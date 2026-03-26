@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTML Presentation Editor</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --panel-2: #f9fbff;
+      --line: #d8e0ec;
+      --line-strong: #bfcad8;
+      --text: #172233;
+      --muted: #5f7088;
+      --accent: #2667ff;
+      --accent-soft: rgba(38, 103, 255, 0.08);
+      --danger: #c73b3b;
+      --radius: 14px;
+      --shadow: 0 10px 24px rgba(18, 30, 61, 0.08);
+      --topbar-h: 64px;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      transition: 0.15s ease;
+    }
+
+    button:hover {
+      border-color: var(--line-strong);
+      background: #fff;
+    }
+
+    button:disabled,
+    select:disabled,
+    input:disabled,
+    textarea:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .primary-btn {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: white;
+    }
+
+    .primary-btn:hover {
+      background: #1954dc;
+      border-color: #1954dc;
+    }
+
+    .ghost-btn {
+      background: transparent;
+    }
+
+    .danger-btn {
+      color: var(--danger);
+      border-color: rgba(199, 59, 59, 0.3);
+      background: rgba(199, 59, 59, 0.05);
+    }
+
+    .topbar {
+      min-height: var(--topbar-h);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .topbar-title {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .topbar-title h1 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .topbar-title span {
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 44vw;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .workspace {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 280px minmax(420px, 1fr) 320px;
+      gap: 16px;
+      padding: 16px;
+    }
+
+    .panel {
+      min-height: 0;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+    }
+
+    .panel-header h2,
+    .panel-header h3 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.3;
+    }
+
+    .panel-subtext {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .slides-panel-body {
+      padding: 10px;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .slide-item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: var(--panel-2);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: start;
+      transition: 0.15s ease;
+      cursor: pointer;
+    }
+
+    .slide-item:hover {
+      border-color: var(--line-strong);
+      background: #fff;
+    }
+
+    .slide-item.is-active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      box-shadow: inset 0 0 0 1px rgba(38, 103, 255, 0.16);
+    }
+
+    .slide-item-main {
+      min-width: 0;
+    }
+
+    .slide-number {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .slide-title {
+      font-size: 14px;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .slide-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .icon-btn {
+      width: 32px;
+      min-width: 32px;
+      height: 32px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9px;
+    }
+
+    .preview-panel {
+      min-height: 0;
+    }
+
+    .preview-shell {
+      flex: 1;
+      min-height: 0;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background:
+        radial-gradient(circle at top left, rgba(38, 103, 255, 0.06), transparent 36%),
+        linear-gradient(180deg, #f8fbff 0%, #eef3fb 100%);
+    }
+
+    .preview-note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .preview-stage {
+      flex: 1;
+      min-height: 0;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: white;
+      overflow: hidden;
+      position: relative;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #fff;
+      display: block;
+    }
+
+    .empty-state {
+      margin: auto;
+      max-width: 520px;
+      text-align: center;
+      color: var(--muted);
+      padding: 24px;
+      line-height: 1.55;
+    }
+
+    .empty-state strong {
+      color: var(--text);
+      display: block;
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+
+    .inspector-body {
+      padding: 16px;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field-group label,
+    .group-title {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .readonly-input,
+    .field-group select,
+    .field-group input[type="text"],
+    .field-group input[type="color"],
+    .field-group textarea,
+    .field-group input[type="number"] {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #fff;
+      color: var(--text);
+    }
+
+    .readonly-input {
+      background: #f7f9fc;
+    }
+
+    .toolbar-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .toolbar-row button {
+      min-width: 42px;
+      min-height: 42px;
+      padding: 0 12px;
+      font-weight: 600;
+    }
+
+    .toolbar-row button.is-active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .align-row button {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .inspector-help {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+      padding: 12px;
+      border: 1px dashed var(--line-strong);
+      border-radius: 12px;
+      background: #fbfdff;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+    }
+
+    .status-pill.is-dirty {
+      color: var(--accent);
+      border-color: rgba(38, 103, 255, 0.25);
+      background: rgba(38, 103, 255, 0.08);
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 17, 34, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 50;
+    }
+
+    .modal.is-open {
+      display: flex;
+    }
+
+    .modal-card {
+      width: min(960px, 100%);
+      max-height: min(90vh, 860px);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 20px 40px rgba(18, 30, 61, 0.22);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .modal-header,
+    .modal-footer {
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .modal-footer {
+      border-top: 1px solid var(--line);
+      border-bottom: 0;
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .modal-body {
+      padding: 16px;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .split-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .upload-box {
+      border: 1px dashed var(--line-strong);
+      border-radius: 14px;
+      padding: 16px;
+      background: #fbfdff;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .upload-box h4 {
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .upload-box p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .modal textarea {
+      width: 100%;
+      min-height: 380px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--text);
+      background: #fbfdff;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 1180px) {
+      .workspace {
+        grid-template-columns: 240px minmax(320px, 1fr) 300px;
+      }
+    }
+
+    @media (max-width: 980px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .panel {
+        min-height: 260px;
+      }
+
+      .split-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-title">
+      <h1>HTML Presentation Editor</h1>
+      <span id="documentMeta">Документ не загружен</span>
+    </div>
+
+    <div class="topbar-actions">
+      <span id="dirtyIndicator" class="status-pill">Нет несохранённых изменений</span>
+      <button id="openHtmlBtn" class="primary-btn">Открыть HTML</button>
+      <button id="showSlideHtmlBtn" disabled>Показать HTML слайда</button>
+      <button id="exportBtn" disabled>Экспортировать HTML</button>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <aside class="panel">
+      <div class="panel-header">
+        <div>
+          <h2>Слайды</h2>
+          <div class="panel-subtext" id="slidesCountLabel">0 слайдов</div>
+        </div>
+      </div>
+      <div class="slides-panel-body" id="slidesList"></div>
+    </aside>
+
+    <section class="panel preview-panel">
+      <div class="panel-header">
+        <div>
+          <h2>Превью</h2>
+          <div class="panel-subtext">Редактирование происходит прямо в слайде</div>
+        </div>
+      </div>
+      <div class="preview-shell">
+        <div class="preview-note">
+          <span>Клик по заголовку, абзацу или списку — и текст меняется сразу в реальном времени.</span>
+          <span id="activeSlideLabel">Слайд не выбран</span>
+        </div>
+
+        <div class="preview-stage" id="previewStage">
+          <div class="empty-state" id="emptyState">
+            <strong>Загрузите HTML‑презентацию</strong>
+            Через кнопку «Открыть HTML» можно выбрать локальный <code>presentation.html</code> или вставить HTML‑код вручную.
+          </div>
+          <iframe id="previewFrame" class="hidden" title="Preview" sandbox="allow-same-origin" referrerpolicy="no-referrer"></iframe>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="panel-header">
+        <div>
+          <h2>Панель элемента</h2>
+          <div class="panel-subtext">Настройки активного текстового блока</div>
+        </div>
+      </div>
+      <div class="inspector-body">
+        <div class="field-group">
+          <label for="elementTagInput">Тип элемента</label>
+          <input id="elementTagInput" class="readonly-input" type="text" value="—" readonly>
+        </div>
+
+        <div class="field-group">
+          <div class="group-title">Форматирование</div>
+          <div class="toolbar-row">
+            <button type="button" id="boldBtn" title="Жирный"><strong>B</strong></button>
+            <button type="button" id="italicBtn" title="Курсив"><em>I</em></button>
+            <button type="button" id="underlineBtn" title="Подчёркнутый"><span style="text-decoration: underline;">U</span></button>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label for="fontSizeSelect">Размер шрифта</label>
+          <select id="fontSizeSelect">
+            <option value="">Авто</option>
+            <option value="14">14 px</option>
+            <option value="16">16 px</option>
+            <option value="20">20 px</option>
+            <option value="24">24 px</option>
+            <option value="32">32 px</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <div class="group-title">Выравнивание</div>
+          <div class="toolbar-row align-row">
+            <button type="button" data-align="left">Слева</button>
+            <button type="button" data-align="center">Центр</button>
+            <button type="button" data-align="right">Справа</button>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label for="textColorInput">Цвет текста</label>
+          <input id="textColorInput" type="color" value="#000000">
+        </div>
+
+        <div class="field-group">
+          <button type="button" id="showElementHtmlBtn">Показать HTML этого элемента</button>
+        </div>
+
+        <div class="inspector-help" id="inspectorHelp">
+          Выдели текстовый блок на активном слайде. После этого справа появятся его свойства, и можно будет менять оформление без ручного редактирования всего документа.
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <div class="modal" id="openHtmlModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Открыть HTML</h3>
+        <button type="button" class="ghost-btn" data-close-modal="openHtmlModal">Закрыть</button>
+      </div>
+      <div class="modal-body">
+        <div class="split-grid">
+          <div class="upload-box">
+            <h4>Загрузка файла</h4>
+            <p>Выбери локальный HTML‑файл презентации. Обычно это <code>presentation.html</code>.</p>
+            <input id="fileInput" type="file" accept=".html,text/html">
+            <div>
+              <button type="button" id="loadFileBtn" class="primary-btn">Загрузить из файла</button>
+            </div>
+          </div>
+
+          <div class="upload-box">
+            <h4>Вставка HTML</h4>
+            <p>Подходит для сценария, когда HTML презентации уже сгенерирован ИИ и лежит в буфере обмена.</p>
+            <textarea id="pasteHtmlTextarea" placeholder="Вставьте полный HTML документа сюда"></textarea>
+            <div>
+              <button type="button" id="loadPastedHtmlBtn" class="primary-btn">Загрузить из текста</button>
+            </div>
+          </div>
+        </div>
+        <div class="hint">
+          Слайды ищутся по селектору по умолчанию <code>section.slide</code>. Если нужно поменять правило, достаточно изменить константу <code>SLIDE_SELECTOR</code> в коде.
+        </div>
+        <div class="hint">
+          Для максимально точного превью лучше использовать самодостаточный HTML: встроенные стили, абсолютные URL или запуск редактора рядом с ресурсами презентации.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="htmlEditorModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="htmlEditorModalTitle">Редактирование HTML</h3>
+        <button type="button" class="ghost-btn" data-close-modal="htmlEditorModal">Закрыть</button>
+      </div>
+      <div class="modal-body">
+        <textarea id="htmlEditorTextarea"></textarea>
+        <div class="hint" id="htmlEditorHint">
+          Вставь корректный HTML. Для элемента и для слайда нужен один корневой HTML‑элемент.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="hint" id="htmlEditorStatus">Изменения применятся сразу в DOM и попадут в экспорт.</div>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="ghost-btn" data-close-modal="htmlEditorModal">Отмена</button>
+          <button type="button" id="saveHtmlEditorBtn" class="primary-btn">Сохранить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Базовый селектор слайдов. Его достаточно поменять в одном месте.
+    const SLIDE_SELECTOR = 'section.slide';
+    const FALLBACK_SLIDE_SELECTORS = ['div.slide'];
+
+    // Текстовые блоки, которые удобно редактировать напрямую.
+    const PRIMARY_EDITABLE_SELECTOR = 'h1,h2,h3,h4,h5,h6,p,li,blockquote,figcaption,pre,code,td,th';
+    const FALLBACK_EDITABLE_SELECTOR = 'div,span,a,label,small';
+
+    const EDITOR_CLASS = 'editor-editable';
+    const ACTIVE_EDITOR_CLASS = 'editor-active';
+    const FRAME_HELPER_STYLE_ID = 'presentation-editor-frame-style';
+
+    const state = {
+      htmlDoc: null,
+      activeSlideIndex: 0,
+      dirty: false,
+      doctypeString: '<!DOCTYPE html>',
+      effectiveSlideSelector: SLIDE_SELECTOR,
+      activeElement: null,
+      htmlEditorMode: null, // 'element' | 'slide'
+      frameSyncQueued: false,
+    };
+
+    const els = {
+      openHtmlBtn: document.getElementById('openHtmlBtn'),
+      showSlideHtmlBtn: document.getElementById('showSlideHtmlBtn'),
+      exportBtn: document.getElementById('exportBtn'),
+      slidesList: document.getElementById('slidesList'),
+      slidesCountLabel: document.getElementById('slidesCountLabel'),
+      activeSlideLabel: document.getElementById('activeSlideLabel'),
+      documentMeta: document.getElementById('documentMeta'),
+      dirtyIndicator: document.getElementById('dirtyIndicator'),
+      previewFrame: document.getElementById('previewFrame'),
+      emptyState: document.getElementById('emptyState'),
+      previewStage: document.getElementById('previewStage'),
+      elementTagInput: document.getElementById('elementTagInput'),
+      boldBtn: document.getElementById('boldBtn'),
+      italicBtn: document.getElementById('italicBtn'),
+      underlineBtn: document.getElementById('underlineBtn'),
+      fontSizeSelect: document.getElementById('fontSizeSelect'),
+      textColorInput: document.getElementById('textColorInput'),
+      showElementHtmlBtn: document.getElementById('showElementHtmlBtn'),
+      inspectorHelp: document.getElementById('inspectorHelp'),
+      alignButtons: Array.from(document.querySelectorAll('[data-align]')),
+      openHtmlModal: document.getElementById('openHtmlModal'),
+      htmlEditorModal: document.getElementById('htmlEditorModal'),
+      fileInput: document.getElementById('fileInput'),
+      pasteHtmlTextarea: document.getElementById('pasteHtmlTextarea'),
+      loadFileBtn: document.getElementById('loadFileBtn'),
+      loadPastedHtmlBtn: document.getElementById('loadPastedHtmlBtn'),
+      htmlEditorModalTitle: document.getElementById('htmlEditorModalTitle'),
+      htmlEditorTextarea: document.getElementById('htmlEditorTextarea'),
+      htmlEditorHint: document.getElementById('htmlEditorHint'),
+      htmlEditorStatus: document.getElementById('htmlEditorStatus'),
+      saveHtmlEditorBtn: document.getElementById('saveHtmlEditorBtn'),
+    };
+
+    init();
+
+    function init() {
+      bindTopBarActions();
+      bindInspectorActions();
+      bindModals();
+      bindUnloadWarning();
+      refreshUi();
+      updateInspectorFromSelection();
+    }
+
+    function bindTopBarActions() {
+      els.openHtmlBtn.addEventListener('click', () => openModal(els.openHtmlModal));
+      els.showSlideHtmlBtn.addEventListener('click', openSlideHtmlEditor);
+      els.exportBtn.addEventListener('click', exportHtml);
+
+      els.loadFileBtn.addEventListener('click', async () => {
+        const file = els.fileInput.files?.[0];
+        if (!file) {
+          alert('Сначала выбери HTML‑файл.');
+          return;
+        }
+
+        try {
+          const htmlText = await file.text();
+          loadHtmlString(htmlText, file.name);
+          closeModal(els.openHtmlModal);
+        } catch (error) {
+          console.error(error);
+          alert('Не удалось прочитать файл.');
+        }
+      });
+
+      els.loadPastedHtmlBtn.addEventListener('click', () => {
+        const htmlText = els.pasteHtmlTextarea.value.trim();
+        if (!htmlText) {
+          alert('Вставь HTML‑код в текстовое поле.');
+          return;
+        }
+
+        loadHtmlString(htmlText, 'Вставленный HTML');
+        closeModal(els.openHtmlModal);
+      });
+    }
+
+    function bindInspectorActions() {
+      els.boldBtn.addEventListener('click', () => applyInlineCommand('bold'));
+      els.italicBtn.addEventListener('click', () => applyInlineCommand('italic'));
+      els.underlineBtn.addEventListener('click', () => applyInlineCommand('underline'));
+
+      els.fontSizeSelect.addEventListener('change', () => {
+        const el = state.activeElement;
+        if (!el) return;
+        el.style.fontSize = els.fontSizeSelect.value ? `${els.fontSizeSelect.value}px` : '';
+        finalizeFrameMutation();
+      });
+
+      els.textColorInput.addEventListener('input', () => {
+        const el = state.activeElement;
+        if (!el) return;
+        el.style.color = els.textColorInput.value;
+        finalizeFrameMutation();
+      });
+
+      els.alignButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const el = state.activeElement;
+          if (!el) return;
+          el.style.textAlign = button.dataset.align || 'left';
+          finalizeFrameMutation();
+        });
+      });
+
+      els.showElementHtmlBtn.addEventListener('click', openElementHtmlEditor);
+
+      els.saveHtmlEditorBtn.addEventListener('click', saveHtmlEditorChanges);
+    }
+
+    function bindModals() {
+      document.querySelectorAll('[data-close-modal]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const target = document.getElementById(button.dataset.closeModal);
+          if (target) closeModal(target);
+        });
+      });
+
+      [els.openHtmlModal, els.htmlEditorModal].forEach((modal) => {
+        modal.addEventListener('click', (event) => {
+          if (event.target === modal) closeModal(modal);
+        });
+      });
+    }
+
+    function bindUnloadWarning() {
+      window.addEventListener('beforeunload', (event) => {
+        if (!state.dirty) return;
+        event.preventDefault();
+        event.returnValue = '';
+      });
+    }
+
+    // Загружаем HTML: разбираем строку в отдельный DOM, ищем слайды и строим UI.
+    function loadHtmlString(htmlString, sourceLabel = 'HTML документ') {
+      const parser = new DOMParser();
+      const parsed = parser.parseFromString(htmlString, 'text/html');
+      const detectedSelector = detectSlideSelector(parsed);
+
+      if (!detectedSelector) {
+        alert(`Не найдено ни одного слайда по селекторам: ${[SLIDE_SELECTOR, ...FALLBACK_SLIDE_SELECTORS].join(', ')}`);
+        return;
+      }
+
+      state.htmlDoc = parsed;
+      state.doctypeString = extractDoctype(htmlString) || '<!DOCTYPE html>';
+      state.effectiveSlideSelector = detectedSelector;
+      state.activeSlideIndex = 0;
+      state.activeElement = null;
+      state.dirty = false;
+
+      els.documentMeta.textContent = `${sourceLabel} • селектор слайдов: ${state.effectiveSlideSelector}`;
+      renderSlidesList();
+      renderPreviewFrame();
+      refreshUi();
+    }
+
+    function detectSlideSelector(doc) {
+      const selectors = [SLIDE_SELECTOR, ...FALLBACK_SLIDE_SELECTORS];
+      for (const selector of selectors) {
+        if (doc.querySelector(selector)) return selector;
+      }
+      return null;
+    }
+
+    function getSlides(doc = state.htmlDoc) {
+      if (!doc) return [];
+      return Array.from(doc.querySelectorAll(state.effectiveSlideSelector || SLIDE_SELECTOR));
+    }
+
+    function renderSlidesList() {
+      const slides = getSlides();
+      els.slidesList.innerHTML = '';
+      els.slidesCountLabel.textContent = `${slides.length} ${pluralizeSlides(slides.length)}`;
+      els.activeSlideLabel.textContent = slides.length
+        ? `Активный: слайд ${state.activeSlideIndex + 1} из ${slides.length}`
+        : 'Слайд не выбран';
+
+      if (!slides.length) {
+        const empty = document.createElement('div');
+        empty.className = 'empty-state';
+        empty.innerHTML = '<strong>Слайды не найдены</strong>Проверь селектор и структуру HTML.';
+        els.slidesList.appendChild(empty);
+        return;
+      }
+
+      slides.forEach((slide, index) => {
+        const item = document.createElement('div');
+        item.className = `slide-item ${index === state.activeSlideIndex ? 'is-active' : ''}`;
+        item.dataset.index = String(index);
+
+        const main = document.createElement('div');
+        main.className = 'slide-item-main';
+        main.innerHTML = `
+          <div class="slide-number">Слайд ${index + 1}</div>
+          <div class="slide-title">${escapeHtml(getSlideLabel(slide))}</div>
+        `;
+
+        const actions = document.createElement('div');
+        actions.className = 'slide-actions';
+
+        const upBtn = document.createElement('button');
+        upBtn.type = 'button';
+        upBtn.className = 'icon-btn';
+        upBtn.textContent = '↑';
+        upBtn.title = 'Поднять выше';
+        upBtn.disabled = index === 0;
+        upBtn.addEventListener('click', (event) => {
+          event.stopPropagation();
+          moveSlide(index, -1);
+        });
+
+        const downBtn = document.createElement('button');
+        downBtn.type = 'button';
+        downBtn.className = 'icon-btn';
+        downBtn.textContent = '↓';
+        downBtn.title = 'Опустить ниже';
+        downBtn.disabled = index === slides.length - 1;
+        downBtn.addEventListener('click', (event) => {
+          event.stopPropagation();
+          moveSlide(index, 1);
+        });
+
+        actions.append(upBtn, downBtn);
+        item.append(main, actions);
+        item.addEventListener('click', () => selectSlide(index));
+        els.slidesList.appendChild(item);
+      });
+    }
+
+    function getSlideLabel(slide) {
+      const titleEl = slide.querySelector('h1, h2');
+      if (titleEl && titleEl.textContent.trim()) {
+        return titleEl.textContent.trim();
+      }
+
+      const text = slide.textContent.replace(/\s+/g, ' ').trim();
+      return text ? text.slice(0, 50) + (text.length > 50 ? '…' : '') : 'Пустой слайд';
+    }
+
+    function pluralizeSlides(count) {
+      const mod10 = count % 10;
+      const mod100 = count % 100;
+      if (mod10 === 1 && mod100 !== 11) return 'слайд';
+      if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return 'слайда';
+      return 'слайдов';
+    }
+
+    function selectSlide(index) {
+      const slides = getSlides();
+      if (!slides[index]) return;
+
+      syncActiveSlideFromFrame();
+      state.activeSlideIndex = index;
+      state.activeElement = null;
+      renderSlidesList();
+      renderPreviewFrame();
+      refreshUi();
+    }
+
+    function moveSlide(index, direction) {
+      syncActiveSlideFromFrame();
+      const slides = getSlides();
+      const targetIndex = index + direction;
+      if (!slides[index] || !slides[targetIndex]) return;
+
+      const currentSlide = slides[index];
+      const targetSlide = slides[targetIndex];
+      if (direction < 0) {
+        targetSlide.before(currentSlide);
+      } else {
+        targetSlide.after(currentSlide);
+      }
+
+      state.activeSlideIndex = targetIndex;
+      markDirty();
+      renderSlidesList();
+      renderPreviewFrame();
+      refreshUi();
+    }
+
+    // Превью строится в iframe: туда подставляется весь HTML с его стилями,
+    // а затем показывается только активный слайд.
+    function renderPreviewFrame() {
+      if (!state.htmlDoc) {
+        els.previewFrame.classList.add('hidden');
+        els.emptyState.classList.remove('hidden');
+        return;
+      }
+
+      els.emptyState.classList.add('hidden');
+      els.previewFrame.classList.remove('hidden');
+
+      const previewDoc = new DOMParser().parseFromString(state.htmlDoc.documentElement.outerHTML, 'text/html');
+      previewDoc.querySelectorAll('script').forEach((script) => script.remove());
+      els.previewFrame.srcdoc = `${state.doctypeString}\n${previewDoc.documentElement.outerHTML}`;
+    }
+
+    els.previewFrame.addEventListener('load', () => {
+      if (!state.htmlDoc) return;
+
+      const frameDoc = els.previewFrame.contentDocument;
+      if (!frameDoc) return;
+
+      setupPreviewDocument(frameDoc);
+      refreshUi();
+    });
+
+    function setupPreviewDocument(frameDoc) {
+      injectFrameHelperStyles(frameDoc);
+      prepareFrameSlides(frameDoc);
+      prepareActiveSlideForEditing(frameDoc);
+      wireFrameEvents(frameDoc);
+      updateInspectorFromSelection();
+    }
+
+    function injectFrameHelperStyles(frameDoc) {
+      let styleEl = frameDoc.getElementById(FRAME_HELPER_STYLE_ID);
+      if (!styleEl) {
+        styleEl = frameDoc.createElement('style');
+        styleEl.id = FRAME_HELPER_STYLE_ID;
+        frameDoc.head.appendChild(styleEl);
+      }
+
+      styleEl.textContent = `
+        html, body {
+          min-height: 100%;
+        }
+
+        body {
+          padding: 18px;
+          box-sizing: border-box;
+        }
+
+        .${EDITOR_CLASS} {
+          outline: 1px dashed transparent;
+          outline-offset: 2px;
+          transition: outline-color 0.12s ease, background-color 0.12s ease;
+          cursor: text;
+        }
+
+        .${EDITOR_CLASS}:hover {
+          outline-color: rgba(38, 103, 255, 0.42);
+          background: rgba(38, 103, 255, 0.05);
+        }
+
+        .${ACTIVE_EDITOR_CLASS},
+        .${EDITOR_CLASS}:focus {
+          outline: 1px solid rgba(38, 103, 255, 0.92) !important;
+          background: rgba(38, 103, 255, 0.08);
+        }
+      `;
+    }
+
+    function prepareFrameSlides(frameDoc) {
+      const slides = getSlides(frameDoc);
+      slides.forEach((slide, index) => {
+        if (index === state.activeSlideIndex) {
+          slide.removeAttribute('data-editor-hidden');
+          if (frameDoc.defaultView.getComputedStyle(slide).display === 'none') {
+            slide.dataset.editorOriginalInlineDisplay = slide.style.display || '';
+            slide.style.display = 'block';
+          }
+        } else {
+          slide.dataset.editorHidden = 'true';
+          slide.style.display = 'none';
+        }
+      });
+    }
+
+    function prepareActiveSlideForEditing(frameDoc) {
+      const activeSlide = getSlides(frameDoc)[state.activeSlideIndex];
+      if (!activeSlide) return;
+
+      activeSlide.querySelectorAll(`.${EDITOR_CLASS}`).forEach((el) => {
+        el.classList.remove(EDITOR_CLASS, ACTIVE_EDITOR_CLASS);
+        el.removeAttribute('contenteditable');
+        el.removeAttribute('spellcheck');
+      });
+
+      const editableElements = collectEditableElements(activeSlide);
+      editableElements.forEach((el) => {
+        el.classList.add(EDITOR_CLASS);
+        el.setAttribute('contenteditable', 'true');
+        el.setAttribute('spellcheck', 'true');
+      });
+
+      state.activeElement = null;
+    }
+
+    function collectEditableElements(slide) {
+      const primary = Array.from(slide.querySelectorAll(PRIMARY_EDITABLE_SELECTOR)).filter(hasMeaningfulText);
+      const fallback = Array.from(slide.querySelectorAll(FALLBACK_EDITABLE_SELECTOR)).filter((el) => {
+        if (!hasMeaningfulText(el)) return false;
+
+        const closestPrimary = el.parentElement?.closest(PRIMARY_EDITABLE_SELECTOR);
+        if (closestPrimary) return false;
+        if (el.querySelector(PRIMARY_EDITABLE_SELECTOR)) return false;
+        return true;
+      });
+
+      const combined = [...primary, ...fallback];
+      return combined.filter((el) => !combined.some((other) => other !== el && el.contains(other)));
+    }
+
+    function hasMeaningfulText(el) {
+      return el.textContent.replace(/\s+/g, ' ').trim().length > 0;
+    }
+
+    function wireFrameEvents(frameDoc) {
+      const activeSlide = getSlides(frameDoc)[state.activeSlideIndex];
+      if (!activeSlide) return;
+
+      frameDoc.addEventListener('click', handleFrameClick);
+      frameDoc.addEventListener('focusin', handleFrameFocusIn);
+      frameDoc.addEventListener('input', handleFrameInput);
+      frameDoc.addEventListener('selectionchange', handleFrameSelectionChange);
+    }
+
+    function handleFrameClick(event) {
+      if (event.target.closest?.('a[href]')) {
+        event.preventDefault();
+      }
+
+      const editable = findEditableTarget(event.target);
+      if (!editable) return;
+      setActiveElement(editable);
+    }
+
+    function handleFrameFocusIn(event) {
+      const editable = findEditableTarget(event.target);
+      if (!editable) return;
+      setActiveElement(editable);
+    }
+
+    function handleFrameInput(event) {
+      const editable = findEditableTarget(event.target);
+      if (!editable) return;
+      setActiveElement(editable, false);
+      queueSyncFromFrame();
+    }
+
+    function handleFrameSelectionChange() {
+      updateInspectorFromSelection();
+    }
+
+    function findEditableTarget(target) {
+      if (!target) return null;
+      const frameDoc = els.previewFrame.contentDocument;
+      if (!frameDoc) return null;
+
+      let node = target.nodeType === Node.TEXT_NODE ? target.parentElement : target;
+      if (!(node instanceof frameDoc.defaultView.Element)) return null;
+      return node.closest(`.${EDITOR_CLASS}`);
+    }
+
+    function setActiveElement(element, focusElement = true) {
+      if (state.activeElement && state.activeElement !== element) {
+        state.activeElement.classList.remove(ACTIVE_EDITOR_CLASS);
+      }
+
+      state.activeElement = element;
+      if (element) {
+        element.classList.add(ACTIVE_EDITOR_CLASS);
+        if (focusElement) element.focus();
+      }
+
+      updateInspectorFromSelection();
+      refreshUi();
+    }
+
+    function queueSyncFromFrame() {
+      if (state.frameSyncQueued) return;
+      state.frameSyncQueued = true;
+      requestAnimationFrame(() => {
+        state.frameSyncQueued = false;
+        syncActiveSlideFromFrame();
+        updateSingleSlideListItem(state.activeSlideIndex);
+        markDirty();
+      });
+    }
+
+    // Все изменения в iframe синхронизируются назад в основной DOM документа,
+    // чтобы экспорт шёл уже из обновлённой версии.
+    function syncActiveSlideFromFrame() {
+      const frameDoc = els.previewFrame.contentDocument;
+      if (!frameDoc || !state.htmlDoc) return;
+
+      const frameSlide = getSlides(frameDoc)[state.activeSlideIndex];
+      const sourceSlide = getSlides(state.htmlDoc)[state.activeSlideIndex];
+      if (!frameSlide || !sourceSlide) return;
+
+      const cleanClone = frameSlide.cloneNode(true);
+      sanitizeEditorArtifacts(cleanClone);
+      const imported = state.htmlDoc.importNode(cleanClone, true);
+      sourceSlide.replaceWith(imported);
+    }
+
+    function sanitizeEditorArtifacts(root) {
+      const elements = [root, ...root.querySelectorAll('*')];
+      elements.forEach((el) => {
+        if (!(el instanceof Element)) return;
+
+        el.classList.remove(EDITOR_CLASS, ACTIVE_EDITOR_CLASS);
+        el.removeAttribute('contenteditable');
+        el.removeAttribute('spellcheck');
+
+        if (el.hasAttribute('data-editor-original-inline-display')) {
+          const originalDisplay = el.getAttribute('data-editor-original-inline-display') || '';
+          if (originalDisplay) {
+            el.style.display = originalDisplay;
+          } else {
+            el.style.removeProperty('display');
+            if (!el.getAttribute('style')) el.removeAttribute('style');
+          }
+        }
+
+        Array.from(el.attributes).forEach((attr) => {
+          if (attr.name.startsWith('data-editor-')) {
+            el.removeAttribute(attr.name);
+          }
+        });
+      });
+    }
+
+    function updateSingleSlideListItem(index) {
+      const item = els.slidesList.querySelector(`.slide-item[data-index="${index}"] .slide-title`);
+      const slide = getSlides()[index];
+      if (item && slide) {
+        item.textContent = getSlideLabel(slide);
+      }
+    }
+
+    function applyInlineCommand(command) {
+      const frameDoc = els.previewFrame.contentDocument;
+      if (!frameDoc || !state.activeElement) return;
+
+      const frameWindow = els.previewFrame.contentWindow;
+      state.activeElement.focus();
+      frameWindow?.focus();
+
+      let applied = false;
+      try {
+        applied = frameDoc.execCommand(command, false, null);
+      } catch (error) {
+        applied = false;
+      }
+
+      if (!applied) {
+        applyCommandFallback(command);
+      }
+
+      finalizeFrameMutation();
+    }
+
+    function applyCommandFallback(command) {
+      const el = state.activeElement;
+      const frameDoc = els.previewFrame.contentDocument;
+      if (!el || !frameDoc) return;
+
+      const computed = frameDoc.defaultView.getComputedStyle(el);
+      switch (command) {
+        case 'bold': {
+          const isBold = computed.fontWeight === '700' || computed.fontWeight === '800' || computed.fontWeight === '900' || computed.fontWeight === 'bold';
+          el.style.fontWeight = isBold ? '400' : '700';
+          break;
+        }
+        case 'italic': {
+          const isItalic = computed.fontStyle === 'italic';
+          el.style.fontStyle = isItalic ? 'normal' : 'italic';
+          break;
+        }
+        case 'underline': {
+          const hasUnderline = computed.textDecorationLine.includes('underline');
+          el.style.textDecoration = hasUnderline ? 'none' : 'underline';
+          break;
+        }
+      }
+    }
+
+    function finalizeFrameMutation() {
+      if (!state.activeElement) return;
+      queueSyncFromFrame();
+      updateInspectorFromSelection();
+    }
+
+    function updateInspectorFromSelection() {
+      const el = state.activeElement;
+      const frameDoc = els.previewFrame.contentDocument;
+      const controlsEnabled = Boolean(el && frameDoc);
+
+      els.elementTagInput.value = el ? el.tagName : '—';
+      [els.boldBtn, els.italicBtn, els.underlineBtn, els.fontSizeSelect, els.textColorInput, els.showElementHtmlBtn, ...els.alignButtons].forEach((control) => {
+        control.disabled = !controlsEnabled;
+      });
+
+      if (!controlsEnabled) {
+        els.fontSizeSelect.value = '';
+        els.textColorInput.value = '#000000';
+        els.alignButtons.forEach((btn) => btn.classList.remove('is-active'));
+        [els.boldBtn, els.italicBtn, els.underlineBtn].forEach((btn) => btn.classList.remove('is-active'));
+        return;
+      }
+
+      const computed = frameDoc.defaultView.getComputedStyle(el);
+      const fontSize = parseInt(computed.fontSize, 10);
+      const supportedSizes = ['14', '16', '20', '24', '32'];
+      els.fontSizeSelect.value = supportedSizes.includes(String(fontSize)) ? String(fontSize) : '';
+      els.textColorInput.value = rgbToHex(computed.color);
+
+      const alignment = el.style.textAlign || computed.textAlign || 'left';
+      els.alignButtons.forEach((btn) => btn.classList.toggle('is-active', btn.dataset.align === alignment));
+
+      const boldState = queryCommandStateSafe(frameDoc, 'bold') || ['700', '800', '900', 'bold'].includes(computed.fontWeight);
+      const italicState = queryCommandStateSafe(frameDoc, 'italic') || computed.fontStyle === 'italic';
+      const underlineState = queryCommandStateSafe(frameDoc, 'underline') || computed.textDecorationLine.includes('underline');
+
+      els.boldBtn.classList.toggle('is-active', Boolean(boldState));
+      els.italicBtn.classList.toggle('is-active', Boolean(italicState));
+      els.underlineBtn.classList.toggle('is-active', Boolean(underlineState));
+    }
+
+    function queryCommandStateSafe(frameDoc, command) {
+      try {
+        return frameDoc.queryCommandState(command);
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function rgbToHex(color) {
+      if (!color) return '#000000';
+      if (color.startsWith('#')) return color;
+      const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+      if (!match) return '#000000';
+      const [, r, g, b] = match;
+      return `#${[r, g, b].map((value) => Number(value).toString(16).padStart(2, '0')).join('')}`;
+    }
+
+    function getSanitizedOuterHtml(element) {
+      const clone = element.cloneNode(true);
+      sanitizeEditorArtifacts(clone);
+      return clone.outerHTML;
+    }
+
+    function openElementHtmlEditor() {
+      if (!state.activeElement) {
+        alert('Сначала выбери элемент на слайде.');
+        return;
+      }
+
+      state.htmlEditorMode = 'element';
+      els.htmlEditorModalTitle.textContent = 'HTML выбранного элемента';
+      els.htmlEditorHint.textContent = 'Нужен один корневой HTML‑элемент. После сохранения он сразу заменит текущий элемент в слайде.';
+      els.htmlEditorTextarea.value = getSanitizedOuterHtml(state.activeElement);
+      openModal(els.htmlEditorModal);
+    }
+
+    function openSlideHtmlEditor() {
+      const frameDoc = els.previewFrame.contentDocument;
+      const activeSlide = frameDoc ? getSlides(frameDoc)[state.activeSlideIndex] : null;
+      if (!activeSlide) {
+        alert('Сначала загрузи презентацию и выбери слайд.');
+        return;
+      }
+
+      state.htmlEditorMode = 'slide';
+      els.htmlEditorModalTitle.textContent = `HTML слайда ${state.activeSlideIndex + 1}`;
+      els.htmlEditorHint.textContent = `Нужен один корневой HTML‑элемент, который должен соответствовать селектору ${state.effectiveSlideSelector}.`;
+      els.htmlEditorTextarea.value = getSanitizedOuterHtml(activeSlide);
+      openModal(els.htmlEditorModal);
+    }
+
+    function saveHtmlEditorChanges() {
+      const html = els.htmlEditorTextarea.value.trim();
+      if (!html) {
+        alert('HTML не должен быть пустым.');
+        return;
+      }
+
+      try {
+        const replacement = parseSingleRootElement(html);
+
+        if (state.htmlEditorMode === 'element') {
+          saveElementHtml(replacement);
+        } else if (state.htmlEditorMode === 'slide') {
+          saveSlideHtml(replacement);
+        }
+
+        closeModal(els.htmlEditorModal);
+      } catch (error) {
+        console.error(error);
+        alert(error.message || 'Не удалось применить HTML.');
+      }
+    }
+
+    function parseSingleRootElement(html) {
+      const doc = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
+      const elements = Array.from(doc.body.children);
+      const nonEmptyTextNodes = Array.from(doc.body.childNodes).filter((node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
+
+      if (elements.length !== 1 || nonEmptyTextNodes.length > 0) {
+        throw new Error('Нужен ровно один корневой HTML‑элемент без лишнего текста снаружи.');
+      }
+
+      return elements[0];
+    }
+
+    function saveElementHtml(replacement) {
+      const frameDoc = els.previewFrame.contentDocument;
+      if (!frameDoc || !state.activeElement) {
+        throw new Error('Нет активного элемента для замены.');
+      }
+
+      const imported = frameDoc.importNode(replacement, true);
+      const currentElement = state.activeElement;
+      currentElement.replaceWith(imported);
+      prepareActiveSlideForEditing(frameDoc);
+
+      const activeSlide = getSlides(frameDoc)[state.activeSlideIndex];
+      const newSelection = imported.matches(`${PRIMARY_EDITABLE_SELECTOR}, ${FALLBACK_EDITABLE_SELECTOR}`)
+        ? imported
+        : imported.querySelector?.(`.${EDITOR_CLASS}`) || activeSlide?.querySelector(`.${EDITOR_CLASS}`) || null;
+
+      if (newSelection) setActiveElement(newSelection);
+      syncActiveSlideFromFrame();
+      updateSingleSlideListItem(state.activeSlideIndex);
+      markDirty();
+    }
+
+    // Ручная правка HTML всего слайда — аварийный механизм на случай,
+    // когда нужен контроль над разметкой целиком.
+    function saveSlideHtml(replacement) {
+      if (!replacement.matches(state.effectiveSlideSelector)) {
+        throw new Error(`Корневой элемент слайда должен соответствовать селектору ${state.effectiveSlideSelector}.`);
+      }
+
+      const slides = getSlides();
+      const currentSlide = slides[state.activeSlideIndex];
+      if (!currentSlide) {
+        throw new Error('Текущий слайд не найден.');
+      }
+
+      const imported = state.htmlDoc.importNode(replacement, true);
+      currentSlide.replaceWith(imported);
+      state.activeElement = null;
+      markDirty();
+      renderSlidesList();
+      renderPreviewFrame();
+      refreshUi();
+    }
+
+    // Экспорт: собираем полный HTML-документ обратно и скачиваем его как файл.
+    function exportHtml() {
+      if (!state.htmlDoc) return;
+
+      syncActiveSlideFromFrame();
+      const serialized = `${state.doctypeString}\n${state.htmlDoc.documentElement.outerHTML}`;
+      const blob = new Blob([serialized], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'presentation-edited.html';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      state.dirty = false;
+      refreshUi();
+    }
+
+    function openModal(modal) {
+      modal.classList.add('is-open');
+      modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeModal(modal) {
+      modal.classList.remove('is-open');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+
+    function markDirty() {
+      state.dirty = true;
+      refreshUi();
+    }
+
+    function refreshUi() {
+      const hasPresentation = Boolean(state.htmlDoc && getSlides().length);
+      const hasElement = Boolean(state.activeElement);
+      els.showSlideHtmlBtn.disabled = !hasPresentation;
+      els.exportBtn.disabled = !hasPresentation;
+      els.showElementHtmlBtn.disabled = !hasElement;
+
+      els.dirtyIndicator.textContent = state.dirty ? 'Есть несохранённые изменения' : 'Нет несохранённых изменений';
+      els.dirtyIndicator.classList.toggle('is-dirty', state.dirty);
+
+      if (!hasElement) {
+        els.inspectorHelp.textContent = hasPresentation
+          ? 'Выдели текстовый блок внутри текущего слайда, чтобы управлять его стилем и HTML.'
+          : 'Сначала загрузи HTML‑презентацию. Затем выбери слайд и кликни по тексту внутри него.';
+      } else {
+        els.inspectorHelp.textContent = 'Изменения применяются сразу. Для точечной ручной правки можно открыть HTML выбранного элемента.';
+      }
+    }
+
+    function extractDoctype(html) {
+      const match = html.match(/<!doctype[^>]*>/i);
+      return match ? match[0] : '';
+    }
+
+    function escapeHtml(value) {
+      return value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>
