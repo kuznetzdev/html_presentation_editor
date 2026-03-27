@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HTML Presentation Editor</title>
   <style>
+    /* ======================================================================
+       HTML Presentation Editor — v3
+       Ниже находятся глобальные токены темы и базовые стили shell-приложения.
+       Мы держим UI редактора снаружи iframe, чтобы не ломать стили презентации.
+       ====================================================================== */
     :root {
       --bg: #f4f7fb;
       --panel: #ffffff;
@@ -553,7 +558,22 @@
       }
     }
 
+    /* Responsive tweaks — на узких экранах уменьшаем горизонтальное давление
+       и переводим вспомогательные панели в более компактный режим. */
+    @media (max-width: 1280px) {
+      .workspace {
+        grid-template-columns: 260px minmax(360px, 1fr) 320px;
+        gap: 12px;
+        padding: 12px;
+      }
+      .topbar-title span { max-width: 32vw; }
+    }
+
     @media (max-width: 980px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+      .panel { min-height: 240px; }
       .workspace {
         grid-template-columns: 1fr;
       }
@@ -837,9 +857,461 @@ textarea {
   }
 }
 
+
+
+    /* ======================================================================
+       Дополнительный UX-слой v3: тёмная тема, умное меню, draggable-toolbar,
+       toasts, collapse-секции инспектора, палитра вставки и loading overlay.
+       ====================================================================== */
+    body[data-theme="dark"] {
+      --bg: #0f1725;
+      --panel: #131d2c;
+      --panel-soft: #182436;
+      --line: #243247;
+      --line-strong: #38506e;
+      --text: #edf4ff;
+      --muted: #9eb2cc;
+      --accent-soft: rgba(95, 148, 255, 0.16);
+      --shadow: 0 14px 30px rgba(0, 0, 0, 0.34);
+    }
+
+    body[data-theme="dark"] .topbar,
+    body[data-theme="dark"] .panel,
+    body[data-theme="dark"] .modal-card,
+    body[data-theme="dark"] .context-menu,
+    body[data-theme="dark"] .floating-toolbar,
+    body[data-theme="dark"] .restore-banner,
+    body[data-theme="dark"] .inspector-section,
+    body[data-theme="dark"] .quick-palette,
+    body[data-theme="dark"] .toast {
+      background: var(--panel);
+      color: var(--text);
+      border-color: var(--line);
+    }
+
+    body[data-theme="dark"] .modal-header,
+    body[data-theme="dark"] .modal-footer,
+    body[data-theme="dark"] .preview-note {
+      background: rgba(19, 29, 44, 0.92);
+      border-color: var(--line);
+      color: var(--text);
+    }
+
+    body[data-theme="dark"] button,
+    body[data-theme="dark"] .readonly-input,
+    body[data-theme="dark"] input[type="text"],
+    body[data-theme="dark"] input[type="number"],
+    body[data-theme="dark"] input[type="color"],
+    body[data-theme="dark"] select,
+    body[data-theme="dark"] textarea,
+    body[data-theme="dark"] .mini-badge,
+    body[data-theme="dark"] .upload-box,
+    body[data-theme="dark"] .diagnostics-box,
+    body[data-theme="dark"] .inspector-help {
+      background: #0f1725;
+      color: var(--text);
+      border-color: var(--line);
+    }
+
+    body[data-theme="dark"] .ghost-btn {
+      background: transparent;
+    }
+
+    body[data-theme="dark"] .context-menu button:hover,
+    body[data-theme="dark"] .quick-palette button:hover,
+    body[data-theme="dark"] .section-toggle:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .theme-toggle-btn {
+      min-width: 120px;
+    }
+
+    .save-pill.is-saved {
+      border-color: rgba(10, 138, 75, 0.28);
+      background: rgba(10, 138, 75, 0.08);
+      color: var(--ok);
+    }
+
+    .save-pill.is-saving {
+      border-color: rgba(38, 103, 255, 0.28);
+      background: rgba(38, 103, 255, 0.08);
+      color: var(--accent);
+    }
+
+    .preview-loading {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 16;
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(4px);
+      text-align: center;
+      padding: 16px;
+    }
+
+    body[data-theme="dark"] .preview-loading {
+      background: rgba(10, 17, 34, 0.72);
+    }
+
+    .preview-loading.is-visible {
+      display: flex;
+    }
+
+    .spinner {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 3px solid rgba(38, 103, 255, 0.18);
+      border-top-color: var(--accent);
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0); }
+      to { transform: rotate(360deg); }
+    }
+
+    .quick-palette {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      z-index: 17;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      max-width: min(360px, calc(100% - 20px));
+      padding: 8px;
+      border-radius: 14px;
+      border: 1px solid rgba(23,34,51,0.12);
+      background: rgba(255,255,255,0.95);
+      box-shadow: 0 10px 24px rgba(18, 30, 61, 0.12);
+      backdrop-filter: blur(10px);
+    }
+
+    .quick-palette button {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      min-height: 36px;
+      font-size: 12px;
+    }
+
+    .quick-palette button[draggable="true"] {
+      cursor: grab;
+    }
+
+    .quick-palette button[draggable="true"]:active {
+      cursor: grabbing;
+    }
+
+    /* Floating toolbar — быстрые действия рядом с выбранным элементом.
+       Позиционируется поверх preview-stage, но только в пределах его границ. */
+    .floating-toolbar {
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      opacity: 0;
+      transform: translateY(4px);
+    }
+
+    .floating-toolbar.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .floating-toolbar.is-dragging {
+      cursor: grabbing;
+      user-select: none;
+      opacity: 0.96;
+    }
+
+    .floating-toolbar[data-collapsed="true"] .floating-toolbar-content {
+      display: none;
+    }
+
+    .floating-toolbar-content {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .floating-toolbar-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding-left: 6px;
+      border-left: 1px solid rgba(23,34,51,0.12);
+    }
+
+    .floating-toolbar-group:first-child {
+      border-left: 0;
+      padding-left: 0;
+    }
+
+    .toolbar-handle {
+      cursor: grab;
+      user-select: none;
+      font-weight: 700;
+    }
+
+    .toolbar-handle:active {
+      cursor: grabbing;
+    }
+
+    /* Context menu — адаптивное меню, построенное под тип элемента.
+       Ограничиваем ширину/высоту, чтобы оно не убегало за экран. */
+    .context-menu {
+      max-width: min(320px, calc(100vw - 16px));
+    }
+
+    .context-menu-inner {
+      display: flex;
+      flex-direction: column;
+      max-height: min(70vh, 540px);
+      overflow: auto;
+    }
+
+    .context-menu-section-title {
+      padding: 8px 12px 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      border-top: 1px solid rgba(23,34,51,0.08);
+    }
+
+    .context-menu-section-title:first-child {
+      border-top: 0;
+    }
+
+    .context-menu button {
+      display: grid;
+      grid-template-columns: 20px 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .context-menu .menu-icon {
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .context-menu .menu-hint {
+      color: var(--muted);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .context-menu .danger-item {
+      color: var(--danger);
+    }
+
+    /* Toast stack — неблокирующая обратная связь. Контейнер ограничен по ширине,
+       чтобы уведомления не перекрывали рабочую область полностью. */
+    .toast-container {
+      position: fixed;
+      right: 16px;
+      top: calc(var(--topbar-h) + 14px);
+      z-index: 150;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+      max-width: min(360px, calc(100vw - 24px));
+    }
+
+    .toast {
+      pointer-events: auto;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.98);
+      box-shadow: 0 16px 36px rgba(18, 30, 61, 0.16);
+      padding: 12px 14px;
+      display: grid;
+      grid-template-columns: 20px 1fr auto;
+      gap: 10px;
+      align-items: start;
+      animation: toastIn 0.18s ease;
+    }
+
+    .toast strong {
+      display: block;
+      margin-bottom: 2px;
+      font-size: 13px;
+    }
+
+    .toast .toast-icon {
+      margin-top: 1px;
+    }
+
+    .toast .toast-close {
+      border: 0;
+      background: transparent;
+      padding: 0;
+      min-height: auto;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .toast.is-success {
+      border-color: rgba(10, 138, 75, 0.25);
+    }
+
+    .toast.is-warning {
+      border-color: rgba(194, 136, 0, 0.28);
+    }
+
+    .toast.is-error {
+      border-color: rgba(199, 59, 59, 0.28);
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .inspector-section {
+      position: relative;
+    }
+
+    .inspector-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .section-toggle {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 0;
+      background: transparent;
+      padding: 0;
+      text-align: left;
+      min-height: auto;
+      font-weight: 700;
+    }
+
+    .section-toggle:hover {
+      background: transparent;
+    }
+
+    .section-toggle .section-caret {
+      font-size: 13px;
+      color: var(--muted);
+      transition: transform 0.18s ease;
+    }
+
+    .inspector-section.is-collapsed .section-toggle .section-caret {
+      transform: rotate(-90deg);
+    }
+
+    .inspector-section-content {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .inspector-section.is-collapsed .inspector-section-content {
+      display: none;
+    }
+
+    .label-with-help {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .help-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1;
+      background: transparent;
+      cursor: help;
+    }
+
+    .field-group.compact label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .flash-outline {
+      animation: flashOutline 0.7s ease;
+    }
+
+    @keyframes flashOutline {
+      0% { box-shadow: 0 0 0 0 rgba(10,138,75,0.0); }
+      30% { box-shadow: 0 0 0 4px rgba(10,138,75,0.24); }
+      100% { box-shadow: 0 0 0 0 rgba(10,138,75,0.0); }
+    }
+
+    body[data-theme="dark"] .floating-toolbar,
+    body[data-theme="dark"] .quick-palette {
+      background: rgba(19,29,44,0.96);
+      border-color: var(--line);
+    }
+
+    body[data-theme="dark"] .preview-dropzone {
+      background: rgba(38,103,255,0.16);
+    }
+
+    /* Responsive tweaks — на узких экранах уменьшаем горизонтальное давление
+       и переводим вспомогательные панели в более компактный режим. */
+    @media (max-width: 1280px) {
+      .workspace {
+        grid-template-columns: 260px minmax(360px, 1fr) 320px;
+        gap: 12px;
+        padding: 12px;
+      }
+      .topbar-title span { max-width: 32vw; }
+    }
+
+    @media (max-width: 980px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+      .panel { min-height: 240px; }
+      .topbar-actions .secondary-row {
+        width: 100%;
+      }
+      .quick-palette {
+        left: 10px;
+        right: 10px;
+        max-width: none;
+      }
+      /* Toast stack — неблокирующая обратная связь. Контейнер ограничен по ширине,
+       чтобы уведомления не перекрывали рабочую область полностью. */
+    .toast-container {
+        left: 12px;
+        right: 12px;
+        top: auto;
+        bottom: 12px;
+      }
+    }
+
 </style>
 </head>
 <body>
+  <!-- ====================================================================
+       Restore banner
+       Показывается только если найден autosave в localStorage и даёт пользователю
+       выбор: восстановить проект или начать с чистого состояния.
+       ==================================================================== -->
   <div id="restoreBanner" class="restore-banner" aria-live="polite">
     <div>
       <strong>Найдена автосохранённая версия проекта.</strong>
@@ -851,6 +1323,10 @@ textarea {
     </div>
   </div>
 
+  <!-- ====================================================================
+       Top bar
+       Глобальные действия редактора: открыть HTML, undo/redo, тема, экспорт.
+       ==================================================================== -->
   <header class="topbar">
     <div class="topbar-title">
       <h1>HTML Presentation Editor</h1>
@@ -867,6 +1343,8 @@ textarea {
       </div>
 
       <div class="secondary-row">
+        <span id="saveStatePill" class="status-pill save-pill">Автосохранение неактивно</span>
+        <button id="themeToggleBtn" class="ghost-btn theme-toggle-btn" title="Переключить тему">🌙 Тёмная тема</button>
         <button id="undoBtn" disabled>Отменить</button>
         <button id="redoBtn" disabled>Повторить</button>
         <button id="openHtmlBtn" class="primary-btn">Открыть HTML</button>
@@ -876,6 +1354,11 @@ textarea {
     </div>
   </header>
 
+  <!-- ====================================================================
+       Workspace
+       Состоит из трёх колонок: список слайдов, preview-stage c iframe и правый
+       inspector. Это shell-оболочка редактора; внутренняя презентация живёт в iframe.
+       ==================================================================== -->
   <main class="workspace">
     <aside class="panel">
       <div class="panel-header">
@@ -912,21 +1395,56 @@ textarea {
               <div class="hint">Картинка будет добавлена на активный слайд.</div>
             </div>
           </div>
-          <div id="floatingToolbar" class="floating-toolbar" role="toolbar" aria-label="Быстрые действия">
-            <button type="button" id="ftDeleteBtn" class="compact" title="Удалить">🗑</button>
-            <button type="button" id="ftDuplicateBtn" class="compact" title="Дублировать">⧉</button>
-            <button type="button" id="ftEditTextBtn" class="compact" title="Редактировать текст">✎</button>
-            <button type="button" id="ftReplaceImageBtn" class="compact" title="Заменить изображение">🖼</button>
-            <input id="ftColorInput" type="color" title="Цвет текста">
-            <select id="ftFontSizeSelect" title="Размер шрифта">
-              <option value="">Px</option>
-              <option value="14">14</option>
-              <option value="16">16</option>
-              <option value="20">20</option>
-              <option value="24">24</option>
-              <option value="32">32</option>
-              <option value="48">48</option>
-            </select>
+          <div id="previewLoading" class="preview-loading is-visible" aria-hidden="false">
+            <div>
+              <div class="spinner"></div>
+              <strong id="previewLoadingText">Подготовка превью…</strong>
+              <div class="hint">Ждём инициализацию iframe и движка презентации.</div>
+            </div>
+          </div>
+          <!-- Quick palette
+               Палитра вставки — всегда видимая, чтобы добавление новых элементов
+               не зависело от выбранного узла. -->
+          <div id="quickPalette" class="quick-palette" aria-label="Палитра элементов">
+            <button type="button" data-palette-action="text" draggable="true" title="Добавить текст">🅣 Текст</button>
+            <button type="button" data-palette-action="image" draggable="true" title="Добавить картинку">🖼 Картинка</button>
+            <button type="button" data-palette-action="video" draggable="true" title="Добавить видео">🎬 Видео</button>
+            <button type="button" data-palette-action="box" draggable="true" title="Добавить простой блок">▣ Блок</button>
+            <button type="button" data-palette-action="layout-two-col" draggable="true" title="Две колонки">▦ 2 колонки</button>
+            <button type="button" data-palette-action="layout-title-subtitle" draggable="true" title="Заголовок и подзаголовок">📰 Заголовок</button>
+          </div>
+          <div id="floatingToolbar" class="floating-toolbar" role="toolbar" aria-label="Быстрые действия" data-collapsed="false">
+            <button type="button" id="ftHandleBtn" class="compact toolbar-handle" title="Перетащить панель">⋮⋮</button>
+            <button type="button" id="ftCollapseBtn" class="compact" title="Свернуть/развернуть">▾</button>
+            <div id="floatingToolbarContent" class="floating-toolbar-content">
+              <div id="ftGeneralGroup" class="floating-toolbar-group">
+                <button type="button" id="ftDeleteBtn" class="compact" title="Удалить">🗑</button>
+                <button type="button" id="ftDuplicateBtn" class="compact" title="Дублировать">⧉</button>
+                <button type="button" id="ftCopyStyleBtn" class="compact" title="Копировать стиль">🎨+</button>
+                <button type="button" id="ftPasteStyleBtn" class="compact" title="Вставить стиль">🎨⇣</button>
+              </div>
+              <div id="ftTextGroup" class="floating-toolbar-group">
+                <button type="button" id="ftEditTextBtn" class="compact" title="Редактировать текст">✎</button>
+                <button type="button" id="ftBoldBtn" class="compact" title="Жирный"><strong>B</strong></button>
+                <button type="button" id="ftItalicBtn" class="compact" title="Курсив"><em>I</em></button>
+                <input id="ftColorInput" type="color" title="Цвет текста">
+                <select id="ftFontSizeSelect" title="Размер шрифта">
+                  <option value="">Px</option>
+                  <option value="14">14</option>
+                  <option value="16">16</option>
+                  <option value="20">20</option>
+                  <option value="24">24</option>
+                  <option value="32">32</option>
+                  <option value="48">48</option>
+                </select>
+              </div>
+              <div id="ftMediaGroup" class="floating-toolbar-group">
+                <button type="button" id="ftReplaceImageBtn" class="compact" title="Заменить изображение">🖼</button>
+                <button type="button" id="ftCopyImageUrlBtn" class="compact" title="Копировать URL изображения">🔗</button>
+                <button type="button" id="ftMediaUrlBtn" class="compact" title="Изменить URL медиа">🎞</button>
+                <button type="button" id="ftFitImageBtn" class="compact" title="Вписать по ширине">↔</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -984,6 +1502,8 @@ textarea {
             <button type="button" id="deleteElementBtn">Удалить</button>
             <button type="button" id="moveElementUpBtn">Сдвинуть вверх</button>
             <button type="button" id="moveElementDownBtn">Сдвинуть вниз</button>
+            <button type="button" id="copyStyleBtn">Копировать стиль</button>
+            <button type="button" id="pasteStyleBtn">Вставить стиль</button>
             <button type="button" id="resetStylesBtn">Сбросить стили</button>
             <button type="button" id="showElementHtmlBtn">HTML элемента</button>
           </div>
@@ -1111,6 +1631,9 @@ textarea {
           </div>
         </div>
 
+        <!-- Media inspector
+             Универсальный блок для <img> и video/iframe media. Для изображений
+             появляются дополнительные действия (alt, rotate, flip, replace file). -->
         <div class="inspector-section" id="imageSection">
           <h3>Изображение / media</h3>
           <div class="field-group compact">
@@ -1127,6 +1650,11 @@ textarea {
           <div class="inspector-actions">
             <button type="button" id="replaceImageBtn">Заменить изображение</button>
             <button type="button" id="fitImageBtn">Вписать по ширине</button>
+            <button type="button" id="copyImageUrlBtn">Копировать URL</button>
+            <button type="button" id="openImageBtn">Открыть URL</button>
+            <button type="button" id="resetImageSizeBtn">Сбросить размеры</button>
+            <button type="button" id="rotateImageBtn">Повернуть 90°</button>
+            <button type="button" id="flipImageBtn">Отразить</button>
           </div>
         </div>
 
@@ -1199,19 +1727,38 @@ textarea {
     </div>
   </div>
 
+  <!-- Context menu
+       Кастомное меню редактора. Строится динамически под тип элемента и никогда
+       не использует системное browser-menu внутри iframe в edit-режиме. -->
   <div id="contextMenu" class="context-menu" role="menu" aria-hidden="true">
-    <button type="button" data-menu-action="edit-html">Редактировать HTML</button>
-    <button type="button" data-menu-action="edit-text">Редактировать текст</button>
-    <button type="button" data-menu-action="duplicate">Дублировать</button>
-    <button type="button" data-menu-action="replace-image">Заменить изображение</button>
-    <button type="button" data-menu-action="reset-styles">Сбросить стили</button>
-    <button type="button" data-menu-action="delete" class="danger-item">Удалить</button>
+    <div id="contextMenuInner" class="context-menu-inner"></div>
   </div>
 
   <input id="replaceImageInput" class="hidden-file-input" type="file" accept="image/*">
   <input id="insertImageInput" class="hidden-file-input" type="file" accept="image/*">
 
+  <!-- Toast container
+       Мягкая обратная связь для действий редактора. Toast'ы автоисчезают и не
+       блокируют работу пользователя. -->
+  <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- ====================================================================
+       Main shell script
+       В этом script-блоке находится почти вся логика редактора.
+       Parent window управляет UI, history, autosave и экспортом; iframe получает
+       только bridge-скрипт и работает с реальным DOM презентации.
+       ==================================================================== -->
   <script>
+
+    /* ======================================================================
+       JS-архитектура файла: 
+       1) constants/state/refs
+       2) загрузка и превью
+       3) bridge c iframe
+       4) editing / inspector / context menu / toolbar
+       5) history / autosave / export
+       Комментарии ниже описывают зачем нужен каждый ключевой блок.
+       ====================================================================== */
     const STATIC_SLIDE_SELECTORS = [
       '.reveal .slides > section',
       '.reveal .slides section',
@@ -1227,9 +1774,28 @@ textarea {
 
     const TEXT_TAGS = new Set(['H1','H2','H3','H4','H5','H6','P','LI','BLOCKQUOTE','FIGCAPTION','TD','TH','PRE','CODE','SMALL','LABEL','A','SPAN']);
     const EXCLUDED_TAGS = new Set(['SCRIPT','STYLE','META','LINK','BASE','HEAD','HTML','BODY','NOSCRIPT','TEMPLATE']);
-    const STORAGE_KEY = 'presentation-editor:autosave:v2';
+    // Ключи localStorage / sessionStorage вынесены отдельно, чтобы поведение
+    // редактора было детерминированным и легко переносимым между версиями.
+    // ====================================================================
+    // Константы shell-редактора
+    // STORAGE_KEY / HISTORY / UI-state ключи используются только в parent window,
+    // а bridge внутри iframe ничего не знает о localStorage редактора.
+    // ====================================================================
+    const STORAGE_KEY = 'presentation-editor:autosave:v3';
     const HISTORY_LIMIT = 20;
+    const THEME_STORAGE_KEY = 'presentation-editor:theme:v1';
+    const INSPECTOR_SECTIONS_KEY = 'presentation-editor:inspector-sections:v1';
+    const TOOLBAR_SESSION_KEY = 'presentation-editor:toolbar-position:v1';
+    const COPIED_STYLE_KEY = 'presentation-editor:copied-style:v1';
+    const MAX_VISIBLE_TOASTS = 4;
 
+    // state — единый источник состояния shell-редактора. Внутри iframe живёт
+    // только runtime-состояние bridge, а здесь — модель документа, UI и история.
+    // ====================================================================
+    // state — единый источник состояния shell-приложения.
+    // Здесь хранится модель документа, активный слайд, выбранный элемент,
+    // история, автосохранение, runtime-состояние превью и UI-панелей.
+    // ====================================================================
     const state = {
       sourceLabel: '',
       sourceHtml: '',
@@ -1252,7 +1818,7 @@ textarea {
       selectedHtml: '',
       selectedRect: null,
       selectedAttrs: {},
-      selectedFlags: { canEditText: false, isImage: false, isVideo: false },
+      selectedFlags: { canEditText: false, isImage: false, isVideo: false, isContainer: false },
       diagnostics: [],
       htmlEditorMode: null,
       htmlEditorTargetId: null,
@@ -1267,10 +1833,31 @@ textarea {
       snapshotTimer: null,
       pendingReplaceTargetId: null,
       pendingImageInsertMode: 'insert',
+      pendingInsertPosition: 'after',
       contextMenuNodeId: null,
+      contextMenuPayload: null,
       restorePayload: null,
+      copiedStyle: null,
+      theme: 'light',
+      inspectorSections: {},
+      lastSavedAt: 0,
+      toolbarPinned: false,
+      toolbarPos: null,
+      toolbarCollapsed: false,
+      toolbarDragOffset: { x: 0, y: 0 },
+      toolbarDragActive: false,
+      loadingPreview: false,
+      bridgeWatchdogTimer: null,
+      modelSyncTimer: null,
+      lastBridgeHeartbeatAt: 0,
+      activeToastId: 0,
     };
 
+    // ====================================================================
+    // els — кеш DOM-элементов оболочки редактора.
+    // Мы собираем ссылки один раз, чтобы не делать document.getElementById
+    // по всему коду и держать JS проще для поддержки.
+    // ====================================================================
     const els = {
       openHtmlBtn: document.getElementById('openHtmlBtn'),
       showSlideHtmlBtn: document.getElementById('showSlideHtmlBtn'),
@@ -1287,15 +1874,33 @@ textarea {
       documentMeta: document.getElementById('documentMeta'),
       engineIndicator: document.getElementById('engineIndicator'),
       dirtyIndicator: document.getElementById('dirtyIndicator'),
+      saveStatePill: document.getElementById('saveStatePill'),
+      themeToggleBtn: document.getElementById('themeToggleBtn'),
       previewFrame: document.getElementById('previewFrame'),
       previewStage: document.getElementById('previewStage'),
       previewDropzone: document.getElementById('previewDropzone'),
+      previewLoading: document.getElementById('previewLoading'),
+      previewLoadingText: document.getElementById('previewLoadingText'),
+      quickPalette: document.getElementById('quickPalette'),
       emptyState: document.getElementById('emptyState'),
       floatingToolbar: document.getElementById('floatingToolbar'),
+      floatingToolbarContent: document.getElementById('floatingToolbarContent'),
+      ftHandleBtn: document.getElementById('ftHandleBtn'),
+      ftCollapseBtn: document.getElementById('ftCollapseBtn'),
+      ftGeneralGroup: document.getElementById('ftGeneralGroup'),
+      ftTextGroup: document.getElementById('ftTextGroup'),
+      ftMediaGroup: document.getElementById('ftMediaGroup'),
       ftDeleteBtn: document.getElementById('ftDeleteBtn'),
       ftDuplicateBtn: document.getElementById('ftDuplicateBtn'),
       ftEditTextBtn: document.getElementById('ftEditTextBtn'),
       ftReplaceImageBtn: document.getElementById('ftReplaceImageBtn'),
+      ftCopyStyleBtn: document.getElementById('ftCopyStyleBtn'),
+      ftPasteStyleBtn: document.getElementById('ftPasteStyleBtn'),
+      ftCopyImageUrlBtn: document.getElementById('ftCopyImageUrlBtn'),
+      ftMediaUrlBtn: document.getElementById('ftMediaUrlBtn'),
+      ftFitImageBtn: document.getElementById('ftFitImageBtn'),
+      ftBoldBtn: document.getElementById('ftBoldBtn'),
+      ftItalicBtn: document.getElementById('ftItalicBtn'),
       ftColorInput: document.getElementById('ftColorInput'),
       ftFontSizeSelect: document.getElementById('ftFontSizeSelect'),
       selectedNodeBadge: document.getElementById('selectedNodeBadge'),
@@ -1340,6 +1945,13 @@ textarea {
       imageAltInput: document.getElementById('imageAltInput'),
       replaceImageBtn: document.getElementById('replaceImageBtn'),
       fitImageBtn: document.getElementById('fitImageBtn'),
+      copyImageUrlBtn: document.getElementById('copyImageUrlBtn'),
+      openImageBtn: document.getElementById('openImageBtn'),
+      resetImageSizeBtn: document.getElementById('resetImageSizeBtn'),
+      rotateImageBtn: document.getElementById('rotateImageBtn'),
+      flipImageBtn: document.getElementById('flipImageBtn'),
+      copyStyleBtn: document.getElementById('copyStyleBtn'),
+      pasteStyleBtn: document.getElementById('pasteStyleBtn'),
       inspectorHelp: document.getElementById('inspectorHelp'),
       diagnosticsBox: document.getElementById('diagnosticsBox'),
       alignButtons: Array.from(document.querySelectorAll('[data-align]')),
@@ -1356,17 +1968,25 @@ textarea {
       htmlEditorStatus: document.getElementById('htmlEditorStatus'),
       saveHtmlEditorBtn: document.getElementById('saveHtmlEditorBtn'),
       contextMenu: document.getElementById('contextMenu'),
+      contextMenuInner: document.getElementById('contextMenuInner'),
       replaceImageInput: document.getElementById('replaceImageInput'),
       insertImageInput: document.getElementById('insertImageInput'),
       restoreBanner: document.getElementById('restoreBanner'),
       restoreBannerText: document.getElementById('restoreBannerText'),
       restoreDraftBtn: document.getElementById('restoreDraftBtn'),
       discardDraftBtn: document.getElementById('discardDraftBtn'),
+      toastContainer: document.getElementById('toastContainer'),
     };
 
     init();
 
+    // init — точка старта shell-приложения. Здесь мы намеренно разделяем
+    // bind/init-блоки по зонам ответственности: top bar, inspector, bridge,
+    // UX-надстройки, autosave/restore.
     function init() {
+      initTheme();
+      initInspectorSections();
+      initFloatingToolbarState();
       bindTopBarActions();
       bindInspectorActions();
       bindModals();
@@ -1376,14 +1996,21 @@ textarea {
       bindClipboardAndDnD();
       bindContextMenu();
       bindRestoreBanner();
+      bindPaletteActions();
+      addInspectorHelpBadges();
       tryRestoreDraftPrompt();
+      startBridgeWatchdog();
       refreshUi();
     }
 
+    // ====================================================================
+    // Верхняя панель: загрузка HTML, экспорт, история, тема, режимы.
+    // ====================================================================
     function bindTopBarActions() {
       els.openHtmlBtn.addEventListener('click', () => openModal(els.openHtmlModal));
       els.showSlideHtmlBtn.addEventListener('click', openSlideHtmlEditor);
       els.exportBtn.addEventListener('click', exportHtml);
+      els.themeToggleBtn.addEventListener('click', toggleTheme);
       els.undoBtn.addEventListener('click', undo);
       els.redoBtn.addEventListener('click', redo);
       els.previewModeBtn.addEventListener('click', () => setMode('preview'));
@@ -1416,12 +2043,18 @@ textarea {
       });
     }
 
+    // bindInspectorActions — связывает правую панель, floating toolbar и общие
+    // действия над элементом. Почти все операции делегируются в bridge, чтобы
+    // сначала изменялся живой DOM iframe, а затем модель синхронизировалась обратно.
     function bindInspectorActions() {
       els.boldBtn.addEventListener('click', () => toggleStyleOnSelected('fontWeight', '700', '400', 'bold'));
       els.italicBtn.addEventListener('click', () => toggleStyleOnSelected('fontStyle', 'italic', 'normal', 'italic'));
       els.underlineBtn.addEventListener('click', () => toggleStyleOnSelected('textDecoration', 'underline', 'none', 'underline'));
       els.editTextBtn.addEventListener('click', () => startTextEditing());
 
+      // Для полей инспектора используем input/change в зависимости от частоты
+      // обновления. Более "тяжёлые" операции (например, размеры) отправляем по change,
+      // чтобы не засорять мост лишними сообщениями.
       els.fontSizeSelect.addEventListener('change', () => applyStyle('fontSize', toCssSize(els.fontSizeSelect.value)));
       els.textColorInput.addEventListener('input', () => applyStyle('color', els.textColorInput.value));
       els.displaySelect.addEventListener('change', () => applyStyle('display', els.displaySelect.value));
@@ -1448,6 +2081,7 @@ textarea {
         button.addEventListener('click', () => applyStyle('textAlign', button.dataset.align || 'left'));
       });
 
+      // Inspector actions.
       els.showElementHtmlBtn.addEventListener('click', openElementHtmlEditor);
       els.saveHtmlEditorBtn.addEventListener('click', saveHtmlEditorChanges);
       els.duplicateElementBtn.addEventListener('click', duplicateSelectedElement);
@@ -1455,14 +2089,43 @@ textarea {
       els.moveElementUpBtn.addEventListener('click', () => moveSelectedElement(-1));
       els.moveElementDownBtn.addEventListener('click', () => moveSelectedElement(1));
       els.resetStylesBtn.addEventListener('click', resetSelectedStyles);
+      els.copyStyleBtn.addEventListener('click', copySelectedStyle);
+      els.pasteStyleBtn.addEventListener('click', pasteStyleToSelected);
       els.addTextBtn.addEventListener('click', insertDefaultTextBlock);
       els.addImageBtn.addEventListener('click', () => requestImageInsert('insert'));
       els.addVideoBtn.addEventListener('click', insertVideoByPrompt);
       els.insertHtmlBtn.addEventListener('click', insertCustomHtmlFromTextarea);
       els.replaceImageBtn.addEventListener('click', () => requestImageInsert('replace'));
-      els.fitImageBtn.addEventListener('click', () => {
-        if (!state.selectedFlags.isImage) return;
-        sendToBridge('apply-styles', { nodeId: state.selectedNodeId, styles: { maxWidth: '100%', width: '100%', height: 'auto', display: 'block' } });
+      els.fitImageBtn.addEventListener('click', fitSelectedImageToWidth);
+      els.copyImageUrlBtn.addEventListener('click', copySelectedImageUrl);
+      els.openImageBtn.addEventListener('click', openSelectedImageInNewTab);
+      els.resetImageSizeBtn.addEventListener('click', resetSelectedImageSize);
+      els.rotateImageBtn.addEventListener('click', () => rotateSelectedImage(90));
+      els.flipImageBtn.addEventListener('click', flipSelectedImage);
+
+      // Floating toolbar mirrors the most frequent actions near the element.
+      els.ftDeleteBtn.addEventListener('click', deleteSelectedElement);
+      els.ftDuplicateBtn.addEventListener('click', duplicateSelectedElement);
+      els.ftEditTextBtn.addEventListener('click', startTextEditing);
+      els.ftReplaceImageBtn.addEventListener('click', () => requestImageInsert('replace'));
+      els.ftCopyStyleBtn.addEventListener('click', copySelectedStyle);
+      els.ftPasteStyleBtn.addEventListener('click', pasteStyleToSelected);
+      els.ftCopyImageUrlBtn.addEventListener('click', copySelectedImageUrl);
+      els.ftMediaUrlBtn.addEventListener('click', editSelectedMediaUrl);
+      els.ftFitImageBtn.addEventListener('click', fitSelectedImageToWidth);
+      els.ftBoldBtn.addEventListener('click', () => toggleStyleOnSelected('fontWeight', '700', '400', 'bold'));
+      els.ftItalicBtn.addEventListener('click', () => toggleStyleOnSelected('fontStyle', 'italic', 'normal', 'italic'));
+      els.ftColorInput.addEventListener('input', () => applyStyle('color', els.ftColorInput.value));
+      els.ftFontSizeSelect.addEventListener('change', () => applyStyle('fontSize', toCssSize(els.ftFontSizeSelect.value)));
+      els.ftCollapseBtn.addEventListener('click', toggleFloatingToolbarCollapsed);
+
+      // Быстрая подсветка активного элемента при наведении на действия помогает
+      // пользователю визуально понять, какой DOM-узел сейчас будет изменён.
+      [
+        els.ftDeleteBtn, els.ftDuplicateBtn, els.ftEditTextBtn, els.ftReplaceImageBtn, els.ftCopyStyleBtn,
+        els.ftPasteStyleBtn, els.ftCopyImageUrlBtn, els.ftMediaUrlBtn, els.ftFitImageBtn, els.ftBoldBtn, els.ftItalicBtn
+      ].forEach((btn) => {
+        btn.addEventListener('mouseenter', flashSelectedElement);
       });
 
       els.replaceImageInput.addEventListener('change', async () => {
@@ -1472,6 +2135,7 @@ textarea {
         const dataUrl = await fileToDataUrl(file);
         if (state.pendingImageInsertMode === 'replace' && state.selectedNodeId) {
           sendToBridge('replace-image-src', { nodeId: state.selectedNodeId, src: dataUrl, alt: file.name });
+          showToast('Изображение заменено.', 'success');
         } else {
           insertImageElement(dataUrl, file.name);
         }
@@ -1484,13 +2148,6 @@ textarea {
         const dataUrl = await fileToDataUrl(file);
         insertImageElement(dataUrl, file.name);
       });
-
-      els.ftDeleteBtn.addEventListener('click', deleteSelectedElement);
-      els.ftDuplicateBtn.addEventListener('click', duplicateSelectedElement);
-      els.ftEditTextBtn.addEventListener('click', startTextEditing);
-      els.ftReplaceImageBtn.addEventListener('click', () => requestImageInsert('replace'));
-      els.ftColorInput.addEventListener('input', () => applyStyle('color', els.ftColorInput.value));
-      els.ftFontSizeSelect.addEventListener('change', () => applyStyle('fontSize', toCssSize(els.ftFontSizeSelect.value)));
     }
 
     function bindModals() {
@@ -1508,6 +2165,8 @@ textarea {
       });
     }
 
+    // bindMessages — родительское окно принимает сообщения только от текущего
+    // bridgeToken. Это защищает от сообщений старых preview URL и случайных iframe.
     function bindMessages() {
       window.addEventListener('message', (event) => {
         const data = event.data;
@@ -1515,11 +2174,15 @@ textarea {
         if (data.token !== state.bridgeToken) return;
         if (els.previewFrame.contentWindow && event.source !== els.previewFrame.contentWindow) return;
 
+        state.lastBridgeHeartbeatAt = Date.now();
+
         switch (data.type) {
           case 'bridge-ready':
             state.bridgeAlive = true;
             state.previewReady = true;
             addDiagnostic(`bridge-ready: ${JSON.stringify(data.payload || {})}`);
+            setPreviewLoading(false);
+            showToast('Превью готово к работе.', 'success', { title: 'Iframe инициализирован' });
             refreshUi();
             break;
           case 'runtime-metadata':
@@ -1548,9 +2211,17 @@ textarea {
             break;
           case 'runtime-error':
             addDiagnostic(`iframe-error: ${data.payload?.message || 'unknown'} @ ${data.payload?.source || ''}:${data.payload?.line || ''}`);
+            showToast(data.payload?.message || 'Ошибка внутри iframe.', 'error', { title: 'Ошибка превью' });
             break;
           case 'runtime-log':
             addDiagnostic(`iframe-log: ${data.payload?.message || ''}`);
+            break;
+          case 'bridge-heartbeat':
+            state.bridgeAlive = true;
+            refreshUi();
+            break;
+          case 'document-sync':
+            applyDocumentSyncFromBridge(data.payload || {});
             break;
         }
       });
@@ -1564,10 +2235,17 @@ textarea {
       });
     }
 
+    // bindGlobalShortcuts — единое место для shell-hotkeys. Важно: если фокус
+    // находится в input/textarea/select, обычный ввод не перехватываем.
     function bindGlobalShortcuts() {
-      window.addEventListener('keydown', (event) => {
+      window.addEventListener('keydown', async (event) => {
         if (shouldIgnoreGlobalShortcut(event)) return;
         const isMod = event.ctrlKey || event.metaKey;
+        if (event.key === 'Escape') {
+          closeContextMenu();
+          if (els.htmlEditorModal.classList.contains('is-open')) closeModal(els.htmlEditorModal);
+          return;
+        }
         if (isMod && event.key.toLowerCase() === 'z' && !event.shiftKey) {
           event.preventDefault();
           undo();
@@ -1583,20 +2261,46 @@ textarea {
           duplicateSelectedElement();
           return;
         }
-        if (event.key === 'Delete' && state.mode === 'edit' && state.selectedNodeId) {
+        if (isMod && event.shiftKey && event.key.toLowerCase() === 'c') {
+          event.preventDefault();
+          copySelectedStyle();
+          return;
+        }
+        if (isMod && event.shiftKey && event.key.toLowerCase() === 'v') {
+          event.preventDefault();
+          pasteStyleToSelected();
+          return;
+        }
+        if ((event.key === 'Delete' || event.key === 'Backspace') && state.mode === 'edit' && state.selectedNodeId) {
           event.preventDefault();
           deleteSelectedElement();
+          return;
+        }
+        if (isMod && event.key.toLowerCase() === 'f' && state.mode === 'edit') {
+          event.preventDefault();
+          openElementFinder();
         }
       });
 
-      document.addEventListener('click', (event) => {
+      document.addEventListener('pointerdown', (event) => {
         if (!event.target.closest('#contextMenu')) closeContextMenu();
       });
+      window.addEventListener('blur', closeContextMenu);
+      document.addEventListener('visibilitychange', () => { if (document.hidden) closeContextMenu(); });
 
-      window.addEventListener('resize', positionFloatingToolbar);
+      window.addEventListener('resize', () => {
+        positionFloatingToolbar();
+        if (els.contextMenu.classList.contains('is-open') && state.contextMenuPayload) {
+          openContextMenuFromBridge(state.contextMenuPayload);
+        }
+      });
       window.addEventListener('scroll', positionFloatingToolbar, true);
     }
 
+    // ====================================================================
+    // Clipboard + Drag&Drop
+    // Обрабатываем вставку картинок из буфера и drop файлов в preview-stage.
+    // ====================================================================
     function bindClipboardAndDnD() {
       window.addEventListener('paste', async (event) => {
         if (state.mode !== 'edit' || !state.modelDoc) return;
@@ -1636,33 +2340,18 @@ textarea {
       });
     }
 
+    // bindContextMenu — контейнер меню всегда один, но его содержимое
+    // пересобирается динамически в renderContextMenu() под тип элемента.
     function bindContextMenu() {
       els.contextMenu.addEventListener('click', (event) => {
-        const action = event.target?.dataset?.menuAction;
+        const action = event.target?.closest?.('[data-menu-action]')?.dataset?.menuAction;
         if (!action) return;
-        const nodeId = state.contextMenuNodeId || state.selectedNodeId;
-        switch (action) {
-          case 'edit-html':
-            openElementHtmlEditor();
-            break;
-          case 'edit-text':
-            startTextEditing();
-            break;
-          case 'duplicate':
-            duplicateSelectedElement();
-            break;
-          case 'replace-image':
-            requestImageInsert('replace');
-            break;
-          case 'reset-styles':
-            resetSelectedStyles();
-            break;
-          case 'delete':
-            deleteSelectedElement();
-            break;
-        }
-        closeContextMenu();
+        handleContextMenuAction(action);
       });
+
+      els.contextMenu.addEventListener('mouseenter', (event) => {
+        if (event.target?.closest?.('[data-menu-action]')) flashSelectedElement();
+      }, true);
     }
 
     function bindRestoreBanner() {
@@ -1704,12 +2393,21 @@ textarea {
       els.restoreBanner.classList.remove('is-visible');
     }
 
+    // ====================================================================
+    // loadHtmlString
+    // 1) сбрасывает runtime-состояние,
+    // 2) строит modelDoc,
+    // 3) собирает preview HTML с bridge,
+    // 4) грузит Blob URL в iframe.
+    // Это центральная точка входа для загрузки презентации.
+    // ====================================================================
     function loadHtmlString(htmlString, sourceLabel, options = {}) {
       cleanupPreviewUrl();
       resetRuntimeState();
       closeContextMenu();
       hideFloatingToolbar();
       hideRestoreBanner();
+      setPreviewLoading(true, 'Подготовка превью…');
 
       state.sourceLabel = sourceLabel;
       state.sourceHtml = htmlString;
@@ -1755,6 +2453,9 @@ textarea {
       refreshUi();
     }
 
+    // buildModelDocument
+    // Здесь создаётся отдельная DOM-модель документа для экспорта и синхронизации.
+    // Каждому слайду и каждому редактируемому узлу присваиваются editor-id маркеры.
     function buildModelDocument(htmlString) {
       const parser = new DOMParser();
       const doc = parser.parseFromString(htmlString, 'text/html');
@@ -1797,6 +2498,9 @@ textarea {
       return result;
     }
 
+    // buildPreviewHtml
+    // Превью формируется из modelDoc, а не из исходной строки напрямую, чтобы
+    // сохранить editor-id и иметь управляемый bridge внутри iframe.
     function buildPreviewHtml() {
       const previewDoc = state.modelDoc.cloneNode(true);
       injectBridge(previewDoc);
@@ -1817,6 +2521,9 @@ ${previewDoc.documentElement.outerHTML}`;
       base.setAttribute('href', baseHref);
     }
 
+    // injectBridge
+    // Встраивает внутрь preview минимальный runtime-мост. Он отвечает за выбор
+    // элементов, операции над DOM и обратные сообщения в shell.
     function injectBridge(doc) {
       const bridgeScript = doc.createElement('script');
       bridgeScript.id = '__presentation_editor_bridge__';
@@ -1824,8 +2531,17 @@ ${previewDoc.documentElement.outerHTML}`;
       doc.body.appendChild(bridgeScript);
     }
 
+    // buildBridgeScript
+    // Возвращает строку JS, которая выполняется внутри iframe. Важно: код моста
+    // живёт внутри превью, чтобы работать с реальным DOM презентации, не ломая
+    // исходный head/body и не втаскивая в iframe весь shell-UI редактора.
     function buildBridgeScript(token) {
       return `(function(){
+        /* ================================================================
+           Presentation Editor Bridge (inside iframe)
+           Этот код исполняется в документе презентации и работает только с
+           preview DOM: выбор элементов, редактирование, sync и runtime events.
+           ================================================================ */
         const TOKEN = ${JSON.stringify(token)};
         const ROOT_SELECTORS = ${JSON.stringify(STATIC_SLIDE_SELECTORS)};
         const EDITOR_MARKER = 'data-editor-node-id';
@@ -1857,6 +2573,7 @@ ${previewDoc.documentElement.outerHTML}`;
           onRuntimeError(event.message, event.filename, event.lineno, event.colno);
         });
 
+        // detectEngine — грубое определение deck engine по глобалам и DOM-маркерам.
         function detectEngine() {
           try {
             if (window.Reveal && typeof window.Reveal.getSlides === 'function') return 'reveal';
@@ -2239,10 +2956,7 @@ ${previewDoc.documentElement.outerHTML}`;
           target.scrollIntoView({ block: 'center', inline: 'center', behavior: 'auto' });
         }
 
-        function cssEscape(value) {
-          if (window.CSS && typeof window.CSS.escape === 'function') return window.CSS.escape(value);
-          return String(value).replace(/[^a-zA-Z0-9_-]/g, '\$&');
-        }
+        
 
         function deleteElementById(nodeId) {
           const el = findNodeById(nodeId);
@@ -2310,17 +3024,7 @@ ${previewDoc.documentElement.outerHTML}`;
           notifySlideUpdated(slide);
         }
 
-        function updateAttributes(nodeId, attrs) {
-          const el = findNodeById(nodeId);
-          if (!el) return;
-          Object.entries(attrs || {}).forEach(([name, value]) => {
-            if (!name || /^data-editor-/.test(name)) return;
-            if (value === null || value === undefined || value === '') el.removeAttribute(name);
-            else el.setAttribute(name, String(value));
-          });
-          selectElement(el, { focusText: false });
-          notifyElementUpdated(el);
-        }
+        
 
         document.addEventListener('mousemove', (event) => {
           if (!STATE.editMode) return;
@@ -2567,6 +3271,9 @@ ${previewDoc.documentElement.outerHTML}`;
       }, '*');
     }
 
+    // applyRuntimeMetadata
+    // Принимает снимок текущего состояния превью: движок, список слайдов,
+    // активный слайд. Это связывает runtime iframe и модель shell-а.
     function applyRuntimeMetadata(payload) {
       state.previewReady = true;
       state.bridgeAlive = true;
@@ -2586,6 +3293,9 @@ ${previewDoc.documentElement.outerHTML}`;
       refreshUi();
     }
 
+    // applyElementSelection
+    // Обновляет данные о выбранном элементе: тег, html, computed styles,
+    // флаги типа (text/image/video/container) и атрибуты.
     function applyElementSelection(payload) {
       state.selectedNodeId = payload.nodeId || null;
       state.selectedTag = payload.tag || null;
@@ -2597,6 +3307,7 @@ ${previewDoc.documentElement.outerHTML}`;
         canEditText: Boolean(payload.canEditText),
         isImage: Boolean(payload.isImage),
         isVideo: Boolean(payload.isVideo),
+        isContainer: Boolean(payload.isContainer),
       };
       state.activeSlideId = payload.slideId || state.activeSlideId;
       updateInspectorFromSelection();
@@ -2635,6 +3346,7 @@ ${previewDoc.documentElement.outerHTML}`;
         canEditText: Boolean(payload.canEditText),
         isImage: Boolean(payload.isImage),
         isVideo: Boolean(payload.isVideo),
+        isContainer: Boolean(payload.isContainer),
       };
       commitChange('element-updated');
       renderSlidesList();
@@ -2688,27 +3400,9 @@ ${previewDoc.documentElement.outerHTML}`;
       }
     }
 
-    function openContextMenuFromBridge(payload) {
-      if (state.mode !== 'edit') return;
-      state.contextMenuNodeId = payload.nodeId || state.selectedNodeId;
-      const frameRect = els.previewFrame.getBoundingClientRect();
-      const x = frameRect.left + (payload.clientX || 0);
-      const y = frameRect.top + (payload.clientY || 0);
-      els.contextMenu.style.left = `${Math.min(window.innerWidth - 240, Math.max(8, x))}px`;
-      els.contextMenu.style.top = `${Math.min(window.innerHeight - 220, Math.max(8, y))}px`;
-      const replaceBtn = els.contextMenu.querySelector('[data-menu-action="replace-image"]');
-      const editTextBtn = els.contextMenu.querySelector('[data-menu-action="edit-text"]');
-      replaceBtn.style.display = payload.isImage ? '' : 'none';
-      editTextBtn.style.display = payload.canEditText ? '' : 'none';
-      els.contextMenu.classList.add('is-open');
-      els.contextMenu.setAttribute('aria-hidden', 'false');
-    }
+    
 
-    function closeContextMenu() {
-      els.contextMenu.classList.remove('is-open');
-      els.contextMenu.setAttribute('aria-hidden', 'true');
-      state.contextMenuNodeId = null;
-    }
+    
 
     function setMode(mode) {
       if (mode === 'edit' && !state.editingSupported) {
@@ -2724,7 +3418,7 @@ ${previewDoc.documentElement.outerHTML}`;
         state.selectedHtml = '';
         state.selectedRect = null;
         state.selectedAttrs = {};
-        state.selectedFlags = { canEditText: false, isImage: false, isVideo: false };
+        state.selectedFlags = { canEditText: false, isImage: false, isVideo: false, isContainer: false };
         hideFloatingToolbar();
       }
       sendToBridge('set-mode', { mode });
@@ -2862,120 +3556,11 @@ ${previewDoc.documentElement.outerHTML}`;
       sendToBridge('apply-style', { nodeId: state.selectedNodeId, styleName, value: isActive ? inactiveValue : activeValue });
     }
 
-    function updateInspectorFromSelection() {
-      const hasSelection = Boolean(state.selectedNodeId && state.mode === 'edit');
-      els.elementTagInput.value = hasSelection ? (state.selectedTag || '—') : '—';
-      els.selectedNodeBadge.textContent = `node: ${hasSelection ? state.selectedNodeId : '—'}`;
-      els.selectedSlideBadge.textContent = `slide: ${hasSelection ? (state.activeSlideId || '—') : '—'}`;
-      const kind = !hasSelection ? '—' : state.selectedFlags.isImage ? 'image' : state.selectedFlags.isVideo ? 'video' : state.selectedFlags.canEditText ? 'text' : 'element';
-      els.selectedKindBadge.textContent = `kind: ${kind}`;
-      const controls = [
-        els.boldBtn, els.italicBtn, els.underlineBtn, els.fontSizeSelect, els.textColorInput, els.showElementHtmlBtn,
-        els.duplicateElementBtn, els.deleteElementBtn, els.moveElementUpBtn, els.moveElementDownBtn, els.resetStylesBtn,
-        els.elementIdInput, els.elementClassInput, els.displaySelect, els.positionSelect, els.zIndexInput,
-        els.widthInput, els.heightInput, els.leftInput, els.topInput, els.bgColorInput, els.borderColorInput,
-        els.borderStyleSelect, els.borderWidthInput, els.marginInput, els.paddingInput, els.editTextBtn,
-        els.imageSrcInput, els.applyImageSrcBtn, els.imageAltInput, els.replaceImageBtn, els.fitImageBtn,
-        ...els.alignButtons
-      ];
-      controls.forEach((control) => { control.disabled = !hasSelection; });
-      els.ftDeleteBtn.disabled = !hasSelection;
-      els.ftDuplicateBtn.disabled = !hasSelection;
-      els.ftEditTextBtn.disabled = !hasSelection || !state.selectedFlags.canEditText;
-      els.ftReplaceImageBtn.disabled = !hasSelection || !state.selectedFlags.isImage;
-      els.ftColorInput.disabled = !hasSelection;
-      els.ftFontSizeSelect.disabled = !hasSelection;
-      if (!hasSelection || !state.selectedComputed) {
-        els.elementIdInput.value = '';
-        els.elementClassInput.value = '';
-        els.fontSizeSelect.value = '';
-        els.ftFontSizeSelect.value = '';
-        els.textColorInput.value = '#000000';
-        els.ftColorInput.value = '#000000';
-        els.bgColorInput.value = '#ffffff';
-        els.borderColorInput.value = '#000000';
-        els.borderStyleSelect.value = '';
-        els.displaySelect.value = '';
-        els.positionSelect.value = '';
-        els.zIndexInput.value = '';
-        els.widthInput.value = '';
-        els.heightInput.value = '';
-        els.leftInput.value = '';
-        els.topInput.value = '';
-        els.marginInput.value = '';
-        els.paddingInput.value = '';
-        els.imageSrcInput.value = '';
-        els.imageAltInput.value = '';
-        els.imageSection.style.display = 'none';
-        els.alignButtons.forEach((button) => button.classList.remove('is-active'));
-        [els.boldBtn, els.italicBtn, els.underlineBtn].forEach((button) => button.classList.remove('is-active'));
-        return;
-      }
-      els.elementIdInput.value = state.selectedAttrs.id || '';
-      els.elementClassInput.value = state.selectedAttrs.class || '';
-      const fontSize = parseInt(state.selectedComputed.fontSize, 10);
-      const supportedSizes = ['12','14','16','20','24','32','48'];
-      const normalizedSize = supportedSizes.includes(String(fontSize)) ? String(fontSize) : '';
-      els.fontSizeSelect.value = normalizedSize;
-      els.ftFontSizeSelect.value = normalizedSize;
-      els.textColorInput.value = rgbToHex(state.selectedComputed.color || '#000000');
-      els.ftColorInput.value = rgbToHex(state.selectedComputed.color || '#000000');
-      els.bgColorInput.value = rgbToHex(state.selectedComputed.backgroundColor || '#ffffff');
-      els.borderColorInput.value = rgbToHex(state.selectedComputed.borderColor || '#000000');
-      els.borderStyleSelect.value = safeSelectValue(els.borderStyleSelect, state.selectedComputed.borderStyle);
-      els.displaySelect.value = safeSelectValue(els.displaySelect, state.selectedComputed.display);
-      els.positionSelect.value = safeSelectValue(els.positionSelect, state.selectedComputed.position);
-      els.zIndexInput.value = sanitizeCssValue(state.selectedComputed.zIndex);
-      els.widthInput.value = sanitizeCssValue(state.selectedComputed.width);
-      els.heightInput.value = sanitizeCssValue(state.selectedComputed.height);
-      els.leftInput.value = sanitizeCssValue(state.selectedComputed.left);
-      els.topInput.value = sanitizeCssValue(state.selectedComputed.top);
-      els.marginInput.value = sanitizeCssValue(state.selectedComputed.margin);
-      els.paddingInput.value = sanitizeCssValue(state.selectedComputed.padding);
-      els.borderWidthInput.value = sanitizeCssValue(state.selectedComputed.borderWidth);
-      const alignment = state.selectedComputed.textAlign || 'left';
-      els.alignButtons.forEach((button) => button.classList.toggle('is-active', button.dataset.align === alignment));
-      els.boldBtn.classList.toggle('is-active', ['700', '800', '900', 'bold'].includes(state.selectedComputed.fontWeight));
-      els.italicBtn.classList.toggle('is-active', state.selectedComputed.fontStyle === 'italic');
-      els.underlineBtn.classList.toggle('is-active', (state.selectedComputed.textDecorationLine || '').includes('underline'));
-      els.imageSection.style.display = state.selectedFlags.isImage ? '' : 'none';
-      if (state.selectedFlags.isImage) {
-        els.imageSrcInput.value = state.selectedAttrs.src || '';
-        els.imageAltInput.value = state.selectedAttrs.alt || '';
-      }
-    }
+    
 
-    function positionFloatingToolbar() {
-      if (state.mode !== 'edit' || !state.selectedNodeId || !state.selectedRect) {
-        hideFloatingToolbar();
-        return;
-      }
-      const iframeRect = els.previewFrame.getBoundingClientRect();
-      if (!iframeRect.width || !iframeRect.height) {
-        hideFloatingToolbar();
-        return;
-      }
-      const hostRect = els.previewStage.getBoundingClientRect();
-      const left = iframeRect.left - hostRect.left + state.selectedRect.left;
-      const top = iframeRect.top - hostRect.top + state.selectedRect.top;
-      const toolbar = els.floatingToolbar;
-      toolbar.classList.add('is-visible');
-      const toolbarHeight = toolbar.offsetHeight || 44;
-      const toolbarWidth = toolbar.offsetWidth || 320;
-      let x = left + state.selectedRect.width - toolbarWidth;
-      let y = top - toolbarHeight - 8;
-      if (x < 8) x = 8;
-      if (x + toolbarWidth > hostRect.width - 8) x = hostRect.width - toolbarWidth - 8;
-      if (y < 8) y = top + state.selectedRect.height + 8;
-      toolbar.style.left = `${Math.max(8, x)}px`;
-      toolbar.style.top = `${Math.max(8, y)}px`;
-    }
+    
 
-    function hideFloatingToolbar() {
-      els.floatingToolbar.classList.remove('is-visible');
-      els.floatingToolbar.style.left = '-9999px';
-      els.floatingToolbar.style.top = '-9999px';
-    }
+    
 
     function openElementHtmlEditor() {
       if (!state.selectedNodeId || !state.selectedHtml) {
@@ -3049,6 +3634,9 @@ ${previewDoc.documentElement.outerHTML}`;
       rebuildPreviewKeepingContext(slideId);
     }
 
+    // exportHtml
+    // Клонирует modelDoc, очищает editor-artifacts и выгружает готовый HTML-файл.
+    // Принцип: в экспорт не должны утечь bridge, служебные атрибуты и helper-CSS.
     function exportHtml() {
       if (!state.modelDoc) return;
       const exportDoc = state.modelDoc.cloneNode(true);
@@ -3104,7 +3692,7 @@ ${exportDoc.documentElement.outerHTML}`;
       state.selectedHtml = '';
       state.selectedRect = null;
       state.selectedAttrs = {};
-      state.selectedFlags = { canEditText: false, isImage: false, isVideo: false };
+      state.selectedFlags = { canEditText: false, isImage: false, isVideo: false, isContainer: false };
       state.diagnostics = [];
       state.editingSupported = false;
       updateDiagnostics();
@@ -3190,22 +3778,7 @@ ${exportDoc.documentElement.outerHTML}`;
       refreshUi();
     }
 
-    function saveProjectToLocalStorage() {
-      if (!state.modelDoc) return;
-      try {
-        const payload = {
-          version: 2,
-          savedAt: Date.now(),
-          sourceLabel: state.sourceLabel,
-          manualBaseUrl: els.baseUrlInput.value.trim(),
-          activeSlideIndex: Math.max(0, state.slides.findIndex((slide) => slide.id === state.activeSlideId)),
-          html: serializeCurrentProject(),
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-      } catch (error) {
-        addDiagnostic(`autosave-failed: ${error.message}`);
-      }
-    }
+    
 
     function clearAutosave() {
       try { localStorage.removeItem(STORAGE_KEY); } catch (error) {}
@@ -3245,41 +3818,7 @@ ${exportDoc.documentElement.outerHTML}`;
       els.diagnosticsBox.textContent = lines.join('\n');
     }
 
-    function refreshUi() {
-      const hasPresentation = Boolean(state.modelDoc);
-      const hasSelection = Boolean(state.selectedNodeId && state.mode === 'edit');
-      els.exportBtn.disabled = !hasPresentation;
-      els.undoBtn.disabled = state.historyIndex <= 0;
-      els.redoBtn.disabled = state.historyIndex >= state.history.length - 1 || state.history.length === 0;
-      els.showSlideHtmlBtn.disabled = !hasPresentation || !state.activeSlideId || !hasStaticSlide(state.activeSlideId);
-      els.showElementHtmlBtn.disabled = !hasSelection;
-      els.editModeBtn.disabled = !hasPresentation || !state.editingSupported;
-      els.previewModeBtn.classList.toggle('is-active', state.mode === 'preview');
-      els.editModeBtn.classList.toggle('is-active', state.mode === 'edit');
-      els.dirtyIndicator.textContent = state.dirty ? 'Есть несохранённые изменения' : 'Нет несохранённых изменений';
-      els.dirtyIndicator.className = `status-pill ${state.dirty ? 'is-dirty' : ''}`.trim();
-      els.engineIndicator.textContent = `Движок: ${state.engine}`;
-      els.engineIndicator.className = `status-pill ${state.previewReady ? 'is-ok' : 'is-warning'}`.trim();
-      if (!hasPresentation) {
-        els.documentMeta.textContent = 'Документ не загружен';
-        els.previewFrame.classList.add('hidden');
-        els.emptyState.classList.remove('hidden');
-      }
-      if (state.mode === 'preview') {
-        els.previewModeLabel.textContent = 'Режим просмотра: iframe ведёт себя как обычное открытие HTML, насколько это позволяет браузер.';
-        els.previewNoteText.textContent = 'Навигация, скрипты и горячие клавиши должны работать внутри самой презентации.';
-        els.inspectorHelp.textContent = hasPresentation
-          ? 'В режиме просмотра редактор не вмешивается в DOM презентации. Для правок переключись в режим редактирования.'
-          : 'Сначала загрузи HTML‑презентацию.';
-      } else {
-        els.previewModeLabel.textContent = 'Режим редактирования: можно выбирать почти любой элемент, редактировать текст, картинки, стили, размеры и структуру.';
-        els.previewNoteText.textContent = 'Правый клик открывает контекстное меню. Ctrl+Z / Ctrl+Y / Ctrl+D поддерживаются и внутри iframe.';
-        els.inspectorHelp.textContent = hasSelection
-          ? 'Изменения применяются сразу в iframe и синхронизируются в модель документа для корректного экспорта.'
-          : 'Кликни по элементу внутри слайда, чтобы выбрать его. Двойной клик по тексту начинает редактирование.';
-      }
-      updateDiagnostics();
-    }
+    
 
     function pluralizeSlides(count) {
       const mod10 = count % 10;
@@ -3351,18 +3890,7 @@ ${exportDoc.documentElement.outerHTML}`;
       return Boolean(el instanceof HTMLElement && el.closest('input, textarea, select') && !(event.ctrlKey || event.metaKey));
     }
 
-    function requestImageInsert(mode) {
-      state.pendingImageInsertMode = mode;
-      if (mode === 'replace') {
-        if (!state.selectedFlags.isImage) {
-          alert('Для замены нужно выбрать элемент <img>.');
-          return;
-        }
-        els.replaceImageInput.click();
-      } else {
-        els.insertImageInput.click();
-      }
-    }
+    
 
     async function fileToDataUrl(file) {
       return await new Promise((resolve, reject) => {
@@ -3373,31 +3901,9 @@ ${exportDoc.documentElement.outerHTML}`;
       });
     }
 
-    function insertImageElement(src, alt = 'image') {
-      if (!state.modelDoc) return;
-      const slideId = state.activeSlideId || state.slides[0]?.id || 'slide-1';
-      const html = `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" style="display:block; max-width:100%; width:320px; height:auto;">`;
-      sendToBridge('insert-element', {
-        slideId,
-        anchorNodeId: state.selectedNodeId,
-        position: state.selectedNodeId ? 'after' : 'append',
-        html,
-        focusText: false,
-      });
-    }
+    
 
-    function insertDefaultTextBlock() {
-      if (!state.modelDoc) return;
-      const slideId = state.activeSlideId || state.slides[0]?.id || 'slide-1';
-      const html = `<div style="min-width:120px; min-height:24px; padding:8px 12px;">Новый текст</div>`;
-      sendToBridge('insert-element', {
-        slideId,
-        anchorNodeId: state.selectedNodeId,
-        position: state.selectedNodeId ? 'after' : 'append',
-        html,
-        focusText: true,
-      });
-    }
+    
 
     function insertCustomHtmlFromTextarea() {
       if (!state.modelDoc) return;
@@ -3421,23 +3927,7 @@ ${exportDoc.documentElement.outerHTML}`;
       }
     }
 
-    function insertVideoByPrompt() {
-      const url = prompt('Вставь ссылку на YouTube или Vimeo');
-      if (!url) return;
-      const embed = toVideoEmbedUrl(url.trim());
-      if (!embed) {
-        alert('Не удалось распознать YouTube/Vimeo ссылку.');
-        return;
-      }
-      const html = `<iframe src="${escapeHtml(embed)}" title="Embedded video" style="width:640px; max-width:100%; height:360px; border:0;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
-      sendToBridge('insert-element', {
-        slideId: state.activeSlideId || state.slides[0]?.id || 'slide-1',
-        anchorNodeId: state.selectedNodeId,
-        position: state.selectedNodeId ? 'after' : 'append',
-        html,
-        focusText: false,
-      });
-    }
+    
 
     function toVideoEmbedUrl(url) {
       try {
@@ -3459,35 +3949,1010 @@ ${exportDoc.documentElement.outerHTML}`;
       return null;
     }
 
-    function duplicateSelectedElement() {
-      if (!state.selectedNodeId) return;
-      sendToBridge('duplicate-element', { nodeId: state.selectedNodeId });
-      closeContextMenu();
-    }
+    
 
-    function deleteSelectedElement() {
-      if (!state.selectedNodeId) return;
-      sendToBridge('delete-element', { nodeId: state.selectedNodeId });
-      closeContextMenu();
-      hideFloatingToolbar();
-    }
+    
 
     function moveSelectedElement(direction) {
       if (!state.selectedNodeId) return;
       sendToBridge('move-element', { nodeId: state.selectedNodeId, direction });
     }
 
-    function resetSelectedStyles() {
-      if (!state.selectedNodeId) return;
-      sendToBridge('reset-inline-styles', { nodeId: state.selectedNodeId });
-      closeContextMenu();
-    }
+    
+
 
     function extractImageFromClipboardEvent(event) {
       const items = Array.from(event.clipboardData?.items || []);
       const imageItem = items.find((item) => item.kind === 'file' && item.type.startsWith('image/'));
       return imageItem ? imageItem.getAsFile() : null;
     }
-  </script>
+
+    /* ======================================================================
+       v3 UX EXTENSIONS
+       Ниже — переопределения и новые функции высокого приоритета из доп. ТЗ.
+       Они оставлены внизу файла специально: так проще читать diff и понимать,
+       какие части базовой версии были расширены без переписывания с нуля.
+       ====================================================================== */
+
+    function initTheme() {
+      let theme = 'light';
+      try { theme = localStorage.getItem(THEME_STORAGE_KEY) || 'light'; } catch (error) {}
+      state.theme = theme === 'dark' ? 'dark' : 'light';
+      try {
+        const rawStyle = localStorage.getItem(COPIED_STYLE_KEY);
+        if (rawStyle) state.copiedStyle = JSON.parse(rawStyle);
+      } catch (error) {}
+      setTheme(state.theme, false);
+    }
+
+    function setTheme(theme, persist = true) {
+      state.theme = theme === 'dark' ? 'dark' : 'light';
+      document.body.dataset.theme = state.theme;
+      if (els.themeToggleBtn) {
+        els.themeToggleBtn.textContent = state.theme === 'dark' ? '☀️ Светлая тема' : '🌙 Тёмная тема';
+      }
+      if (persist) {
+        try { localStorage.setItem(THEME_STORAGE_KEY, state.theme); } catch (error) {}
+      }
+    }
+
+    function toggleTheme() {
+      setTheme(state.theme === 'dark' ? 'light' : 'dark');
+      showToast(`Тема переключена: ${state.theme === 'dark' ? 'тёмная' : 'светлая'}.`, 'success', { title: 'Оформление' });
+    }
+
+    function setPreviewLoading(active, text = 'Подготовка превью…') {
+      state.loadingPreview = Boolean(active);
+      if (els.previewLoadingText) els.previewLoadingText.textContent = text;
+      if (els.previewLoading) {
+        els.previewLoading.classList.toggle('is-visible', Boolean(active));
+        els.previewLoading.setAttribute('aria-hidden', active ? 'false' : 'true');
+      }
+    }
+
+    function showToast(message, type = 'info', options = {}) {
+      if (!els.toastContainer) return;
+      state.activeToastId += 1;
+      const id = `toast-${state.activeToastId}`;
+      const toast = document.createElement('div');
+      toast.className = `toast is-${type}`;
+      toast.dataset.toastId = id;
+      const icon = type === 'success' ? '✅' : type === 'warning' ? '⚠️' : type === 'error' ? '⛔' : 'ℹ️';
+      toast.innerHTML = `
+        <div class="toast-icon">${icon}</div>
+        <div>
+          <strong>${escapeHtml(options.title || 'Действие выполнено')}</strong>
+          <div>${escapeHtml(message)}</div>
+        </div>
+        <button type="button" class="toast-close" aria-label="Закрыть">×</button>
+      `;
+      const removeToast = () => { if (toast.isConnected) toast.remove(); };
+      toast.querySelector('.toast-close').addEventListener('click', removeToast);
+      els.toastContainer.appendChild(toast);
+      while (els.toastContainer.children.length > MAX_VISIBLE_TOASTS) {
+        els.toastContainer.firstElementChild?.remove();
+      }
+      const ttl = Number(options.ttl || (type === 'error' ? 5200 : 2600));
+      window.setTimeout(removeToast, ttl);
+    }
+
+    function getSelectedModelNode() {
+      if (!state.modelDoc || !state.selectedNodeId) return null;
+      return state.modelDoc.querySelector(`[data-editor-node-id="${cssEscape(state.selectedNodeId)}"]`);
+    }
+
+    function copyAttributes(source, target, options = {}) {
+      const omit = new Set(options.omit || []);
+      Array.from(source.attributes || []).forEach((attr) => {
+        if (omit.has(attr.name)) return;
+        if (/^data-editor-/.test(attr.name)) return;
+        if (attr.name === 'contenteditable' || attr.name === 'spellcheck') return;
+        target.setAttribute(attr.name, attr.value);
+      });
+    }
+
+    function replaceSelectedNodeHtml(html, toastMessage = '') {
+      if (!state.selectedNodeId) return;
+      sendToBridge('replace-node-html', { nodeId: state.selectedNodeId, html });
+      if (toastMessage) showToast(toastMessage, 'success', { title: 'Изменение применено' });
+      closeContextMenu();
+    }
+
+    function copySelectedStyle() {
+      if (!state.selectedNodeId || !state.selectedComputed) return;
+      const styles = {};
+      [
+        'color','backgroundColor','fontSize','fontWeight','fontStyle','textDecoration','textAlign',
+        'display','position','left','top','width','height','maxWidth','margin','padding',
+        'borderColor','borderWidth','borderStyle','borderRadius','objectFit','transform','zIndex'
+      ].forEach((key) => {
+        const value = state.selectedComputed?.[key];
+        if (value && value !== 'none' && value !== 'normal' && value !== 'auto' && value !== '0px') {
+          styles[key] = value;
+        }
+      });
+      state.copiedStyle = { styles, copiedAt: Date.now(), sourceTag: state.selectedTag };
+      try { localStorage.setItem(COPIED_STYLE_KEY, JSON.stringify(state.copiedStyle)); } catch (error) {}
+      showToast('Стиль элемента скопирован в буфер редактора.', 'success', { title: 'Копировать стиль' });
+      closeContextMenu();
+    }
+
+    function pasteStyleToSelected() {
+      if (!state.selectedNodeId || !state.copiedStyle?.styles) return;
+      sendToBridge('apply-styles', { nodeId: state.selectedNodeId, styles: state.copiedStyle.styles });
+      flashSelectedElement();
+      showToast('Стиль применён к выбранному элементу.', 'success', { title: 'Вставить стиль' });
+      closeContextMenu();
+    }
+
+    function fitSelectedImageToWidth() {
+      if (!state.selectedFlags.isImage || !state.selectedNodeId) return;
+      sendToBridge('apply-styles', {
+        nodeId: state.selectedNodeId,
+        styles: { display: 'block', width: '100%', maxWidth: '100%', height: 'auto' }
+      });
+      flashSelectedElement();
+      showToast('Изображение вписано по ширине.', 'success', { title: 'Медиа' });
+      closeContextMenu();
+    }
+
+    function resetSelectedImageSize() {
+      if (!state.selectedFlags.isImage || !state.selectedNodeId) return;
+      sendToBridge('apply-styles', {
+        nodeId: state.selectedNodeId,
+        styles: { width: '', height: '', maxWidth: '', objectFit: '' }
+      });
+      showToast('Inline-размеры изображения сброшены.', 'success', { title: 'Медиа' });
+      closeContextMenu();
+    }
+
+    async function copySelectedImageUrl() {
+      if (!state.selectedFlags.isImage && !state.selectedFlags.isVideo) return;
+      const src = state.selectedAttrs.src || '';
+      if (!src) return;
+      try {
+        await navigator.clipboard.writeText(src);
+        showToast('URL изображения скопирован в буфер обмена.', 'success', { title: 'Медиа' });
+      } catch (error) {
+        prompt('Скопируй URL вручную', src);
+      }
+      closeContextMenu();
+    }
+
+    function openSelectedImageInNewTab() {
+      if (!state.selectedFlags.isImage) return;
+      const src = state.selectedAttrs.src || '';
+      if (!src) return;
+      window.open(src, '_blank', 'noopener,noreferrer');
+      closeContextMenu();
+    }
+
+
+    // openSelectedMediaInNewTab / editSelectedMediaUrl — универсальные helpers для
+    // iframe/video media. Для изображений остаётся отдельная функция выше.
+    function openSelectedMediaInNewTab() {
+      const src = state.selectedAttrs.src || '';
+      if (!src) return;
+      window.open(src, '_blank', 'noopener,noreferrer');
+      closeContextMenu();
+    }
+
+    function editSelectedMediaUrl() {
+      if (!state.selectedNodeId || !state.selectedFlags.isVideo) return;
+      const current = state.selectedAttrs.src || '';
+      const next = prompt('Новый URL для видео / iframe', current);
+      if (next === null) return;
+      updateAttributes({ src: next.trim() });
+      showToast('URL видео обновлён.', 'success', { title: 'Видео' });
+      closeContextMenu();
+    }
+
+    function rotateSelectedImage(deltaDegrees = 90) {
+      if (!state.selectedFlags.isImage || !state.selectedNodeId) return;
+      const node = getSelectedModelNode();
+      const current = node?.style?.transform || '';
+      const match = current.match(/rotate\((-?\d+)deg\)/i);
+      const angle = (match ? Number(match[1]) : 0) + deltaDegrees;
+      const withoutRotate = current.replace(/rotate\([^)]*\)/ig, '').trim();
+      const transform = `${withoutRotate} rotate(${angle}deg)`.trim();
+      sendToBridge('apply-style', { nodeId: state.selectedNodeId, styleName: 'transform', value: transform });
+      showToast('Изображение повернуто на 90°.', 'success', { title: 'Медиа' });
+    }
+
+    function flipSelectedImage() {
+      if (!state.selectedFlags.isImage || !state.selectedNodeId) return;
+      const node = getSelectedModelNode();
+      const current = node?.style?.transform || '';
+      const hasFlip = /scaleX\(-1\)/.test(current);
+      const transform = hasFlip ? current.replace(/scaleX\(-1\)/g, '').trim() : `${current} scaleX(-1)`.trim();
+      sendToBridge('apply-style', { nodeId: state.selectedNodeId, styleName: 'transform', value: transform });
+      showToast(hasFlip ? 'Отражение убрано.' : 'Отражение применено.', 'success', { title: 'Медиа' });
+    }
+
+    async function copySelectedText() {
+      const node = getSelectedModelNode();
+      const text = node?.textContent?.trim() || '';
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast('Текст скопирован в буфер обмена.', 'success', { title: 'Текст' });
+      } catch (error) {
+        prompt('Скопируй текст вручную', text);
+      }
+      closeContextMenu();
+    }
+
+    async function cutSelectedText() {
+      const node = getSelectedModelNode();
+      const text = node?.textContent || '';
+      if (!node || !state.selectedFlags.canEditText) return;
+      try { await navigator.clipboard.writeText(text); } catch (error) {}
+      const replacement = node.ownerDocument.createElement(node.tagName);
+      copyAttributes(node, replacement);
+      replacement.textContent = '';
+      replaceSelectedNodeHtml(replacement.outerHTML, 'Текст вырезан.');
+    }
+
+    async function pasteClipboardAsText() {
+      if (!state.selectedFlags.canEditText) return;
+      let text = '';
+      try { text = await navigator.clipboard.readText(); } catch (error) {
+        showToast('Браузер не дал доступ к буферу обмена.', 'warning', { title: 'Вставка текста' });
+        return;
+      }
+      const node = getSelectedModelNode();
+      if (!node) return;
+      const replacement = node.ownerDocument.createElement(node.tagName);
+      copyAttributes(node, replacement);
+      replacement.textContent = text;
+      replaceSelectedNodeHtml(replacement.outerHTML, 'Текст вставлен без стилей.');
+    }
+
+    function transformSelectedTag(tagName) {
+      const node = getSelectedModelNode();
+      if (!node) return;
+      const replacement = node.ownerDocument.createElement(tagName.toUpperCase());
+      copyAttributes(node, replacement);
+      replacement.innerHTML = node.innerHTML;
+      replaceSelectedNodeHtml(replacement.outerHTML, `Элемент преобразован в ${tagName.toUpperCase()}.`);
+    }
+
+    function wrapSelectedInDiv() {
+      const node = getSelectedModelNode();
+      if (!node) return;
+      const className = prompt('Класс новой обёртки', 'editor-wrap') || 'editor-wrap';
+      const wrapper = node.ownerDocument.createElement('div');
+      if (className.trim()) wrapper.className = className.trim();
+      wrapper.appendChild(node.cloneNode(true));
+      replaceSelectedNodeHtml(wrapper.outerHTML, 'Элемент обёрнут в новый контейнер.');
+    }
+
+    function insertHtmlViaBridge(html, options = {}) {
+      if (!state.modelDoc) return;
+      sendToBridge('insert-element', {
+        slideId: state.activeSlideId || state.slides[0]?.id || 'slide-1',
+        anchorNodeId: options.anchorNodeId !== undefined ? options.anchorNodeId : state.selectedNodeId,
+        position: options.position || (state.selectedNodeId ? 'after' : 'append'),
+        html,
+        focusText: Boolean(options.focusText),
+      });
+    }
+
+    function addChildTextToSelected() {
+      if (!state.selectedNodeId) return;
+      insertHtmlViaBridge('<div style="min-width:120px; min-height:24px; padding:8px 12px;">Новый дочерний текст</div>', {
+        anchorNodeId: state.selectedNodeId,
+        position: 'inside',
+        focusText: true,
+      });
+      showToast('Внутрь контейнера добавлен текстовый блок.', 'success', { title: 'Структура' });
+    }
+
+    function insertSimpleBox() {
+      insertHtmlViaBridge('<div style="min-width:160px; min-height:80px; padding:16px; border:1px dashed rgba(38,103,255,.35); border-radius:12px; background:rgba(38,103,255,.06);"></div>', { focusText: false });
+      showToast('Новый блок добавлен на слайд.', 'success', { title: 'Палитра' });
+    }
+
+    function insertLayoutPreset(kind = 'two-col') {
+      let html = '';
+      if (kind === 'two-col') {
+        html = '<div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start; width:100%;"><div style="padding:12px;"><h2>Заголовок</h2><p>Текст левой колонки.</p></div><div style="padding:12px;"><p>Текст правой колонки.</p></div></div>';
+      } else if (kind === 'title-subtitle') {
+        html = '<div style="display:flex; flex-direction:column; gap:12px;"><h1>Заголовок</h1><p>Подзаголовок</p></div>';
+      }
+      if (!html) return;
+      insertHtmlViaBridge(html, { focusText: false });
+      showToast('Готовая раскладка вставлена.', 'success', { title: 'Палитра' });
+    }
+
+    function bindPaletteActions() {
+      if (!els.quickPalette) return;
+      els.quickPalette.addEventListener('click', (event) => {
+        const action = event.target.closest('[data-palette-action]')?.dataset?.paletteAction;
+        if (!action) return;
+        performPaletteAction(action);
+      });
+
+      els.quickPalette.querySelectorAll('[data-palette-action]').forEach((button) => {
+        button.addEventListener('dragstart', (event) => {
+          const action = button.dataset.paletteAction;
+          event.dataTransfer.setData('text/x-pe-palette', action);
+          event.dataTransfer.effectAllowed = 'copy';
+        });
+      });
+
+      els.previewStage.addEventListener('drop', (event) => {
+        const action = event.dataTransfer?.getData('text/x-pe-palette');
+        if (!action || state.mode !== 'edit') return;
+        event.preventDefault();
+        performPaletteAction(action);
+      }, true);
+    }
+
+    function performPaletteAction(action) {
+      switch (action) {
+        case 'text': insertDefaultTextBlock(); break;
+        case 'image': requestImageInsert('insert'); break;
+        case 'video': insertVideoByPrompt(); break;
+        case 'box': insertSimpleBox(); break;
+        case 'layout-two-col': insertLayoutPreset('two-col'); break;
+        case 'layout-title-subtitle': insertLayoutPreset('title-subtitle'); break;
+      }
+    }
+
+    function requestImageInsert(mode) {
+      state.pendingImageInsertMode = mode;
+      if (mode === 'replace') {
+        if (!state.selectedFlags.isImage) {
+          alert('Для замены нужно выбрать элемент <img>.');
+          return;
+        }
+        els.replaceImageInput.click();
+      } else {
+        els.insertImageInput.click();
+      }
+    }
+
+    function insertImageElement(src, alt = 'image') {
+      if (!state.modelDoc) return;
+      const html = `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" style="display:block; max-width:100%; width:320px; height:auto;">`;
+      const mode = state.pendingImageInsertMode;
+      const position = mode === 'insert-child' ? 'inside' : (state.selectedNodeId ? 'after' : 'append');
+      const anchorNodeId = mode === 'insert-child' ? state.selectedNodeId : state.selectedNodeId;
+      insertHtmlViaBridge(html, { position, anchorNodeId, focusText: false });
+      showToast('Изображение вставлено на слайд.', 'success', { title: 'Медиа' });
+      state.pendingImageInsertMode = 'insert';
+      maybeSuggestFitForLargeImage(src);
+    }
+
+    function insertDefaultTextBlock() {
+      if (!state.modelDoc) return;
+      insertHtmlViaBridge('<div style="min-width:120px; min-height:24px; padding:8px 12px;">Новый текст</div>', { focusText: true });
+      showToast('Текстовый блок добавлен.', 'success', { title: 'Палитра' });
+    }
+
+    function insertVideoByPrompt() {
+      const url = prompt('Вставь ссылку на YouTube или Vimeo');
+      if (!url) return;
+      const embed = toVideoEmbedUrl(url.trim());
+      if (!embed) {
+        alert('Не удалось распознать YouTube/Vimeo ссылку.');
+        return;
+      }
+      const html = `<iframe src="${escapeHtml(embed)}" title="Embedded video" style="width:640px; max-width:100%; height:360px; border:0;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+      insertHtmlViaBridge(html, { focusText: false });
+      showToast('Видео добавлено на слайд.', 'success', { title: 'Медиа' });
+    }
+
+    function duplicateSelectedElement() {
+      if (!state.selectedNodeId) return;
+      sendToBridge('duplicate-element', { nodeId: state.selectedNodeId });
+      showToast('Элемент продублирован.', 'success', { title: 'Структура' });
+      closeContextMenu();
+    }
+
+    function deleteSelectedElement() {
+      if (!state.selectedNodeId) return;
+      sendToBridge('delete-element', { nodeId: state.selectedNodeId });
+      showToast('Элемент удалён.', 'success', { title: 'Структура' });
+      closeContextMenu();
+      hideFloatingToolbar();
+    }
+
+    function resetSelectedStyles() {
+      if (!state.selectedNodeId) return;
+      sendToBridge('reset-inline-styles', { nodeId: state.selectedNodeId });
+      flashSelectedElement();
+      showToast('Inline-стили элемента сброшены.', 'success', { title: 'Стили' });
+      closeContextMenu();
+    }
+
+    function flashSelectedElement() {
+      if (!state.selectedNodeId) return;
+      sendToBridge('flash-node', { nodeId: state.selectedNodeId });
+    }
+
+    function toggleFloatingToolbarCollapsed(force) {
+      state.toolbarCollapsed = typeof force === 'boolean' ? force : !state.toolbarCollapsed;
+      els.floatingToolbar.dataset.collapsed = state.toolbarCollapsed ? 'true' : 'false';
+      if (els.ftCollapseBtn) els.ftCollapseBtn.textContent = state.toolbarCollapsed ? '▸' : '▾';
+      persistToolbarSession();
+      positionFloatingToolbar();
+    }
+
+    function persistToolbarSession() {
+      try {
+        sessionStorage.setItem(TOOLBAR_SESSION_KEY, JSON.stringify({
+          toolbarPinned: state.toolbarPinned,
+          toolbarPos: state.toolbarPos,
+          toolbarCollapsed: state.toolbarCollapsed,
+        }));
+      } catch (error) {}
+    }
+
+    // ====================================================================
+    // Floating toolbar
+    // Плавающая панель умеет автопозиционироваться, перетаскиваться и запоминать
+    // положение в sessionStorage, чтобы не перекрывать рабочую область.
+    // ====================================================================
+    function initFloatingToolbarState() {
+      try {
+        const raw = sessionStorage.getItem(TOOLBAR_SESSION_KEY);
+        if (raw) {
+          const payload = JSON.parse(raw);
+          state.toolbarPinned = Boolean(payload.toolbarPinned);
+          state.toolbarPos = payload.toolbarPos || null;
+          state.toolbarCollapsed = Boolean(payload.toolbarCollapsed);
+        }
+      } catch (error) {}
+      toggleFloatingToolbarCollapsed(state.toolbarCollapsed);
+
+      const onPointerMove = (event) => {
+        if (!state.toolbarDragActive) return;
+        const hostRect = els.previewStage.getBoundingClientRect();
+        const nextX = event.clientX - hostRect.left - state.toolbarDragOffset.x;
+        const nextY = event.clientY - hostRect.top - state.toolbarDragOffset.y;
+        state.toolbarPos = clampToolbarPosition(nextX, nextY);
+        els.floatingToolbar.style.left = `${state.toolbarPos.x}px`;
+        els.floatingToolbar.style.top = `${state.toolbarPos.y}px`;
+        els.floatingToolbar.classList.add('is-visible', 'is-dragging');
+      };
+
+      const stopDragging = () => {
+        if (!state.toolbarDragActive) return;
+        state.toolbarDragActive = false;
+        els.floatingToolbar.classList.remove('is-dragging');
+        persistToolbarSession();
+      };
+
+      els.ftHandleBtn?.addEventListener('pointerdown', (event) => {
+        if (!state.selectedNodeId) return;
+        const rect = els.floatingToolbar.getBoundingClientRect();
+        state.toolbarPinned = true;
+        state.toolbarDragActive = true;
+        state.toolbarDragOffset = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+        try { els.ftHandleBtn.setPointerCapture(event.pointerId); } catch (error) {}
+      });
+      window.addEventListener('pointermove', onPointerMove);
+      window.addEventListener('pointerup', stopDragging);
+    }
+
+    function clampToolbarPosition(x, y) {
+      const hostRect = els.previewStage.getBoundingClientRect();
+      const toolbarWidth = els.floatingToolbar.offsetWidth || 320;
+      const toolbarHeight = els.floatingToolbar.offsetHeight || 46;
+      return {
+        x: Math.min(Math.max(8, x), Math.max(8, hostRect.width - toolbarWidth - 8)),
+        y: Math.min(Math.max(8, y), Math.max(8, hostRect.height - toolbarHeight - 8)),
+      };
+    }
+
+    function positionFloatingToolbar() {
+      updateFloatingToolbarContext();
+      if (state.mode !== 'edit' || !state.selectedNodeId || !state.selectedRect) {
+        hideFloatingToolbar();
+        return;
+      }
+      const iframeRect = els.previewFrame.getBoundingClientRect();
+      const hostRect = els.previewStage.getBoundingClientRect();
+      if (!iframeRect.width || !iframeRect.height) {
+        hideFloatingToolbar();
+        return;
+      }
+      const toolbar = els.floatingToolbar;
+      toolbar.classList.add('is-visible');
+
+      if (state.toolbarPinned && state.toolbarPos) {
+        const pos = clampToolbarPosition(state.toolbarPos.x, state.toolbarPos.y);
+        toolbar.style.left = `${pos.x}px`;
+        toolbar.style.top = `${pos.y}px`;
+        return;
+      }
+
+      const left = iframeRect.left - hostRect.left + state.selectedRect.left;
+      const top = iframeRect.top - hostRect.top + state.selectedRect.top;
+      const toolbarHeight = toolbar.offsetHeight || 44;
+      const toolbarWidth = toolbar.offsetWidth || 320;
+      let x = left;
+      let y = top - toolbarHeight - 8;
+      const placeRight = state.selectedRect.width < 140 && left + state.selectedRect.width + toolbarWidth + 12 < hostRect.width;
+      if (placeRight) {
+        x = left + state.selectedRect.width + 8;
+        y = top;
+      }
+      if (y < 8) y = top + state.selectedRect.height + 8;
+      const pos = clampToolbarPosition(x, y);
+      toolbar.style.left = `${pos.x}px`;
+      toolbar.style.top = `${pos.y}px`;
+    }
+
+    function hideFloatingToolbar() {
+      els.floatingToolbar.classList.remove('is-visible');
+      els.floatingToolbar.style.left = '-9999px';
+      els.floatingToolbar.style.top = '-9999px';
+    }
+
+    function updateFloatingToolbarContext() {
+      const hasSelection = Boolean(state.selectedNodeId && state.mode === 'edit');
+      els.ftTextGroup.hidden = !hasSelection || !state.selectedFlags.canEditText;
+      els.ftMediaGroup.hidden = !hasSelection || (!state.selectedFlags.isImage && !state.selectedFlags.isVideo);
+      els.ftReplaceImageBtn.hidden = !state.selectedFlags.isImage;
+      els.ftCopyImageUrlBtn.hidden = !(state.selectedFlags.isImage || state.selectedFlags.isVideo);
+      els.ftMediaUrlBtn.hidden = !state.selectedFlags.isVideo;
+      els.ftFitImageBtn.hidden = !state.selectedFlags.isImage;
+    }
+
+    function initInspectorSections() {
+      let persisted = {};
+      try { persisted = JSON.parse(localStorage.getItem(INSPECTOR_SECTIONS_KEY) || '{}'); } catch (error) {}
+      state.inspectorSections = persisted || {};
+      document.querySelectorAll('.inspector-section').forEach((section, index) => {
+        if (section.dataset.enhanced === 'true') return;
+        section.dataset.enhanced = 'true';
+        const heading = section.querySelector('h3');
+        if (!heading) return;
+        const key = slugify(heading.textContent || `section-${index}`);
+        section.dataset.sectionKey = key;
+        const header = document.createElement('div');
+        header.className = 'inspector-section-header';
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'section-toggle';
+        toggle.innerHTML = `<span>${escapeHtml(heading.textContent || 'Секция')}</span><span class="section-caret">▾</span>`;
+        header.appendChild(toggle);
+        heading.replaceWith(header);
+        const content = document.createElement('div');
+        content.className = 'inspector-section-content';
+        while (header.nextSibling) content.appendChild(header.nextSibling);
+        section.appendChild(content);
+        const collapsed = Boolean(state.inspectorSections[key]);
+        section.classList.toggle('is-collapsed', collapsed);
+        toggle.addEventListener('click', () => {
+          section.classList.toggle('is-collapsed');
+          state.inspectorSections[key] = section.classList.contains('is-collapsed');
+          try { localStorage.setItem(INSPECTOR_SECTIONS_KEY, JSON.stringify(state.inspectorSections)); } catch (error) {}
+        });
+      });
+    }
+
+    function slugify(value) {
+      return String(value || '')
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-zа-я0-9]+/gi, '-')
+        .replace(/^-+|-+$/g, '') || 'section';
+    }
+
+    function addInspectorHelpBadges() {
+      const helpMap = {
+        'elementIdInput': 'id элемента внутри HTML. Оставь пустым, если привязка по id не нужна.',
+        'elementClassInput': 'CSS-классы через пробел. Используй осторожно: классы могут участвовать в логике презентации.',
+        'widthInput': 'Ширина элемента: например, 320px, 50% или auto.',
+        'heightInput': 'Высота элемента: например, 180px или auto.',
+        'marginInput': 'Внешние отступы элемента. Пример: 8px 12px.',
+        'paddingInput': 'Внутренние отступы элемента. Пример: 8px 12px.',
+        'leftInput': 'Смещение слева. Имеет смысл только для relative/absolute/fixed/sticky.',
+        'topInput': 'Смещение сверху. Имеет смысл только для relative/absolute/fixed/sticky.',
+        'zIndexInput': 'Порядок наложения элемента по оси Z.',
+        'imageSrcInput': 'Адрес изображения: URL или data:image/...',
+      };
+      Object.entries(helpMap).forEach(([inputId, text]) => {
+        const input = document.getElementById(inputId);
+        const label = input?.closest('.field-group')?.querySelector('label');
+        if (!label || label.querySelector('.help-badge')) return;
+        const badge = document.createElement('span');
+        badge.className = 'help-badge';
+        badge.textContent = '?';
+        badge.title = text;
+        label.classList.add('label-with-help');
+        label.appendChild(badge);
+      });
+    }
+
+    // buildContextMenuItems
+    // Меню строится динамически под текущий тип элемента: текст, картинка,
+    // video/iframe, контейнер. Это уменьшает шум и делает меню «человечным».
+    function buildContextMenuItems(payload) {
+      const items = [];
+      const isText = Boolean(payload.canEditText || state.selectedFlags.canEditText);
+      const isImage = Boolean(payload.isImage || state.selectedFlags.isImage);
+      const isContainer = Boolean(payload.isContainer || state.selectedFlags.isContainer);
+
+      items.push({ section: 'format', action: 'edit-html', icon: '🧩', label: 'Редактировать HTML', hint: '' });
+      if (isText) {
+        items.push({ section: 'format', action: 'edit-text', icon: '✏️', label: 'Редактировать текст', hint: 'Double click' });
+        items.push({ section: 'format', action: 'copy-text', icon: '📄', label: 'Копировать текст', hint: '' });
+        items.push({ section: 'format', action: 'cut-text', icon: '✂️', label: 'Вырезать текст', hint: '' });
+        items.push({ section: 'format', action: 'paste-as-text', icon: '📋', label: 'Вставить как текст', hint: '' });
+        items.push({ section: 'format', action: 'to-h2', icon: 'H2', label: 'Преобразовать в H2', hint: '' });
+        items.push({ section: 'format', action: 'to-h3', icon: 'H3', label: 'Преобразовать в H3', hint: '' });
+      }
+      if (isImage) {
+        items.push({ section: 'media', action: 'replace-image', icon: '🖼', label: 'Заменить изображение', hint: '' });
+        items.push({ section: 'media', action: 'copy-image-url', icon: '🔗', label: 'Копировать URL изображения', hint: '' });
+        items.push({ section: 'media', action: 'open-image', icon: '↗', label: 'Открыть в новой вкладке', hint: '' });
+        items.push({ section: 'media', action: 'reset-image-size', icon: '↺', label: 'Сбросить размеры', hint: '' });
+        items.push({ section: 'media', action: 'fit-image-width', icon: '↔', label: 'Вписать по ширине', hint: '' });
+      }
+      if (Boolean(payload.isVideo || state.selectedFlags.isVideo)) {
+        items.push({ section: 'media', action: 'edit-media-url', icon: '🎞', label: 'Изменить URL видео', hint: '' });
+        items.push({ section: 'media', action: 'open-media-url', icon: '↗', label: 'Открыть URL видео', hint: '' });
+      }
+      if (isContainer) {
+        items.push({ section: 'structure', action: 'add-child-text', icon: '🅣', label: 'Добавить дочерний текст', hint: '' });
+        items.push({ section: 'structure', action: 'add-child-image', icon: '🖼', label: 'Добавить дочернюю картинку', hint: '' });
+        items.push({ section: 'structure', action: 'wrap-div', icon: '▣', label: 'Обернуть в div', hint: '' });
+      }
+      items.push({ section: 'structure', action: 'duplicate', icon: '⧉', label: 'Дублировать', hint: 'Ctrl+D' });
+      items.push({ section: 'structure', action: 'copy-style', icon: '🎨+', label: 'Копировать стиль', hint: 'Ctrl+Shift+C' });
+      items.push({ section: 'structure', action: 'paste-style', icon: '🎨⇣', label: 'Вставить стиль', hint: 'Ctrl+Shift+V' });
+      items.push({ section: 'structure', action: 'reset-styles', icon: '🧼', label: 'Сбросить стили', hint: '' });
+      items.push({ section: 'remove', action: 'delete', icon: '🗑', label: 'Удалить', hint: 'Delete', danger: true });
+      return items;
+    }
+
+    function renderContextMenu(payload) {
+      const items = buildContextMenuItems(payload);
+      const sections = [
+        ['format', 'Форматирование'],
+        ['media', 'Медиа'],
+        ['structure', 'Структура'],
+        ['remove', 'Удаление'],
+      ];
+      els.contextMenuInner.innerHTML = '';
+      sections.forEach(([key, title]) => {
+        const groupItems = items.filter((item) => item.section === key);
+        if (!groupItems.length) return;
+        const titleEl = document.createElement('div');
+        titleEl.className = 'context-menu-section-title';
+        titleEl.textContent = title;
+        els.contextMenuInner.appendChild(titleEl);
+        groupItems.forEach((item) => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.dataset.menuAction = item.action;
+          if (item.danger) button.classList.add('danger-item');
+          button.title = item.hint ? `${item.label} (${item.hint})` : item.label;
+          button.innerHTML = `
+            <span class="menu-icon">${item.icon}</span>
+            <span>${escapeHtml(item.label)}</span>
+            <span class="menu-hint">${escapeHtml(item.hint || '')}</span>
+          `;
+          els.contextMenuInner.appendChild(button);
+        });
+      });
+    }
+
+    function computeContextMenuPosition(clientX, clientY) {
+      const menu = els.contextMenu;
+      menu.style.left = '0px';
+      menu.style.top = '0px';
+      menu.classList.add('is-open');
+      const width = menu.offsetWidth || 240;
+      const height = menu.offsetHeight || 260;
+      let x = clientX;
+      let y = clientY;
+      if (clientX + width + 8 > window.innerWidth) x = clientX - width;
+      if (clientY + height + 8 > window.innerHeight) y = clientY - height;
+      x = Math.max(8, Math.min(window.innerWidth - width - 8, x));
+      y = Math.max(8, Math.min(window.innerHeight - height - 8, y));
+      return { x, y };
+    }
+
+    function openContextMenuFromBridge(payload) {
+      if (state.mode !== 'edit') return;
+      state.contextMenuNodeId = payload.nodeId || state.selectedNodeId;
+      state.contextMenuPayload = { ...payload, nodeId: state.contextMenuNodeId };
+      renderContextMenu(state.contextMenuPayload);
+      const frameRect = els.previewFrame.getBoundingClientRect();
+      const x = frameRect.left + (payload.clientX || 0);
+      const y = frameRect.top + (payload.clientY || 0);
+      const pos = computeContextMenuPosition(x, y);
+      els.contextMenu.style.left = `${pos.x}px`;
+      els.contextMenu.style.top = `${pos.y}px`;
+      els.contextMenu.classList.add('is-open');
+      els.contextMenu.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeContextMenu() {
+      els.contextMenu.classList.remove('is-open');
+      els.contextMenu.setAttribute('aria-hidden', 'true');
+      state.contextMenuNodeId = null;
+      state.contextMenuPayload = null;
+    }
+
+    async function handleContextMenuAction(action) {
+      switch (action) {
+        case 'edit-html': openElementHtmlEditor(); break;
+        case 'edit-text': startTextEditing(); break;
+        case 'duplicate': duplicateSelectedElement(); break;
+        case 'replace-image': requestImageInsert('replace'); break;
+        case 'reset-styles': resetSelectedStyles(); break;
+        case 'delete': deleteSelectedElement(); break;
+        case 'copy-image-url': await copySelectedImageUrl(); break;
+        case 'open-image': openSelectedImageInNewTab(); break;
+        case 'reset-image-size': resetSelectedImageSize(); break;
+        case 'fit-image-width': fitSelectedImageToWidth(); break;
+        case 'edit-media-url': editSelectedMediaUrl(); break;
+        case 'open-media-url': openSelectedMediaInNewTab(); break;
+        case 'copy-text': await copySelectedText(); break;
+        case 'cut-text': await cutSelectedText(); break;
+        case 'paste-as-text': await pasteClipboardAsText(); break;
+        case 'to-h2': transformSelectedTag('h2'); break;
+        case 'to-h3': transformSelectedTag('h3'); break;
+        case 'add-child-text': addChildTextToSelected(); break;
+        case 'add-child-image': state.pendingImageInsertMode = 'insert-child'; els.insertImageInput.click(); break;
+        case 'wrap-div': wrapSelectedInDiv(); break;
+        case 'copy-style': copySelectedStyle(); break;
+        case 'paste-style': pasteStyleToSelected(); break;
+      }
+      closeContextMenu();
+    }
+
+    // openElementFinder
+    // Мини-поиск по активному слайду: tag / id / class / текст. Полезен для
+    // сложных слайдов, где нужный элемент трудно поймать мышью.
+    function openElementFinder() {
+      const query = prompt('Поиск элемента по tag / id / class / тексту');
+      if (!query || !state.modelDoc || !state.activeSlideId) return;
+      const slide = state.modelDoc.querySelector(`[data-editor-slide-id="${cssEscape(state.activeSlideId)}"]`);
+      if (!slide) return;
+      const q = query.trim().toLowerCase();
+      const match = slide.querySelectorAll('[data-editor-node-id]');
+      const target = Array.from(match).find((el) => {
+        return el.tagName.toLowerCase() === q ||
+          (el.id || '').toLowerCase().includes(q) ||
+          (el.className || '').toLowerCase().includes(q) ||
+          (el.textContent || '').toLowerCase().includes(q);
+      });
+      if (!target) {
+        showToast('Совпадений не найдено.', 'warning', { title: 'Поиск' });
+        return;
+      }
+      sendToBridge('navigate-to-slide', { slideId: state.activeSlideId, index: state.slides.findIndex((slideMeta) => slideMeta.id === state.activeSlideId) });
+      sendToBridge('select-element', { nodeId: target.getAttribute('data-editor-node-id') });
+      showToast('Найден первый подходящий элемент.', 'success', { title: 'Поиск' });
+    }
+
+    function maybeSuggestFitForLargeImage(src) {
+      try {
+        const img = new Image();
+        img.onload = () => {
+          if (img.naturalWidth > 1800) {
+            showToast('Изображение большое. При необходимости используй «Вписать по ширине».', 'warning', { title: 'Совет' });
+          }
+        };
+        img.src = src;
+      } catch (error) {}
+    }
+
+    // ====================================================================
+    // Watchdog / resilience
+    // Следим за heartbeat bridge и периодически запрашиваем sync активного слайда,
+    // чтобы уменьшать риск рассинхрона между iframe и modelDoc.
+    // ====================================================================
+    function startBridgeWatchdog() {
+      if (state.bridgeWatchdogTimer) window.clearInterval(state.bridgeWatchdogTimer);
+      if (state.modelSyncTimer) window.clearInterval(state.modelSyncTimer);
+      state.bridgeWatchdogTimer = window.setInterval(() => {
+        if (!state.modelDoc || !state.previewReady) return;
+        sendToBridge('request-slide-sync', { slideId: state.activeSlideId });
+        if (Date.now() - state.lastBridgeHeartbeatAt > 12000) {
+          if (state.bridgeAlive) {
+            state.bridgeAlive = false;
+            setPreviewLoading(true, 'Связь с превью потеряна. Можно перезагрузить HTML.');
+            showToast('Bridge внутри iframe перестал отвечать. Попробуй перезагрузить превью.', 'warning', { title: 'Связь потеряна', ttl: 5200 });
+            refreshUi();
+          }
+        }
+      }, 5000);
+      state.modelSyncTimer = window.setInterval(() => {
+        if (!state.modelDoc || !state.previewReady || state.mode !== 'edit') return;
+        sendToBridge('request-slide-sync', { slideId: state.activeSlideId });
+      }, 7000);
+    }
+
+    function applyDocumentSyncFromBridge(payload) {
+      const slideId = payload.slideId;
+      const html = payload.html;
+      if (!slideId || !html || !state.modelDoc) return;
+      const currentSlide = state.modelDoc.querySelector(`[data-editor-slide-id="${cssEscape(slideId)}"]`);
+      if (!currentSlide) return;
+      if (currentSlide.outerHTML === html) return;
+      try {
+        const replacement = parseSingleRootElement(html);
+        replacement.setAttribute('data-editor-slide-id', slideId);
+        currentSlide.replaceWith(state.modelDoc.importNode(replacement, true));
+        commitChange('bridge-sync');
+        renderSlidesList();
+        refreshUi();
+      } catch (error) {
+        addDiagnostic(`document-sync-error: ${error.message}`);
+      }
+    }
+
+    function updateInspectorFromSelection() {
+      const hasSelection = Boolean(state.selectedNodeId && state.mode === 'edit');
+      els.elementTagInput.value = hasSelection ? (state.selectedTag || '—') : '—';
+      els.selectedNodeBadge.textContent = `node: ${hasSelection ? state.selectedNodeId : '—'}`;
+      els.selectedSlideBadge.textContent = `slide: ${hasSelection ? (state.activeSlideId || '—') : '—'}`;
+      const kind = !hasSelection ? '—' : state.selectedFlags.isImage ? 'image' : state.selectedFlags.isVideo ? 'video' : state.selectedFlags.canEditText ? 'text' : state.selectedFlags.isContainer ? 'container' : 'element';
+      els.selectedKindBadge.textContent = `kind: ${kind}`;
+      const controls = [
+        els.boldBtn, els.italicBtn, els.underlineBtn, els.fontSizeSelect, els.textColorInput, els.showElementHtmlBtn,
+        els.duplicateElementBtn, els.deleteElementBtn, els.moveElementUpBtn, els.moveElementDownBtn, els.resetStylesBtn,
+        els.copyStyleBtn, els.pasteStyleBtn,
+        els.elementIdInput, els.elementClassInput, els.displaySelect, els.positionSelect, els.zIndexInput,
+        els.widthInput, els.heightInput, els.leftInput, els.topInput, els.bgColorInput, els.borderColorInput,
+        els.borderStyleSelect, els.borderWidthInput, els.marginInput, els.paddingInput, els.editTextBtn,
+        els.imageSrcInput, els.applyImageSrcBtn, els.imageAltInput, els.replaceImageBtn, els.fitImageBtn,
+        els.copyImageUrlBtn, els.openImageBtn, els.resetImageSizeBtn, els.rotateImageBtn, els.flipImageBtn,
+        ...els.alignButtons
+      ];
+      controls.forEach((control) => { if (control) control.disabled = !hasSelection; });
+
+      [
+        els.ftDeleteBtn, els.ftDuplicateBtn, els.ftEditTextBtn, els.ftReplaceImageBtn,
+        els.ftCopyStyleBtn, els.ftPasteStyleBtn, els.ftCopyImageUrlBtn, els.ftMediaUrlBtn, els.ftFitImageBtn,
+        els.ftBoldBtn, els.ftItalicBtn, els.ftColorInput, els.ftFontSizeSelect
+      ].forEach((control) => { if (control) control.disabled = !hasSelection; });
+
+      if (!hasSelection || !state.selectedComputed) {
+        els.elementIdInput.value = '';
+        els.elementClassInput.value = '';
+        els.fontSizeSelect.value = '';
+        els.ftFontSizeSelect.value = '';
+        els.textColorInput.value = '#000000';
+        els.ftColorInput.value = '#000000';
+        els.bgColorInput.value = '#ffffff';
+        els.borderColorInput.value = '#000000';
+        els.borderStyleSelect.value = '';
+        els.displaySelect.value = '';
+        els.positionSelect.value = '';
+        els.zIndexInput.value = '';
+        els.widthInput.value = '';
+        els.heightInput.value = '';
+        els.leftInput.value = '';
+        els.topInput.value = '';
+        els.marginInput.value = '';
+        els.paddingInput.value = '';
+        els.imageSrcInput.value = '';
+        els.imageAltInput.value = '';
+        els.imageSection.style.display = 'none';
+        const imageAltField = els.imageAltInput?.closest('.field-group'); if (imageAltField) imageAltField.style.display = '';
+        [els.replaceImageBtn, els.fitImageBtn, els.copyImageUrlBtn, els.resetImageSizeBtn, els.rotateImageBtn, els.flipImageBtn].forEach((btn) => { if (btn) btn.style.display = ''; });
+        els.alignButtons.forEach((button) => button.classList.remove('is-active'));
+        [els.boldBtn, els.italicBtn, els.underlineBtn, els.ftBoldBtn, els.ftItalicBtn].forEach((button) => button.classList.remove('is-active'));
+        updateFloatingToolbarContext();
+        return;
+      }
+      els.elementIdInput.value = state.selectedAttrs.id || '';
+      els.elementClassInput.value = state.selectedAttrs.class || '';
+      const fontSize = parseInt(state.selectedComputed.fontSize, 10);
+      const supportedSizes = ['12','14','16','20','24','32','48'];
+      const normalizedSize = supportedSizes.includes(String(fontSize)) ? String(fontSize) : '';
+      els.fontSizeSelect.value = normalizedSize;
+      els.ftFontSizeSelect.value = normalizedSize;
+      els.textColorInput.value = rgbToHex(state.selectedComputed.color || '#000000');
+      els.ftColorInput.value = rgbToHex(state.selectedComputed.color || '#000000');
+      els.bgColorInput.value = rgbToHex(state.selectedComputed.backgroundColor || '#ffffff');
+      els.borderColorInput.value = rgbToHex(state.selectedComputed.borderColor || '#000000');
+      els.borderStyleSelect.value = safeSelectValue(els.borderStyleSelect, state.selectedComputed.borderStyle);
+      els.displaySelect.value = safeSelectValue(els.displaySelect, state.selectedComputed.display);
+      els.positionSelect.value = safeSelectValue(els.positionSelect, state.selectedComputed.position);
+      els.zIndexInput.value = sanitizeCssValue(state.selectedComputed.zIndex);
+      els.widthInput.value = sanitizeCssValue(state.selectedComputed.width);
+      els.heightInput.value = sanitizeCssValue(state.selectedComputed.height);
+      els.leftInput.value = sanitizeCssValue(state.selectedComputed.left);
+      els.topInput.value = sanitizeCssValue(state.selectedComputed.top);
+      els.marginInput.value = sanitizeCssValue(state.selectedComputed.margin);
+      els.paddingInput.value = sanitizeCssValue(state.selectedComputed.padding);
+      els.borderWidthInput.value = sanitizeCssValue(state.selectedComputed.borderWidth);
+      const alignment = state.selectedComputed.textAlign || 'left';
+      els.alignButtons.forEach((button) => button.classList.toggle('is-active', button.dataset.align === alignment));
+      const boldActive = ['700', '800', '900', 'bold'].includes(state.selectedComputed.fontWeight);
+      const italicActive = state.selectedComputed.fontStyle === 'italic';
+      els.boldBtn.classList.toggle('is-active', boldActive);
+      els.ftBoldBtn.classList.toggle('is-active', boldActive);
+      els.italicBtn.classList.toggle('is-active', italicActive);
+      els.ftItalicBtn.classList.toggle('is-active', italicActive);
+      els.underlineBtn.classList.toggle('is-active', (state.selectedComputed.textDecorationLine || '').includes('underline'));
+      els.imageSection.style.display = (state.selectedFlags.isImage || state.selectedFlags.isVideo) ? '' : 'none';
+      if (state.selectedFlags.isImage || state.selectedFlags.isVideo) {
+        els.imageSrcInput.value = state.selectedAttrs.src || '';
+        els.imageAltInput.value = state.selectedFlags.isImage ? (state.selectedAttrs.alt || '') : '';
+      }
+      els.imageAltInput.closest('.field-group').style.display = state.selectedFlags.isImage ? '' : 'none';
+      [els.replaceImageBtn, els.fitImageBtn, els.copyImageUrlBtn, els.resetImageSizeBtn, els.rotateImageBtn, els.flipImageBtn].forEach((btn) => { if (btn) btn.style.display = state.selectedFlags.isImage ? '' : 'none'; });
+      updateFloatingToolbarContext();
+    }
+
+    // refreshUi
+    // Перерисовывает оболочку редактора: статусы, кнопки, подсказки, toolbar,
+    // видимость палитры и диагностические элементы.
+    function refreshUi() {
+      const hasPresentation = Boolean(state.modelDoc);
+      const hasSelection = Boolean(state.selectedNodeId && state.mode === 'edit');
+      els.exportBtn.disabled = !hasPresentation;
+      els.undoBtn.disabled = state.historyIndex <= 0;
+      els.redoBtn.disabled = state.historyIndex >= state.history.length - 1 || state.history.length === 0;
+      els.showSlideHtmlBtn.disabled = !hasPresentation || !state.activeSlideId || !hasStaticSlide(state.activeSlideId);
+      els.showElementHtmlBtn.disabled = !hasSelection;
+      els.editModeBtn.disabled = !hasPresentation || !state.editingSupported;
+      els.previewModeBtn.classList.toggle('is-active', state.mode === 'preview');
+      els.editModeBtn.classList.toggle('is-active', state.mode === 'edit');
+      els.dirtyIndicator.textContent = state.dirty ? 'Есть несохранённые изменения' : 'Нет несохранённых изменений';
+      els.dirtyIndicator.className = `status-pill ${state.dirty ? 'is-dirty' : ''}`.trim();
+      els.engineIndicator.textContent = `Движок: ${state.engine}`;
+      els.engineIndicator.className = `status-pill ${state.previewReady && state.bridgeAlive ? 'is-ok' : 'is-warning'}`.trim();
+      if (els.saveStatePill) {
+        const text = !hasPresentation ? 'Автосохранение неактивно' : state.dirty ? 'Есть несохранённые правки' : state.lastSavedAt ? `Сохранено ${new Date(state.lastSavedAt).toLocaleTimeString()}` : 'Изменений нет';
+        els.saveStatePill.textContent = text;
+        els.saveStatePill.className = `status-pill save-pill ${state.dirty ? 'is-saving' : 'is-saved'}`.trim();
+      }
+      if (els.quickPalette) els.quickPalette.style.display = hasPresentation ? '' : 'none';
+      if (!hasPresentation) {
+        els.documentMeta.textContent = 'Документ не загружен';
+        els.previewFrame.classList.add('hidden');
+        els.emptyState.classList.remove('hidden');
+      }
+      if (state.mode === 'preview') {
+        els.previewModeLabel.textContent = 'Режим просмотра: iframe ведёт себя как обычное открытие HTML, насколько это позволяет браузер.';
+        els.previewNoteText.textContent = 'Навигация, скрипты и горячие клавиши должны работать внутри самой презентации.';
+        els.inspectorHelp.textContent = hasPresentation
+          ? 'В режиме просмотра редактор не вмешивается в DOM презентации. Для правок переключись в режим редактирования.'
+          : 'Сначала загрузи HTML‑презентацию.';
+      } else {
+        els.previewModeLabel.textContent = 'Режим редактирования: можно выбирать почти любой элемент, редактировать текст, картинки, стили, размеры и структуру.';
+        els.previewNoteText.textContent = 'Правый клик открывает умное контекстное меню. Ctrl+Z / Ctrl+Y / Ctrl+D / Ctrl+Shift+C / Ctrl+Shift+V поддерживаются и внутри iframe.';
+        els.inspectorHelp.textContent = hasSelection
+          ? 'Изменения применяются сразу в iframe и синхронизируются в модель документа для корректного экспорта.'
+          : 'Кликни по элементу внутри слайда, чтобы выбрать его. Двойной клик по тексту начинает редактирование.';
+      }
+      updateDiagnostics();
+      positionFloatingToolbar();
+    }
+
+    function saveProjectToLocalStorage() {
+      if (!state.modelDoc) return;
+      try {
+        const payload = {
+          version: 3,
+          savedAt: Date.now(),
+          sourceLabel: state.sourceLabel,
+          manualBaseUrl: els.baseUrlInput.value.trim(),
+          activeSlideIndex: Math.max(0, state.slides.findIndex((slide) => slide.id === state.activeSlideId)),
+          html: serializeCurrentProject(),
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        state.lastSavedAt = payload.savedAt;
+        refreshUi();
+      } catch (error) {
+        addDiagnostic(`autosave-failed: ${error.message}`);
+      }
+    }
+
+  
+</script>
 </body>
 </html>
