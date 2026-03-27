@@ -1991,6 +1991,7 @@ textarea {
       bindInspectorActions();
       bindModals();
       bindMessages();
+      bindRuntimeGuards();
       bindUnloadWarning();
       bindGlobalShortcuts();
       bindClipboardAndDnD();
@@ -2176,53 +2177,57 @@ textarea {
 
         state.lastBridgeHeartbeatAt = Date.now();
 
-        switch (data.type) {
-          case 'bridge-ready':
-            state.bridgeAlive = true;
-            state.previewReady = true;
-            addDiagnostic(`bridge-ready: ${JSON.stringify(data.payload || {})}`);
-            setPreviewLoading(false);
-            showToast('Превью готово к работе.', 'success', { title: 'Iframe инициализирован' });
-            refreshUi();
-            break;
-          case 'runtime-metadata':
-            applyRuntimeMetadata(data.payload || {});
-            break;
-          case 'element-selected':
-            applyElementSelection(data.payload || {});
-            break;
-          case 'element-updated':
-            applyElementUpdateFromBridge(data.payload || {});
-            break;
-          case 'selection-geometry':
-            applySelectionGeometry(data.payload || {});
-            break;
-          case 'slide-updated':
-            applySlideUpdateFromBridge(data.payload || {});
-            break;
-          case 'slide-removed':
-            applySlideRemovedFromBridge(data.payload || {});
-            break;
-          case 'context-menu':
-            openContextMenuFromBridge(data.payload || {});
-            break;
-          case 'shortcut':
-            handleBridgeShortcut(data.payload || {});
-            break;
-          case 'runtime-error':
-            addDiagnostic(`iframe-error: ${data.payload?.message || 'unknown'} @ ${data.payload?.source || ''}:${data.payload?.line || ''}`);
-            showToast(data.payload?.message || 'Ошибка внутри iframe.', 'error', { title: 'Ошибка превью' });
-            break;
-          case 'runtime-log':
-            addDiagnostic(`iframe-log: ${data.payload?.message || ''}`);
-            break;
-          case 'bridge-heartbeat':
-            state.bridgeAlive = true;
-            refreshUi();
-            break;
-          case 'document-sync':
-            applyDocumentSyncFromBridge(data.payload || {});
-            break;
+        try {
+          switch (data.type) {
+            case 'bridge-ready':
+              state.bridgeAlive = true;
+              state.previewReady = true;
+              addDiagnostic(`bridge-ready: ${JSON.stringify(data.payload || {})}`);
+              setPreviewLoading(false);
+              showToast('Превью готово к работе.', 'success', { title: 'Iframe инициализирован' });
+              refreshUi();
+              break;
+            case 'runtime-metadata':
+              applyRuntimeMetadata(data.payload || {});
+              break;
+            case 'element-selected':
+              applyElementSelection(data.payload || {});
+              break;
+            case 'element-updated':
+              applyElementUpdateFromBridge(data.payload || {});
+              break;
+            case 'selection-geometry':
+              applySelectionGeometry(data.payload || {});
+              break;
+            case 'slide-updated':
+              applySlideUpdateFromBridge(data.payload || {});
+              break;
+            case 'slide-removed':
+              applySlideRemovedFromBridge(data.payload || {});
+              break;
+            case 'context-menu':
+              openContextMenuFromBridge(data.payload || {});
+              break;
+            case 'shortcut':
+              handleBridgeShortcut(data.payload || {});
+              break;
+            case 'runtime-error':
+              addDiagnostic(`iframe-error: ${data.payload?.message || 'unknown'} @ ${data.payload?.source || ''}:${data.payload?.line || ''}`);
+              showToast(data.payload?.message || 'Ошибка внутри iframe.', 'error', { title: 'Ошибка превью' });
+              break;
+            case 'runtime-log':
+              addDiagnostic(`iframe-log: ${data.payload?.message || ''}`);
+              break;
+            case 'bridge-heartbeat':
+              state.bridgeAlive = true;
+              refreshUi();
+              break;
+            case 'document-sync':
+              applyDocumentSyncFromBridge(data.payload || {});
+              break;
+          }
+        } catch (error) {
+          addDiagnostic(`parent-message-error:${data.type || 'unknown'}:${error.message}`);
         }
       });
     }
@@ -2235,17 +2240,27 @@ textarea {
       });
     }
 
+    function bindRuntimeGuards() {
+      window.addEventListener('error', (event) => {
+        addDiagnostic(`shell-error: ${event.message || 'unknown'} @ ${event.filename || ''}:${event.lineno || ''}`);
+      });
+      window.addEventListener('unhandledrejection', (event) => {
+        const message = event.reason instanceof Error ? event.reason.message : String(event.reason || 'Unhandled promise rejection');
+        addDiagnostic(`shell-promise-error: ${message}`);
+      });
+    }
+
     // bindGlobalShortcuts — единое место для shell-hotkeys. Важно: если фокус
     // находится в input/textarea/select, обычный ввод не перехватываем.
     function bindGlobalShortcuts() {
       window.addEventListener('keydown', async (event) => {
-        if (shouldIgnoreGlobalShortcut(event)) return;
-        const isMod = event.ctrlKey || event.metaKey;
         if (event.key === 'Escape') {
           closeContextMenu();
           if (els.htmlEditorModal.classList.contains('is-open')) closeModal(els.htmlEditorModal);
           return;
         }
+        if (shouldIgnoreGlobalShortcut(event)) return;
+        const isMod = event.ctrlKey || event.metaKey;
         if (isMod && event.key.toLowerCase() === 'z' && !event.shiftKey) {
           event.preventDefault();
           undo();
@@ -2547,8 +2562,12 @@ ${previewDoc.documentElement.outerHTML}`;
         const EDITOR_MARKER = 'data-editor-node-id';
         const SLIDE_MARKER = 'data-editor-slide-id';
         const HELPER_STYLE_ID = '__presentation_editor_helper_styles__';
+        const FLASH_ATTR = 'data-editor-flash';
         const EXCLUDED = new Set(['SCRIPT','STYLE','META','LINK','BASE','HEAD','HTML','BODY','NOSCRIPT','TEMPLATE']);
         const TEXT_TAGS = new Set(['H1','H2','H3','H4','H5','H6','P','LI','BLOCKQUOTE','FIGCAPTION','TD','TH','PRE','CODE','SMALL','LABEL','A','SPAN']);
+        const BLOCKED_ATTR_NAMES = new Set([EDITOR_MARKER, SLIDE_MARKER, 'contenteditable', 'spellcheck']);
+        const VALID_ATTR_NAME = /^[^\s"'<>\/=]+$/;
+        const UNSAFE_ATTR_NAME = /^on/i;
         const STATE = {
           engine: 'unknown',
           slides: [],
@@ -2558,6 +2577,7 @@ ${previewDoc.documentElement.outerHTML}`;
           slideObserver: null,
           resizeObserver: null,
           refreshQueued: false,
+          flashTimer: null,
           seq: 0,
         };
 
@@ -2573,6 +2593,11 @@ ${previewDoc.documentElement.outerHTML}`;
           onRuntimeError(event.message, event.filename, event.lineno, event.colno);
         });
 
+        window.addEventListener('unhandledrejection', function(event) {
+          const reason = event.reason instanceof Error ? event.reason.message : String(event.reason || 'Unhandled promise rejection');
+          onRuntimeError(reason, 'promise', 0, 0);
+        });
+
         // detectEngine — грубое определение deck engine по глобалам и DOM-маркерам.
         function detectEngine() {
           try {
@@ -2581,6 +2606,17 @@ ${previewDoc.documentElement.outerHTML}`;
             if (document.querySelector('.remark-slide-container') || document.querySelector('.remark-visible')) return 'remark';
           } catch (e) {}
           return 'generic';
+        }
+
+        function cssEscape(value) {
+          if (window.CSS && typeof window.CSS.escape === 'function') return window.CSS.escape(String(value));
+          return String(value).replace(/[^a-zA-Z0-9_-]/g, '\\$&');
+        }
+
+        function isTypingTarget(target) {
+          if (!(target instanceof Element)) return false;
+          if (target.isContentEditable) return true;
+          return Boolean(target.closest('input, textarea, select, option, [contenteditable=""], [contenteditable="true"], [contenteditable]:not([contenteditable="false"])'));
         }
 
         function nextNodeId() {
@@ -2746,6 +2782,13 @@ ${previewDoc.documentElement.outerHTML}`;
               '[data-editor-hover="true"] {' +
               'outline: 1px dashed rgba(38, 103, 255, 0.5) !important;' +
               'outline-offset: 2px !important;' +
+              '}' +
+              '[data-editor-flash="true"] {' +
+              'animation: presentation-editor-flash 720ms ease-out;' +
+              '}' +
+              '@keyframes presentation-editor-flash {' +
+              '0% { box-shadow: 0 0 0 0 rgba(38, 103, 255, 0.48); }' +
+              '100% { box-shadow: 0 0 0 18px rgba(38, 103, 255, 0); }' +
               '}'
             : '';
         }
@@ -2769,9 +2812,55 @@ ${previewDoc.documentElement.outerHTML}`;
           return el instanceof Element && el.tagName === 'IFRAME' && /(youtube|youtu\.be|vimeo)/i.test(el.getAttribute('src') || '');
         }
 
+        function isContainerElement(el) {
+          if (!(el instanceof Element)) return false;
+          if (el.hasAttribute(SLIDE_MARKER)) return false;
+          if (isImageElement(el) || isVideoFrame(el) || canEditText(el)) return false;
+          return el.children.length > 0 || ['DIV','SECTION','ARTICLE','MAIN','HEADER','FOOTER','ASIDE','NAV','FIGURE','UL','OL','TABLE'].includes(el.tagName);
+        }
+
         function getEditableElementFromTarget(target) {
           if (!(target instanceof Element)) return null;
           return target.closest('[' + EDITOR_MARKER + ']');
+        }
+
+        function normalizeDomId(value) {
+          return String(value || '').replace(/\s+/g, '-').trim();
+        }
+
+        function collectUsedDomIds(exceptRoot) {
+          const used = new Set();
+          document.querySelectorAll('[id]').forEach((el) => {
+            if (exceptRoot instanceof Element && (el === exceptRoot || exceptRoot.contains(el))) return;
+            const id = normalizeDomId(el.getAttribute('id') || '');
+            if (id) used.add(id);
+          });
+          return used;
+        }
+
+        function claimUniqueDomId(baseId, usedIds) {
+          const normalized = normalizeDomId(baseId);
+          if (!normalized) return '';
+          let candidate = normalized;
+          let index = 2;
+          while (usedIds.has(candidate)) {
+            candidate = normalized + '-copy' + (index > 2 ? '-' + index : '');
+            index += 1;
+          }
+          usedIds.add(candidate);
+          return candidate;
+        }
+
+        function ensureUniqueDomIds(root, exceptRoot) {
+          if (!(root instanceof Element)) return;
+          const usedIds = collectUsedDomIds(exceptRoot);
+          const nodes = [];
+          if (root.id) nodes.push(root);
+          root.querySelectorAll('[id]').forEach((el) => nodes.push(el));
+          nodes.forEach((el) => {
+            const uniqueId = claimUniqueDomId(el.id, usedIds);
+            if (uniqueId) el.id = uniqueId; else el.removeAttribute('id');
+          });
         }
 
         function clearHover() {
@@ -2784,8 +2873,13 @@ ${previewDoc.documentElement.outerHTML}`;
             if (el.isContentEditable) el.removeAttribute('contenteditable');
             el.removeAttribute('spellcheck');
           });
+          document.querySelectorAll('[' + FLASH_ATTR + '="true"]').forEach((el) => el.removeAttribute(FLASH_ATTR));
           if (STATE.resizeObserver) {
             STATE.resizeObserver.disconnect();
+          }
+          if (STATE.flashTimer) {
+            window.clearTimeout(STATE.flashTimer);
+            STATE.flashTimer = null;
           }
           STATE.selectedEl = null;
           STATE.selectedNodeId = null;
@@ -2845,6 +2939,7 @@ ${previewDoc.documentElement.outerHTML}`;
             canEditText: canEditText(el),
             isImage: isImageElement(el),
             isVideo: isVideoFrame(el),
+            isContainer: isContainerElement(el),
           });
         }
 
@@ -2895,6 +2990,7 @@ ${previewDoc.documentElement.outerHTML}`;
             canEditText: canEditText(el),
             isImage: isImageElement(el),
             isVideo: isVideoFrame(el),
+            isContainer: isContainerElement(el),
           });
           queueMetadataRefresh();
         }
@@ -2978,6 +3074,7 @@ ${previewDoc.documentElement.outerHTML}`;
           const el = findNodeById(nodeId);
           if (!el || el.hasAttribute(SLIDE_MARKER)) return;
           const clone = el.cloneNode(true);
+          ensureUniqueDomIds(clone);
           assignIdsDeep(clone);
           el.after(clone);
           selectElement(clone, { focusText: false });
@@ -3000,6 +3097,51 @@ ${previewDoc.documentElement.outerHTML}`;
           if (slide) notifySlideUpdated(slide);
         }
 
+        function syncSlideToParent(slide) {
+          if (!slide) return;
+          post('document-sync', { slideId: slide.getAttribute(SLIDE_MARKER), html: slide.outerHTML });
+        }
+
+        function updateAttributes(nodeId, attrs) {
+          const el = findNodeById(nodeId);
+          if (!el || !attrs || typeof attrs !== 'object') return;
+          Object.entries(attrs).forEach(([name, rawValue]) => {
+            const attrName = String(name || '').trim();
+            if (!attrName || BLOCKED_ATTR_NAMES.has(attrName) || UNSAFE_ATTR_NAME.test(attrName) || !VALID_ATTR_NAME.test(attrName)) return;
+            const value = rawValue == null ? '' : String(rawValue).trim();
+            if (!value) {
+              el.removeAttribute(attrName);
+              return;
+            }
+            if (attrName === 'class') {
+              const normalized = value.split(/\s+/).filter(Boolean).join(' ');
+              if (normalized) el.setAttribute('class', normalized); else el.removeAttribute('class');
+              return;
+            }
+            if (attrName === 'id') {
+              const usedIds = collectUsedDomIds(el);
+              const uniqueId = claimUniqueDomId(value, usedIds);
+              if (uniqueId) el.setAttribute('id', uniqueId); else el.removeAttribute('id');
+              return;
+            }
+            el.setAttribute(attrName, value);
+          });
+          selectElement(el, { focusText: false });
+          notifyElementUpdated(el);
+        }
+
+        function flashNodeById(nodeId) {
+          const el = findNodeById(nodeId);
+          if (!el) return;
+          if (STATE.flashTimer) window.clearTimeout(STATE.flashTimer);
+          el.setAttribute(FLASH_ATTR, 'true');
+          STATE.flashTimer = window.setTimeout(() => {
+            if (el.isConnected) el.removeAttribute(FLASH_ATTR);
+            STATE.flashTimer = null;
+          }, 720);
+          notifySelectionGeometry();
+        }
+
         function replaceImageSrc(nodeId, src, alt) {
           const el = findNodeById(nodeId);
           if (!el || el.tagName !== 'IMG') return;
@@ -3013,6 +3155,7 @@ ${previewDoc.documentElement.outerHTML}`;
           const html = payload.html || '';
           const insertion = parseSingleRoot(html);
           if (!insertion) return;
+          ensureUniqueDomIds(insertion);
           assignIdsDeep(insertion);
           const anchor = findNodeById(payload.anchorNodeId);
           const slide = findSlideById(payload.slideId) || (anchor ? anchor.closest('[' + SLIDE_MARKER + ']') : getCurrentSlide());
@@ -3066,6 +3209,7 @@ ${previewDoc.documentElement.outerHTML}`;
             clientY: event.clientY,
             isImage: isImageElement(el),
             canEditText: canEditText(el),
+            isContainer: isContainerElement(el),
           });
         }, true);
 
@@ -3087,6 +3231,13 @@ ${previewDoc.documentElement.outerHTML}`;
 
         document.addEventListener('keydown', (event) => {
           if (!STATE.editMode) return;
+          if (event.key === 'Escape' && STATE.selectedEl) {
+            STATE.selectedEl.blur();
+            STATE.selectedEl.removeAttribute('contenteditable');
+            selectElement(STATE.selectedEl, { focusText: false });
+            return;
+          }
+          if (isTypingTarget(event.target)) return;
           const isMod = event.ctrlKey || event.metaKey;
           if (isMod && event.key.toLowerCase() === 'd') {
             event.preventDefault();
@@ -3107,11 +3258,6 @@ ${previewDoc.documentElement.outerHTML}`;
             event.preventDefault();
             post('shortcut', { action: 'delete' });
             return;
-          }
-          if (event.key === 'Escape' && STATE.selectedEl) {
-            STATE.selectedEl.blur();
-            STATE.selectedEl.removeAttribute('contenteditable');
-            selectElement(STATE.selectedEl, { focusText: false });
           }
         });
 
@@ -3143,101 +3289,117 @@ ${previewDoc.documentElement.outerHTML}`;
         window.addEventListener('message', (event) => {
           const data = event.data;
           if (!data || data.__presentationEditorParent !== true) return;
+          if (event.source !== parent) return;
           if (data.token !== TOKEN) return;
           const payload = data.payload || {};
-          switch (data.type) {
-            case 'set-mode': {
-              STATE.editMode = payload.mode === 'edit';
-              if (!STATE.editMode) {
-                clearHover();
-                clearSelection();
+          try {
+            switch (data.type) {
+              case 'set-mode': {
+                STATE.editMode = payload.mode === 'edit';
+                if (!STATE.editMode) {
+                  clearHover();
+                  clearSelection();
+                }
+                ensureHelperStyles();
+                break;
               }
-              ensureHelperStyles();
-              break;
+              case 'navigate-to-slide': {
+                navigateToSlide(payload.slideId, payload.index);
+                break;
+              }
+              case 'select-element': {
+                const el = findNodeById(payload.nodeId);
+                if (el) selectElement(el, { focusText: Boolean(payload.focusText) });
+                break;
+              }
+              case 'apply-style': {
+                const el = findNodeById(payload.nodeId);
+                if (!el) return;
+                el.style[payload.styleName] = payload.value || '';
+                selectElement(el, { focusText: false });
+                notifyElementUpdated(el);
+                break;
+              }
+              case 'apply-styles': {
+                const el = findNodeById(payload.nodeId);
+                if (!el) return;
+                Object.entries(payload.styles || {}).forEach(([name, value]) => {
+                  el.style[name] = value || '';
+                });
+                selectElement(el, { focusText: false });
+                notifyElementUpdated(el);
+                break;
+              }
+              case 'update-attributes': {
+                updateAttributes(payload.nodeId, payload.attrs || {});
+                break;
+              }
+              case 'replace-image-src': {
+                replaceImageSrc(payload.nodeId, payload.src, payload.alt || '');
+                break;
+              }
+              case 'reset-inline-styles': {
+                const el = findNodeById(payload.nodeId);
+                if (!el) return;
+                el.removeAttribute('style');
+                selectElement(el, { focusText: false });
+                notifyElementUpdated(el);
+                break;
+              }
+              case 'delete-element': {
+                deleteElementById(payload.nodeId);
+                break;
+              }
+              case 'duplicate-element': {
+                duplicateElementById(payload.nodeId);
+                break;
+              }
+              case 'move-element': {
+                moveElementById(payload.nodeId, Number(payload.direction) || 0);
+                break;
+              }
+              case 'insert-element': {
+                insertElement(payload);
+                break;
+              }
+              case 'flash-node': {
+                flashNodeById(payload.nodeId);
+                break;
+              }
+              case 'request-slide-sync': {
+                const slide = findSlideById(payload.slideId) || getCurrentSlide();
+                if (slide) syncSlideToParent(slide);
+                break;
+              }
+              case 'replace-node-html': {
+                const current = findNodeById(payload.nodeId);
+                if (!current) return;
+                const replacement = parseSingleRoot(payload.html);
+                if (!replacement) return;
+                ensureUniqueDomIds(replacement, current);
+                replacement.setAttribute(EDITOR_MARKER, payload.nodeId);
+                assignIdsDeep(replacement);
+                current.replaceWith(replacement);
+                selectElement(replacement, { focusText: false });
+                notifyElementUpdated(replacement);
+                break;
+              }
+              case 'replace-slide-html': {
+                const current = findSlideById(payload.slideId);
+                if (!current) return;
+                const replacement = parseSingleRoot(payload.html);
+                if (!replacement) return;
+                ensureUniqueDomIds(replacement, current);
+                replacement.setAttribute(SLIDE_MARKER, payload.slideId);
+                assignIdsDeep(replacement);
+                current.replaceWith(replacement);
+                STATE.slides = collectSlides();
+                emitRuntimeMetadata();
+                break;
+              }
             }
-            case 'navigate-to-slide': {
-              navigateToSlide(payload.slideId, payload.index);
-              break;
-            }
-            case 'select-element': {
-              const el = findNodeById(payload.nodeId);
-              if (el) selectElement(el, { focusText: Boolean(payload.focusText) });
-              break;
-            }
-            case 'apply-style': {
-              const el = findNodeById(payload.nodeId);
-              if (!el) return;
-              el.style[payload.styleName] = payload.value || '';
-              selectElement(el, { focusText: false });
-              notifyElementUpdated(el);
-              break;
-            }
-            case 'apply-styles': {
-              const el = findNodeById(payload.nodeId);
-              if (!el) return;
-              Object.entries(payload.styles || {}).forEach(([name, value]) => {
-                el.style[name] = value || '';
-              });
-              selectElement(el, { focusText: false });
-              notifyElementUpdated(el);
-              break;
-            }
-            case 'update-attributes': {
-              updateAttributes(payload.nodeId, payload.attrs || {});
-              break;
-            }
-            case 'replace-image-src': {
-              replaceImageSrc(payload.nodeId, payload.src, payload.alt || '');
-              break;
-            }
-            case 'reset-inline-styles': {
-              const el = findNodeById(payload.nodeId);
-              if (!el) return;
-              el.removeAttribute('style');
-              selectElement(el, { focusText: false });
-              notifyElementUpdated(el);
-              break;
-            }
-            case 'delete-element': {
-              deleteElementById(payload.nodeId);
-              break;
-            }
-            case 'duplicate-element': {
-              duplicateElementById(payload.nodeId);
-              break;
-            }
-            case 'move-element': {
-              moveElementById(payload.nodeId, Number(payload.direction) || 0);
-              break;
-            }
-            case 'insert-element': {
-              insertElement(payload);
-              break;
-            }
-            case 'replace-node-html': {
-              const current = findNodeById(payload.nodeId);
-              if (!current) return;
-              const replacement = parseSingleRoot(payload.html);
-              if (!replacement) return;
-              replacement.setAttribute(EDITOR_MARKER, payload.nodeId);
-              assignIdsDeep(replacement);
-              current.replaceWith(replacement);
-              selectElement(replacement, { focusText: false });
-              notifyElementUpdated(replacement);
-              break;
-            }
-            case 'replace-slide-html': {
-              const current = findSlideById(payload.slideId);
-              if (!current) return;
-              const replacement = parseSingleRoot(payload.html);
-              if (!replacement) return;
-              replacement.setAttribute(SLIDE_MARKER, payload.slideId);
-              assignIdsDeep(replacement);
-              current.replaceWith(replacement);
-              STATE.slides = collectSlides();
-              emitRuntimeMetadata();
-              break;
-            }
+          } catch (error) {
+            onRuntimeError(error.message || String(error), 'bridge-message:' + (data.type || 'unknown'), 0, 0);
           }
         });
 
@@ -3262,13 +3424,19 @@ ${previewDoc.documentElement.outerHTML}`;
     }
 
     function sendToBridge(type, payload = {}) {
-      if (!state.bridgeToken || !els.previewFrame.contentWindow) return;
-      els.previewFrame.contentWindow.postMessage({
-        __presentationEditorParent: true,
-        token: state.bridgeToken,
-        type,
-        payload,
-      }, '*');
+      if (!state.bridgeToken || !els.previewFrame.contentWindow) return false;
+      try {
+        els.previewFrame.contentWindow.postMessage({
+          __presentationEditorParent: true,
+          token: state.bridgeToken,
+          type,
+          payload,
+        }, '*');
+        return true;
+      } catch (error) {
+        addDiagnostic(`bridge-send-error:${type}:${error.message}`);
+        return false;
+      }
     }
 
     // applyRuntimeMetadata
@@ -3323,6 +3491,22 @@ ${previewDoc.documentElement.outerHTML}`;
       updateInspectorFromSelection();
     }
 
+    function clearSelectedElementState() {
+      state.selectedNodeId = null;
+      state.selectedTag = null;
+      state.selectedComputed = null;
+      state.selectedHtml = '';
+      state.selectedRect = null;
+      state.selectedAttrs = {};
+      state.selectedFlags = { canEditText: false, isImage: false, isVideo: false, isContainer: false };
+      hideFloatingToolbar();
+      updateInspectorFromSelection();
+    }
+
+    function selectedNodeExistsInModel() {
+      return Boolean(state.selectedNodeId && state.modelDoc?.querySelector(`[data-editor-node-id="${cssEscape(state.selectedNodeId)}"]`));
+    }
+
     function applyElementUpdateFromBridge(payload) {
       const nodeId = payload.nodeId;
       if (!nodeId || !state.modelDoc) return;
@@ -3365,6 +3549,9 @@ ${previewDoc.documentElement.outerHTML}`;
         const replacement = parseSingleRootElement(html);
         replacement.setAttribute('data-editor-slide-id', slideId);
         currentSlide.replaceWith(state.modelDoc.importNode(replacement, true));
+        if (!selectedNodeExistsInModel()) {
+          clearSelectedElementState();
+        }
         commitChange('slide-updated');
         renderSlidesList();
         refreshUi();
@@ -3380,13 +3567,10 @@ ${previewDoc.documentElement.outerHTML}`;
       if (!slide) return;
       slide.remove();
       if (state.activeSlideId === slideId) state.activeSlideId = null;
-      state.selectedNodeId = null;
-      state.selectedHtml = '';
-      state.selectedComputed = null;
+      clearSelectedElementState();
       commitChange('slide-removed');
       renderSlidesList();
       refreshUi();
-      hideFloatingToolbar();
     }
 
     function handleBridgeShortcut(payload) {
@@ -3412,14 +3596,7 @@ ${previewDoc.documentElement.outerHTML}`;
       state.mode = mode;
       closeContextMenu();
       if (mode === 'preview') {
-        state.selectedNodeId = null;
-        state.selectedTag = null;
-        state.selectedComputed = null;
-        state.selectedHtml = '';
-        state.selectedRect = null;
-        state.selectedAttrs = {};
-        state.selectedFlags = { canEditText: false, isImage: false, isVideo: false, isContainer: false };
-        hideFloatingToolbar();
+        clearSelectedElementState();
       }
       sendToBridge('set-mode', { mode });
       refreshUi();
@@ -3686,19 +3863,14 @@ ${exportDoc.documentElement.outerHTML}`;
       state.engine = 'unknown';
       state.slides = [];
       state.activeSlideId = null;
-      state.selectedNodeId = null;
-      state.selectedTag = null;
-      state.selectedComputed = null;
-      state.selectedHtml = '';
-      state.selectedRect = null;
-      state.selectedAttrs = {};
-      state.selectedFlags = { canEditText: false, isImage: false, isVideo: false, isContainer: false };
+      clearSelectedElementState();
       state.diagnostics = [];
       state.editingSupported = false;
       updateDiagnostics();
     }
 
     function cleanupPreviewUrl() {
+      els.previewFrame.onload = null;
       if (state.previewUrl) {
         URL.revokeObjectURL(state.previewUrl);
         state.previewUrl = null;
@@ -3872,8 +4044,8 @@ ${exportDoc.documentElement.outerHTML}`;
     }
 
     function cssEscape(value) {
-      if (window.CSS && typeof window.CSS.escape === 'function') return window.CSS.escape(value);
-      return String(value).replace(/[^a-zA-Z0-9_-]/g, '\$&');
+      if (window.CSS && typeof window.CSS.escape === 'function') return window.CSS.escape(String(value));
+      return String(value).replace(/[^a-zA-Z0-9_-]/g, '\\$&');
     }
 
     function escapeHtml(value) {
@@ -3887,7 +4059,9 @@ ${exportDoc.documentElement.outerHTML}`;
 
     function shouldIgnoreGlobalShortcut(event) {
       const el = event.target;
-      return Boolean(el instanceof HTMLElement && el.closest('input, textarea, select') && !(event.ctrlKey || event.metaKey));
+      if (!(el instanceof HTMLElement)) return false;
+      if (el.isContentEditable) return true;
+      return Boolean(el.closest('input, textarea, select, option, [contenteditable=""], [contenteditable="true"], [contenteditable]:not([contenteditable="false"])'));
     }
 
     
@@ -4783,6 +4957,9 @@ ${exportDoc.documentElement.outerHTML}`;
         const replacement = parseSingleRootElement(html);
         replacement.setAttribute('data-editor-slide-id', slideId);
         currentSlide.replaceWith(state.modelDoc.importNode(replacement, true));
+        if (!selectedNodeExistsInModel()) {
+          clearSelectedElementState();
+        }
         commitChange('bridge-sync');
         renderSlidesList();
         refreshUi();
