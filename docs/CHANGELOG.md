@@ -1,0 +1,33 @@
+# CHANGELOG
+
+## 0.13.1 - shell hardening - 2026-03-31
+- removed the feedback loop between design-time chrome sizes and measured runtime offsets; shell now uses `--topbar-min-h` for styling and `--shell-top-offset` / `--mobile-rail-offset` for live geometry
+- hardened topbar, secondary row, preview note, panel internals, and button sizing against frozen width assumptions via predictable grid/min-width rules
+- normalized shell layout metrics into one model for popovers, context menu, compact toolbar, drawer lock state, and viewport insets
+- moved slide-template popover out of the drawer subtree so it no longer disappears with a hidden ancestor in compact shell mode
+- upgraded narrow-width popovers and context menu to deterministic sheet fallback on `390 / 640 / 820` instead of relying on fragile anchored placement
+- converted compact floating toolbar to viewport-anchored positioning using the same shell inset metrics as other overlays
+- removed hidden-but-focusable toolbar state; offscreen toolbar controls no longer stay in the keyboard path when no active selection exists
+- verified responsive shell behavior on `390 / 640 / 820 / 1100 / 1280 / 1440`, plus light/dark and keyboard-basics smoke checks
+
+## 0.12.1 - audit / v13 planning - 2026-03-31
+- reconstructed current v12 state from code + docs
+- classified closed vs partially mitigated vs still-critical issues
+- defined top-5 blockers for v13
+- prepared execution plan, file boundaries, and future commit/tag sequence
+
+## 0.12.1 - 2026-03-31
+- fixed bridge script serialization in iframe preview; regex-based helpers no longer break at runtime
+- fixed empty preview state so the loading overlay does not block `Open HTML`
+- changed slide activation flow to wait for runtime confirmation instead of optimistic shell-only activation
+- split clean export from validation preview export; clean export no longer leaks bridge or editor markers
+- fixed direct manipulation coordinate origin for `absolute` and `fixed` elements
+- added separate tracking for unresolved assets vs base-URL-dependent assets
+- synced compact shell panel visibility with `hidden` / `aria-hidden` / `inert`
+
+## 0.12.0
+- compact and safer floating toolbar path on narrow widths
+- context menu sheet-mode fallback on narrow widths
+- safer direct manipulation gating for complex geometry
+- tiny-target overlay adjustments
+- shell cleanup around preview/edit flows
