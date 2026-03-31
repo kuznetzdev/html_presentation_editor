@@ -1,38 +1,69 @@
-# HTML Presentation Editor Repository Pack
+# HTML Presentation Editor
 
-Это собранный пакет текущего состояния проекта **HTML Presentation Editor**.
+Local shell-driven editor for existing HTML slide decks.
 
-## Что внутри
+The product goal is simple:
 
-- `editor/presentation-editor-v12.html` — актуальная hardened-сборка редактора
-- `docs/SOURCE_OF_TRUTH.md` — зафиксированная продуктовая и архитектурная истина
-- `docs/README_REPO_STRUCTURE.md` — структура репозитория и назначение файлов
-- `docs/CODEX_HANDOFF_PROMPTS.md` — последовательные handoff-промпты для Codex/ИИ-агента
-- `docs/REPORT_V12.md` — отчёт по последнему инженерному проходу
-- `docs/VALIDATION_NOTES_V12.md` — notes по валидации последнего прохода
-- `docs/REMAINING_ISSUES.md` — актуальный backlog после v12
-- `docs/history/` — предыдущие HTML-версии, diff и отчёты
-- `docs/source-materials/` — исходные ТЗ, handoff и материалы проекта
+`Open -> select -> edit -> save`
 
-## Рекомендованная точка входа
+In basic mode the user should not need to understand HTML at all. The editor
+must feel closer to a standard presentation tool than to DevTools. Advanced
+mode is allowed to expose structure, HTML, and low-level controls for users who
+need deeper deck surgery.
 
-1. Прочитать `docs/SOURCE_OF_TRUTH.md`
-2. Прочитать `docs/CODEX_HANDOFF_PROMPTS.md`
-3. Открыть `editor/presentation-editor-v12.html`
-4. Далее работать от `docs/REMAINING_ISSUES.md`
+## Current state
 
-## Ключевые инварианты
+- Current package version: `0.13.9`
+- Main runtime file: `editor/presentation-editor-v12.html`
+- Architecture remains fixed: `parent shell + iframe preview + bridge + modelDoc`
+- Full Playwright suite on `main`: `125 passed / 67 skipped`
+- Asset parity validation: green
 
-- `iframe + bridge + modelDoc` не ломать
-- shell-UI живёт снаружи контента
-- export обязан оставаться чистым
-- Basic / Advanced обязательны
-- при конфликте между новой фичей и устойчивостью побеждает устойчивость
+## What is working
 
-## Текущий фокус разработки
+- Load an existing HTML deck into an isolated iframe preview
+- Switch between Preview and Edit without changing the core architecture
+- Keep runtime-confirmed active slide state in sync with the shell
+- Edit text, replace images, insert blocks, insert media, and use slide-level actions
+- Use direct manipulation on the supported safe geometry envelope
+- Keep unsafe manipulation paths blocked with explicit UX feedback
+- Duplicate, delete, undo, redo, autosave, and restore deterministically
+- Reorder slides from the rail on desktop with drag and drop
+- Open a unified slide action menu from the rail, with compact-safe kebab access
+- Export clean HTML without editor-only chrome or bridge residue
 
-1. Shell / responsive hardening
-2. Slide model v2
-3. Asset edge cases
-4. Direct manipulation hardening
-5. Очистка структуры кода без новых override-слоёв
+## Product rules
+
+- The shell stays outside presentation content
+- Preview stays truthful to the runtime deck
+- Export stays clean
+- Basic and Advanced modes both remain first-class
+- Reliability beats feature count when those goals conflict
+
+## Repository entry points
+
+- `editor/presentation-editor-v12.html`
+  Current editor runtime
+- `docs/SOURCE_OF_TRUTH.md`
+  Product and architecture invariants
+- `docs/PROJECT_SUMMARY.md`
+  Current state snapshot
+- `docs/CHANGELOG.md`
+  Release-level engineering history
+- `docs/ROADMAP_NEXT.md`
+  Next priorities
+- `.codex/skills/html-presentation-editor/SKILL.md`
+  Project-local operating rules for Codex
+
+## Development commands
+
+```bash
+npm test
+npm run test:asset-parity
+```
+
+## Recent milestone tags
+
+- `ux-regression-baseline-v1`
+- `ux-direct-manipulation-v1`
+- `ux-slide-structure-v1`

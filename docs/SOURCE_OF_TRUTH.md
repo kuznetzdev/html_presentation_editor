@@ -1,173 +1,138 @@
 # SOURCE OF TRUTH
-## Проект: HTML Presentation Editor
 
-**Версия:** 1.0  
-**Статус:** основной документ проекта
+## Project
 
-## 1. Что мы строим
+HTML Presentation Editor
 
-Мы строим локальный/клиентский визуальный редактор HTML-презентаций, который позволяет:
-- загрузить существующий HTML-файл презентации;
-- показать превью максимально близко к тому, как HTML открывается в браузере;
-- выбрать любой допустимый элемент слайда;
-- изменить текст, изображения, видео, базовые стили и структуру;
-- вставлять новые элементы;
-- экспортировать назад чистый HTML без следов редактора.
+## Product definition
 
-Это не generic page builder, не CMS и не low-code система общего назначения.
-Это специализированный редактор HTML-презентаций.
+This is a local visual editor for existing HTML slide decks.
 
-## 2. Главная цель продукта
+It is not:
 
-Сделать редактор, который:
-- не требует обучения;
-- не допускает тупиков;
-- понятен даже слабому пользователю;
-- не ломает презентацию при обычных действиях;
-- даёт ощущение качественного современного продукта;
-- работает стабильно как инструмент редактирования, а не как технодемка.
+- a generic page builder
+- a CMS
+- a low-code website tool
 
-Главное ощущение:
-**Открыл → выбрал → изменил → сохранил**
+It exists to let a user open a real HTML presentation, edit it safely, and
+export clean HTML again.
 
-## 3. Неподвижные инварианты
+## Core product promise
+
+The default user path is:
+
+`Open -> select -> edit -> save`
+
+The user should be able to do normal work without understanding HTML.
+
+### Basic mode
+
+Basic mode is for presentation editing, not code editing.
+
+It should prioritize:
+
+- obvious actions
+- fast selection and editing
+- minimal UI noise
+- safe defaults
+- no dead ends
+
+### Advanced mode
+
+Advanced mode may expose:
+
+- HTML editing
+- id/class/dataset controls
+- diagnostics
+- precise sizing and positioning
+- structural controls
+
+Advanced mode exists for power users. It must not leak complexity back into
+the basic path.
+
+## Non-negotiable invariants
 
 - no dead ends
 - predictable UX
-- preview = truth
-- recoverability через undo/redo/autosave
-- Basic / Advanced обязательны
-- shell UI живёт снаружи контента
-- export обязан быть чистым
+- preview equals runtime truth
+- recoverability through undo, redo, and autosave
+- shell UI stays outside presentation content
+- export stays clean
+- `iframe + bridge + modelDoc` remains the fixed architecture
 
-## 4. Архитектура
+## Architecture
 
-Зафиксированная схема:
-- Parent shell
-- Iframe preview
-- Bridge
-- modelDoc
+### Parent shell
 
-Parent shell отвечает за:
+Owns:
+
 - topbar
-- slides list
+- slide rail
 - inspector
 - floating toolbar
 - context menu
 - insert palette
 - history
-- autosave
+- autosave and restore
 - export
-- mobile shell
+- compact shell
 - diagnostics UI
 
-Iframe отвечает за:
-- живой запуск документа
-- реальный DOM презентации
-- выполнение презентационных скриптов
-- runtime selection/editing через bridge
+### Iframe preview
 
-Bridge отвечает за:
-- команды parent → iframe
-- сообщения iframe → parent
+Owns:
+
+- truthful runtime DOM for the presentation
+- execution of presentation scripts
+- runtime selection and editing inside the deck
+
+### Bridge
+
+Owns:
+
+- parent-to-iframe commands
+- iframe-to-parent state sync
 - runtime metadata
-- selection
-- element/slide updates
-- diagnostics / heartbeat
+- selection payloads
+- element and slide updates
+- diagnostics and heartbeat
 
-modelDoc отвечает за:
-- каноническую модель документа
-- export
-- restore
+### modelDoc
+
+Owns:
+
+- canonical document state
+- export source
+- restore source
 - history source
-- editor logic
+- editor-side structural logic
 
-## 5. Архитектурные запреты
+## UX rules
 
-- нельзя ломать `iframe + bridge + modelDoc`
-- нельзя превращать editor в DOM-грязь
-- нельзя выстраивать продукт вокруг полной пересборки iframe как основного пути
-- нельзя тащить продукт в generic page builder
+- The slide content is visually primary
+- Shell chrome must stay quieter than the presentation canvas
+- The rail is for navigation and simple structure actions
+- Desktop may use drag-and-drop reorder in the rail
+- Compact widths should prefer explicit menu actions over fragile drag paths
+- Blocked actions must fail honestly with feedback, not silently
 
-## 6. Режимы
+## Current signed-off capabilities
 
-### Preview mode
-- честный просмотр
-- минимум вмешательства
-- selection UI скрыт
+- load deck into isolated iframe preview
+- switch Preview and Edit without changing architecture
+- runtime-confirmed slide activation
+- slide create, duplicate, delete, undo, redo, autosave, and restore
+- safe direct manipulation for the signed-off geometry envelope
+- truthful blocking for unsafe manipulation contexts
+- desktop rail drag-and-drop reorder
+- unified slide action menu with compact-safe access
+- clean export and asset parity validation
 
-### Edit mode
-- выбор элементов
-- редактирование
-- вставка
-- structural actions
-- защитные механизмы
+## Priority rule
 
-## 7. Basic / Advanced
+If there is a conflict between:
 
-Basic:
-- закрывает массовые типовые действия
-- не похож на devtools
+- adding more power
+- making the editor clearer, safer, and more reliable
 
-Advanced:
-- position / size / margin / padding
-- id / class / dataset
-- HTML элемента / слайда
-- diagnostics
-
-## 8. Текущие обязательные подсистемы
-
-- slides list
-- preview stage
-- inspector
-- floating toolbar
-- context menu
-- insert palette
-- history / autosave / recovery
-- export
-
-## 9. Текущий backlog высокого приоритета
-
-1. Live browser QA hardening
-   - 390 / 640 / 820 / 1100 / 1280 / 1440+
-   - topbar/menu/drawers/mobile rail не уезжают
-
-2. Slide model v2
-   - slide registry
-   - slide settings
-   - deterministic activation
-   - safer slide-level UX
-
-3. Asset edge cases
-   - relative assets
-   - CSS url()
-   - srcset
-   - media/poster
-   - preview/export consistency
-   - unresolved assets reporting
-
-4. Direct manipulation QA hardening
-   - transformed elements
-   - nested positioned containers
-   - zoom / scroll
-   - touch / trackpad
-   - very small targets
-   - overlay collision cases
-
-5. Structural cleanup
-   - shell-layout
-   - theme-system
-   - preview-lifecycle
-   - selection/direct-manipulation
-   - inspector
-   - slide-model
-   - asset/export
-
-## 10. Правило приоритета
-
-Если возникает конфликт между:
-- “добавить ещё фичу”
-и
-- “сделать путь пользователя проще, надёжнее и чище”,
-
-всегда побеждает второе.
+the second one wins.
