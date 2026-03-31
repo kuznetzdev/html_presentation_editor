@@ -2154,6 +2154,14 @@
           display: block;
         }
 
+        body[data-left-panel-open="true"] .panel-backdrop {
+          left: min(var(--drawer-width), 100vw);
+        }
+
+        body[data-right-panel-open="true"] .panel-backdrop {
+          right: min(var(--drawer-width), 100vw);
+        }
+
         .panel-main {
           min-height: calc(
             100dvh - var(--shell-top-offset) - 32px - var(--mobile-rail-offset)

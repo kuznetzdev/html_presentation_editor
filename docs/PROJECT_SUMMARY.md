@@ -2,7 +2,7 @@
 
 ## Current version
 
-`0.13.5`
+`0.13.6`
 
 ## Product state
 
@@ -34,6 +34,7 @@ The fixed architecture is unchanged:
 - direct manipulation is now proven for the supported keyboard-nudge envelope across `absolute`, `fixed`, and nested positioned contexts
 - unsafe transformed manipulation paths stay honestly blocked and surfaced through diagnostics instead of producing incorrect coordinates
 - connected asset-directory diagnostics are now proven through active Stage D browser coverage across the signed-off Chromium width set
+- compact-shell drawers are now proven to close through the real backdrop hit-area on `390 / 640 / 820`, and hidden panels stay out of the focus order after close
 
 ## Important constraints
 
@@ -47,7 +48,7 @@ The fixed architecture is unchanged:
 
 - direct manipulation is still intentionally conservative for transformed / zoomed layouts outside the signed-off positioned envelope
 - asset fidelity is still partial for deeper remote/manual-base uncertainty outside the connected-directory sign-off path
-- the Playwright harness is now present with stages A-D enabled; dedicated shell hardening, cleanup, and final polish still need staged activation
+- the Playwright harness is now present with stages A-E enabled; structural cleanup and final polish still need staged activation
 - the editor still lives in one large HTML file and needs internal structural cleanup without changing the architecture
 
 ## Engineering audit snapshot
@@ -64,7 +65,7 @@ The fixed architecture is unchanged:
 
 - direct manipulation in transform-heavy or zoom-heavy geometry is blocked safely, not truly solved
 - asset audit distinguishes `unresolved` from `base-URL-dependent`, and connected-directory truthfulness is now proven, but deeper remote/manual-base uncertainty still lacks a dedicated release gate
-- compact shell drawers / toolbar / context menu are now under repo-local Playwright smoke coverage, but stage-specific shell hardening is still not fully enabled
+- compact shell drawers / toolbar / context menu are now under repo-local Playwright coverage, and drawer close/inertness is proven on narrow widths, but broader shell cleanup is still pending
 - slide lifecycle is now deterministic for create / duplicate / delete / undo / redo, and bridge-driven document reconciliation no longer poisons redo history; deeper bridge resend and runtime repair paths still need proof
 
 ### Still critical

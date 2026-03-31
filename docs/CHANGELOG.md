@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.13.6 - compact shell drawer hit-area proved - 2026-03-31
+- narrowed the compact-shell backdrop to the visible dimmed area outside the active drawer, so close gestures stop landing on panel content at `390 / 640`
+- promoted Stage E Playwright coverage from placeholder to active release gate for drawer close, hidden-panel inertness, and compact-shell geometry on the signed-off narrow widths
+- kept the full active Playwright suite green after enabling the Stage E gate, raising the verified line to `73 passed / 31 skipped`
+
 ## 0.13.5 - connected asset diagnostics signed off - 2026-03-31
 - promoted Stage D Playwright coverage from placeholder to active release gate for connected asset-directory diagnostics across the signed-off Chromium width set
 - verified that diagnostics no longer collapse back to the previous false-clean zero summary once fixture assets are connected under the shared manual-base contract

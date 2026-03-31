@@ -54,7 +54,6 @@ test.describe("Editor shell smoke @harness", () => {
     testInfo,
   ) => {
     test.skip(!/(390|640|820)/.test(testInfo.project.name), "Narrow viewport only.");
-    test.skip(true, "Enable during stage E hardening.");
 
     await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL });
 
