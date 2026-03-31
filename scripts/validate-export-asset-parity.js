@@ -1,5 +1,7 @@
 const fs = require("fs");
+const http = require("http");
 const path = require("path");
+const { spawn } = require("child_process");
 const assert = require("assert");
 const { chromium } = require("playwright");
 
@@ -7,9 +9,11 @@ const WORKSPACE_ROOT =
   process.env.WORKSPACE_ROOT ||
   path.resolve(__dirname, "..");
 
+const SERVER_HOST = process.env.STATIC_SERVER_HOST || "127.0.0.1";
+const SERVER_PORT = Number(process.env.STATIC_SERVER_PORT || 4173);
 const TARGET_URL =
   process.env.TARGET_URL ||
-  `file:///${WORKSPACE_ROOT.replace(/\\/g, "/")}/editor/presentation-editor-v12.html`;
+  `http://${SERVER_HOST}:${SERVER_PORT}/editor/presentation-editor-v12.html`;
 
 const FIXTURE_ROOT = path.resolve(
   WORKSPACE_ROOT,
@@ -20,7 +24,7 @@ const FIXTURE_ROOT = path.resolve(
 
 const MANUAL_BASE_URL =
   process.env.MANUAL_BASE_URL ||
-  "http://127.0.0.1:4173/tests/fixtures/export-asset-parity/";
+  `http://${SERVER_HOST}:${SERVER_PORT}/tests/fixtures/export-asset-parity/`;
 
 const COMPLEX_HTML = `<!doctype html>
 <html lang="en">
@@ -109,12 +113,76 @@ function collectFixturePayloads(rootDir) {
   return payloads;
 }
 
+function waitForHttpReady(url, timeoutMs = 15_000) {
+  const deadline = Date.now() + timeoutMs;
+  return new Promise((resolve, reject) => {
+    const probe = () => {
+      const request = http.get(url, (response) => {
+        response.resume();
+        if (response.statusCode && response.statusCode < 500) {
+          resolve();
+          return;
+        }
+        if (Date.now() >= deadline) {
+          reject(new Error(`Static server probe failed with status ${response.statusCode || "unknown"}`));
+          return;
+        }
+        setTimeout(probe, 250);
+      });
+      request.on("error", (error) => {
+        if (Date.now() >= deadline) {
+          reject(error);
+          return;
+        }
+        setTimeout(probe, 250);
+      });
+    };
+    probe();
+  });
+}
+
+async function ensureStaticServer() {
+  try {
+    await waitForHttpReady(TARGET_URL, 2_000);
+    return null;
+  } catch (_error) {
+    const serverScript = path.join(WORKSPACE_ROOT, "scripts", "static-server.js");
+    const child = spawn(
+      process.execPath,
+      [serverScript, ".", String(SERVER_PORT), SERVER_HOST],
+      {
+        cwd: WORKSPACE_ROOT,
+        stdio: "pipe",
+      },
+    );
+    try {
+      await waitForHttpReady(TARGET_URL, 15_000);
+      return child;
+    } catch (error) {
+      child.kill();
+      const stderr = [];
+      child.stderr?.on("data", (chunk) => stderr.push(String(chunk)));
+      throw new Error(
+        `Failed to start static server for asset parity: ${error.message}`,
+      );
+    }
+  }
+}
+
 async function waitForPreviewReady(page) {
   try {
     await page.waitForFunction(
-      () => Boolean(state.modelDoc) && state.previewLifecycle === "ready" && state.previewReady,
+      () => {
+        const frame = document.getElementById("previewFrame");
+        const frameDoc = frame?.contentDocument || null;
+        return Boolean(state.modelDoc) &&
+          state.previewLifecycle === "ready" &&
+          Boolean(state.previewReady) &&
+          Boolean(frameDoc) &&
+          frameDoc.readyState === "complete";
+      },
       undefined,
-      { timeout: 15000 },
+      { timeout: 20_000 },
     );
   } catch (error) {
     const debugState = await page.evaluate(() => ({
@@ -174,6 +242,8 @@ async function applyFixtureAssetDirectory(page, payloads) {
 }
 
 async function collectCaseSnapshot(page) {
+  const hasPresentation = await page.evaluate(() => Boolean(state.modelDoc));
+  if (hasPresentation) await waitForPreviewReady(page);
   return page.evaluate(() => {
     const normalizeText = (value) =>
       String(value || "")
@@ -262,6 +332,7 @@ function assertParitiedRefs(caseName, snapshot) {
 
 async function run() {
   const assetPayloads = collectFixturePayloads(FIXTURE_ROOT);
+  const staticServer = await ensureStaticServer();
   const browser = await chromium.launch({ headless: false, slowMo: 40 });
   const page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
   const results = [];
@@ -331,6 +402,9 @@ async function run() {
     );
   } finally {
     await browser.close();
+    if (staticServer && !staticServer.killed) {
+      staticServer.kill();
+    }
   }
 }
 
