@@ -6405,6 +6405,12 @@
           const referenceOffset = measurePositionReferenceOffset(el, mode, rect);
           const rawLeft = Number.parseFloat(computed.left);
           const rawTop = Number.parseFloat(computed.top);
+          const rawRight = Number.parseFloat(computed.right);
+          const rawBottom = Number.parseFloat(computed.bottom);
+          const horizontalAnchor =
+            Number.isFinite(rawLeft) || !Number.isFinite(rawRight) ? 'left' : 'right';
+          const verticalAnchor =
+            Number.isFinite(rawTop) || !Number.isFinite(rawBottom) ? 'top' : 'bottom';
           STATE.directManipulation = {
             nodeId,
             kind,
@@ -6414,17 +6420,23 @@
             startRect: rect,
             startWidth: rect.width,
             startHeight: rect.height,
+            horizontalAnchor,
+            verticalAnchor,
             startLeft: Number.isFinite(rawLeft)
               ? rawLeft
               : referenceOffset.left,
             startTop: Number.isFinite(rawTop)
               ? rawTop
               : referenceOffset.top,
+            startRight: Number.isFinite(rawRight) ? rawRight : 0,
+            startBottom: Number.isFinite(rawBottom) ? rawBottom : 0,
             startTranslate: translate,
             startInline: {
               position: el.style.position || '',
               left: el.style.left || '',
+              right: el.style.right || '',
               top: el.style.top || '',
+              bottom: el.style.bottom || '',
               width: el.style.width || '',
               height: el.style.height || '',
               translate: el.style.translate || '',
@@ -6449,12 +6461,33 @@
           if (!session || !session.el) return;
           session.el.style.position = session.startInline.position;
           session.el.style.left = session.startInline.left;
+          session.el.style.right = session.startInline.right;
           session.el.style.top = session.startInline.top;
+          session.el.style.bottom = session.startInline.bottom;
           session.el.style.width = session.startInline.width;
           session.el.style.height = session.startInline.height;
           session.el.style.translate = session.startInline.translate;
           session.el.style.transform = session.startInline.transform;
           notifySelectionGeometry();
+        }
+
+        function applyPositionedInsets(session, dx, dy) {
+          if (!session || !session.el) return;
+          if (!session.el.style.position) session.el.style.position = session.mode;
+          if (session.horizontalAnchor === 'right') {
+            session.el.style.right = Math.round(session.startRight - dx) + 'px';
+            session.el.style.left = 'auto';
+          } else {
+            session.el.style.left = Math.round(session.startLeft + dx) + 'px';
+            session.el.style.right = 'auto';
+          }
+          if (session.verticalAnchor === 'bottom') {
+            session.el.style.bottom = Math.round(session.startBottom - dy) + 'px';
+            session.el.style.top = 'auto';
+          } else {
+            session.el.style.top = Math.round(session.startTop + dy) + 'px';
+            session.el.style.bottom = 'auto';
+          }
         }
 
         function applyDirectManipulationStep(session, payload) {
@@ -6463,9 +6496,7 @@
           const dy = Number(payload.dy || 0);
           if (payload.kind === 'drag') {
             if (session.mode === 'absolute' || session.mode === 'fixed') {
-              if (!session.el.style.position) session.el.style.position = session.mode;
-              session.el.style.left = Math.round(session.startLeft + dx) + 'px';
-              session.el.style.top = Math.round(session.startTop + dy) + 'px';
+              applyPositionedInsets(session, dx, dy);
             } else {
               applySessionTranslate(session, session.startTranslate.x + dx, session.startTranslate.y + dy);
             }
@@ -6475,9 +6506,7 @@
             session.el.style.width = Math.round(nextWidth) + 'px';
             session.el.style.height = Math.round(nextHeight) + 'px';
             if (session.mode === 'absolute' || session.mode === 'fixed') {
-              if (!session.el.style.position) session.el.style.position = session.mode;
-              session.el.style.left = Math.round(session.startLeft + dx) + 'px';
-              session.el.style.top = Math.round(session.startTop + dy) + 'px';
+              applyPositionedInsets(session, dx, dy);
             } else {
               applySessionTranslate(session, session.startTranslate.x + dx, session.startTranslate.y + dy);
             }
@@ -6660,10 +6689,11 @@
           if (!STATE.editMode) return;
           const el = getEditableElementFromTarget(event.target);
           if (!el) return;
-          if (el.isContentEditable) {
-            el.removeAttribute('contenteditable');
-            el.removeAttribute('spellcheck');
-          }
+          const wasTextEditing =
+            el.isContentEditable || el.getAttribute('contenteditable') === 'true';
+          if (!wasTextEditing) return;
+          el.removeAttribute('contenteditable');
+          el.removeAttribute('spellcheck');
           notifyElementUpdated(el);
         }, true);
 
@@ -7110,6 +7140,7 @@
         renderSelectionOverlay();
         renderSlidesList();
         refreshUi();
+        focusSelectionFrameForKeyboard();
       }
 
       function applySelectionGeometry(payload) {
@@ -7141,6 +7172,34 @@
         renderSelectionOverlay();
       }
 
+      function focusSelectionFrameForKeyboard() {
+        if (!els.selectionFrame || state.mode !== "edit" || !state.selectedNodeId)
+          return;
+        if (state.selectedFlags.isTextEditing || state.activeManipulation) return;
+        const active = document.activeElement;
+        if (
+          active instanceof Element &&
+          (active.closest("#inspectorPanel") ||
+            active.closest("#slidesPanel") ||
+            active.closest("#contextMenu") ||
+            active.closest(".modal.is-open"))
+        ) {
+          return;
+        }
+        window.requestAnimationFrame(() => {
+          if (
+            !els.selectionFrame ||
+            state.mode !== "edit" ||
+            !state.selectedNodeId ||
+            state.selectedFlags.isTextEditing ||
+            state.activeManipulation
+          ) {
+            return;
+          }
+          els.selectionFrame.focus({ preventScroll: true });
+        });
+      }
+
       function selectedNodeExistsInModel() {
         return Boolean(
           state.selectedNodeId &&
@@ -7154,6 +7213,7 @@
         const nodeId = payload.nodeId;
         const slideId = payload.slideId || state.activeSlideId || null;
         if (!nodeId || !state.modelDoc) return;
+        const isCurrentSelection = nodeId === state.selectedNodeId;
         if (isStaleInboundSeq(slideId, seq)) {
           addDiagnostic(`element-update-stale:${slideId || "n/a"}:${seq}`);
           return;
@@ -7172,25 +7232,30 @@
           addDiagnostic(`element-update-error: ${error.message}`);
           markPreviewDesync(`element-update-error:${error.message}`);
         }
-        state.selectedComputed = payload.computed || state.selectedComputed;
-        state.selectedHtml = payload.html || state.selectedHtml;
-        state.selectedRect = payload.rect || state.selectedRect;
-        state.liveSelectionRect = null;
-        state.selectedAttrs = payload.attrs || state.selectedAttrs;
-        state.selectedTag = payload.tag || state.selectedTag;
-        state.manipulationContext = payload.manipulationContext || state.manipulationContext;
-        state.activeGuides = { vertical: [], horizontal: [] };
-        const nextFlags = deriveSelectedFlagsFromPayload(payload);
-        state.selectedFlags = nextFlags;
-        state.selectedPolicy = normalizeSelectionPolicy(
-          payload.protectionPolicy || {},
-          nextFlags,
-        );
+        if (isCurrentSelection) {
+          state.selectedComputed = payload.computed || state.selectedComputed;
+          state.selectedHtml = payload.html || state.selectedHtml;
+          state.selectedRect = payload.rect || state.selectedRect;
+          state.liveSelectionRect = null;
+          state.selectedAttrs = payload.attrs || state.selectedAttrs;
+          state.selectedTag = payload.tag || state.selectedTag;
+          state.manipulationContext = payload.manipulationContext || state.manipulationContext;
+          state.activeGuides = { vertical: [], horizontal: [] };
+          const nextFlags = deriveSelectedFlagsFromPayload(payload);
+          state.selectedFlags = nextFlags;
+          state.selectedPolicy = normalizeSelectionPolicy(
+            payload.protectionPolicy || {},
+            nextFlags,
+          );
+        }
         noteAppliedSeq(slideId, seq);
         commitChange("element-updated");
         renderSlidesList();
-        updateInspectorFromSelection();
-        positionFloatingToolbar();
+        if (isCurrentSelection) {
+          updateInspectorFromSelection();
+          positionFloatingToolbar();
+          focusSelectionFrameForKeyboard();
+        }
         refreshUi();
       }
 

@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 0.13.4 - direct manipulation coordinate correctness proved - 2026-03-31
+- widened the proven direct-manipulation envelope to nested positioned contexts by tracking `left/right` and `top/bottom` anchors explicitly instead of assuming one inset space
+- preserved truthful blocking for unsafe transformed contexts, so keyboard nudge falls back to diagnostics instead of writing incorrect coordinates
+- hardened selection sync around blur and bridge-driven element updates so non-text selection paths stop tearing down editing state unexpectedly
+- promoted Stage C Playwright coverage for text edit, image replace, block/image/video/layout insertion, and safe-vs-unsafe keyboard nudge flows
+- refreshed loaded-shell visual baselines to match the expanded Stage C fixture deck while keeping the full suite green
+
 ## 0.13.3 - deterministic slide activation proved - 2026-03-31
 - promoted Stage B Playwright coverage from placeholder to release gate for create, duplicate, delete, undo/redo, and autosave-recovery flows across the signed-off Chromium width set
 - added shell-aware browser helpers so compact-width regression scenarios use the real slide-list and inspector drawers instead of hidden desktop controls

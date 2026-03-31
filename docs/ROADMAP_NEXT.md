@@ -1,22 +1,10 @@
 # ROADMAP NEXT
 
-## Post-0.13.3 priorities
+## Post-0.13.4 priorities
 
-Stage B is now revalidated after locking edit-mode persistence, removing the `bridge-sync` history race, and hardening the mobile cold-start QA path. The next open release gate remains direct-manipulation correctness.
+Stage C is now signed off for the supported positioned envelope. The next open release gate is truthful asset diagnostics under manual-base and remote uncertainty.
 
-### 1. Direct manipulation coordinate correctness (`v0.13.4`)
-
-Goals:
-- move from safe blocking to exact support for the geometry cases that are actually provable
-- keep incorrect coordinates impossible on nested positioned contexts
-
-Substeps:
-- model coordinate origins for nested positioned containers explicitly
-- keep `absolute` and `fixed` paths correct under scroll and resize
-- block unsafe transform/zoom chains honestly and route them to inspector fallback
-- codify drag, resize, and nudge cases in Playwright before widening support
-
-### 2. Truthful asset diagnostics (`v0.13.5`)
+### 1. Truthful asset diagnostics (`v0.13.5`)
 
 Goals:
 - remove false-clean diagnostic states
@@ -27,7 +15,7 @@ Substeps:
 - distinguish unresolved local assets from remote or manual-base-dependent uncertainty
 - codify asset-resolution error scenarios in Playwright
 
-### 3. Focus isolation and shell hardening (`v0.13.6`)
+### 2. Focus isolation and shell hardening (`v0.13.6`)
 
 Goals:
 - keep hidden drawers and overlays out of the focus order
@@ -38,7 +26,7 @@ Substeps:
 - re-run topbar, menu, popover, and mobile rail stability checks
 - keep shell geometry and keyboard path stable across `390 / 640 / 820`
 
-### 4. Internal zoning without architecture rewrite (`v0.13.7`)
+### 3. Internal zoning without architecture rewrite (`v0.13.7`)
 
 Goals:
 - reduce blast radius inside the large editor file
@@ -49,7 +37,7 @@ Substeps:
 - keep refactors contiguous and responsibility-based before extracting files
 - preserve `parent shell + iframe + bridge + modelDoc`
 
-### 5. System polish after correctness (`v0.14.0`)
+### 4. System polish after correctness (`v0.14.0`)
 
 Goals:
 - keep light/dark parity and visual consistency without re-opening correctness regressions
@@ -61,13 +49,11 @@ Substeps:
 
 ## Suggested version path
 
-1. `0.13.4`
-   focus: direct-manipulation coordinate correctness
-2. `0.13.5`
+1. `0.13.5`
    focus: truthful asset diagnostics
-3. `0.13.6`
+2. `0.13.6`
    focus: focus isolation and compact shell hardening
-5. `0.13.7`
+3. `0.13.7`
    focus: structure cleanup without architecture rewrite
-6. `0.14.0`
+4. `0.14.0`
    focus: visual and system polish after correctness is already locked

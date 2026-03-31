@@ -1,3 +1,3 @@
 # VALIDATION NOTES V12
 
-See [validation-notes-0.13.3.md](validation-notes-0.13.3.md) for the revalidated `v0.13.3` verification state of the current editor line.
+See [validation-notes-0.13.4.md](validation-notes-0.13.4.md) for the current `v0.13.4` verification state of the editor line.

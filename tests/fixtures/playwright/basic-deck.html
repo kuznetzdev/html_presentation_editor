@@ -50,6 +50,12 @@
         box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
       }
 
+      #palette-dropzone {
+        min-height: 124px;
+        border-style: dashed;
+        background: rgba(224, 242, 254, 0.58);
+      }
+
       #hero-image,
       #nested-image {
         display: block;
@@ -64,15 +70,23 @@
       #absolute-card {
         position: absolute;
         top: 72px;
-        right: 72px;
-        width: 220px;
+        right: 24px;
+        width: min(220px, calc(100vw - 96px));
+      }
+
+      #fixed-badge {
+        position: fixed;
+        left: 16px;
+        top: 16px;
+        width: 180px;
+        z-index: 4;
       }
 
       #nested-position-root {
         position: relative;
         width: 420px;
         height: 280px;
-        margin-top: 120px;
+        margin-top: 220px;
         border-radius: 32px;
         border: 2px dashed rgba(15, 23, 42, 0.2);
         background: rgba(255, 255, 255, 0.58);
@@ -80,8 +94,8 @@
 
       #nested-image-wrap {
         position: absolute;
-        inset: 28px auto auto 32px;
-        width: 240px;
+        inset: 28px 32px auto auto;
+        width: 180px;
       }
 
       #unsafe-transform-root {
@@ -113,7 +127,18 @@
           grid-template-columns: 1fr;
         }
 
-        #absolute-card,
+        #absolute-card {
+          top: 28px;
+          right: 28px;
+          width: min(180px, calc(100vw - 56px));
+        }
+
+        #fixed-badge {
+          left: 12px;
+          top: 12px;
+          width: min(160px, calc(100vw - 32px));
+        }
+
         #unsafe-transform-root {
           position: static;
           width: auto;
@@ -122,7 +147,12 @@
 
         #nested-position-root {
           width: 100%;
-          margin-top: 32px;
+          margin-top: 96px;
+        }
+
+        #nested-image-wrap {
+          inset: auto 20px 20px auto;
+          width: 132px;
         }
       }
     </style>
@@ -130,7 +160,7 @@
   <body>
     <section class="slide" data-slide-title="Hero">
       <div class="hero-grid">
-        <div class="stack">
+        <div id="hero-stack" class="stack">
           <p id="hero-kicker">Regression harness deck</p>
           <h1 id="hero-title">Stable editing baseline</h1>
           <p id="hero-copy">
@@ -140,6 +170,7 @@
           <div id="cta-box" class="box">
             Compact callout container used for selection and layout checks.
           </div>
+          <div id="palette-dropzone" class="box" aria-label="Palette dropzone"></div>
         </div>
         <img
           id="hero-image"
@@ -154,7 +185,18 @@
         Absolute positioned card for coordinate-space checks.
       </div>
 
+      <div id="fixed-badge" class="box">
+        Fixed positioned badge for viewport-relative checks.
+      </div>
+
       <div id="nested-position-root">
+        <div
+          id="nested-absolute-card"
+          class="box"
+          style="position: absolute; top: 28px; left: 32px; width: 208px"
+        >
+          Nested absolute card for positioned-context checks.
+        </div>
         <div id="nested-image-wrap">
           <img
             id="nested-image"

@@ -395,6 +395,24 @@ async function clickEditorControl(page, selector, options = {}) {
   await control.click();
 }
 
+async function activateSlideByIndex(page, index) {
+  const targetIndex = Number(index);
+  if (!Number.isInteger(targetIndex) || targetIndex < 0) {
+    throw new Error(`Invalid slide index: ${index}`);
+  }
+
+  await ensureShellPanelVisible(page, "slides");
+  const slideItem = page.locator(`#slidesPanel .slide-item[data-index="${targetIndex}"]`);
+  await expect(slideItem).toBeVisible();
+  await slideItem.click();
+
+  const slideCount = await evaluateEditor(page, "state.slides.length");
+  await waitForSlideActivationState(page, {
+    activeIndex: targetIndex,
+    count: Number(slideCount),
+  });
+}
+
 async function closeCompactShellPanels(page) {
   const compact = await page.evaluate(() => window.innerWidth <= 1024);
   if (!compact) return;
@@ -535,6 +553,19 @@ function isChromiumOnlyProject(projectName) {
   return String(projectName || "").startsWith("chromium");
 }
 
+async function openInsertPalette(page) {
+  const desktopToggle = page.locator("#toggleInsertPaletteBtn");
+  if (await desktopToggle.isVisible()) {
+    await clickEditorControl(page, "#toggleInsertPaletteBtn");
+    return;
+  }
+
+  const mobileToggle = page.locator("#mobileInsertBtn");
+  await expect(mobileToggle).toBeVisible();
+  await expect(mobileToggle).toBeEnabled();
+  await mobileToggle.click();
+}
+
 module.exports = {
   ASSET_MANUAL_BASE_URL,
   ASSET_PARITY_CASE_PATH,
@@ -542,6 +573,7 @@ module.exports = {
   BASIC_MANUAL_BASE_URL,
   EXPORT_FIXTURE_ROOT,
   TARGET_URL,
+  activateSlideByIndex,
   assertHiddenPanelsAreInert,
   assertNoHorizontalOverflow,
   assertShellGeometry,
@@ -558,6 +590,7 @@ module.exports = {
   isChromiumOnlyProject,
   loadBasicDeck,
   openExportValidationPopup,
+  openInsertPalette,
   openHtmlFixture,
   previewLocator,
   readDiagnostics,

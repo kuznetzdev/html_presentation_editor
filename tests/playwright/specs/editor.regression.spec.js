@@ -1,6 +1,7 @@
 const path = require("path");
 const { test, expect } = require("@playwright/test");
 const {
+  activateSlideByIndex,
   BASIC_MANUAL_BASE_URL,
   closeCompactShellPanels,
   EXPORT_FIXTURE_ROOT,
@@ -11,6 +12,7 @@ const {
   isChromiumOnlyProject,
   loadBasicDeck,
   openExportValidationPopup,
+  openInsertPalette,
   previewLocator,
   setMode,
   waitForSlideActivationState,
@@ -27,8 +29,8 @@ async function slideCount(page) {
   return evaluateEditor(page, "state.slides.length");
 }
 
-async function selectTextNode(page, selector) {
-  await clickPreview(page, selector);
+async function selectTextNode(page, selector, options = {}) {
+  await clickPreview(page, selector, options);
   await page.waitForFunction(
     () =>
       globalThis.eval(
@@ -47,8 +49,19 @@ async function selectImageNode(page, selector) {
   );
 }
 
-async function selectContainerNode(page, selector) {
-  await clickPreview(page, selector);
+async function selectContainerNode(page, selector, options = {}) {
+  const target = previewLocator(page, selector);
+  const clickOptions = { ...options };
+  if (!clickOptions.position) {
+    const box = await target.boundingBox();
+    if (box) {
+      clickOptions.position = {
+        x: Math.max(12, Math.round(box.width - 20)),
+        y: Math.max(12, Math.round(box.height - 20)),
+      };
+    }
+  }
+  await target.click(clickOptions);
   await page.waitForFunction(
     () =>
       globalThis.eval(
@@ -118,47 +131,51 @@ test.describe("Editor regression coverage", () => {
     testInfo,
   ) => {
     test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only editing flow.");
-    test.skip(true, "Enable during stage C hardening.");
 
     await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
 
     await selectTextNode(page, "#hero-title");
-    await page.click("#editTextBtn");
+    await clickEditorControl(page, "#editTextBtn", { panel: "inspector" });
     const title = previewLocator(page, "#hero-title");
     await expect(title).toHaveAttribute("contenteditable", "true");
     await title.press(process.platform === "darwin" ? "Meta+A" : "Control+A");
     await title.fill("Edited hero title");
+    await closeCompactShellPanels(page);
     await clickPreview(page, "#cta-box");
     await expect(previewLocator(page, "#hero-title")).toContainText("Edited hero title");
 
     await selectImageNode(page, "#hero-image");
-    await page.fill("#imageSrcInput", "../export-asset-parity/assets/images/pattern.svg");
-    await page.click("#applyImageSrcBtn");
-    await expect(previewLocator(page, "#hero-image")).toHaveAttribute(/src/, /pattern\.svg/);
+    await clickEditorControl(page, "#replaceImageBtn", { panel: "inspector" });
+    await page.setInputFiles("#replaceImageInput", PATTERN_IMAGE_PATH);
+    await expect(previewLocator(page, "#hero-image")).toHaveAttribute("alt", "pattern.svg");
+    await expect(previewLocator(page, "#hero-image")).toHaveAttribute(
+      "src",
+      /^data:image\/svg\+xml;base64,/,
+    );
 
-    await selectContainerNode(page, "#cta-box");
-    await page.click("#toggleInsertPaletteBtn");
+    await closeCompactShellPanels(page);
+    await selectContainerNode(page, "#palette-dropzone");
+    await openInsertPalette(page);
     await page.click('[data-palette-action="box"]');
     await expect(previewLocator(page, 'div[style*="min-width:160px"]')).toHaveCount(1);
   });
 
   test("insert image video and layout via palette @stage-c", async ({ page }, testInfo) => {
     test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only insertion flow.");
-    test.skip(true, "Enable during stage C hardening.");
 
     await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
-    await selectContainerNode(page, "#cta-box");
+    await selectContainerNode(page, "#palette-dropzone");
 
-    await page.click("#toggleInsertPaletteBtn");
+    await openInsertPalette(page);
     await page.click('[data-palette-action="image"]');
     await page.setInputFiles("#insertImageInput", PATTERN_IMAGE_PATH);
     await expect(previewLocator(page, 'img[alt="pattern.svg"]')).toHaveCount(1);
 
-    await page.click("#toggleInsertPaletteBtn");
+    await openInsertPalette(page);
     await page.click('[data-palette-action="layout-two-col"]');
     await expect(previewLocator(page, "body")).toContainText("Текст левой колонки.");
 
-    await page.click("#toggleInsertPaletteBtn");
+    await openInsertPalette(page);
     await page.click('[data-palette-action="video"]');
     await page.fill("#videoUrlInput", "../export-asset-parity/assets/video/clip.mp4");
     await page.click("#insertVideoUrlBtn");
@@ -209,18 +226,39 @@ test.describe("Editor regression coverage", () => {
     testInfo,
   ) => {
     test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only direct manipulation flow.");
-    test.skip(true, "Enable during stage C hardening.");
 
     await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
+    await activateSlideByIndex(page, 1);
+    await closeCompactShellPanels(page);
 
-    await selectContainerNode(page, "#absolute-card");
-    const before = await getPreviewRect(page, "#absolute-card");
+    await selectTextNode(page, "#absolute-card");
+    const absoluteBefore = await getPreviewRect(page, "#absolute-card");
     await page.keyboard.press("ArrowRight");
-    const after = await getPreviewRect(page, "#absolute-card");
-    expect(after.left).toBeGreaterThan(before.left);
+    const absoluteAfter = await getPreviewRect(page, "#absolute-card");
+    expect(absoluteAfter.left).toBeGreaterThan(absoluteBefore.left);
 
-    await selectContainerNode(page, "#unsafe-box");
+    await selectTextNode(page, "#nested-absolute-card");
+    const nestedBefore = await getPreviewRect(page, "#nested-absolute-card");
     await page.keyboard.press("ArrowRight");
-    await expect(page.locator("#diagnosticsBox")).toContainText(/directManipSafe=false|directManipReason=/);
+    const nestedAfter = await getPreviewRect(page, "#nested-absolute-card");
+    expect(nestedAfter.left).toBeGreaterThan(nestedBefore.left);
+
+    await selectTextNode(page, "#fixed-badge");
+    const fixedBefore = await getPreviewRect(page, "#fixed-badge");
+    await page.keyboard.press("ArrowRight");
+    const fixedAfter = await getPreviewRect(page, "#fixed-badge");
+    expect(fixedAfter.left).toBeGreaterThan(fixedBefore.left);
+
+    await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
+    await activateSlideByIndex(page, 1);
+    await closeCompactShellPanels(page);
+
+    await selectTextNode(page, "#unsafe-box", {
+      position: { x: 176, y: 96 },
+    });
+    await page.keyboard.press("ArrowRight");
+    await expect(page.locator("#diagnosticsBox")).toContainText(
+      /directManipSafe=false|directManipReason=/,
+    );
   });
 });
