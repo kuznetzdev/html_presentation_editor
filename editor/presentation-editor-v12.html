@@ -1516,15 +1516,24 @@
         left: -9999px;
         top: -9999px;
         display: none;
-        border: 2px solid var(--shell-accent);
+        border: 1.5px solid color-mix(in srgb, var(--shell-accent) 84%, white 16%);
         border-radius: 12px;
-        box-shadow: 0 0 0 1px var(--shell-selection-ring);
+        box-shadow:
+          0 0 0 1px color-mix(in srgb, var(--shell-selection-ring) 78%, transparent 22%),
+          0 16px 32px rgba(15, 23, 42, 0.12);
         background: transparent;
         pointer-events: none;
       }
 
       .selection-frame.is-visible {
         display: block;
+      }
+
+      .selection-frame.is-engaged {
+        box-shadow:
+          0 0 0 1px color-mix(in srgb, var(--shell-selection-ring) 92%, transparent 8%),
+          0 0 0 4px color-mix(in srgb, var(--shell-accent) 18%, transparent 82%),
+          0 20px 40px rgba(15, 23, 42, 0.18);
       }
 
       .selection-frame.is-protected {
@@ -1565,15 +1574,23 @@
         position: absolute;
         inset: 0;
         border-radius: inherit;
-        cursor: move;
+        cursor: grab;
         pointer-events: auto;
         touch-action: none;
       }
 
-      .selection-frame.is-protected .selection-frame-hit-area,
-      .selection-frame.is-direct-manip-blocked .selection-frame-hit-area {
+      .selection-frame.is-engaged .selection-frame-hit-area {
+        cursor: grabbing;
+      }
+
+      .selection-frame.is-protected .selection-frame-hit-area {
         pointer-events: none;
         cursor: default;
+      }
+
+      .selection-frame.is-direct-manip-blocked .selection-frame-hit-area {
+        pointer-events: auto;
+        cursor: not-allowed;
       }
 
       .selection-frame-label {
@@ -1602,17 +1619,61 @@
         color: var(--shell-warning);
       }
 
+      .selection-frame-tooltip {
+        position: absolute;
+        left: 50%;
+        top: calc(100% + 12px);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 28px;
+        max-width: min(240px, calc(100vw - 48px));
+        padding: 6px 10px;
+        border: 1px solid color-mix(in srgb, var(--shell-border-strong) 82%, transparent 18%);
+        border-radius: 12px;
+        background:
+          linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--shell-panel-elevated) 96%, white 4%) 0%,
+            color-mix(in srgb, var(--shell-panel) 94%, black 6%) 100%
+          );
+        box-shadow:
+          0 10px 28px rgba(15, 23, 42, 0.18),
+          0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+        color: var(--shell-text);
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.35;
+        text-align: center;
+        white-space: normal;
+        opacity: 0;
+        transform: translate(-50%, -4px);
+        transition:
+          opacity 0.16s ease,
+          transform 0.16s ease;
+        pointer-events: none;
+      }
+
+      .selection-frame-tooltip.is-visible {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+
       .selection-handle {
         position: absolute;
-        width: 14px;
-        height: 14px;
-        min-width: 14px;
-        min-height: 14px;
+        width: 16px;
+        height: 16px;
+        min-width: 16px;
+        min-height: 16px;
         padding: 0;
-        border: 2px solid var(--shell-accent);
+        border: 1.5px solid color-mix(in srgb, var(--shell-accent) 88%, white 12%);
         border-radius: 999px;
-        background: var(--shell-panel-elevated);
-        box-shadow: var(--shadow-sm);
+        background:
+          radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.82) 35%, rgba(255, 255, 255, 0.18) 100%),
+          var(--shell-panel-elevated);
+        box-shadow:
+          0 8px 20px rgba(15, 23, 42, 0.14),
+          0 0 0 1px rgba(255, 255, 255, 0.12) inset;
         pointer-events: auto;
         touch-action: none;
       }
@@ -1623,58 +1684,58 @@
       }
 
       .selection-handle[data-handle="n"] {
-        top: -7px;
+        top: 0;
         left: 50%;
-        transform: translate(-50%, -50%);
+        transform: translate(-50%, 0);
         cursor: ns-resize;
       }
 
       .selection-handle[data-handle="s"] {
         left: 50%;
-        bottom: -7px;
-        transform: translate(-50%, 50%);
+        bottom: 0;
+        transform: translate(-50%, 0);
         cursor: ns-resize;
       }
 
       .selection-handle[data-handle="e"] {
         top: 50%;
-        right: -7px;
-        transform: translate(50%, -50%);
+        right: 0;
+        transform: translate(0, -50%);
         cursor: ew-resize;
       }
 
       .selection-handle[data-handle="w"] {
         top: 50%;
-        left: -7px;
-        transform: translate(-50%, -50%);
+        left: 0;
+        transform: translate(0, -50%);
         cursor: ew-resize;
       }
 
       .selection-handle[data-handle="nw"] {
-        top: -7px;
-        left: -7px;
-        transform: translate(-50%, -50%);
+        top: 0;
+        left: 0;
+        transform: translate(0, 0);
         cursor: nwse-resize;
       }
 
       .selection-handle[data-handle="ne"] {
-        top: -7px;
-        right: -7px;
-        transform: translate(50%, -50%);
+        top: 0;
+        right: 0;
+        transform: translate(0, 0);
         cursor: nesw-resize;
       }
 
       .selection-handle[data-handle="se"] {
-        right: -7px;
-        bottom: -7px;
-        transform: translate(50%, 50%);
+        right: 0;
+        bottom: 0;
+        transform: translate(0, 0);
         cursor: nwse-resize;
       }
 
       .selection-handle[data-handle="sw"] {
-        left: -7px;
-        bottom: -7px;
-        transform: translate(-50%, 50%);
+        left: 0;
+        bottom: 0;
+        transform: translate(0, 0);
         cursor: nesw-resize;
       }
 
@@ -2123,39 +2184,39 @@
         }
 
         .selection-handle[data-handle="n"] {
-          top: -10px;
+          top: 0;
         }
 
         .selection-handle[data-handle="s"] {
-          bottom: -10px;
+          bottom: 0;
         }
 
         .selection-handle[data-handle="e"] {
-          right: -10px;
+          right: 0;
         }
 
         .selection-handle[data-handle="w"] {
-          left: -10px;
+          left: 0;
         }
 
         .selection-handle[data-handle="nw"],
         .selection-handle[data-handle="ne"] {
-          top: -10px;
+          top: 0;
         }
 
         .selection-handle[data-handle="nw"],
         .selection-handle[data-handle="sw"] {
-          left: -10px;
+          left: 0;
         }
 
         .selection-handle[data-handle="ne"],
         .selection-handle[data-handle="se"] {
-          right: -10px;
+          right: 0;
         }
 
         .selection-handle[data-handle="sw"],
         .selection-handle[data-handle="se"] {
-          bottom: -10px;
+          bottom: 0;
         }
       }
 
@@ -2868,6 +2929,13 @@
                 <div id="selectionFrameLabel" class="selection-frame-label">
                   Переместить
                 </div>
+                <div
+                  id="selectionFrameTooltip"
+                  class="selection-frame-tooltip"
+                  role="status"
+                  aria-live="polite"
+                  aria-hidden="true"
+                ></div>
                 <button
                   type="button"
                   class="selection-handle"
@@ -4101,6 +4169,11 @@
         liveSelectionRect: null,
         activeManipulation: null,
         activeGuides: { vertical: [], horizontal: [] },
+        selectionTooltip: {
+          message: "",
+          visibleUntil: 0,
+          hideTimer: 0,
+        },
         diagnostics: [],
         htmlEditorMode: null,
         htmlEditorTargetId: null,
@@ -4208,6 +4281,7 @@
         selectionFrame: document.getElementById("selectionFrame"),
         selectionFrameHitArea: document.getElementById("selectionFrameHitArea"),
         selectionFrameLabel: document.getElementById("selectionFrameLabel"),
+        selectionFrameTooltip: document.getElementById("selectionFrameTooltip"),
         selectionHandles: Array.from(document.querySelectorAll(".selection-handle")),
         quickPalette: document.getElementById("quickPalette"),
         toggleInsertPaletteBtn: document.getElementById(
@@ -7967,25 +8041,34 @@
           ["move", "resize", "nudge"].includes(action) &&
           hasBlockedDirectManipulationContext()
         ) {
+          const blockedKind = action === "resize" ? "resize" : "drag";
+          if (options.surface === "tooltip") {
+            showSelectionFrameTooltip(
+              options.message || getDirectManipulationTooltipMessage(blockedKind),
+            );
+          } else if (options.toast !== false) {
+            showToast(
+              options.message || getDirectManipulationBlockMessage(blockedKind),
+              "warning",
+              {
+                title: actionLabel || "Операция ограничена",
+                ttl: 4200,
+              },
+            );
+          }
+          return false;
+        }
+        if (canSelectionAction(action)) return true;
+        if (options.toast !== false) {
           showToast(
-            options.message || getDirectManipulationBlockMessage(action === "resize" ? "resize" : "drag"),
+            options.message || getSelectionActionBlockMessage(action),
             "warning",
             {
               title: actionLabel || "Операция ограничена",
               ttl: 4200,
             },
           );
-          return false;
         }
-        if (canSelectionAction(action)) return true;
-        showToast(
-          options.message || getSelectionActionBlockMessage(action),
-          "warning",
-          {
-            title: actionLabel || "Операция ограничена",
-            ttl: 4200,
-          },
-        );
         return false;
       }
 
@@ -9271,6 +9354,103 @@ ${exportDoc.documentElement.outerHTML}`;
         return Boolean(state.manipulationContext?.directManipulationSafe === false);
       }
 
+      function clearSelectionTooltipTimer() {
+        if (!state.selectionTooltip?.hideTimer) return;
+        clearTimeout(state.selectionTooltip.hideTimer);
+        state.selectionTooltip.hideTimer = 0;
+      }
+
+      function normaliseSelectionTooltipMessage(message, maxLength = 60) {
+        const normalized = String(message || "")
+          .replace(/\s+/g, " ")
+          .trim();
+        if (!normalized) return "";
+        const firstSentence =
+          normalized.split(/(?<=[.!?])\s+/)[0]?.trim() || normalized;
+        if (firstSentence.length <= maxLength) return firstSentence;
+        return `${firstSentence.slice(0, maxLength - 3).trimEnd()}...`;
+      }
+
+      function getDirectManipulationTooltipMessage(kind = "drag") {
+        const reason = String(
+          state.manipulationContext?.directManipulationReason || "",
+        ).trim();
+        const normalizedReason = reason.toLowerCase();
+        const actionLabel = kind === "resize" ? "resize" : "move";
+        if (
+          normalizedReason.includes("собствен") ||
+          normalizedReason.includes("own transform")
+        ) {
+          return `Cannot ${actionLabel}: element uses transform`;
+        }
+        if (
+          normalizedReason.includes("внутри transformed") ||
+          normalizedReason.includes("transformed-контейнера") ||
+          normalizedReason.includes("inside transformed") ||
+          normalizedReason.includes("parent uses transform")
+        ) {
+          return `Cannot ${actionLabel}: parent uses transform`;
+        }
+        if (
+          normalizedReason.includes("корневой контейнер слайда") ||
+          normalizedReason.includes("slide uses transform")
+        ) {
+          return `Cannot ${actionLabel}: slide uses transform`;
+        }
+        if (reason) {
+          return normaliseSelectionTooltipMessage(reason);
+        }
+        return kind === "resize"
+          ? "Cannot resize: use inspector controls"
+          : "Cannot move: use inspector controls";
+      }
+
+      function hideSelectionFrameTooltip(options = {}) {
+        clearSelectionTooltipTimer();
+        if (options.clearMessage) {
+          state.selectionTooltip.message = "";
+        }
+        state.selectionTooltip.visibleUntil = 0;
+        if (!els.selectionFrameTooltip) return;
+        els.selectionFrameTooltip.classList.remove("is-visible");
+        els.selectionFrameTooltip.setAttribute("aria-hidden", "true");
+        if (options.clearMessage) {
+          els.selectionFrameTooltip.textContent = "";
+        }
+      }
+
+      function showSelectionFrameTooltip(message, options = {}) {
+        const nextMessage = normaliseSelectionTooltipMessage(message);
+        if (!nextMessage) return;
+        clearSelectionTooltipTimer();
+        state.selectionTooltip.message = nextMessage;
+        state.selectionTooltip.visibleUntil = Date.now() + 3000;
+        state.selectionTooltip.hideTimer = window.setTimeout(() => {
+          hideSelectionFrameTooltip({ clearMessage: true });
+          renderSelectionOverlay();
+        }, 3000);
+        if (options.render !== false) {
+          renderSelectionOverlay();
+        }
+      }
+
+      function renderSelectionFrameTooltip(stageRect, visible) {
+        if (!els.selectionFrameTooltip) return;
+        const tooltipMessage = String(state.selectionTooltip?.message || "");
+        const active =
+          visible &&
+          Boolean(tooltipMessage) &&
+          Number(state.selectionTooltip?.visibleUntil || 0) > Date.now();
+        if (!active || !stageRect) {
+          els.selectionFrameTooltip.classList.remove("is-visible");
+          els.selectionFrameTooltip.setAttribute("aria-hidden", "true");
+          return;
+        }
+        els.selectionFrameTooltip.textContent = tooltipMessage;
+        els.selectionFrameTooltip.classList.add("is-visible");
+        els.selectionFrameTooltip.setAttribute("aria-hidden", "false");
+      }
+
       function getDirectManipulationBlockMessage(kind = "drag") {
         return (
           String(state.manipulationContext?.directManipulationReason || "").trim() ||
@@ -9307,6 +9487,30 @@ ${exportDoc.documentElement.outerHTML}`;
           top: iframeRect.top - stageRect.top + rect.top,
           width: rect.width,
           height: rect.height,
+        });
+      }
+
+      function clipStageRectToPreviewViewport(frameRect) {
+        const rect = cloneRect(frameRect);
+        if (!rect) return null;
+        const iframeRect = els.previewFrame.getBoundingClientRect();
+        const stageRect = els.previewStage.getBoundingClientRect();
+        const viewportLeft = iframeRect.left - stageRect.left;
+        const viewportTop = iframeRect.top - stageRect.top;
+        const viewportRight = viewportLeft + iframeRect.width;
+        const viewportBottom = viewportTop + iframeRect.height;
+        const nextLeft = Math.max(rect.left, viewportLeft);
+        const nextTop = Math.max(rect.top, viewportTop);
+        const nextRight = Math.min(rect.right, viewportRight);
+        const nextBottom = Math.min(rect.bottom, viewportBottom);
+        if (nextRight <= nextLeft || nextBottom <= nextTop) {
+          return null;
+        }
+        return cloneRect({
+          left: nextLeft,
+          top: nextTop,
+          width: nextRight - nextLeft,
+          height: nextBottom - nextTop,
         });
       }
 
@@ -9374,11 +9578,14 @@ ${exportDoc.documentElement.outerHTML}`;
           els.selectionFrame.style.left = "-9999px";
           els.selectionFrame.style.top = "-9999px";
           els.selectionFrame.tabIndex = -1;
+          renderSelectionFrameTooltip(null, false);
           clearSelectionGuides();
           renderSelectionGuides();
           return;
         }
-        const stageRect = toStageRect(getActiveSelectionRect());
+        const stageRect = clipStageRectToPreviewViewport(
+          toStageRect(getActiveSelectionRect()),
+        );
         if (!stageRect) return;
         const isProtected = Boolean(
           !state.selectedPolicy.canMove && !state.selectedPolicy.canResize,
@@ -9398,6 +9605,10 @@ ${exportDoc.documentElement.outerHTML}`;
         );
         els.selectionFrame.classList.toggle("is-compact", isCompact);
         els.selectionFrame.classList.toggle("is-tiny", isTiny);
+        els.selectionFrame.classList.toggle(
+          "is-engaged",
+          Boolean(state.activeManipulation),
+        );
         els.selectionFrame.tabIndex = visible ? 0 : -1;
         els.selectionFrame.setAttribute(
           "aria-label",
@@ -9410,9 +9621,12 @@ ${exportDoc.documentElement.outerHTML}`;
         if (els.selectionFrameLabel)
           els.selectionFrameLabel.textContent = getSelectionFrameLabel();
         if (els.selectionFrameHitArea) {
-          els.selectionFrameHitArea.style.pointerEvents = overlayLocked
-            ? "none"
-            : "auto";
+          els.selectionFrameHitArea.style.pointerEvents = isProtected ? "none" : "auto";
+          els.selectionFrameHitArea.style.cursor = directManipBlocked
+            ? "not-allowed"
+            : state.activeManipulation?.kind === "drag"
+              ? "grabbing"
+              : "grab";
           els.selectionFrameHitArea.title = overlayLocked
             ? directManipBlocked
               ? getDirectManipulationBlockMessage()
@@ -9424,6 +9638,7 @@ ${exportDoc.documentElement.outerHTML}`;
         els.selectionHandles.forEach((handle) => {
           handle.disabled = !state.selectedPolicy.canResize || directManipBlocked;
         });
+        renderSelectionFrameTooltip(stageRect, visible);
         renderSelectionGuides();
       }
 
@@ -9692,6 +9907,9 @@ ${exportDoc.documentElement.outerHTML}`;
         }
         state.activeManipulation = null;
         clearSelectionGuides();
+        if (!cancel) {
+          hideSelectionFrameTooltip({ clearMessage: true });
+        }
         setInteractionMode("select");
         renderSelectionOverlay();
       }
@@ -9728,9 +9946,27 @@ ${exportDoc.documentElement.outerHTML}`;
       }
 
       function startActiveManipulation(kind, event, handle = null) {
+        const action = kind === "resize" ? "resize" : "move";
+        if (
+          !guardSelectionAction(
+            action,
+            kind === "resize" ? "Изменение размера" : "Перемещение",
+            {
+              surface: "tooltip",
+              toast: false,
+            },
+          )
+        ) {
+          event.preventDefault();
+          event.stopPropagation();
+          if (els.selectionFrame) {
+            els.selectionFrame.focus({ preventScroll: true });
+          }
+          return;
+        }
         if (!canDirectManipulateSelection(kind === "resize" ? "resize" : "drag")) {
           guardSelectionAction(
-            kind === "resize" ? "resize" : "move",
+            action,
             kind === "resize" ? "Изменение размера" : "Перемещение",
           );
           return;
@@ -9739,6 +9975,7 @@ ${exportDoc.documentElement.outerHTML}`;
         if (!startRect) return;
         closeContextMenu();
         closeInsertPalette();
+        hideSelectionFrameTooltip({ clearMessage: true });
         const sourceEl = event.currentTarget;
         state.activeManipulation = {
           kind,
@@ -11125,12 +11362,7 @@ ${exportDoc.documentElement.outerHTML}`;
           getEntityKindFromFlags(state.selectedFlags),
         );
         if (!isCompactShell()) return "inspector";
-        if (
-          kind === "video" ||
-          kind === "slide-root" ||
-          kind === "protected" ||
-          hasBlockedDirectManipulationContext()
-        ) {
+        if (kind === "video" || kind === "slide-root" || kind === "protected") {
           return "inspector";
         }
         if (
