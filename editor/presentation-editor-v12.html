@@ -177,7 +177,10 @@
         box-sizing: border-box;
       }
 
-      html,
+      html {
+        height: 100%;
+      }
+
       body {
         min-height: 100%;
         margin: 0;
@@ -189,9 +192,13 @@
         display: flex;
         flex-direction: column;
         min-height: 100vh;
+        height: 100vh;
+        min-height: 100dvh;
+        height: 100dvh;
+        max-height: 100dvh;
         line-height: 1.45;
         text-rendering: optimizeLegibility;
-        overflow-x: clip;
+        overflow: hidden;
       }
 
       body[data-shell-locked="true"] {
@@ -505,6 +512,8 @@
       .workspace {
         flex: 1;
         min-height: 0;
+        height: 100%;
+        max-height: 100%;
         width: min(100%, var(--workspace-max));
         margin: 0 auto;
         display: grid;
@@ -512,8 +521,10 @@
             280px,
             320px
           );
+        align-items: stretch;
         gap: 16px;
         padding: 16px;
+        overflow: hidden;
       }
 
       .panel,
@@ -521,6 +532,8 @@
       .panel-main {
         min-width: 0;
         min-height: 0;
+        height: 100%;
+        max-height: 100%;
         background: var(--shell-panel);
         color: var(--shell-text);
         border: 1px solid var(--shell-border);
@@ -676,12 +689,16 @@
       .slides-panel-body {
         padding: 10px;
         overflow: auto;
+        min-height: 0;
+        overscroll-behavior: contain;
+        scrollbar-gutter: stable both-edges;
         display: flex;
         flex-direction: column;
         gap: 8px;
       }
 
       .slide-item {
+        position: relative;
         display: grid;
         grid-template-columns: 1fr auto;
         gap: 12px;
@@ -697,6 +714,18 @@
           box-shadow 0.16s ease;
       }
 
+      .slide-item::before {
+        content: "";
+        position: absolute;
+        left: 12px;
+        top: 14px;
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        border: 1px solid var(--shell-border-strong);
+        background: transparent;
+      }
+
       .slide-item:hover {
         border-color: var(--shell-border-strong);
         background: var(--shell-panel);
@@ -708,6 +737,12 @@
         box-shadow: inset 0 0 0 1px var(--shell-selection-ring);
       }
 
+      .slide-item.is-active::before {
+        border-color: var(--shell-accent);
+        background: var(--shell-accent);
+        box-shadow: 0 0 0 4px var(--shell-focus);
+      }
+
       .slide-item.is-pending {
         border-style: dashed;
         border-color: var(--shell-selection-ring);
@@ -715,6 +750,7 @@
 
       .slide-item-main {
         min-width: 0;
+        padding-left: 18px;
       }
 
       .slide-number {
@@ -749,6 +785,20 @@
         line-height: 1.2;
       }
 
+      .slide-tag.slide-state-tag {
+        color: var(--shell-text);
+      }
+
+      .slide-tag.slide-state-tag.is-pending {
+        border-style: dashed;
+        border-color: var(--shell-selection-ring);
+      }
+
+      .slide-tag.slide-state-tag.is-active {
+        border-color: color-mix(in srgb, var(--shell-accent) 55%, var(--shell-border));
+        background: color-mix(in srgb, var(--shell-accent-soft) 80%, var(--shell-panel-elevated));
+      }
+
       .slide-actions {
         display: flex;
         flex-direction: column;
@@ -758,6 +808,7 @@
       .preview-shell {
         flex: 1;
         min-height: 0;
+        overflow: hidden;
         display: flex;
         flex-direction: column;
         gap: 12px;
@@ -1002,6 +1053,9 @@
       .inspector-body {
         padding: 16px;
         overflow: auto;
+        min-height: 0;
+        overscroll-behavior: contain;
+        scrollbar-gutter: stable both-edges;
         display: flex;
         flex-direction: column;
         gap: 12px;
@@ -3592,6 +3646,8 @@
       const BRIDGE_WATCHDOG_INTERVAL_MS = 5000;
       const MODEL_SYNC_INTERVAL_MS = 7000;
       const BRIDGE_STALE_THRESHOLD_MS = 12000;
+      const SLIDE_ACTIVATION_RETRY_MS = 180;
+      const SLIDE_ACTIVATION_MAX_ATTEMPTS = 8;
       const DIRECT_MANIP_THRESHOLD_PX = 4;
       const DIRECT_MANIP_SNAP_PX = 8;
       const DIRECT_MANIP_MIN_SIZE_PX = 24;
@@ -3803,8 +3859,15 @@
         previewLifecycleChangedAt: 0,
         staticSlideSelector: null,
         slides: [],
+        runtimeSlides: [],
+        slideRegistryById: {},
+        slideRegistryOrder: [],
         activeSlideId: null,
         pendingActiveSlideId: null,
+        runtimeActiveSlideId: null,
+        requestedSlideActivation: null,
+        requestedSlideActivationSeq: 0,
+        pendingPreviewSelection: null,
         selectedNodeId: null,
         selectedTag: null,
         selectedComputed: null,
@@ -3867,9 +3930,17 @@
         assetResolverLabel: "",
         assetObjectUrls: [],
         assetFileCount: 0,
+        resolvedPreviewAssets: [],
         unresolvedPreviewAssets: [],
         baseUrlDependentAssets: [],
+        previewAssetAuditCounts: {
+          resolved: 0,
+          unresolved: 0,
+          baseUrlDependent: 0,
+        },
+        lastExportValidationAudit: null,
         lastExportValidationUrl: null,
+        slideActivationRetryTimer: null,
         slideTemplateBarOpen: false,
         shellMetricsRaf: 0,
         shellPopoverRaf: 0,
@@ -4351,6 +4422,8 @@
                   `bridge-ready: ${JSON.stringify(data.payload || {})}`,
                 );
                 setPreviewLoading(false);
+                dispatchPendingSlideActivation("bridge-ready");
+                flushPendingPreviewSelection();
                 showToast("Превью готово к работе.", "success", {
                   title: "Iframe инициализирован",
                 });
@@ -4358,6 +4431,9 @@
                 break;
               case "runtime-metadata":
                 applyRuntimeMetadata(data.payload || {});
+                break;
+              case "slide-activation":
+                applySlideActivationFromBridge(data.payload || {});
                 break;
               case "element-selected":
                 applyElementSelection(data.payload || {});
@@ -4671,7 +4747,7 @@
         state.sourceHtml = htmlString;
         state.doctypeString = extractDoctype(htmlString) || "<!DOCTYPE html>";
         state.manualBaseUrl = els.baseUrlInput.value.trim();
-        state.bridgeToken = `pe-${Math.random().toString(36).slice(2)}-${Date.now()}`;
+        state.bridgeToken = createBridgeToken();
         state.mode = "preview";
         state.interactionMode = "preview";
         state.dirty = Boolean(options.dirty);
@@ -4695,19 +4771,28 @@
           preferSlideId: options.preferSlideId,
           preferSlideIndex: options.preferSlideIndex,
         });
-        state.activeSlideId = preferredSlideId || getFirstModelSlideId();
-        state.pendingActiveSlideId = preferredSlideId || null;
+        state.runtimeSlides = [];
+        state.runtimeActiveSlideId = null;
+        clearRequestedSlideActivation();
+        if (preferredSlideId) {
+          stageSlideActivationRequest(preferredSlideId, {
+            source: "load-html",
+          });
+        }
+        syncSlideRegistry({
+          currentActiveId: preferredSlideId || getFirstModelSlideId(),
+        });
 
         if (options.resetHistory) {
           state.history = [];
           state.historyIndex = -1;
         }
 
-        const previewHtml = buildPreviewHtml();
-        const blob = new Blob([previewHtml], {
-          type: "text/html;charset=utf-8",
-        });
-        state.previewUrl = URL.createObjectURL(blob);
+        const previewPack = buildPreviewPackage();
+        if (!previewPack) {
+          throw new Error("Не удалось собрать preview-документ.");
+        }
+        state.previewUrl = URL.createObjectURL(previewPack.blob);
 
         els.documentMeta.textContent = `${sourceLabel} • подготовка превью…`;
         els.emptyState.classList.add("hidden");
@@ -4776,6 +4861,314 @@
         return firstSlide?.getAttribute("data-editor-slide-id") || null;
       }
 
+      function getModelSlideTitle(slide) {
+        if (!(slide instanceof Element)) return "Пустой слайд";
+        const titleOverride = getSlideTitleOverride(slide);
+        if (titleOverride) return titleOverride;
+        const heading = slide.querySelector(
+          "h1, h2, h3, .slide-title, [data-slide-title]",
+        );
+        if (heading?.textContent?.trim()) return heading.textContent.trim();
+        const text = String(slide.textContent || "")
+          .replace(/\s+/g, " ")
+          .trim();
+        return text ? text.slice(0, 60) + (text.length > 60 ? "…" : "") : "Пустой слайд";
+      }
+
+      function getModelSlideBackgroundValue(slide) {
+        if (!(slide instanceof Element)) return "";
+        return String(
+          slide.getAttribute("data-slide-bg") || slide.style.backgroundColor || "",
+        ).trim();
+      }
+
+      function createModelSlideRegistryEntry(slide, index) {
+        if (!(slide instanceof Element)) return null;
+        const slideId = String(slide.getAttribute("data-editor-slide-id") || "").trim();
+        if (!slideId) return null;
+        return {
+          id: slideId,
+          title: getModelSlideTitle(slide),
+          titleOverride: getSlideTitleOverride(slide),
+          preset: getSlidePresetValue(slide),
+          background: getModelSlideBackgroundValue(slide),
+          paddingPreset: getSlidePaddingPreset(slide),
+          index,
+          exportable: true,
+          source: "model",
+        };
+      }
+
+      function normalizeRuntimeSlideEntry(slide, index) {
+        if (!slide || typeof slide !== "object") return null;
+        const slideId = String(slide.id || "").trim();
+        if (!slideId) return null;
+        return {
+          id: slideId,
+          title: String(slide.title || "").trim() || "Пустой слайд",
+          titleOverride: String(slide.titleOverride || "").trim(),
+          preset: String(slide.preset || "").trim(),
+          background: String(slide.background || "").trim(),
+          paddingPreset: String(slide.paddingPreset || "").trim(),
+          index:
+            typeof slide.index === "number" && Number.isFinite(slide.index)
+              ? slide.index
+              : index,
+          exportable: slide.exportable !== false,
+          source: "runtime",
+        };
+      }
+
+      function getRequestedSlideActivation() {
+        return state.requestedSlideActivation || null;
+      }
+
+      function clearSlideActivationRetryTimer() {
+        if (!state.slideActivationRetryTimer) return;
+        window.clearTimeout(state.slideActivationRetryTimer);
+        state.slideActivationRetryTimer = null;
+      }
+
+      function clearRequestedSlideActivation() {
+        clearSlideActivationRetryTimer();
+        state.requestedSlideActivation = null;
+        state.pendingActiveSlideId = null;
+      }
+
+      function getRequestedSlideId() {
+        return getRequestedSlideActivation()?.slideId || null;
+      }
+
+      function getSlideRegistryIds(slides = state.slides) {
+        return slides.map((slide) => slide.id);
+      }
+
+      function createBridgeToken() {
+        return `pe-${Math.random().toString(36).slice(2)}-${Date.now()}`;
+      }
+
+      function resolveSlideRegistryActiveId(slides, options = {}) {
+        const slideIds = new Set(getSlideRegistryIds(slides));
+        const requestedId = slideIds.has(options.requestedSlideId)
+          ? options.requestedSlideId
+          : null;
+        const runtimeActiveId = slideIds.has(options.runtimeActiveSlideId)
+          ? options.runtimeActiveSlideId
+          : null;
+        const currentActiveId = slideIds.has(options.currentActiveId)
+          ? options.currentActiveId
+          : null;
+        return requestedId || runtimeActiveId || currentActiveId || slides[0]?.id || null;
+      }
+
+      function describeSlideRegistryState(slideId, options = {}) {
+        const isRequested =
+          Boolean(options.requestedId) && slideId === options.requestedId;
+        const isActive = Boolean(options.activeId) && slideId === options.activeId;
+        const isRuntimeActive =
+          Boolean(options.runtimeActiveId) && slideId === options.runtimeActiveId;
+        if (isRequested && (!isRuntimeActive || !isActive)) {
+          return { key: "requested", label: "requested" };
+        }
+        if (isActive && isRuntimeActive) {
+          return { key: "active", label: "active" };
+        }
+        if (isRuntimeActive && !isActive) {
+          return { key: "preview", label: "preview" };
+        }
+        if (isActive) {
+          return { key: "active", label: "active" };
+        }
+        return { key: "ready", label: "ready" };
+      }
+
+      function syncSlideRegistry(options = {}) {
+        const modelSlides = getStaticSlideModelNodes()
+          .map((slide, index) => createModelSlideRegistryEntry(slide, index))
+          .filter(Boolean);
+        const runtimeSlides = Array.isArray(options.runtimeSlides)
+          ? options.runtimeSlides
+          : state.runtimeSlides;
+        const runtimeById = new Map(
+          runtimeSlides
+            .map((slide, index) => normalizeRuntimeSlideEntry(slide, index))
+            .filter(Boolean)
+            .map((slide) => [slide.id, slide]),
+        );
+        const mergedSlides = modelSlides.length
+          ? modelSlides.map((slide, index) => {
+              const runtimeSlide = runtimeById.get(slide.id);
+              return {
+                ...slide,
+                ...(runtimeSlide || {}),
+                id: slide.id,
+                background: slide.background || runtimeSlide?.background || "",
+                index,
+                source: runtimeSlide ? "model+runtime" : "model",
+              };
+            })
+          : Array.from(runtimeById.values()).sort((a, b) => a.index - b.index);
+
+        runtimeById.forEach((runtimeSlide) => {
+          if (mergedSlides.some((slide) => slide.id === runtimeSlide.id)) return;
+          mergedSlides.push({ ...runtimeSlide, source: "runtime" });
+        });
+
+        if (!mergedSlides.length) {
+          state.slideRegistryById = {};
+          state.slideRegistryOrder = [];
+          state.slides = [];
+          state.activeSlideId = null;
+          clearRequestedSlideActivation();
+          return [];
+        }
+
+        const requestedId = getRequestedSlideId();
+        if (requestedId && !mergedSlides.some((slide) => slide.id === requestedId)) {
+          clearRequestedSlideActivation();
+        }
+        const nextRequestedId = getRequestedSlideId();
+        const nextRuntimeActiveId = mergedSlides.some(
+          (slide) => slide.id === (options.runtimeActiveSlideId ?? state.runtimeActiveSlideId),
+        )
+          ? options.runtimeActiveSlideId ?? state.runtimeActiveSlideId
+          : null;
+        state.runtimeActiveSlideId = nextRuntimeActiveId;
+        const nextActiveId = resolveSlideRegistryActiveId(mergedSlides, {
+          requestedSlideId: nextRequestedId,
+          runtimeActiveSlideId: nextRuntimeActiveId,
+          currentActiveId: options.currentActiveId ?? state.activeSlideId,
+        });
+
+        state.slideRegistryById = {};
+        state.slideRegistryOrder = mergedSlides.map((slide) => slide.id);
+        state.activeSlideId = nextActiveId;
+        state.pendingActiveSlideId = nextRequestedId;
+        state.slides = mergedSlides.map((slide, index) => {
+          const stateInfo = describeSlideRegistryState(slide.id, {
+            requestedId: nextRequestedId,
+            runtimeActiveId: nextRuntimeActiveId,
+            activeId: nextActiveId,
+          });
+          const entry = {
+            ...slide,
+            index,
+            state: stateInfo.key,
+            stateLabel: stateInfo.label,
+            isActive: slide.id === nextActiveId,
+            isRequested: slide.id === nextRequestedId,
+            isRuntimeActive: slide.id === nextRuntimeActiveId,
+          };
+          state.slideRegistryById[slide.id] = entry;
+          return entry;
+        });
+        return state.slides;
+      }
+
+      function stageSlideActivationRequest(slideId, options = {}) {
+        const normalizedSlideId = String(slideId || "").trim();
+        if (!normalizedSlideId) return null;
+        const slideIndex =
+          typeof options.index === "number" && Number.isFinite(options.index)
+            ? options.index
+            : Math.max(0, getSlideIndexById(normalizedSlideId));
+        state.requestedSlideActivationSeq += 1;
+        state.requestedSlideActivation = {
+          requestId: `slide-activation-${state.requestedSlideActivationSeq}`,
+          slideId: normalizedSlideId,
+          index: slideIndex,
+          source: String(options.source || "shell"),
+          requestedAt: Date.now(),
+          lastSentAt: 0,
+          attempts: 0,
+          status: "pending",
+        };
+        clearSlideActivationRetryTimer();
+        state.pendingActiveSlideId = normalizedSlideId;
+        return state.requestedSlideActivation;
+      }
+
+      function schedulePendingSlideActivationRetry(
+        reason = "slide-request-retry",
+      ) {
+        clearSlideActivationRetryTimer();
+        const request = getRequestedSlideActivation();
+        if (!request || !state.previewReady || !state.bridgeAlive) return false;
+        if (request.attempts >= SLIDE_ACTIVATION_MAX_ATTEMPTS) return false;
+        state.slideActivationRetryTimer = window.setTimeout(() => {
+          state.slideActivationRetryTimer = null;
+          const pending = getRequestedSlideActivation();
+          if (!pending) return;
+          if (
+            state.runtimeActiveSlideId &&
+            state.runtimeActiveSlideId === pending.slideId
+          ) {
+            clearRequestedSlideActivation();
+            syncSlideRegistry({
+              runtimeActiveSlideId: state.runtimeActiveSlideId,
+            });
+            renderSlidesList();
+            refreshUi();
+            return;
+          }
+          dispatchPendingSlideActivation(reason);
+        }, SLIDE_ACTIVATION_RETRY_MS);
+        return true;
+      }
+
+      function dispatchPendingSlideActivation(reason = "slide-request") {
+        const request = getRequestedSlideActivation();
+        if (!request || !state.previewReady || !state.bridgeAlive) return false;
+        const slideIndex = getSlideIndexById(request.slideId);
+        if (slideIndex >= 0) request.index = slideIndex;
+        const sent = sendToBridge("navigate-to-slide", {
+          slideId: request.slideId,
+          index: request.index,
+          requestId: request.requestId,
+          reason,
+          source: request.source,
+        });
+        if (sent) {
+          request.lastSentAt = Date.now();
+          request.attempts += 1;
+          schedulePendingSlideActivationRetry(reason);
+        }
+        return sent;
+      }
+
+      function stagePreviewSelectionRestore(nodeId, options = {}) {
+        const normalizedNodeId = String(nodeId || "").trim();
+        if (!normalizedNodeId) {
+          state.pendingPreviewSelection = null;
+          return null;
+        }
+        state.pendingPreviewSelection = {
+          nodeId: normalizedNodeId,
+          slideId: String(options.slideId || state.activeSlideId || "").trim() || null,
+          focusText: Boolean(options.focusText),
+          requestedAt: Date.now(),
+        };
+        return state.pendingPreviewSelection;
+      }
+
+      function flushPendingPreviewSelection() {
+        const pendingSelection = state.pendingPreviewSelection;
+        if (!pendingSelection || !state.previewReady || !state.bridgeAlive) return false;
+        if (
+          pendingSelection.slideId &&
+          state.activeSlideId &&
+          pendingSelection.slideId !== state.activeSlideId
+        ) {
+          return false;
+        }
+        const sent = sendToBridge("select-element", {
+          nodeId: pendingSelection.nodeId,
+          focusText: pendingSelection.focusText,
+        });
+        if (sent) state.pendingPreviewSelection = null;
+        return sent;
+      }
+
       function resolvePreferredSlideTarget(options = {}) {
         const preferSlideId = String(options.preferSlideId || "").trim();
         if (
@@ -4816,6 +5209,77 @@
           base.removeAttribute("data-editor-preview-base");
         }
         base.setAttribute("href", baseHref);
+      }
+
+      function createRenderedOutputContract(options = {}) {
+        const keepEditorArtifacts = options.keepEditorArtifacts !== false;
+        const includeBridge = Boolean(options.includeBridge);
+        return {
+          renderMode: String(options.renderMode || "preview").trim() || "preview",
+          applyAssetResolver: Boolean(
+            options.applyAssetResolver && state.assetResolverMap,
+          ),
+          keepEditorArtifacts,
+          includeBridge,
+          auditAssets: Boolean(options.auditAssets),
+          captureAuditToState: Boolean(options.captureAuditToState),
+          baseHref: String(options.baseHref ?? state.manualBaseUrl ?? "").trim(),
+          previewOnly: keepEditorArtifacts && includeBridge,
+          exportSafe: !keepEditorArtifacts,
+        };
+      }
+
+      function createEmptyPreviewAssetAudit() {
+        return {
+          resolved: [],
+          unresolved: [],
+          baseUrlDependent: [],
+          counts: {
+            resolved: 0,
+            unresolved: 0,
+            baseUrlDependent: 0,
+          },
+        };
+      }
+
+      function buildRenderedOutputPackage(options = {}) {
+        const contract = createRenderedOutputContract(options);
+        const outputDoc = buildRenderedOutputDocument(contract);
+        if (!outputDoc) return null;
+        const assetAudit = contract.auditAssets
+          ? collectPreviewAssetAudit(state.modelDoc, { baseHref: contract.baseHref })
+          : createEmptyPreviewAssetAudit();
+        if (contract.captureAuditToState) {
+          updatePreviewAssetAuditFromAudit(assetAudit);
+        }
+        const serialized = serializeDocumentWithDoctype(outputDoc);
+        const blob = new Blob([serialized], {
+          type: "text/html;charset=utf-8",
+        });
+        const slideCount = outputDoc.querySelectorAll(
+          state.staticSlideSelector || "section, article, .slide",
+        ).length;
+        return {
+          document: outputDoc,
+          serialized,
+          blob,
+          slideCount,
+          usesAssetResolver: contract.applyAssetResolver,
+          assetAudit,
+          contract,
+        };
+      }
+
+      function buildPreviewPackage() {
+        return buildRenderedOutputPackage({
+          renderMode: "preview",
+          applyAssetResolver: Boolean(state.assetResolverMap),
+          keepEditorArtifacts: true,
+          includeBridge: true,
+          auditAssets: true,
+          captureAuditToState: true,
+          baseHref: state.manualBaseUrl.trim(),
+        });
       }
 
       // injectBridge
@@ -4986,10 +5450,10 @@
           if (engine === 'reveal' && window.Reveal && typeof window.Reveal.getCurrentSlide === 'function') {
             return window.Reveal.getCurrentSlide();
           }
-          const signals = ['.slide.active', '.slide.current', '.slide.present', '.active.slide', '.present', '.current', '[aria-current="true"]'];
+          const signals = ['.slide.active', '.slide.current', '.slide.present', '.active.slide', '.present', '.current', '[aria-current="true"]', '[data-editor-runtime-slide-active="true"]'];
           for (const selector of signals) {
             const el = document.querySelector(selector);
-            if (el && STATE.slides.includes(el)) return el;
+            if (el && STATE.slides.includes(el) && !isSlideHidden(el)) return el;
           }
           const visible = STATE.slides.find((slide) => {
             const style = window.getComputedStyle(slide);
@@ -5054,13 +5518,108 @@
             if (profile.usesHiddenAttr) slide.hidden = !isTarget;
             if (profile.usesAriaHidden) slide.setAttribute('aria-hidden', isTarget ? 'false' : 'true');
           });
-          target.scrollIntoView({ block: 'center', inline: 'center', behavior: 'auto' });
-          queueMetadataRefresh();
           return true;
+        }
+
+        function applySafeGenericSlideActivation(target) {
+          const slides = STATE.slides || [];
+          if (!target || !slides.length) return false;
+          document.documentElement.style.height = '100%';
+          document.documentElement.style.overflow = 'hidden';
+          document.body.style.minHeight = '100%';
+          document.body.style.height = '100%';
+          document.body.style.overflow = 'hidden';
+          slides.forEach((slide) => {
+            const isTarget = slide === target;
+            slide.setAttribute('data-editor-runtime-slide-active', isTarget ? 'true' : 'false');
+            if (isTarget) {
+              slide.hidden = false;
+              slide.setAttribute('aria-hidden', 'false');
+              slide.setAttribute('aria-current', 'true');
+              slide.removeAttribute('tabindex');
+            } else {
+              slide.hidden = true;
+              slide.setAttribute('aria-hidden', 'true');
+              slide.removeAttribute('aria-current');
+              slide.setAttribute('tabindex', '-1');
+            }
+          });
+          return true;
+        }
+
+        function ensureGenericSingleSlideView() {
+          const slides = STATE.slides || [];
+          if (slides.length <= 1) return false;
+          const profile = detectGenericSlideActivationProfile();
+          const hasKnownActivation =
+            profile.usesActiveClass ||
+            profile.usesCurrentClass ||
+            profile.usesPresentClass ||
+            profile.usesPastClass ||
+            profile.usesFutureClass ||
+            profile.usesNextClass ||
+            profile.usesPreviousClass ||
+            profile.usesAriaCurrent ||
+            profile.usesHiddenAttr ||
+            profile.usesAriaHidden;
+          if (hasKnownActivation) return false;
+          const current =
+            slides.find((slide) => !isSlideHidden(slide)) ||
+            slides.find((slide) => slide.getAttribute('data-editor-runtime-slide-active') === 'true' && !isSlideHidden(slide)) ||
+            slides[0] ||
+            null;
+          return current ? applySafeGenericSlideActivation(current) : false;
+        }
+
+        function isElementInViewport(el) {
+          if (!(el instanceof Element)) return false;
+          const rect = el.getBoundingClientRect();
+          return (
+            rect.bottom > 0 &&
+            rect.right > 0 &&
+            rect.top < window.innerHeight &&
+            rect.left < window.innerWidth
+          );
+        }
+
+        function emitSlideActivation(payload) {
+          post('slide-activation', {
+            requestId: payload.requestId || '',
+            requestedSlideId: payload.requestedSlideId || '',
+            resolvedSlideId: payload.resolvedSlideId || '',
+            activeSlideId: currentSlideId(),
+            targetIndex:
+              typeof payload.targetIndex === 'number' && Number.isFinite(payload.targetIndex)
+                ? payload.targetIndex
+                : -1,
+            strategy: payload.strategy || 'runtime',
+            status: payload.status || 'ok',
+            success: Boolean(payload.success),
+          });
+        }
+
+        function scheduleSlideActivationReport(payload) {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              STATE.slides = collectSlides();
+              const activeSlideId = currentSlideId();
+              const requestedSlideId = String(payload.requestedSlideId || '').trim();
+              emitSlideActivation({
+                ...payload,
+                activeSlideId,
+                success: requestedSlideId ? activeSlideId === requestedSlideId : Boolean(activeSlideId),
+                status:
+                  payload.status ||
+                  (requestedSlideId && activeSlideId !== requestedSlideId ? 'mismatch' : 'ok'),
+              });
+              queueMetadataRefresh();
+            });
+          });
         }
 
         function emitRuntimeMetadata() {
           STATE.slides = collectSlides();
+          ensureGenericSingleSlideView();
           post('runtime-metadata', {
             engine: STATE.engine,
             activeSlideId: currentSlideId(),
@@ -5091,8 +5650,14 @@
         function attachEngineHooks() {
           if (STATE.engine === 'reveal' && window.Reveal && typeof window.Reveal.on === 'function') {
             window.Reveal.on('ready', emitRuntimeMetadata);
-            window.Reveal.on('slidechanged', emitRuntimeMetadata);
-            window.Reveal.on('slidetransitionend', emitRuntimeMetadata);
+            window.Reveal.on('slidechanged', () => {
+              emitRuntimeMetadata();
+              emitSlideActivation({ strategy: 'engine-observed', success: true });
+            });
+            window.Reveal.on('slidetransitionend', () => {
+              emitRuntimeMetadata();
+              emitSlideActivation({ strategy: 'engine-observed', success: true });
+            });
           }
           if (STATE.slideObserver) STATE.slideObserver.disconnect();
           STATE.slideObserver = new MutationObserver((mutations) => {
@@ -5575,7 +6140,7 @@
           return slideId ? document.querySelector('[' + SLIDE_MARKER + '="' + cssEscape(slideId) + '"]') : null;
         }
 
-        function navigateToSlide(slideId, fallbackIndex) {
+        function navigateToSlide(slideId, fallbackIndex, requestId) {
           STATE.slides = collectSlides();
           const parsedFallbackIndex =
             typeof fallbackIndex === 'number' && Number.isFinite(fallbackIndex)
@@ -5585,11 +6150,30 @@
             findSlideById(slideId) ||
             (Number.isFinite(parsedFallbackIndex) ? STATE.slides[parsedFallbackIndex] : null) ||
             null;
-          if (!target) return;
+          if (!target) {
+            emitSlideActivation({
+              requestId: requestId || '',
+              requestedSlideId: slideId || '',
+              resolvedSlideId: '',
+              targetIndex: -1,
+              strategy: 'missing-target',
+              status: 'missing-target',
+              success: false,
+            });
+            return;
+          }
           const targetIndex = STATE.slides.findIndex((slide) => slide === target);
+          const targetSlideId = target.getAttribute(SLIDE_MARKER) || '';
           if (STATE.engine === 'reveal' && window.Reveal && typeof window.Reveal.getIndices === 'function' && typeof window.Reveal.slide === 'function') {
             const idx = window.Reveal.getIndices(target);
             window.Reveal.slide(idx.h, idx.v, idx.f);
+            scheduleSlideActivationReport({
+              requestId: requestId || '',
+              requestedSlideId: slideId || targetSlideId,
+              resolvedSlideId: targetSlideId,
+              targetIndex,
+              strategy: 'reveal',
+            });
             return;
           }
           if (typeof window.goToSlide === 'function') {
@@ -5597,7 +6181,13 @@
               ? targetIndex + 1
               : Number(target.getAttribute('data-slide')) || 1;
             window.goToSlide(nextIndex);
-            queueMetadataRefresh();
+            scheduleSlideActivationReport({
+              requestId: requestId || '',
+              requestedSlideId: slideId || targetSlideId,
+              resolvedSlideId: targetSlideId,
+              targetIndex,
+              strategy: 'goToSlide',
+            });
             return;
           }
           if (typeof window.changeSlide === 'function' && targetIndex !== -1) {
@@ -5609,20 +6199,66 @@
                 for (let step = 0; step < Math.abs(delta); step += 1) {
                   window.changeSlide(delta > 0 ? 1 : -1);
                 }
-                queueMetadataRefresh();
+                scheduleSlideActivationReport({
+                  requestId: requestId || '',
+                  requestedSlideId: slideId || targetSlideId,
+                  resolvedSlideId: targetSlideId,
+                  targetIndex,
+                  strategy: 'changeSlide',
+                });
                 return;
               }
             }
-            if (applyGenericSlideActivation(target, targetIndex)) return;
+            if (applyGenericSlideActivation(target, targetIndex)) {
+              scheduleSlideActivationReport({
+                requestId: requestId || '',
+                requestedSlideId: slideId || targetSlideId,
+                resolvedSlideId: targetSlideId,
+                targetIndex,
+                strategy: 'generic-profile',
+              });
+              return;
+            }
           }
           if (STATE.engine === 'shower' && target.id) {
             location.hash = '#' + target.id;
-            queueMetadataRefresh();
+            scheduleSlideActivationReport({
+              requestId: requestId || '',
+              requestedSlideId: slideId || targetSlideId,
+              resolvedSlideId: targetSlideId,
+              targetIndex,
+              strategy: 'shower',
+            });
             return;
           }
-          if (applyGenericSlideActivation(target, targetIndex)) return;
+          if (applyGenericSlideActivation(target, targetIndex)) {
+            scheduleSlideActivationReport({
+              requestId: requestId || '',
+              requestedSlideId: slideId || targetSlideId,
+              resolvedSlideId: targetSlideId,
+              targetIndex,
+              strategy: 'generic-profile',
+            });
+            return;
+          }
+          if (applySafeGenericSlideActivation(target)) {
+            scheduleSlideActivationReport({
+              requestId: requestId || '',
+              requestedSlideId: slideId || targetSlideId,
+              resolvedSlideId: targetSlideId,
+              targetIndex,
+              strategy: 'generic-safe',
+            });
+            return;
+          }
           target.scrollIntoView({ block: 'center', inline: 'center', behavior: 'auto' });
-          queueMetadataRefresh();
+          scheduleSlideActivationReport({
+            requestId: requestId || '',
+            requestedSlideId: slideId || targetSlideId,
+            resolvedSlideId: targetSlideId,
+            targetIndex,
+            strategy: 'scroll-fallback',
+          });
         }
 
         
@@ -5699,16 +6335,31 @@
           return position === 'absolute' || position === 'fixed' ? position : 'translate';
         }
 
-        function getPositionReferenceOrigin(el, mode) {
-          if (mode === 'fixed') return { left: 0, top: 0 };
+        function measurePositionReferenceOffset(el, mode, rect = null) {
+          const elementRect = rect || getRect(el);
+          if (mode === 'fixed') {
+            return {
+              left: elementRect.left,
+              top: elementRect.top,
+            };
+          }
           const offsetParent = el.offsetParent;
           if (!offsetParent || offsetParent === document.body || offsetParent === document.documentElement) {
-            return { left: 0, top: 0 };
+            return {
+              left: elementRect.left + window.scrollX,
+              top: elementRect.top + window.scrollY,
+            };
           }
-          const rect = offsetParent.getBoundingClientRect();
+          const parentRect = offsetParent.getBoundingClientRect();
           return {
-            left: rect.left + offsetParent.clientLeft,
-            top: rect.top + offsetParent.clientTop,
+            left:
+              elementRect.left -
+              (parentRect.left + offsetParent.clientLeft) +
+              offsetParent.scrollLeft,
+            top:
+              elementRect.top -
+              (parentRect.top + offsetParent.clientTop) +
+              offsetParent.scrollTop,
           };
         }
 
@@ -5721,7 +6372,7 @@
           const rect = getRect(el);
           const mode = getDirectManipulationMode(el);
           const translate = parseTranslateValue(computed.translate || el.style.translate || '');
-          const referenceOrigin = getPositionReferenceOrigin(el, mode);
+          const referenceOffset = measurePositionReferenceOffset(el, mode, rect);
           const rawLeft = Number.parseFloat(computed.left);
           const rawTop = Number.parseFloat(computed.top);
           STATE.directManipulation = {
@@ -5735,10 +6386,10 @@
             startHeight: rect.height,
             startLeft: Number.isFinite(rawLeft)
               ? rawLeft
-              : rect.left - referenceOrigin.left,
+              : referenceOffset.left,
             startTop: Number.isFinite(rawTop)
               ? rawTop
-              : rect.top - referenceOrigin.top,
+              : referenceOffset.top,
             startTranslate: translate,
             startInline: {
               position: el.style.position || '',
@@ -5829,9 +6480,15 @@
           notifyElementUpdated(session.el);
         }
 
-        function syncSlideToParent(slide) {
+        function syncSlideToParent(slide, options = {}) {
           if (!slide) return;
-          post('document-sync', { slideId: slide.getAttribute(SLIDE_MARKER), html: slide.outerHTML });
+          post('document-sync', {
+            slideId: slide.getAttribute(SLIDE_MARKER),
+            activeSlideId: currentSlideId(),
+            index: STATE.slides.findIndex((entry) => entry === slide),
+            source: options.source || 'runtime',
+            html: slide.outerHTML,
+          });
         }
 
         function updateAttributes(nodeId, attrs) {
@@ -6058,7 +6715,7 @@
                 break;
               }
               case 'navigate-to-slide': {
-                navigateToSlide(payload.slideId, payload.index);
+                navigateToSlide(payload.slideId, payload.index, payload.requestId);
                 break;
               }
               case 'select-element': {
@@ -6146,7 +6803,7 @@
               }
               case 'request-slide-sync': {
                 const slide = findSlideById(payload.slideId) || getCurrentSlide();
-                if (slide) syncSlideToParent(slide);
+                if (slide) syncSlideToParent(slide, { source: payload.reason || 'request-slide-sync' });
                 break;
               }
               case 'replace-node-html': {
@@ -6190,6 +6847,7 @@
           ensureHelperStyles();
           post('bridge-ready', { engine: STATE.engine });
           emitRuntimeMetadata();
+          emitSlideActivation({ strategy: 'boot', success: true });
           setTimeout(emitRuntimeMetadata, 150);
           setTimeout(emitRuntimeMetadata, 500);
           setTimeout(emitRuntimeMetadata, 1200);
@@ -6301,41 +6959,65 @@
         state.bridgeAlive = true;
         setPreviewLifecycleState("ready", { reason: "runtime-metadata" });
         state.engine = payload.engine || "unknown";
-        state.slides = Array.isArray(payload.slides) ? payload.slides : [];
-        const requested = state.pendingActiveSlideId;
-        const runtimeActiveSlideId = payload.activeSlideId || null;
-        const hasRequestedSlide = Boolean(
-          requested && state.slides.some((slide) => slide.id === requested),
-        );
-        if (hasRequestedSlide) {
-          state.activeSlideId = requested;
-          if (runtimeActiveSlideId === requested) {
-            state.pendingActiveSlideId = null;
-          }
-        } else {
-          state.activeSlideId =
-            runtimeActiveSlideId ||
-            state.activeSlideId ||
-            state.slides[0]?.id ||
-            null;
-          state.pendingActiveSlideId = null;
+        state.runtimeSlides = Array.isArray(payload.slides) ? payload.slides : [];
+        state.runtimeActiveSlideId = String(payload.activeSlideId || "").trim() || null;
+        const requestedSlideId = getRequestedSlideId();
+        syncSlideRegistry({
+          runtimeSlides: state.runtimeSlides,
+          runtimeActiveSlideId: state.runtimeActiveSlideId,
+        });
+        if (
+          requestedSlideId &&
+          state.runtimeActiveSlideId &&
+          requestedSlideId === state.runtimeActiveSlideId &&
+          (state.requestedSlideActivation?.attempts || 0) > 0
+        ) {
+          clearRequestedSlideActivation();
+          syncSlideRegistry({
+            runtimeSlides: state.runtimeSlides,
+            runtimeActiveSlideId: state.runtimeActiveSlideId,
+          });
         }
         state.editingSupported = Boolean(
           payload.editingSupported &&
           state.modelDoc?.querySelector("[data-editor-node-id]"),
         );
         state.lastRuntimeMetadataAt = Date.now();
-        if (!state.activeSlideId && state.slides.length)
-          state.activeSlideId = state.slides[0].id;
         els.documentMeta.textContent = `${state.sourceLabel} • движок: ${state.engine}`;
         renderSlidesList();
-        scrollActiveSlideListItemIntoView();
-        if (hasRequestedSlide && runtimeActiveSlideId !== requested) {
-          sendToBridge("navigate-to-slide", {
-            slideId: requested,
-            index: getSlideIndexById(requested),
-          });
+        dispatchPendingSlideActivation("runtime-metadata");
+        schedulePendingSlideActivationRetry("runtime-metadata-retry");
+        flushPendingPreviewSelection();
+        refreshUi();
+      }
+
+      function applySlideActivationFromBridge(payload) {
+        const requestId = String(payload.requestId || "").trim();
+        const requestedSlideId = String(payload.requestedSlideId || "").trim();
+        const activeSlideId = String(payload.activeSlideId || "").trim() || null;
+        const activationRequest = getRequestedSlideActivation();
+        state.runtimeActiveSlideId = activeSlideId;
+        if (
+          activationRequest &&
+          requestId &&
+          activationRequest.requestId === requestId &&
+          activeSlideId === activationRequest.slideId
+        ) {
+          clearRequestedSlideActivation();
+        } else if (
+          activationRequest &&
+          requestedSlideId &&
+          requestedSlideId === activationRequest.slideId &&
+          payload.status === "missing-target"
+        ) {
+          clearRequestedSlideActivation();
         }
+        syncSlideRegistry({ runtimeActiveSlideId: state.runtimeActiveSlideId });
+        if (getRequestedSlideActivation()) {
+          schedulePendingSlideActivationRetry("slide-activation");
+        }
+        renderSlidesList();
+        flushPendingPreviewSelection();
         refreshUi();
       }
 
@@ -6381,7 +7063,11 @@
           payload.protectionPolicy || {},
           nextFlags,
         );
-        state.activeSlideId = payload.slideId || state.activeSlideId;
+        state.runtimeActiveSlideId = payload.slideId || state.runtimeActiveSlideId;
+        syncSlideRegistry({
+          currentActiveId: payload.slideId || state.activeSlideId,
+          runtimeActiveSlideId: state.runtimeActiveSlideId,
+        });
         if (state.mode === "edit" && !state.activeManipulation) {
           if (state.selectedFlags.isTextEditing && state.selectedFlags.canEditText) {
             setInteractionMode("text-edit");
@@ -6392,6 +7078,7 @@
         updateInspectorFromSelection();
         positionFloatingToolbar();
         renderSelectionOverlay();
+        renderSlidesList();
         refreshUi();
       }
 
@@ -6503,6 +7190,7 @@
           state.activeGuides = { vertical: [], horizontal: [] };
           noteAppliedSeq(slideId, seq);
           commitChange("slide-updated");
+          syncSlideRegistry();
           renderSlidesList();
           refreshUi();
         } catch (error) {
@@ -6528,6 +7216,7 @@
         noteAppliedSeq(slideId, seq);
         clearSelectedElementState();
         commitChange("slide-removed");
+        syncSlideRegistry();
         renderSlidesList();
         refreshUi();
       }
@@ -6552,7 +7241,7 @@
       }
 
       function getSlideIndexById(slideId) {
-        return state.slides.findIndex((slide) => slide.id === slideId);
+        return state.slideRegistryOrder.indexOf(slideId);
       }
 
       function scrollActiveSlideListItemIntoView() {
@@ -6567,19 +7256,13 @@
 
       function requestSlideActivation(slideId, options = {}) {
         if (!slideId) return;
-        const slideIndex =
-          typeof options.index === "number" && Number.isFinite(options.index)
-            ? options.index
-            : getSlideIndexById(slideId);
-        state.pendingActiveSlideId = slideId;
+        const activationRequest = stageSlideActivationRequest(slideId, options);
+        if (!activationRequest) return;
         if (options.closeTransientUi !== false) {
           closeTransientShellUi({ keep: options.keepUi || "" });
         }
-        const sent = sendToBridge("navigate-to-slide", {
-          slideId,
-          index: slideIndex >= 0 ? slideIndex : 0,
-        });
-        if (!sent) state.pendingActiveSlideId = null;
+        syncSlideRegistry({ currentActiveId: slideId });
+        dispatchPendingSlideActivation(options.reason || "request-slide-activation");
         renderSlidesList();
         refreshUi();
         scrollActiveSlideListItemIntoView();
@@ -6660,12 +7343,20 @@
             `[data-editor-slide-id="${cssEscape(slide.id)}"]`,
           );
           const metaTags = buildSlideMetaTags(slide, slideNode);
+          const stateTagClass =
+            slide.state === "requested"
+              ? "slide-tag slide-state-tag is-pending"
+              : slide.state === "active"
+                ? "slide-tag slide-state-tag is-active"
+                : "slide-tag slide-state-tag";
           main.innerHTML = `
           <div class="slide-number">Слайд ${index + 1}</div>
           <div class="slide-title">${escapeHtml(slide.title || "Пустой слайд")}</div>
           ${
-            metaTags.length
-              ? `<div class="slide-meta-row">${metaTags
+            metaTags.length || slide.stateLabel
+              ? `<div class="slide-meta-row"><span class="${stateTagClass}">${escapeHtml(
+                  slide.stateLabel || "ready",
+                )}</span>${metaTags
                   .map((tag) => `<span class="slide-tag">${escapeHtml(tag)}</span>`)
                   .join("")}</div>`
               : ""
@@ -6805,6 +7496,7 @@
         else targetEl.after(currentEl);
         syncStaticSlideOrderingMetadata();
         commitChange("slide-move");
+        syncSlideRegistry({ currentActiveId: current.id });
         rebuildPreviewKeepingContext(current.id);
       }
 
@@ -6937,21 +7629,28 @@
         cleanupPreviewUrl();
         state.previewReady = false;
         state.bridgeAlive = false;
+        state.runtimeSlides = [];
+        state.runtimeActiveSlideId = null;
         setPreviewLifecycleState("recovering", { reason: "rebuild-preview" });
-        state.slides = [];
-        state.selectedNodeId = null;
-        state.selectedTag = null;
-        state.selectedComputed = null;
-        state.selectedHtml = "";
-        state.selectedRect = null;
         state.slideSyncLocks = {};
-        state.activeSlideId = preferredSlideId;
-        state.pendingActiveSlideId = preferredSlideId;
-        const previewHtml = buildPreviewHtml();
-        const blob = new Blob([previewHtml], {
-          type: "text/html;charset=utf-8",
-        });
-        state.previewUrl = URL.createObjectURL(blob);
+        clearRequestedSlideActivation();
+        if (preferredSlideId) {
+          stageSlideActivationRequest(preferredSlideId, {
+            source: "rebuild-preview",
+          });
+        }
+        if (!state.pendingPreviewSelection) {
+          state.selectedNodeId = null;
+          state.selectedTag = null;
+          state.selectedComputed = null;
+          state.selectedHtml = "";
+          state.selectedRect = null;
+        }
+        syncSlideRegistry({ currentActiveId: preferredSlideId });
+        state.bridgeToken = createBridgeToken();
+        const previewPack = buildPreviewPackage();
+        if (!previewPack) return;
+        state.previewUrl = URL.createObjectURL(previewPack.blob);
         els.previewFrame.onload = () => {
           sendToBridge("set-mode", { mode: state.mode });
         };
@@ -7135,68 +7834,58 @@
 ${doc.documentElement.outerHTML}`;
       }
 
-      function buildRenderedOutputDocument(options = {}) {
+      function buildRenderedOutputDocument(contract = {}) {
         if (!state.modelDoc) return null;
         const outputDoc = state.modelDoc.cloneNode(true);
-        if (options.applyAssetResolver && state.assetResolverMap) {
+        if (contract.applyAssetResolver && state.assetResolverMap) {
           applyAssetResolverToPreviewDoc(outputDoc);
         }
-        if (!options.keepEditorArtifacts) {
+        if (!contract.keepEditorArtifacts) {
           stripEditorArtifacts(outputDoc);
         }
-        if (options.baseHref) {
-          upsertBaseHref(outputDoc, options.baseHref, {
-            markPreviewBase: Boolean(options.keepEditorArtifacts),
-          });
-        }
-        if (options.includeBridge) {
+        if (contract.includeBridge) {
           injectBridge(outputDoc);
+        }
+        if (contract.baseHref) {
+          upsertBaseHref(outputDoc, contract.baseHref, {
+            markPreviewBase: Boolean(
+              contract.keepEditorArtifacts && contract.includeBridge,
+            ),
+          });
         }
         return outputDoc;
       }
 
       function buildCleanExportPackage() {
-        const exportDoc = buildRenderedOutputDocument({
+        return buildRenderedOutputPackage({
+          renderMode: "export",
           keepEditorArtifacts: false,
           baseHref: state.manualBaseUrl.trim(),
         });
-        if (!exportDoc) return null;
-        const serialized = serializeDocumentWithDoctype(exportDoc);
-        const slideCount = exportDoc.querySelectorAll(
-          state.staticSlideSelector || "section, article, .slide",
-        ).length;
-        return {
-          serialized,
-          blob: new Blob([serialized], {
-            type: "text/html;charset=utf-8",
-          }),
-          slideCount,
-        };
       }
 
       function buildExportValidationPackage() {
-        const validationDoc = buildRenderedOutputDocument({
+        const pack = buildRenderedOutputPackage({
+          renderMode: "export-validation",
           applyAssetResolver: Boolean(state.assetResolverMap),
           keepEditorArtifacts: false,
+          auditAssets: true,
           baseHref: state.manualBaseUrl.trim(),
         });
-        if (!validationDoc) return null;
-        const serialized = serializeDocumentWithDoctype(validationDoc);
-        const blob = new Blob([serialized], {
-          type: "text/html;charset=utf-8",
-        });
+        if (!pack) return null;
         cleanupExportValidationUrl();
-        const previewUrl = URL.createObjectURL(blob);
+        const previewUrl = URL.createObjectURL(pack.blob);
         state.lastExportValidationUrl = previewUrl;
-        const slideCount = validationDoc.querySelectorAll(
-          state.staticSlideSelector || "section, article, .slide",
-        ).length;
+        state.lastExportValidationAudit = pack.assetAudit;
         return {
-          serialized,
-          blob,
+          document: pack.document,
+          serialized: pack.serialized,
+          blob: pack.blob,
           previewUrl,
-          slideCount,
-          usesAssetResolver: Boolean(state.assetResolverMap),
+          slideCount: pack.slideCount,
+          usesAssetResolver: pack.usesAssetResolver,
+          assetAudit: pack.assetAudit,
+          contract: pack.contract,
         };
       }
 
@@ -7208,14 +7897,20 @@ ${doc.documentElement.outerHTML}`;
         const pack = buildExportPackage();
         if (!pack) return;
         const popup = window.open(pack.previewUrl, "_blank", "noopener,noreferrer");
+        const auditSummary = formatAssetAuditSummary(pack.assetAudit, {
+          includeSamples: true,
+          includeZeroes: true,
+        });
         if (!popup) {
           showToast("Браузер заблокировал новую вкладку. Скопируй проверочный preview вручную или разреши pop-up.", "warning", {
             title: "Проверка экспорта",
           });
+          if (auditSummary) addDiagnostic(`export-validation-audit: ${auditSummary}`);
           prompt("Открой проверочный preview вручную", pack.previewUrl);
           return;
         }
-        showToast("Открылся чистый экспорт без editor-артефактов. Сверь его с live preview перед отправкой.", "success", {
+        addDiagnostic(`export-validation-audit: ${auditSummary}`);
+        showToast(`Открылся export-safe validation preview. ${auditSummary}`, (pack.assetAudit?.counts?.unresolved || 0) > 0 ? "warning" : "success", {
           title: "Проверка экспорта",
         });
       }
@@ -7304,7 +7999,14 @@ ${doc.documentElement.outerHTML}`;
         state.engine = "unknown";
         setPreviewLifecycleState("idle", { reason: "reset-runtime" });
         state.slides = [];
+        state.runtimeSlides = [];
+        state.slideRegistryById = {};
+        state.slideRegistryOrder = [];
         state.activeSlideId = null;
+        state.pendingActiveSlideId = null;
+        state.runtimeActiveSlideId = null;
+        clearRequestedSlideActivation();
+        state.pendingPreviewSelection = null;
         state.slideSyncLocks = {};
         state.lastAppliedSeqBySlide = {};
         state.lastAppliedSeq = 0;
@@ -7315,8 +8017,15 @@ ${doc.documentElement.outerHTML}`;
         state.activeGuides = { vertical: [], horizontal: [] };
         state.diagnostics = [];
         state.editingSupported = false;
+        state.resolvedPreviewAssets = [];
         state.unresolvedPreviewAssets = [];
         state.baseUrlDependentAssets = [];
+        state.previewAssetAuditCounts = {
+          resolved: 0,
+          unresolved: 0,
+          baseUrlDependent: 0,
+        };
+        state.lastExportValidationAudit = null;
         updateDiagnostics();
       }
 
@@ -9847,15 +10556,17 @@ ${exportDoc.documentElement.outerHTML}`;
           showToast("Совпадений не найдено.", "warning", { title: "Поиск" });
           return;
         }
-        sendToBridge("navigate-to-slide", {
+        stagePreviewSelectionRestore(target.getAttribute("data-editor-node-id"), {
           slideId: state.activeSlideId,
+        });
+        requestSlideActivation(state.activeSlideId, {
           index: state.slides.findIndex(
             (slideMeta) => slideMeta.id === state.activeSlideId,
           ),
+          closeTransientUi: false,
+          reason: "find-element",
         });
-        sendToBridge("select-element", {
-          nodeId: target.getAttribute("data-editor-node-id"),
-        });
+        flushPendingPreviewSelection();
         showToast("Найден первый подходящий элемент.", "success", {
           title: "Поиск",
         });
@@ -9889,7 +10600,10 @@ ${exportDoc.documentElement.outerHTML}`;
         state.bridgeWatchdogTimer = window.setInterval(() => {
           if (!state.modelDoc || !state.previewReady) return;
           pruneSlideSyncLocks();
-          sendToBridge("request-slide-sync", { slideId: state.activeSlideId });
+          sendToBridge("request-slide-sync", {
+            slideId: state.activeSlideId,
+            reason: "watchdog",
+          });
           if (Date.now() - state.lastBridgeHeartbeatAt > BRIDGE_STALE_THRESHOLD_MS) {
             if (state.bridgeAlive) {
               state.bridgeAlive = false;
@@ -9912,7 +10626,10 @@ ${exportDoc.documentElement.outerHTML}`;
         state.modelSyncTimer = window.setInterval(() => {
           if (!state.modelDoc || !state.previewReady || state.mode !== "edit")
             return;
-          sendToBridge("request-slide-sync", { slideId: state.activeSlideId });
+          sendToBridge("request-slide-sync", {
+            slideId: state.activeSlideId,
+            reason: "interval",
+          });
         }, MODEL_SYNC_INTERVAL_MS);
       }
 
@@ -9945,6 +10662,10 @@ ${exportDoc.documentElement.outerHTML}`;
           }
           noteAppliedSeq(slideId, seq);
           commitChange("bridge-sync");
+          syncSlideRegistry({
+            runtimeActiveSlideId:
+              String(payload.activeSlideId || "").trim() || state.runtimeActiveSlideId,
+          });
           renderSlidesList();
           refreshUi();
         } catch (error) {
@@ -11140,6 +11861,32 @@ ${exportDoc.documentElement.outerHTML}`;
           : window.innerWidth <= 1024;
       }
 
+      function syncShellPanelFocusableState(panel, shouldShow) {
+        if (!panel) return;
+        panel
+          .querySelectorAll(
+            'button, [href], input, select, textarea, [tabindex], [contenteditable="true"]',
+          )
+          .forEach((el) => {
+            if (!(el instanceof HTMLElement)) return;
+            if (shouldShow) {
+              if (!el.hasAttribute("data-shell-tabindex-restore")) return;
+              const prevTabIndex = el.getAttribute("data-shell-tabindex-restore");
+              el.removeAttribute("data-shell-tabindex-restore");
+              if (prevTabIndex === "") el.removeAttribute("tabindex");
+              else el.setAttribute("tabindex", prevTabIndex);
+              return;
+            }
+            if (!el.hasAttribute("data-shell-tabindex-restore")) {
+              el.setAttribute(
+                "data-shell-tabindex-restore",
+                el.getAttribute("tabindex") ?? "",
+              );
+            }
+            el.setAttribute("tabindex", "-1");
+          });
+      }
+
       function applyShellPanelState() {
         const compact = isCompactShell();
         const leftOpen = compact && state.leftPanelOpen;
@@ -11155,8 +11902,12 @@ ${exportDoc.documentElement.outerHTML}`;
             showBackdrop ? "false" : "true",
           );
         }
-        syncShellPanelVisibility(els.slidesPanel, !compact || leftOpen);
-        syncShellPanelVisibility(els.inspectorPanel, !compact || rightOpen);
+        syncShellPanelVisibility(els.slidesPanel, !compact || leftOpen, {
+          returnFocusEl: els.mobileSlidesBtn,
+        });
+        syncShellPanelVisibility(els.inspectorPanel, !compact || rightOpen, {
+          returnFocusEl: els.mobileInspectorBtn,
+        });
         setDisclosureButtonState(els.mobileSlidesBtn, leftOpen, "slidesPanel");
         setDisclosureButtonState(
           els.mobileInspectorBtn,
@@ -11165,10 +11916,20 @@ ${exportDoc.documentElement.outerHTML}`;
         );
       }
 
-      function syncShellPanelVisibility(panel, shouldShow) {
+      function syncShellPanelVisibility(panel, shouldShow, options = {}) {
         if (!panel) return;
+        if (
+          !shouldShow &&
+          panel.contains(document.activeElement) &&
+          options.returnFocusEl instanceof HTMLElement
+        ) {
+          window.requestAnimationFrame(() =>
+            options.returnFocusEl.focus({ preventScroll: true }),
+          );
+        }
         panel.hidden = !shouldShow;
         panel.setAttribute("aria-hidden", shouldShow ? "false" : "true");
+        syncShellPanelFocusableState(panel, shouldShow);
         try {
           panel.inert = !shouldShow;
         } catch (error) {}
@@ -11565,17 +12326,49 @@ ${exportDoc.documentElement.outerHTML}`;
         else parent.appendChild(slide);
         syncStaticSlideOrderingMetadata();
         commitChange(`slide-template:${kind}`);
-        state.activeSlideId = slide.getAttribute("data-editor-slide-id");
-        rebuildPreviewKeepingContext(state.activeSlideId);
+        const slideId = slide.getAttribute("data-editor-slide-id");
+        syncSlideRegistry({ currentActiveId: slideId });
+        rebuildPreviewKeepingContext(slideId);
         closeSlideTemplateBar();
         showToast("Новый слайд добавлен после текущего.", "success", {
           title: "Слайды",
         });
       }
 
+      function getElementPathWithinRoot(root, node) {
+        if (!(root instanceof Element) || !(node instanceof Element)) return null;
+        if (root === node) return [];
+        if (!root.contains(node)) return null;
+        const path = [];
+        let current = node;
+        while (current && current !== root) {
+          const parent = current.parentElement;
+          if (!parent) return null;
+          path.unshift(Array.from(parent.children).indexOf(current));
+          current = parent;
+        }
+        return path;
+      }
+
+      function findElementByPath(root, path) {
+        if (!(root instanceof Element) || !Array.isArray(path)) return null;
+        let current = root;
+        for (const index of path) {
+          current = current.children[index] || null;
+          if (!(current instanceof Element)) return null;
+        }
+        return current;
+      }
+
       function cloneCurrentSlideForDuplicate() {
         const currentSlide = getCurrentSlideModelNode();
         if (!currentSlide) return null;
+        const selectedNode =
+          state.selectedNodeId &&
+          currentSlide.querySelector(
+            `[data-editor-node-id="${cssEscape(state.selectedNodeId)}"]`,
+          );
+        const selectedPath = getElementPathWithinRoot(currentSlide, selectedNode);
         const clone = currentSlide.cloneNode(true);
         stripRuntimeSlideState(clone);
         stripInheritedSlideRuntimeAttrs(clone);
@@ -11588,19 +12381,31 @@ ${exportDoc.documentElement.outerHTML}`;
         if (titleOverride) clone.setAttribute("data-slide-title", `${titleOverride} (копия)`);
         ensureUniqueDomIdsInModel(clone, currentSlide);
         assignEditorNodeIdsInModel(clone);
-        return clone;
+        const clonedSelectedNode = findElementByPath(clone, selectedPath);
+        return {
+          clone,
+          clonedSelectedNodeId:
+            clonedSelectedNode?.getAttribute("data-editor-node-id") || null,
+        };
       }
 
       function duplicateCurrentSlide() {
         if (!canUseStaticSlideModel()) return;
         const currentSlide = getCurrentSlideModelNode();
-        const clone = cloneCurrentSlideForDuplicate();
+        const duplicatePayload = cloneCurrentSlideForDuplicate();
+        const clone = duplicatePayload?.clone || null;
         if (!currentSlide || !clone) return;
         currentSlide.after(clone);
         syncStaticSlideOrderingMetadata();
-        state.activeSlideId = clone.getAttribute("data-editor-slide-id");
+        const cloneId = clone.getAttribute("data-editor-slide-id");
+        if (duplicatePayload?.clonedSelectedNodeId) {
+          stagePreviewSelectionRestore(duplicatePayload.clonedSelectedNodeId, {
+            slideId: cloneId,
+          });
+        }
         commitChange("slide-duplicate");
-        rebuildPreviewKeepingContext(state.activeSlideId);
+        syncSlideRegistry({ currentActiveId: cloneId });
+        rebuildPreviewKeepingContext(cloneId);
         showToast("Текущий слайд продублирован.", "success", {
           title: "Слайды",
         });
@@ -11625,11 +12430,13 @@ ${exportDoc.documentElement.outerHTML}`;
           slides[currentIndex + 1] || slides[currentIndex - 1] || null;
         currentSlide.remove();
         syncStaticSlideOrderingMetadata();
-        state.activeSlideId =
+        const nextSlideId =
           nextSlide?.getAttribute("data-editor-slide-id") || null;
+        state.pendingPreviewSelection = null;
         clearSelectedElementState();
         commitChange("slide-delete");
-        rebuildPreviewKeepingContext(state.activeSlideId);
+        syncSlideRegistry({ currentActiveId: nextSlideId });
+        rebuildPreviewKeepingContext(nextSlideId);
         showToast("Слайд удалён. При необходимости используй Undo.", "success", {
           title: "Слайды",
         });
@@ -11640,6 +12447,9 @@ ${exportDoc.documentElement.outerHTML}`;
         if (!slide) return;
         const slideId = slide.getAttribute("data-editor-slide-id");
         commitChange(reason);
+        syncSlideRegistry({ currentActiveId: slideId });
+        renderSlidesList();
+        refreshUi();
         const sent = sendToBridge("replace-slide-html", {
           slideId,
           html: slide.outerHTML,
@@ -11878,13 +12688,39 @@ ${exportDoc.documentElement.outerHTML}`;
         if (state.modelDoc) rebuildPreviewKeepingContext(state.activeSlideId);
       }
 
+      function formatAssetSampleInline(items, limit = 3) {
+        const list = Array.from(items || []).slice(0, limit);
+        if (!list.length) return "";
+        return list.map((item) => escapeHtml(item)).join(", ");
+      }
+
+      function formatAssetAuditSummary(audit, options = {}) {
+        const sourceAudit = audit || createEmptyPreviewAssetAudit();
+        const includeZeroes = options.includeZeroes === true;
+        const includeSamples = options.includeSamples === true;
+        const categories = [
+          ["resolved", "resolved"],
+          ["baseUrlDependent", "base-url"],
+          ["unresolved", "unresolved"],
+        ];
+        const parts = [];
+        categories.forEach(([key, label]) => {
+          const count = Number(
+            sourceAudit?.counts?.[key] ?? sourceAudit?.[key]?.length ?? 0,
+          );
+          if (!includeZeroes && count <= 0) return;
+          let part = `${label}: ${count}`;
+          if (includeSamples) {
+            const sample = formatAssetSampleInline(sourceAudit?.[key] || [], 2);
+            if (sample) part += ` (${sample})`;
+          }
+          parts.push(part);
+        });
+        return parts.join(" • ");
+      }
+
       function formatUnresolvedAssetsInline(limit = 3) {
-        const items = Array.from(state.unresolvedPreviewAssets || []).slice(
-          0,
-          limit,
-        );
-        if (!items.length) return "";
-        return items.map((item) => escapeHtml(item)).join(", ");
+        return formatAssetSampleInline(state.unresolvedPreviewAssets, limit);
       }
 
       function updateAssetDirectoryStatus() {
@@ -11970,50 +12806,28 @@ ${exportDoc.documentElement.outerHTML}`;
           .filter((value) => value && !isExternalLikeUrl(value));
       }
 
-      function collectUnresolvedPreviewAssets(doc) {
-        if (!doc || state.manualBaseUrl) return [];
-        const unresolved = new Set();
-        const pushRelative = (value) => {
-          const normalized = normalizeAssetPath(value);
-          if (normalized && !state.assetResolverMap?.has(normalized)) {
-            unresolved.add(normalized);
-          }
-        };
-        doc.querySelectorAll("[src], [href], [poster]").forEach((el) => {
-          ["src", "href", "poster"].forEach((attr) => {
-            const value = el.getAttribute(attr);
-            if (!value || isExternalLikeUrl(value)) return;
-            pushRelative(value);
-          });
-        });
-        doc.querySelectorAll("[srcset]").forEach((el) => {
-          extractRelativeUrlsFromSrcsetValue(el.getAttribute("srcset") || "").forEach(
-            pushRelative,
-          );
-        });
-        doc.querySelectorAll("[style]").forEach((el) => {
-          extractRelativeUrlsFromCssText(el.getAttribute("style") || "").forEach(
-            pushRelative,
-          );
-        });
-        doc.querySelectorAll("style").forEach((styleTag) => {
-          extractRelativeUrlsFromCssText(styleTag.textContent || "").forEach(
-            pushRelative,
-          );
-        });
-        return Array.from(unresolved).slice(0, 24);
+      function collectUnresolvedPreviewAssets(doc, options = {}) {
+        return collectPreviewAssetAudit(doc, options).unresolved;
       }
 
-      function collectPreviewAssetAudit(doc) {
+      function collectPreviewAssetAudit(doc, options = {}) {
         if (!doc) {
-          return { unresolved: [], baseUrlDependent: [] };
+          return createEmptyPreviewAssetAudit();
         }
+        const manualBaseUrl = String(
+          options.baseHref ?? state.manualBaseUrl ?? "",
+        ).trim();
+        const resolved = new Set();
         const unresolved = new Set();
         const baseUrlDependent = new Set();
         const pushRelative = (value) => {
           const normalized = normalizeAssetPath(value);
-          if (!normalized || resolveAssetObjectUrl(normalized)) return;
-          if (state.manualBaseUrl) {
+          if (!normalized) return;
+          if (resolveAssetObjectUrl(normalized)) {
+            resolved.add(normalized);
+            return;
+          }
+          if (manualBaseUrl) {
             baseUrlDependent.add(normalized);
             return;
           }
@@ -12042,26 +12856,36 @@ ${exportDoc.documentElement.outerHTML}`;
           );
         });
         return {
+          resolved: Array.from(resolved).slice(0, 24),
           unresolved: Array.from(unresolved).slice(0, 24),
           baseUrlDependent: Array.from(baseUrlDependent).slice(0, 24),
+          counts: {
+            resolved: resolved.size,
+            unresolved: unresolved.size,
+            baseUrlDependent: baseUrlDependent.size,
+          },
         };
       }
 
-      function updatePreviewAssetAudit(doc) {
-        const audit = collectPreviewAssetAudit(doc);
-        state.unresolvedPreviewAssets = audit.unresolved;
-        state.baseUrlDependentAssets = audit.baseUrlDependent;
+      function updatePreviewAssetAuditFromAudit(audit) {
+        const safeAudit = audit || createEmptyPreviewAssetAudit();
+        state.resolvedPreviewAssets = safeAudit.resolved;
+        state.unresolvedPreviewAssets = safeAudit.unresolved;
+        state.baseUrlDependentAssets = safeAudit.baseUrlDependent;
+        state.previewAssetAuditCounts = {
+          resolved: Number(safeAudit?.counts?.resolved || 0),
+          unresolved: Number(safeAudit?.counts?.unresolved || 0),
+          baseUrlDependent: Number(safeAudit?.counts?.baseUrlDependent || 0),
+        };
+      }
+
+      function updatePreviewAssetAudit(doc, options = {}) {
+        const audit = collectPreviewAssetAudit(doc, options);
+        updatePreviewAssetAuditFromAudit(audit);
       }
 
       function buildPreviewHtml() {
-        const previewDoc = state.modelDoc.cloneNode(true);
-        if (state.assetResolverMap) applyAssetResolverToPreviewDoc(previewDoc);
-        updatePreviewAssetAudit(previewDoc);
-        injectBridge(previewDoc);
-        if (state.manualBaseUrl) {
-          upsertBaseHref(previewDoc, state.manualBaseUrl);
-        }
-        return `${state.doctypeString}\n${previewDoc.documentElement.outerHTML}`;
+        return buildPreviewPackage()?.serialized || "";
       }
 
       function openVideoInsertModal() {
@@ -12248,8 +13072,12 @@ ${exportDoc.documentElement.outerHTML}`;
           parts.push(`движок: ${state.engine}`);
         if (state.previewLifecycle !== "ready") parts.push(lifecycleMeta.label.toLowerCase());
         if (state.assetFileCount) parts.push(`assets: ${state.assetFileCount}`);
-        if ((state.unresolvedPreviewAssets?.length || 0) > 0)
-          parts.push(`unresolved: ${state.unresolvedPreviewAssets.length}`);
+        if ((state.previewAssetAuditCounts?.resolved || 0) > 0)
+          parts.push(`resolved: ${state.previewAssetAuditCounts.resolved}`);
+        if ((state.previewAssetAuditCounts?.baseUrlDependent || 0) > 0)
+          parts.push(`base-url: ${state.previewAssetAuditCounts.baseUrlDependent}`);
+        if ((state.previewAssetAuditCounts?.unresolved || 0) > 0)
+          parts.push(`unresolved: ${state.previewAssetAuditCounts.unresolved}`);
         els.documentMeta.textContent = parts.join(" • ");
       }
 
@@ -12300,11 +13128,13 @@ ${exportDoc.documentElement.outerHTML}`;
           els.previewNoteText.textContent =
             state.previewLifecycle !== "ready" && hasPresentation
               ? lifecycleMeta.previewCopy
-              : (state.unresolvedPreviewAssets?.length || 0) > 0
-                ? `В превью ещё остались относительные ресурсы без резолва: ${state.unresolvedPreviewAssets.length}. Подключи папку ассетов или задай base URL.`
-                : state.assetFileCount
-                  ? "Превью использует подключённую папку ресурсов и остаётся ближе к реальному открытию HTML."
-                  : "Кнопка «Вставить» станет доступна после перехода в режим редактирования и полной загрузки превью.";
+              : (state.previewAssetAuditCounts?.unresolved || 0) > 0
+                ? `В превью ещё остались относительные ресурсы без резолва: ${state.previewAssetAuditCounts.unresolved}. Подключи папку ассетов или задай base URL.`
+                : (state.previewAssetAuditCounts?.baseUrlDependent || 0) > 0
+                  ? `Часть относительных ресурсов сейчас зависит от base URL: ${state.previewAssetAuditCounts.baseUrlDependent}. Validation preview использует тот же contract.`
+                  : state.assetFileCount
+                    ? `Превью использует подключённую папку ресурсов и уже переписало относительные ссылки: ${state.previewAssetAuditCounts?.resolved || 0}.`
+                    : "Кнопка «Вставить» станет доступна после перехода в режим редактирования и полной загрузки превью.";
           els.inspectorHelp.textContent = hasPresentation
             ? "В режиме просмотра редактор не вмешивается в DOM презентации. Для правок переключись в режим редактирования."
             : "Сначала загрузи HTML-презентацию.";
@@ -12316,11 +13146,13 @@ ${exportDoc.documentElement.outerHTML}`;
         els.previewNoteText.textContent =
           state.previewLifecycle !== "ready" && hasPresentation
             ? lifecycleMeta.editCopy
-            : (state.unresolvedPreviewAssets?.length || 0) > 0
-              ? `Есть неразрешённые относительные ресурсы: ${state.unresolvedPreviewAssets.length}. Лучше подключить папку ассетов до точной проверки layout и экспорта.`
-              : state.assetFileCount
-                ? "Папка ресурсов подключена. Вставка и правки выполняются поверх живого preview без потери основной области слайда."
-                : "Кнопка «Вставить» открывает скрытую палитру блоков. Правый клик показывает действия по текущему элементу.";
+            : (state.previewAssetAuditCounts?.unresolved || 0) > 0
+              ? `Есть неразрешённые относительные ресурсы: ${state.previewAssetAuditCounts.unresolved}. Лучше подключить папку ассетов до точной проверки layout и экспорта.`
+              : (state.previewAssetAuditCounts?.baseUrlDependent || 0) > 0
+                ? `Часть относительных ресурсов пока держится на base URL: ${state.previewAssetAuditCounts.baseUrlDependent}. Validation preview повторяет тот же base contract.`
+                : state.assetFileCount
+                  ? `Папка ресурсов подключена. Вставка и правки выполняются поверх живого preview, переписанных относительных ссылок: ${state.previewAssetAuditCounts?.resolved || 0}.`
+                  : "Кнопка «Вставить» открывает скрытую палитру блоков. Правый клик показывает действия по текущему элементу.";
         els.inspectorHelp.textContent = hasSelection
           ? "Изменения применяются сразу в iframe и синхронизируются в модель документа для корректного экспорта."
           : "Кликни по элементу внутри слайда, чтобы выбрать его. Двойной клик по тексту начинает редактирование.";

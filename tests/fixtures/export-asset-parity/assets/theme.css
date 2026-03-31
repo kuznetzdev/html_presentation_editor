@@ -1,0 +1,7 @@
+.hero {
+  background-image: url("./images/pattern.svg");
+}
+
+video {
+  outline: 1px solid transparent;
+}
