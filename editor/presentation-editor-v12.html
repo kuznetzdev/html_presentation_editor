@@ -70,12 +70,15 @@
         --drawer-backdrop-bg: rgba(7, 12, 22, 0.38);
         --shell-cluster-bg: rgba(255, 255, 255, 0.78);
         --shell-cluster-border: rgba(23, 33, 51, 0.08);
+        --shell-cluster-shadow: 0 8px 18px rgba(18, 30, 61, 0.04);
         --shell-accent-glow: rgba(36, 93, 255, 0.12);
         --shell-selection-ring: rgba(36, 93, 255, 0.14);
         --shell-note-shadow: 0 6px 18px rgba(18, 30, 61, 0.06);
         --shell-spinner-track: rgba(36, 93, 255, 0.18);
         --shell-modal-backdrop: rgba(10, 17, 34, 0.45);
         --shell-modal-shadow: 0 20px 40px rgba(18, 30, 61, 0.22);
+        --canvas-stage-highlight: rgba(255, 255, 255, 0.36);
+        --canvas-stage-shadow: 0 24px 46px rgba(18, 30, 61, 0.12);
         --shell-flash-ring: rgba(11, 122, 67, 0.24);
         --shell-flash-ring-clear: rgba(11, 122, 67, 0);
 
@@ -164,12 +167,15 @@
         --drawer-backdrop-bg: rgba(0, 0, 0, 0.56);
         --shell-cluster-bg: rgba(15, 23, 36, 0.86);
         --shell-cluster-border: rgba(165, 180, 203, 0.14);
+        --shell-cluster-shadow: 0 10px 22px rgba(0, 0, 0, 0.26);
         --shell-accent-glow: rgba(126, 162, 255, 0.22);
         --shell-selection-ring: rgba(126, 162, 255, 0.2);
         --shell-note-shadow: 0 8px 20px rgba(0, 0, 0, 0.24);
         --shell-spinner-track: rgba(126, 162, 255, 0.24);
         --shell-modal-backdrop: rgba(0, 0, 0, 0.58);
         --shell-modal-shadow: 0 22px 46px rgba(0, 0, 0, 0.44);
+        --canvas-stage-highlight: rgba(255, 255, 255, 0.12);
+        --canvas-stage-shadow: 0 28px 54px rgba(0, 0, 0, 0.36);
         --shell-flash-ring: rgba(143, 230, 181, 0.32);
         --shell-flash-ring-clear: rgba(143, 230, 181, 0);
 
@@ -550,7 +556,7 @@
         border: 1px solid var(--shell-cluster-border);
         border-radius: 14px;
         background: var(--shell-cluster-bg);
-        box-shadow: 0 8px 18px rgba(18, 30, 61, 0.04);
+        box-shadow: var(--shell-cluster-shadow);
         backdrop-filter: blur(10px);
       }
 
@@ -1112,8 +1118,8 @@
         border-radius: 18px;
         background: var(--canvas-stage-bg);
         box-shadow:
-          inset 0 1px 0 rgba(255, 255, 255, 0.36),
-          0 24px 46px rgba(18, 30, 61, 0.12);
+          inset 0 1px 0 var(--canvas-stage-highlight),
+          var(--canvas-stage-shadow);
       }
 
       .preview-stage::before {

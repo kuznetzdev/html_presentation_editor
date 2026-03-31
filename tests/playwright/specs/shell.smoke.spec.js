@@ -49,6 +49,43 @@ test.describe("Editor shell smoke @harness", () => {
     await assertNoHorizontalOverflow(page);
   });
 
+  test("theme switching updates elevated shell surfaces @stage-f", async ({
+    page,
+  }) => {
+    await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL });
+
+    const captureTheme = async (theme) => {
+      await page.evaluate((nextTheme) => {
+        globalThis.eval(`setThemePreference(${JSON.stringify(nextTheme)}, false)`);
+      }, theme);
+      await page.waitForTimeout(150);
+
+      return page.evaluate(() => {
+        const read = (selector) => {
+          const element = document.querySelector(selector);
+          if (!element) return null;
+          const style = window.getComputedStyle(element);
+          return {
+            backgroundColor: style.backgroundColor,
+            boxShadow: style.boxShadow,
+          };
+        };
+
+        return {
+          cluster: read("#topbarStateCluster"),
+          stage: read("#previewStage"),
+        };
+      });
+    };
+
+    const light = await captureTheme("light");
+    const dark = await captureTheme("dark");
+
+    expect(light.stage?.backgroundColor).not.toBe(dark.stage?.backgroundColor);
+    expect(light.stage?.boxShadow).not.toBe(dark.stage?.boxShadow);
+    expect(light.cluster?.boxShadow).not.toBe(dark.cluster?.boxShadow);
+  });
+
   test("intermediate shell breakpoint exposes structured chrome groups @stage-f", async (
     { page },
     testInfo,

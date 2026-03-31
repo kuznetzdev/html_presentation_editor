@@ -35,4 +35,19 @@ test.describe("Visual shell regression @harness", () => {
       ],
     });
   });
+
+  test("loaded shell dark theme baseline @harness", async ({ page }) => {
+    await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL });
+    await page.evaluate(() => {
+      globalThis.eval("setThemePreference('dark', false)");
+    });
+    await expect(page).toHaveScreenshot("loaded-shell-dark.png", {
+      mask: [
+        page.locator("#diagnosticsBox"),
+        page.locator("#documentMeta"),
+        page.locator("#previewLifecyclePill"),
+        page.locator("#saveStatePill"),
+      ],
+    });
+  });
 });
