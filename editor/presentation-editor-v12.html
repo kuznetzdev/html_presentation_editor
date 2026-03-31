@@ -68,6 +68,9 @@
         --restore-accent-border: rgba(36, 93, 255, 0.22);
         --restore-accent-bg: rgba(36, 93, 255, 0.08);
         --drawer-backdrop-bg: rgba(7, 12, 22, 0.38);
+        --shell-cluster-bg: rgba(255, 255, 255, 0.78);
+        --shell-cluster-border: rgba(23, 33, 51, 0.08);
+        --shell-accent-glow: rgba(36, 93, 255, 0.12);
         --shell-selection-ring: rgba(36, 93, 255, 0.14);
         --shell-note-shadow: 0 6px 18px rgba(18, 30, 61, 0.06);
         --shell-spinner-track: rgba(36, 93, 255, 0.18);
@@ -83,8 +86,8 @@
         --shadow-md: 0 14px 30px rgba(18, 30, 61, 0.14);
         --shadow-lg: 0 18px 38px rgba(18, 30, 61, 0.18);
 
-        --topbar-min-h: 64px;
-        --shell-top-offset: 64px;
+        --topbar-min-h: 58px;
+        --shell-top-offset: 58px;
         --workspace-max: 1540px;
         --drawer-width: min(86vw, 360px);
         --mobile-rail-offset: 0px;
@@ -110,6 +113,12 @@
           BlinkMacSystemFont,
           "Segoe UI",
           sans-serif;
+        --editor-display:
+          "Iowan Old Style",
+          "Palatino Linotype",
+          "Book Antiqua",
+          Georgia,
+          serif;
       }
 
       body[data-theme="dark"] {
@@ -153,6 +162,9 @@
         --restore-accent-border: rgba(126, 162, 255, 0.28);
         --restore-accent-bg: rgba(126, 162, 255, 0.12);
         --drawer-backdrop-bg: rgba(0, 0, 0, 0.56);
+        --shell-cluster-bg: rgba(15, 23, 36, 0.86);
+        --shell-cluster-border: rgba(165, 180, 203, 0.14);
+        --shell-accent-glow: rgba(126, 162, 255, 0.22);
         --shell-selection-ring: rgba(126, 162, 255, 0.2);
         --shell-note-shadow: 0 8px 20px rgba(0, 0, 0, 0.24);
         --shell-spinner-track: rgba(126, 162, 255, 0.24);
@@ -442,13 +454,19 @@
         top: 0;
         z-index: var(--z-topbar);
         min-height: var(--topbar-min-h);
-        padding: 12px 16px;
+        padding: 10px 14px;
         display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
         align-items: center;
-        gap: 12px 16px;
+        gap: 10px 14px;
         border-bottom: 1px solid var(--shell-border);
-        background: var(--shell-panel-translucent);
+        background:
+          radial-gradient(
+            circle at 10% -40%,
+            var(--shell-accent-glow),
+            transparent 38%
+          ),
+          var(--shell-panel-translucent);
         backdrop-filter: blur(12px);
       }
 
@@ -468,14 +486,32 @@
         padding-right: 4px;
       }
 
+      .topbar-eyebrow {
+        font-size: 11px;
+        line-height: 1;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: var(--shell-accent);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
       .topbar-title h1 {
         margin: 0;
-        font-size: 18px;
-        line-height: 1.2;
+        font-family: var(--editor-display);
+        font-size: 17px;
+        line-height: 1.1;
+        letter-spacing: 0.01em;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .topbar-title span {
-        font-size: 12px;
+        font-size: 11px;
         color: var(--shell-text-muted);
         white-space: nowrap;
         overflow: hidden;
@@ -484,25 +520,52 @@
 
       .topbar-actions {
         min-width: 0;
-        display: grid;
-        grid-template-columns: auto minmax(0, max-content);
+        display: flex;
+        flex-wrap: wrap;
         align-items: center;
         justify-content: flex-end;
-        gap: 8px 12px;
+        gap: 6px 10px;
       }
 
       .topbar-actions .secondary-row {
         min-width: 0;
-        display: grid;
-        grid-auto-flow: column;
-        grid-auto-columns: max-content;
+        display: flex;
+        flex-wrap: wrap;
         align-items: center;
         justify-content: flex-end;
         gap: 8px;
       }
 
       .theme-toggle-btn {
-        min-width: 120px;
+        min-width: 0;
+      }
+
+      .shell-cluster {
+        min-width: 0;
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 6px;
+        border: 1px solid var(--shell-cluster-border);
+        border-radius: 14px;
+        background: var(--shell-cluster-bg);
+        box-shadow: 0 8px 18px rgba(18, 30, 61, 0.04);
+        backdrop-filter: blur(10px);
+      }
+
+      #topbarStateCluster {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+      }
+
+      #workspaceStateBadge {
+        font-weight: 600;
+      }
+
+      #topbarCommandCluster {
+        justify-content: flex-end;
+        flex-wrap: wrap;
       }
 
       .slide-template-trigger {
@@ -546,6 +609,12 @@
 
       .panel-main {
         min-width: 0;
+        background:
+          linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--shell-panel) 94%, transparent),
+            color-mix(in srgb, var(--shell-panel-soft) 92%, transparent)
+          );
       }
 
       .panel-header,
@@ -554,14 +623,15 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 12px;
-        padding: 14px 16px;
+        gap: 10px;
+        padding: 10px 14px;
         border-bottom: 1px solid var(--shell-border);
         background: linear-gradient(
           180deg,
           var(--shell-panel) 0%,
           var(--shell-panel-soft) 100%
         );
+        flex: 0 0 auto;
       }
 
       .modal-footer {
@@ -572,21 +642,59 @@
       .panel-header h2,
       .modal-header h3 {
         margin: 0;
-        font-size: 15px;
+        font-family: var(--editor-display);
+        font-size: 16px;
         line-height: 1.3;
+        letter-spacing: 0.01em;
+        font-weight: 600;
       }
 
       .panel-header-actions {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
         flex-wrap: wrap;
       }
 
       .panel-subtext {
-        font-size: 12px;
-        line-height: 1.4;
+        font-size: 11px;
+        line-height: 1.35;
         color: var(--shell-text-muted);
+      }
+
+      #mainPreviewPanel .panel-header {
+        padding-block: 8px;
+      }
+
+      #previewModeLabel {
+        max-width: 68ch;
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 1;
+      }
+
+      .topbar button,
+      .topbar .mode-toggle button,
+      .preview-note-actions button {
+        padding: 8px 10px;
+        font-size: 12px;
+      }
+
+      .topbar .status-pill,
+      .topbar .mini-badge,
+      .preview-note .status-pill {
+        min-height: 28px;
+        padding: 4px 9px;
+        font-size: 11px;
+      }
+
+      .topbar .mode-toggle {
+        border-radius: 11px;
+      }
+
+      .topbar .mode-toggle button {
+        min-width: 92px;
       }
 
       .shell-panel,
@@ -687,6 +795,8 @@
       }
 
       .slides-panel-body {
+        flex: 1 1 auto;
+        height: 0;
         padding: 10px;
         overflow: auto;
         min-height: 0;
@@ -806,18 +916,19 @@
       }
 
       .preview-shell {
-        flex: 1;
+        flex: 1 1 auto;
+        height: 0;
         min-height: 0;
         overflow: hidden;
         display: flex;
         flex-direction: column;
-        gap: 12px;
-        padding: 16px;
+        gap: 10px;
+        padding: 12px;
         background:
           radial-gradient(
             circle at top left,
             var(--canvas-grad-a),
-            transparent 36%
+            transparent 32%
           ),
           linear-gradient(
             180deg,
@@ -830,48 +941,83 @@
         display: grid;
         grid-template-columns: minmax(0, 1fr) auto;
         align-items: center;
-        gap: 10px;
+        gap: 8px 10px;
         padding: 10px 12px;
         border: 1px solid var(--shell-border);
-        border-radius: 12px;
-        background: var(--canvas-note-bg);
+        border-radius: 14px;
+        background:
+          linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--canvas-note-bg) 92%, transparent),
+            var(--canvas-note-bg)
+          );
         box-shadow: var(--shell-note-shadow);
       }
 
       .preview-note-main {
         display: flex;
-        flex-direction: column;
-        gap: 4px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4px 8px;
         min-width: 0;
         flex: 1;
         color: var(--shell-text-muted);
-        font-size: 12px;
-        line-height: 1.45;
+        font-size: 11px;
+        line-height: 1.35;
       }
 
       .preview-note-main span {
         display: block;
       }
 
+      .preview-note .topbar-eyebrow {
+        display: none;
+      }
+
+      #previewNoteText {
+        display: none;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 1;
+      }
+
+      .preview-note-summary {
+        min-width: 0;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px 8px;
+      }
+
+      #previewStatusSummary {
+        max-width: 100%;
+      }
+
+      #activeSlideLabel {
+        color: var(--shell-text);
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
       .preview-note-actions {
-        display: grid;
-        grid-auto-flow: column;
-        grid-auto-columns: max-content;
+        display: flex;
+        flex-wrap: wrap;
         align-items: center;
         justify-content: flex-end;
-        gap: 8px;
+        gap: 6px;
       }
 
       #interactionStatePill,
       #previewLifecyclePill {
         white-space: nowrap;
-        min-height: 42px;
-        max-width: min(100%, 220px);
+        min-height: 30px;
+        max-width: min(100%, 180px);
         align-self: center;
       }
 
       .insert-toggle-btn {
-        min-width: 138px;
+        min-width: 110px;
         white-space: nowrap;
       }
 
@@ -963,8 +1109,21 @@
         min-height: 0;
         overflow: hidden;
         border: 1px solid var(--canvas-stage-border);
-        border-radius: var(--radius-md);
+        border-radius: 18px;
         background: var(--canvas-stage-bg);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.36),
+          0 24px 46px rgba(18, 30, 61, 0.12);
+      }
+
+      .preview-stage::before {
+        content: "";
+        position: absolute;
+        inset: 12px;
+        border: 1px solid color-mix(in srgb, var(--canvas-stage-border) 20%, transparent);
+        border-radius: 12px;
+        pointer-events: none;
+        z-index: 1;
       }
 
       iframe {
@@ -1051,6 +1210,8 @@
        [STYLE 05] Inspector + forms
        ====================================================================== */
       .inspector-body {
+        flex: 1 1 auto;
+        height: 0;
         padding: 16px;
         overflow: auto;
         min-height: 0;
@@ -1994,35 +2155,8 @@
 
       @media (max-width: 1240px) {
         .topbar {
-          grid-template-columns: 1fr;
-          align-items: start;
-        }
-
-        .topbar-actions {
-          width: 100%;
-          display: grid;
-          grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
-          align-items: start;
-          justify-content: stretch;
-          gap: 8px 10px;
-        }
-
-        .mode-toggle {
-          justify-self: start;
-        }
-
-        .topbar-actions .secondary-row {
-          width: 100%;
-          display: grid;
-          grid-auto-flow: row;
-          grid-auto-columns: auto;
-          grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
-          align-items: stretch;
-          justify-content: stretch;
-        }
-
-        .topbar-title span {
-          white-space: normal;
+          padding: 10px 12px;
+          grid-template-columns: minmax(168px, 208px) minmax(0, 1fr);
         }
 
         #saveStatePill {
@@ -2030,9 +2164,9 @@
         }
 
         .workspace {
-          grid-template-columns: minmax(220px, 260px) minmax(0, 1fr) minmax(
-              260px,
-              300px
+          grid-template-columns: minmax(204px, 236px) minmax(0, 1fr) minmax(
+              236px,
+              268px
             );
         }
       }
@@ -2058,45 +2192,65 @@
 
       @media (max-width: 1120px) {
         .topbar {
-          padding: 10px 12px;
-        }
-
-        .topbar-actions {
-          grid-template-columns: 1fr;
-          gap: 10px;
-        }
-
-        .mode-toggle {
-          width: 100%;
-          max-width: 360px;
+          gap: 8px 12px;
         }
 
         .mode-toggle button {
-          flex: 1 1 0;
-          min-width: 0;
+          min-width: 82px;
+          padding-inline: 9px;
+        }
+
+        .topbar .mode-toggle {
+          flex-shrink: 0;
+        }
+      }
+
+      @media (max-width: 980px) {
+        .topbar {
+          grid-template-columns: 1fr;
+          align-items: start;
+        }
+
+        .topbar-actions {
+          width: 100%;
+          justify-content: stretch;
         }
 
         .topbar-actions .secondary-row {
           width: 100%;
-          display: grid;
-          grid-auto-flow: row;
-          grid-auto-columns: auto;
-          grid-template-columns: repeat(auto-fit, minmax(108px, 1fr));
+          justify-content: flex-start;
+        }
+
+        #topbarStateCluster,
+        #topbarCommandCluster {
+          width: 100%;
+          justify-content: flex-start;
+        }
+
+        .preview-note {
+          grid-template-columns: 1fr;
           align-items: stretch;
         }
 
-        .topbar-actions .secondary-row > * {
-          width: 100%;
+        .preview-note-main {
+          align-items: flex-start;
+        }
+
+        .preview-note .topbar-eyebrow {
+          display: inline-flex;
+        }
+
+        #previewNoteText {
+          display: -webkit-box;
         }
 
         .preview-note-actions {
           width: 100%;
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+          justify-content: flex-start;
         }
 
         .preview-note-actions > * {
-          width: 100%;
+          flex: 1 1 132px;
         }
       }
 
@@ -2199,10 +2353,6 @@
       }
 
       @media (max-width: 860px) {
-        .topbar-actions .secondary-row {
-          grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
-        }
-
         #themeToggleBtn {
           display: none;
         }
@@ -2222,8 +2372,11 @@
         }
 
         .preview-note {
-          grid-template-columns: 1fr;
-          align-items: stretch;
+          padding: 12px;
+        }
+
+        .preview-note-summary {
+          align-items: flex-start;
         }
 
         .preview-note-actions,
@@ -2256,16 +2409,23 @@
         }
 
         .topbar-actions .secondary-row {
-          grid-auto-flow: row;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+          grid-template-columns: 1fr;
         }
 
         .preview-note-actions {
-          grid-template-columns: 1fr;
+          flex-direction: column;
         }
 
         #themeToggleBtn {
           display: none;
+        }
+
+        #topbarStateCluster {
+          display: none;
+        }
+
+        #topbarCommandCluster {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
         #undoBtn,
@@ -2396,6 +2556,7 @@
        ==================================================================== -->
     <header class="topbar" id="topbar">
       <div class="topbar-title">
+        <span class="topbar-eyebrow">Workspace shell</span>
         <h1>HTML Presentation Editor</h1>
         <span id="documentMeta">Документ не загружен</span>
       </div>
@@ -2411,20 +2572,37 @@
         </div>
 
         <div class="secondary-row">
-          <span id="saveStatePill" class="status-pill save-pill"
-            >Автосохранение неактивно</span
+          <div
+            id="topbarStateCluster"
+            class="shell-cluster"
+            role="group"
+            aria-label="Workspace status"
           >
-          <button
-            id="themeToggleBtn"
-            class="ghost-btn theme-toggle-btn"
-            title="Переключить тему"
+            <span id="saveStatePill" class="status-pill save-pill"
+              >Автосохранение неактивно</span
+            >
+            <span id="workspaceStateBadge" class="status-pill"
+              >Workspace idle</span
+            >
+          </div>
+          <div
+            id="topbarCommandCluster"
+            class="shell-cluster"
+            role="group"
+            aria-label="Workspace commands"
           >
-            🌓 Тема
-          </button>
-          <button id="undoBtn" disabled>Отменить</button>
-          <button id="redoBtn" disabled>Повторить</button>
-          <button id="openHtmlBtn" class="primary-btn">Открыть</button>
-          <button id="exportBtn" disabled>Экспорт</button>
+            <button
+              id="themeToggleBtn"
+              class="ghost-btn theme-toggle-btn"
+              title="Переключить тему"
+            >
+              🌓 Тема
+            </button>
+            <button id="undoBtn" disabled>Отменить</button>
+            <button id="redoBtn" disabled>Повторить</button>
+            <button id="openHtmlBtn" class="primary-btn">Открыть</button>
+            <button id="exportBtn" disabled>Экспорт</button>
+          </div>
         </div>
       </div>
     </header>
@@ -2504,24 +2682,30 @@
         <div class="preview-shell">
           <div class="preview-note">
             <div class="preview-note-main">
+              <span class="topbar-eyebrow">Live canvas</span>
               <span id="previewNoteText"
                 >Здесь должно быть поведение, максимально близкое к обычному
                 открытию HTML в браузере.</span
               >
-              <span id="activeSlideLabel">Слайд не выбран</span>
+              <div class="preview-note-summary">
+                <span id="previewStatusSummary" class="mini-badge"
+                  >Workspace idle</span
+                >
+                <span id="activeSlideLabel">Слайд не выбран</span>
+              </div>
             </div>
             <div class="preview-note-actions">
               <span
                 id="interactionStatePill"
                 class="status-pill"
                 aria-live="polite"
-                >Состояние: просмотр</span
+                >Preview</span
               >
               <span
                 id="previewLifecyclePill"
                 class="status-pill"
                 aria-live="polite"
-                >Превью: пусто</span
+                >Empty</span
               >
               <button
                 type="button"
@@ -3766,7 +3950,7 @@
         switch (lifecycle) {
           case "loading":
             return {
-              label: "Превью: загрузка",
+              label: "Loading",
               className: "status-pill is-accent",
               title: "Iframe загружается и bridge ещё инициализируется.",
               buttonLabel: "↻ Превью",
@@ -3778,7 +3962,7 @@
             };
           case "recovering":
             return {
-              label: "Превью: восстановление",
+              label: "Recovering",
               className: "status-pill is-accent",
               title: "Shell пересоздаёт iframe и заново поднимает bridge.",
               buttonLabel: "↻ Восстановить",
@@ -3790,7 +3974,7 @@
             };
           case "bridge-degraded":
             return {
-              label: "Превью: связь потеряна",
+              label: "Bridge lost",
               className: "status-pill is-warning",
               title: "Heartbeat от iframe не приходит вовремя.",
               buttonLabel: "↻ Восстановить",
@@ -3802,7 +3986,7 @@
             };
           case "desync-suspected":
             return {
-              label: "Превью: sync под вопросом",
+              label: "Sync check",
               className: "status-pill is-warning",
               title: "Shell зафиксировал подозрение на рассинхрон между modelDoc и live DOM.",
               buttonLabel: "↻ Восстановить",
@@ -3814,7 +3998,7 @@
             };
           case "ready":
             return {
-              label: "Превью: готово",
+              label: "Ready",
               className: "status-pill is-ok",
               title: "Iframe и bridge синхронизированы и готовы к работе.",
               buttonLabel: "↻ Превью",
@@ -3824,7 +4008,7 @@
             };
           default:
             return {
-              label: "Превью: пусто",
+              label: "Empty",
               className: "status-pill",
               title: "HTML ещё не загружен.",
               buttonLabel: "↻ Превью",
@@ -3983,12 +4167,16 @@
         activeSlideLabel: document.getElementById("activeSlideLabel"),
         previewModeLabel: document.getElementById("previewModeLabel"),
         previewNoteText: document.getElementById("previewNoteText"),
+        previewStatusSummary: document.getElementById("previewStatusSummary"),
         interactionStatePill: document.getElementById("interactionStatePill"),
         previewLifecyclePill: document.getElementById("previewLifecyclePill"),
         reloadPreviewBtn: document.getElementById("reloadPreviewBtn"),
         documentMeta: document.getElementById("documentMeta"),
         saveStatePill: document.getElementById("saveStatePill"),
+        workspaceStateBadge: document.getElementById("workspaceStateBadge"),
         themeToggleBtn: document.getElementById("themeToggleBtn"),
+        topbarStateCluster: document.getElementById("topbarStateCluster"),
+        topbarCommandCluster: document.getElementById("topbarCommandCluster"),
         previewFrame: document.getElementById("previewFrame"),
         previewStage: document.getElementById("previewStage"),
         previewDropzone: document.getElementById("previewDropzone"),
@@ -8855,37 +9043,37 @@ ${exportDoc.documentElement.outerHTML}`;
         switch (mode) {
           case "select":
             return {
-              label: "Состояние: выбор",
+              label: "Select",
               className: "status-pill is-accent",
               title: "Можно выбирать элементы и менять свойства.",
             };
           case "text-edit":
             return {
-              label: "Состояние: текст",
+              label: "Text",
               className: "status-pill is-accent",
               title: "Редактируется текст выбранного элемента.",
             };
           case "insert":
             return {
-              label: "Состояние: вставка",
+              label: "Insert",
               className: "status-pill is-warning",
               title: "Открыто меню вставки блоков.",
             };
           case "drag":
             return {
-              label: "Состояние: перемещение",
+              label: "Move",
               className: "status-pill is-accent",
               title: "Элемент перемещается на холсте.",
             };
           case "resize":
             return {
-              label: "Состояние: размер",
+              label: "Resize",
               className: "status-pill is-accent",
               title: "Размер выбранного элемента изменяется.",
             };
           default:
             return {
-              label: "Состояние: просмотр",
+              label: "Preview",
               className: "status-pill",
               title: "Редактор не вмешивается в DOM презентации.",
             };
@@ -13198,6 +13386,106 @@ ${exportDoc.documentElement.outerHTML}`;
         });
       }
 
+      function getActiveSlideSummaryLabel() {
+        const activeSlideIndex = getSlideIndexById(state.activeSlideId);
+        if (activeSlideIndex < 0 || !state.slides.length) {
+          return "No active slide";
+        }
+        const activeSlide = state.slides[activeSlideIndex] || {};
+        const title = String(activeSlide.title || "").trim();
+        return title
+          ? `Slide ${activeSlideIndex + 1}/${state.slides.length} - ${title}`
+          : `Slide ${activeSlideIndex + 1}/${state.slides.length}`;
+      }
+
+      function getWorkspaceStateMeta(hasPresentation, hasSelection) {
+        if (!hasPresentation) {
+          return {
+            className: "status-pill",
+            label: "Workspace idle",
+            title: "Load an HTML presentation to activate the editor shell.",
+          };
+        }
+
+        switch (state.previewLifecycle) {
+          case "loading":
+            return {
+              className: "status-pill is-accent",
+              label: "Preview loading",
+              title: "The preview iframe is still booting.",
+            };
+          case "recovering":
+            return {
+              className: "status-pill is-accent",
+              label: "Preview recovering",
+              title: "The shell is rebuilding the iframe and bridge.",
+            };
+          case "bridge-degraded":
+            return {
+              className: "status-pill is-warning",
+              label: "Bridge degraded",
+              title: "Bridge heartbeats are missing and the shell is degraded.",
+            };
+          case "desync-suspected":
+            return {
+              className: "status-pill is-warning",
+              label: "Sync check",
+              title: "The shell suspects model and live DOM drift.",
+            };
+          default:
+            if (state.mode === "edit") {
+              return hasSelection
+                ? {
+                    className: "status-pill is-accent",
+                    label: "Selection active",
+                    title: "A live node is selected inside the preview iframe.",
+                  }
+                : {
+                    className: "status-pill is-accent",
+                    label: "Edit canvas ready",
+                    title: "The preview is ready for insert and edit actions.",
+                  };
+            }
+            return {
+              className: "status-pill is-ok",
+              label: "Live preview",
+              title: "The preview iframe and bridge are synchronized.",
+            };
+        }
+      }
+
+      function getPreviewStatusSummary(hasPresentation, hasSelection) {
+        if (!hasPresentation) {
+          return "Load a deck to unlock the live canvas.";
+        }
+
+        switch (state.previewLifecycle) {
+          case "loading":
+            return "Booting the iframe before shell actions unlock.";
+          case "recovering":
+            return "Rebuilding the iframe from the current model document.";
+          case "bridge-degraded":
+            return "Reconnect the bridge before trusting live edits.";
+          case "desync-suspected":
+            return "Refresh the preview to restore model and DOM parity.";
+          default:
+            if (state.mode === "edit") {
+              return hasSelection
+                ? "Live selection ready."
+                : "Insert palette ready.";
+            }
+            return "Live preview stable.";
+        }
+      }
+
+      function syncWorkspaceStateUi(hasPresentation, hasSelection) {
+        if (!els.workspaceStateBadge) return;
+        const meta = getWorkspaceStateMeta(hasPresentation, hasSelection);
+        els.workspaceStateBadge.textContent = meta.label;
+        els.workspaceStateBadge.className = meta.className;
+        els.workspaceStateBadge.title = meta.title;
+      }
+
       function syncDocumentMetaUi(hasPresentation) {
         if (!hasPresentation) {
           els.documentMeta.textContent = "Документ не загружен";
@@ -13295,6 +13583,25 @@ ${exportDoc.documentElement.outerHTML}`;
           : "Кликни по элементу внутри слайда, чтобы выбрать его. Двойной клик по тексту начинает редактирование.";
       }
 
+      function syncPreviewStatusSummaryUi(hasPresentation, hasSelection) {
+        if (!els.previewStatusSummary) return;
+        els.previewStatusSummary.textContent = getPreviewStatusSummary(
+          hasPresentation,
+          hasSelection,
+        );
+        els.previewStatusSummary.title = getActiveSlideSummaryLabel();
+      }
+
+      function syncShellChromeUi(hasPresentation, hasSelection, canInsertNow) {
+        syncPrimaryActionUi(hasPresentation, hasSelection, canInsertNow);
+        syncDocumentMetaUi(hasPresentation);
+        syncPreviewLifecycleUi(hasPresentation);
+        syncWorkspaceStateUi(hasPresentation, hasSelection);
+        syncMobileRailUi(hasPresentation);
+        syncPreviewCopyUi(hasPresentation, hasSelection);
+        syncPreviewStatusSummaryUi(hasPresentation, hasSelection);
+      }
+
       function syncEmptyPreviewUi(hasPresentation) {
         if (hasPresentation) return;
         setPreviewLoading(false);
@@ -13311,10 +13618,7 @@ ${exportDoc.documentElement.outerHTML}`;
         );
         const canInsertNow = Boolean(hasPresentation && state.previewReady);
 
-        syncPrimaryActionUi(hasPresentation, hasSelection, canInsertNow);
-        syncDocumentMetaUi(hasPresentation);
-        syncPreviewLifecycleUi(hasPresentation);
-        syncMobileRailUi(hasPresentation);
+        syncShellChromeUi(hasPresentation, hasSelection, canInsertNow);
         syncSlideSectionUi(hasPresentation);
         updateAssetDirectoryStatus();
 

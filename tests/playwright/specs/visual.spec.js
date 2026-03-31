@@ -8,6 +8,7 @@ const {
 const VISUAL_PROJECTS = new Set([
   "chromium-desktop",
   "chromium-mobile-390",
+  "chromium-shell-1100",
   "chromium-wide-1440",
 ]);
 
