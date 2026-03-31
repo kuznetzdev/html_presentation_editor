@@ -214,6 +214,48 @@ async function clickPreview(page, selector, options = {}) {
   await previewLocator(page, selector).click(options);
 }
 
+function selectionFrameLocator(page) {
+  return page.locator("#selectionFrame");
+}
+
+function selectionFrameHitAreaLocator(page) {
+  return page.locator("#selectionFrameHitArea");
+}
+
+function selectionHandleLocator(page, handle) {
+  return page.locator(`#selectionFrame .selection-handle[data-handle="${handle}"]`);
+}
+
+async function dragSelectionOverlay(page, dx, dy) {
+  const target = selectionFrameHitAreaLocator(page);
+  await expect(target).toBeVisible();
+  const box = await target.boundingBox();
+  if (!box) {
+    throw new Error("Selection frame hit area is not measurable.");
+  }
+  const startX = Math.round(box.x + box.width / 2);
+  const startY = Math.round(box.y + box.height / 2);
+  await page.mouse.move(startX, startY);
+  await page.mouse.down();
+  await page.mouse.move(startX + dx, startY + dy, { steps: 12 });
+  await page.mouse.up();
+}
+
+async function resizeSelectionOverlay(page, handle, dx, dy) {
+  const target = selectionHandleLocator(page, handle);
+  await expect(target).toBeVisible();
+  const box = await target.boundingBox();
+  if (!box) {
+    throw new Error(`Selection handle ${handle} is not measurable.`);
+  }
+  const startX = Math.round(box.x + box.width / 2);
+  const startY = Math.round(box.y + box.height / 2);
+  await page.mouse.move(startX, startY);
+  await page.mouse.down();
+  await page.mouse.move(startX + dx, startY + dy, { steps: 12 });
+  await page.mouse.up();
+}
+
 async function getPreviewRect(page, selector) {
   return previewLocator(page, selector).evaluate((element) => {
     const rect = element.getBoundingClientRect();
@@ -483,6 +525,29 @@ async function activateSlideByIndex(page, index) {
   });
 }
 
+async function dragSlideRailItem(page, fromIndex, toIndex) {
+  await ensureShellPanelVisible(page, "slides");
+  const source = page.locator(`#slidesPanel .slide-item[data-index="${fromIndex}"]`);
+  const target = page.locator(`#slidesPanel .slide-item[data-index="${toIndex}"]`);
+  await expect(source).toBeVisible();
+  await expect(target).toBeVisible();
+  await source.dragTo(target);
+}
+
+async function openSlideRailContextMenu(page, index, options = {}) {
+  await ensureShellPanelVisible(page, "slides");
+  const slideItem = page.locator(`#slidesPanel .slide-item[data-index="${index}"]`);
+  await expect(slideItem).toBeVisible();
+  if (options.viaKebab) {
+    const trigger = slideItem.locator(".slide-menu-trigger");
+    await expect(trigger).toBeVisible();
+    await trigger.click();
+  } else {
+    await slideItem.click({ button: "right" });
+  }
+  await expect(page.locator("#contextMenu")).toBeVisible();
+}
+
 async function closeCompactShellPanels(page) {
   const compact = await page.evaluate(() => window.innerWidth <= 1024);
   if (!compact) return;
@@ -652,6 +717,8 @@ module.exports = {
   closeCompactShellPanels,
   collectFixturePayloads,
   connectAssetDirectory,
+  dragSelectionOverlay,
+  dragSlideRailItem,
   ensureEditorControlVisible,
   ensureShellPanelVisible,
   evaluateEditor,
@@ -665,7 +732,11 @@ module.exports = {
   previewLocator,
   readSelectionUiState,
   readDiagnostics,
+  resizeSelectionOverlay,
+  selectionFrameLocator,
+  selectionHandleLocator,
   setMode,
+  openSlideRailContextMenu,
   waitForSlideActivationState,
   waitForSelectedEntityKind,
   waitForPreviewReady,

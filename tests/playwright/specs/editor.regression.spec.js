@@ -4,6 +4,8 @@ const {
   activateSlideByIndex,
   BASIC_MANUAL_BASE_URL,
   closeCompactShellPanels,
+  dragSelectionOverlay,
+  dragSlideRailItem,
   EXPORT_FIXTURE_ROOT,
   clickEditorControl,
   clickPreview,
@@ -13,8 +15,10 @@ const {
   loadBasicDeck,
   openExportValidationPopup,
   openInsertPalette,
+  openSlideRailContextMenu,
   previewLocator,
   readSelectionUiState,
+  resizeSelectionOverlay,
   setMode,
   waitForSlideActivationState,
   waitForSelectedEntityKind,
@@ -262,6 +266,39 @@ test.describe("Editor regression coverage", () => {
     await expect.poll(() => evaluateEditor(page, "state.mode")).toBe("edit");
   });
 
+  test("autosave restore falls back to slide index when slide id is missing @stage-b", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only autosave flow.");
+
+    await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
+    await activateSlideByIndex(page, 2);
+    const projectHtml = await evaluateEditor(page, "serializeCurrentProject()");
+    await page.evaluate((html) => {
+      window.localStorage.setItem(
+        "presentation-editor:autosave:v3",
+        JSON.stringify({
+          version: 3,
+          savedAt: Date.now(),
+          sourceLabel: "Fallback payload",
+          manualBaseUrl: "http://127.0.0.1:4173/tests/fixtures/playwright/",
+          mode: "edit",
+          activeSlideIndex: 2,
+          html,
+        }),
+      );
+    }, projectHtml);
+
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await expect(page.locator("#restoreBanner")).toBeVisible();
+    await page.click("#restoreDraftBtn");
+    await waitForSlideActivationState(page, {
+      activeIndex: 2,
+      count: 3,
+    });
+  });
+
   test("export validation popup strips editor chrome @stage-a", async ({ page }, testInfo) => {
     test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only export contract.");
 
@@ -313,6 +350,113 @@ test.describe("Editor regression coverage", () => {
     await expect(page.locator("#diagnosticsBox")).toContainText(
       /directManipSafe=false|directManipReason=/,
     );
+  });
+
+  test("selection overlay drags and resizes safe elements directly @stage-c", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only direct manipulation flow.");
+
+    await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
+    await activateSlideByIndex(page, 1);
+    await closeCompactShellPanels(page);
+
+    await selectTextNode(page, "#absolute-card");
+    const beforeDrag = await getPreviewRect(page, "#absolute-card");
+    await dragSelectionOverlay(page, 48, 24);
+    await expect
+      .poll(() => getPreviewRect(page, "#absolute-card"))
+      .toMatchObject({
+        left: expect.any(Number),
+        top: expect.any(Number),
+      });
+    const afterDrag = await getPreviewRect(page, "#absolute-card");
+    expect(afterDrag.left).toBeGreaterThan(beforeDrag.left + 20);
+    expect(afterDrag.top).toBeGreaterThan(beforeDrag.top + 10);
+
+    const beforeResize = await getPreviewRect(page, "#absolute-card");
+    await resizeSelectionOverlay(page, "se", 42, 28);
+    const afterResize = await getPreviewRect(page, "#absolute-card");
+    expect(afterResize.width).toBeGreaterThan(beforeResize.width + 20);
+    expect(afterResize.height).toBeGreaterThan(beforeResize.height + 10);
+  });
+
+  test("blocked direct manipulation keeps safety gate and surfaces tooltip @stage-c", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only direct manipulation flow.");
+
+    await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
+    await activateSlideByIndex(page, 1);
+    await closeCompactShellPanels(page);
+
+    await selectTextNode(page, "#unsafe-box", {
+      position: { x: 176, y: 96 },
+    });
+    const before = await getPreviewRect(page, "#unsafe-box");
+    await dragSelectionOverlay(page, 32, 18);
+    const after = await getPreviewRect(page, "#unsafe-box");
+    expect(Math.abs(after.left - before.left)).toBeLessThan(2);
+    expect(Math.abs(after.top - before.top)).toBeLessThan(2);
+    await expect(page.locator("#selectionFrameTooltip")).toContainText(/Cannot move|overlay/i);
+    await expect(page.locator("#diagnosticsBox")).toContainText(
+      /directManipSafe=false|directManipReason=/,
+    );
+  });
+
+  test("desktop rail drag reorder updates slide order @stage-d", async ({ page }, testInfo) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only stateful flow.");
+    test.skip(/390|640|820/.test(testInfo.project.name), "Desktop-only rail drag flow.");
+
+    await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
+
+    const beforeOrder = await evaluateEditor(page, "JSON.stringify(state.slideRegistryOrder)");
+    await dragSlideRailItem(page, 0, 2);
+    const afterOrder = await evaluateEditor(page, "JSON.stringify(state.slideRegistryOrder)");
+    expect(afterOrder).not.toBe(beforeOrder);
+    await waitForSlideActivationState(page, {
+      activeIndex: 0,
+      count: 3,
+    });
+  });
+
+  test("slide context menu supports duplicate delete and move actions @stage-d", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only stateful flow.");
+
+    await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
+
+    await openSlideRailContextMenu(page, 1, {
+      viaKebab: /390|640|820/.test(testInfo.project.name),
+    });
+    await page.click('[data-menu-action="slide-duplicate"]');
+    await waitForSlideActivationState(page, {
+      activeIndex: 2,
+      count: 4,
+    });
+
+    await openSlideRailContextMenu(page, 2, {
+      viaKebab: /390|640|820/.test(testInfo.project.name),
+    });
+    await page.click('[data-menu-action="slide-move-top"]');
+    await waitForSlideActivationState(page, {
+      activeIndex: 0,
+      count: 4,
+    });
+
+    await openSlideRailContextMenu(page, 0, {
+      viaKebab: /390|640|820/.test(testInfo.project.name),
+    });
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.click('[data-menu-action="slide-delete"]');
+    await waitForSlideActivationState(page, {
+      activeIndex: 0,
+      count: 3,
+    });
   });
 
   test("compact shell closes slide drawer and routes primary surface by entity kind @stage-e", async (
