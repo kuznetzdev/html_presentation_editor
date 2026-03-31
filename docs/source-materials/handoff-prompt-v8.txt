@@ -1,0 +1,262 @@
+Ты продолжаешь проект HTML Presentation Editor в рамках этого же проекта.
+
+Восстанови контекст сразу и работай без повторных расспросов. Считай этот prompt жёстким handoff + рабочим ТЗ.
+
+# 1. Что это за продукт
+
+Мы делаем не generic page builder и не low-code CMS.
+Мы делаем специализированный визуальный редактор HTML-презентаций.
+
+Цель:
+- открыть существующий HTML презентации;
+- показать максимально правдивое live preview;
+- позволить выбирать и редактировать допустимые элементы;
+- менять текст, изображения, GIF, видео, базовые стили, часть структуры;
+- вставлять новые элементы и layout presets;
+- экспортировать обратно чистый HTML без editor-мусора.
+
+Ключевое ощущение:
+«Открыл → выбрал → изменил → сохранил».
+
+# 2. Неподвижные инварианты
+
+Нельзя нарушать:
+- no dead ends;
+- predictable UX;
+- truthful preview;
+- recoverability через undo/redo/autosave;
+- Basic/Advanced;
+- никаких служебных editor-артефактов в export;
+- shell-UI живёт снаружи контента, а не загрязняет документ;
+- архитектуру iframe + bridge + modelDoc ломать нельзя.
+
+# 3. Зафиксированная архитектура
+
+Основа:
+- Parent shell
+- Iframe preview
+- Bridge
+- modelDoc
+
+Parent shell отвечает за:
+- topbar
+- slides list
+- inspector
+- floating toolbar
+- context menu
+- insert palette / insert entry point
+- history
+- autosave
+- export
+- mobile shell
+- diagnostics UI
+
+Iframe отвечает за:
+- живой запуск документа
+- реальный DOM презентации
+- выполнение презентационных скриптов
+- runtime selection/editing через bridge
+
+Bridge отвечает за:
+- команды parent -> iframe
+- сообщения iframe -> parent
+- runtime metadata
+- selection
+- element/slide updates
+- diagnostics / heartbeat
+
+modelDoc отвечает за:
+- каноническую модель документа
+- export
+- restore
+- history source
+- editor logic
+
+# 4. Что уже сделано в этом чате
+
+Проект прошёл несколько инженерных проходов:
+
+v1-v5:
+- стабилизация и очистка shell;
+- нормализация CSS/JS;
+- вынос theme/layout/state в более предсказуемую структуру;
+- cleanup topbar и shell-path;
+- кодовая карта и отчёты по стабилизации.
+
+v6:
+- direct manipulation v1;
+- overlay selection;
+- drag/resize/nudge/snap/guides;
+- pointer-session / interaction hardening;
+- фиксы по text-edit state.
+
+v7:
+- protected policy;
+- preview lifecycle hardening;
+- recovery-path для preview;
+- policy-aware direct manipulation;
+- починка верхнего бара и responsive shell-path.
+
+v8:
+- inspector decomposition v1;
+- slide model v1;
+- export validation surfaced;
+- asset status surfaced;
+- mid-width shell polish;
+- responsive cleanup поверх v7.
+
+Текущий главный рабочий файл:
+presentation-editor-ux-slide-pass-v8.html
+
+Сопутствующие файлы:
+- presentation-editor-code-map-v8.md
+- remaining-issues-after-v8.md
+- ux-slide-export-pass-08.md
+
+# 5. Что сейчас считается source of truth
+
+Держись этих принципов:
+- редактор должен быть понятен слабому пользователю;
+- типовые действия должны делаться за 1–2 шага;
+- shell не должен уезжать, ломаться или перекрывать canvas;
+- topbar должен оставаться чистым и глобальным;
+- локальные действия должны жить в inspector / floating toolbar / context menu;
+- insert UX должен быть контекстным и не жить постоянным шумом над слайдом;
+- темы и responsive должны быть системными, а не набором хаотичных overrides;
+- direct manipulation должен быть удобным, но не ломать DOM и не конфликтовать с deck logic;
+- export обязан оставаться чистым;
+- любые новые доработки сначала проверяй на адаптив, тему, UX-смысл и отсутствие архитектурной деградации.
+
+# 6. Что осталось нерешённым после v8
+
+Это текущий backlog высокого приоритета:
+
+1. Live browser QA hardening
+Нужно проверить и при необходимости починить:
+- topbar
+- secondary row
+- drawers
+- mobile rail
+- preview note
+- palette/menu positioning
+- floating toolbar / context menu
+- отсутствие horizontal overflow
+- отсутствие уезжающих кнопок и меню
+на ширинах:
+390 / 640 / 820 / 1100 / 1280 / 1440+
+
+2. Slide model v2
+Нужно сделать слайды более first-class:
+- безопасные slide presets/templates;
+- slide settings;
+- понятный slide-level UX;
+- не ломая modelDoc и existing decks.
+
+3. Asset edge cases
+Нужно добить:
+- relative assets;
+- CSS url();
+- srcset;
+- media/poster;
+- preview/export consistency;
+- unresolved assets reporting.
+
+4. Direct manipulation QA hardening
+Нужно проверить и усилить:
+- transformed elements;
+- nested positioned containers;
+- zoom / scroll scenarios;
+- touch / trackpad behavior;
+- very small targets;
+- overlay collision cases.
+
+5. Дальнейшая кодовая структуризация
+Нужно не допустить возвращения мешанины.
+Структура должна становиться более модульной и предсказуемой:
+- shell-layout
+- theme-system
+- preview-lifecycle
+- selection/direct-manipulation
+- inspector
+- slide-model
+- asset/export
+
+# 7. Текущий порядок работ
+
+В новом чате работай по такому приоритету:
+
+Этап A. Live browser QA hardening
+Сначала проверяй реальные responsive/regression-проблемы и чини shell/layout так, чтобы:
+- ничего не уезжало;
+- topbar не ломался;
+- меню открывались корректно;
+- панели и drawers были предсказуемы;
+- light/dark оставались консистентны;
+- canvas не терял приоритет.
+
+Этап B. Slide model v2
+После стабилизации shell расширяй модель слайдов:
+- presets;
+- slide settings;
+- safer slide-level actions;
+- better slide list UX.
+
+Этап C. Asset edge cases + export hardening
+Дальше:
+- улучшение asset resolver;
+- export validation flow;
+- preview/export compare path;
+- asset diagnostics.
+
+Этап D. Direct manipulation QA hardening
+После этого:
+- дополировать drag/resize/nudge/snap/guides;
+- привести к стабильному cross-width/cross-input поведению.
+
+# 8. Как писать код
+
+Это критично.
+
+- Не плодить повторные top-level функции.
+- Не создавать новые “historical override layers”.
+- Не делать хаотичные CSS patches в конце файла.
+- Если правишь shell/layout/theme, думай как о системе, а не как о точечном костыле.
+- Любая UI-команда должна иметь один источник правды.
+- Состояния должны быть явными, а не размазаны по скрытым флагам.
+- Если добавляешь новый UI-state, фиксируй его осознанно.
+- Если рефакторишь — делай аккуратно, не ломая архитектуру и текущий working path.
+
+# 9. Как работать в ответах
+
+В каждом новом инженерном проходе:
+1. Кратко восстанови состояние.
+2. Назови текущую цель прохода.
+3. Скажи, какие реальные проблемы закрываешь сейчас.
+4. Внеси изменения.
+5. Проверь:
+   - синтаксис
+   - адаптив
+   - темы
+   - отсутствие визуальных артефактов
+   - отсутствие уезжающих элементов
+   - базовую доступность
+6. Отдай:
+   - новый HTML-файл
+   - diff
+   - короткий отчёт
+   - validation notes
+   - обновлённый список remaining issues
+
+# 10. Что важно не забыть
+
+- Если правишь UI, следи за консистентностью, адаптивностью и отсутствием визуальных артефактов.
+- Не расширяй продукт хаотично.
+- Если есть конфликт между новой фичей и устойчивостью — выбирай устойчивость.
+- Если есть конфликт между мощью и понятностью — выбирай понятность, но без потери архитектуры.
+- Действуй итеративно, пока оставшиеся проблемы не будут закрыты и код не станет чище, структурированнее, а UX — устойчиво рабочим.
+
+Начни работу с:
+1. краткого восстановления контекста,
+2. перечисления 3–5 главных проблем,
+3. описания следующего конкретного инженерного прохода,
+4. затем переходи к правкам.

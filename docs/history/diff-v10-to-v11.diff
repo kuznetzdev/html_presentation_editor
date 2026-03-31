@@ -1,0 +1,412 @@
+--- original_v10.html	2026-03-30 21:19:44.163033144 +0000
++++ /mnt/data/presentation-editor-ux-slide-pass-v11.html	2026-03-30 21:19:44.101846096 +0000
+@@ -87,6 +87,7 @@
+         --workspace-max: 1540px;
+         --drawer-width: min(86vw, 360px);
+         --mobile-rail-h: 64px;
++        --shell-popover-inset: 12px;
+ 
+         --z-topbar: 40;
+         --z-stage-toolbar: 18;
+@@ -640,6 +641,8 @@
+         max-width: calc(100vw - 24px);
+         max-height: min(56vh, calc(100dvh - var(--topbar-h) - 40px));
+         overflow: auto;
++        overscroll-behavior: contain;
++        scrollbar-gutter: stable both-edges;
+         padding: 12px;
+         border: 1px solid var(--shell-border);
+         border-radius: var(--radius-md);
+@@ -829,6 +832,8 @@
+         max-width: calc(100vw - 24px);
+         max-height: min(62vh, calc(100dvh - var(--topbar-h) - 40px));
+         overflow: auto;
++        overscroll-behavior: contain;
++        scrollbar-gutter: stable both-edges;
+         padding: 12px;
+         border: 1px solid var(--shell-border);
+         border-radius: var(--radius-md);
+@@ -862,6 +867,28 @@
+         cursor: grabbing;
+       }
+ 
++      body[data-shell-popover-mode="sheet"] .quick-palette,
++      body[data-shell-popover-mode="sheet"] .slides-template-bar {
++        width: auto;
++        max-width: none;
++        left: var(--shell-popover-inset) !important;
++        right: var(--shell-popover-inset);
++        border-radius: 18px;
++        box-shadow: var(--shadow-lg);
++        max-height: min(
++          62vh,
++          calc(100dvh - var(--topbar-h) - var(--mobile-rail-h) - 32px)
++        );
++      }
++
++      body[data-shell-popover-mode="sheet"] .quick-palette {
++        grid-template-columns: 1fr;
++      }
++
++      body[data-shell-popover-mode="sheet"] .slides-template-bar {
++        grid-template-columns: 1fr;
++      }
++
+       .preview-stage {
+         position: relative;
+         isolation: isolate;
+@@ -1183,6 +1210,19 @@
+         margin-top: 2px;
+       }
+ 
++      .slide-preset-apply-group {
++        justify-content: flex-end;
++      }
++
++      .slide-preset-apply-group .group-title {
++        margin-bottom: 8px;
++      }
++
++      .slide-preset-apply-group button {
++        width: 100%;
++        min-height: 42px;
++      }
++
+       .inspector-section.is-entity-hidden {
+         display: none !important;
+       }
+@@ -2766,6 +2806,25 @@
+                 </select>
+               </div>
+             </div>
++            <div class="field-grid-2 slide-settings-grid">
++              <div class="field-group compact">
++                <label for="slidePresetSelect">Preset слайда</label>
++                <select id="slidePresetSelect">
++                  <option value="">Без preset-замены</option>
++                  <option value="title">Title slide</option>
++                  <option value="section">Section</option>
++                  <option value="bullets">Bullets</option>
++                  <option value="media">Media</option>
++                  <option value="two-column">2 колонки</option>
++                </select>
++              </div>
++              <div class="field-group compact slide-preset-apply-group">
++                <span class="group-title">Структура</span>
++                <button type="button" id="applySlidePresetBtn">
++                  Применить preset
++                </button>
++              </div>
++            </div>
+             <div class="inspector-actions slide-actions-grid">
+               <button type="button" id="duplicateCurrentSlideBtn">
+                 Дублировать слайд
+@@ -2786,8 +2845,9 @@
+             </div>
+             <div class="small-note slide-status-note">
+               У слайда появились собственные first-class настройки: название для
+-              списка, фон и preset отступов. Тонкие structural-операции остаются
+-              в Advanced.
++              списка, фон, preset отступов и безопасная preset-замена структуры.
++              Применение preset заменяет контент текущего слайда, но сохраняет
++              slide-level настройки. Undo вернёт прошлую версию.
+             </div>
+           </div>
+ 
+@@ -3811,6 +3871,8 @@
+         slidePaddingPresetSelect: document.getElementById(
+           "slidePaddingPresetSelect",
+         ),
++        slidePresetSelect: document.getElementById("slidePresetSelect"),
++        applySlidePresetBtn: document.getElementById("applySlidePresetBtn"),
+         duplicateCurrentSlideBtn: document.getElementById(
+           "duplicateCurrentSlideBtn",
+         ),
+@@ -4061,6 +4123,17 @@
+         els.slidePaddingPresetSelect?.addEventListener("change", () =>
+           applyCurrentSlidePaddingPreset(els.slidePaddingPresetSelect.value),
+         );
++        els.slidePresetSelect?.addEventListener("change", () =>
++          syncSlidePresetActionUi(
++            canUseStaticSlideModel() &&
++              state.mode === "edit" &&
++              state.editingSupported,
++            getCurrentSlideModelNode(),
++          ),
++        );
++        els.applySlidePresetBtn?.addEventListener("click", () =>
++          applyCurrentSlidePreset(els.slidePresetSelect?.value || ""),
++        );
+         els.duplicateCurrentSlideBtn?.addEventListener(
+           "click",
+           duplicateCurrentSlide,
+@@ -4856,7 +4929,9 @@
+             slides: STATE.slides.map((slide, index) => ({
+               id: slide.getAttribute(SLIDE_MARKER),
+               title: getSlideTitle(slide),
++              titleOverride: slide.getAttribute('data-slide-title') || '',
+               preset: slide.getAttribute('data-slide-preset') || '',
++              paddingPreset: slide.getAttribute('data-slide-padding-preset') || '',
+               index,
+               exportable: Boolean(slide.getAttribute(SLIDE_MARKER) && !slide.getAttribute(SLIDE_MARKER).startsWith('runtime-')),
+             })),
+@@ -6331,13 +6406,18 @@
+           if (isActiveSlide) item.setAttribute("aria-current", "true");
+           const main = document.createElement("div");
+           main.className = "slide-item-main";
+-          const presetLabel = getSlidePresetLabel(slide.preset || "");
++          const slideNode = state.modelDoc?.querySelector(
++            `[data-editor-slide-id="${cssEscape(slide.id)}"]`,
++          );
++          const metaTags = buildSlideMetaTags(slide, slideNode);
+           main.innerHTML = `
+           <div class="slide-number">Слайд ${index + 1}</div>
+           <div class="slide-title">${escapeHtml(slide.title || "Пустой слайд")}</div>
+           ${
+-            presetLabel
+-              ? `<div class="slide-meta-row"><span class="slide-tag">${escapeHtml(presetLabel)}</span></div>`
++            metaTags.length
++              ? `<div class="slide-meta-row">${metaTags
++                  .map((tag) => `<span class="slide-tag">${escapeHtml(tag)}</span>`)
++                  .join("")}</div>`
+               : ""
+           }
+         `;
+@@ -6412,6 +6492,10 @@
+         return String(slide?.getAttribute("data-slide-title") || "").trim();
+       }
+ 
++      function getSlidePresetValue(slide) {
++        return String(slide?.getAttribute("data-slide-preset") || "").trim();
++      }
++
+       function getSlidePaddingPreset(slide) {
+         const stored = String(
+           slide?.getAttribute("data-slide-padding-preset") || "",
+@@ -6425,6 +6509,34 @@
+         return "";
+       }
+ 
++      function getSlidePaddingLabel(preset) {
++        switch (String(preset || "").trim()) {
++          case "none":
++            return "Отступ 0";
++          case "compact":
++            return "Отступ 24";
++          case "default":
++            return "Отступ 48";
++          case "spacious":
++            return "Отступ 72";
++          default:
++            return "";
++        }
++      }
++
++      function buildSlideMetaTags(slideMeta = {}, slideNode = null) {
++        const tags = [];
++        const presetLabel = getSlidePresetLabel(
++          slideMeta?.preset || getSlidePresetValue(slideNode),
++        );
++        if (presetLabel) tags.push(presetLabel);
++        const paddingLabel = getSlidePaddingLabel(
++          slideMeta?.paddingPreset || getSlidePaddingPreset(slideNode),
++        );
++        if (paddingLabel) tags.push(paddingLabel);
++        return tags;
++      }
++
+       function moveSlide(index, direction) {
+         if (!state.modelDoc) return;
+         const targetIndex = index + direction;
+@@ -7290,20 +7402,30 @@
+       }
+ 
+       function getShellViewportInsets() {
++        const inset = readShellMetricVar("--shell-popover-inset", 12);
+         return {
+-          top: readShellMetricVar("--topbar-h", 64) + 8,
+-          right: 8,
++          top: readShellMetricVar("--topbar-h", 64) + inset,
++          right: inset,
+           bottom: (isCompactShell()
+             ? readShellMetricVar("--mobile-rail-h", 0)
+-            : 0) + 8,
+-          left: 8,
++            : 0) + inset,
++          left: inset,
+         };
+       }
+ 
++      function prefersShellPopoverSheetMode() {
++        return window.matchMedia
++          ? window.matchMedia("(max-width: 640px)").matches
++          : window.innerWidth <= 640;
++      }
++
+       function syncShellViewportLock() {
+         const shouldLock =
+           isCompactShell() && (state.leftPanelOpen || state.rightPanelOpen);
+         document.body.dataset.shellLocked = shouldLock ? "true" : "false";
++        document.body.dataset.shellPopoverMode = prefersShellPopoverSheetMode()
++          ? "sheet"
++          : "anchored";
+       }
+ 
+       function syncShellChromeMetrics() {
+@@ -7351,11 +7473,26 @@
+         const insets = getShellViewportInsets();
+         popoverEl.style.left = "0px";
+         popoverEl.style.top = "0px";
++        popoverEl.style.right = prefersShellPopoverSheetMode()
++          ? `${Math.round(insets.right)}px`
++          : "auto";
+         popoverEl.style.visibility = "hidden";
+         const width =
+           popoverEl.offsetWidth || Number(options.fallbackWidth || 320);
+         const height =
+           popoverEl.offsetHeight || Number(options.fallbackHeight || 220);
++        if (prefersShellPopoverSheetMode()) {
++          const x = insets.left;
++          const y = Math.max(
++            insets.top,
++            window.innerHeight - insets.bottom - height,
++          );
++          popoverEl.style.left = `${Math.round(x)}px`;
++          popoverEl.style.right = `${Math.round(insets.right)}px`;
++          popoverEl.style.top = `${Math.round(y)}px`;
++          popoverEl.style.visibility = "";
++          return;
++        }
+         let x =
+           align === "start" ? triggerRect.left : triggerRect.right - width;
+         const fitsBelow =
+@@ -7677,6 +7814,7 @@
+ 
+       function openContextMenuForCurrentSelection(clientX, clientY) {
+         if (!state.selectedNodeId) return;
++        closeShellPanels();
+         closeTransientShellUi({ keep: "context-menu" });
+         const payload = {
+           nodeId: state.selectedNodeId,
+@@ -9302,6 +9440,22 @@
+         });
+       }
+ 
++      function syncSlidePresetActionUi(canEditSlides, currentSlide) {
++        if (!els.slidePresetSelect) return;
++        const selectedPreset = String(els.slidePresetSelect.value || "").trim();
++        if (els.applySlidePresetBtn) {
++          const presetLabel = getSlidePresetLabel(selectedPreset);
++          els.applySlidePresetBtn.disabled =
++            !canEditSlides || !currentSlide || !selectedPreset;
++          els.applySlidePresetBtn.textContent = presetLabel
++            ? `Применить ${presetLabel}`
++            : "Применить preset";
++          els.applySlidePresetBtn.title = selectedPreset
++            ? "Заменить содержимое текущего слайда выбранным preset. Undo вернёт прошлую версию."
++            : "Сначала выбери preset для текущего слайда.";
++        }
++      }
++
+       function syncSlideSectionUi(hasPresentation) {
+         const canUseSlides = canUseStaticSlideModel();
+         const canEditSlides =
+@@ -9314,13 +9468,11 @@
+           slideIndex >= 0
+             ? state.slides.find((slide) => slide.id === state.activeSlideId) || null
+             : null;
+-        const presetLabel = getSlidePresetLabel(
+-          currentSlideMeta?.preset || currentSlide?.getAttribute("data-slide-preset") || "",
+-        );
++        const badgeTags = buildSlideMetaTags(currentSlideMeta, currentSlide);
+         if (els.currentSlideMetaBadge) {
+           els.currentSlideMetaBadge.textContent =
+             slideIndex >= 0
+-              ? `слайд ${slideIndex + 1} / ${state.slides.length}${presetLabel ? ` • ${presetLabel}` : ""}`
++              ? `слайд ${slideIndex + 1} / ${state.slides.length}${badgeTags.length ? ` • ${badgeTags.join(" • ")}` : ""}`
+               : "слайд: —";
+         }
+         if (els.slideTitleOverrideInput) {
+@@ -9339,6 +9491,12 @@
+           els.slidePaddingPresetSelect.value = getSlidePaddingPreset(currentSlide);
+           els.slidePaddingPresetSelect.disabled = !canEditSlides || !currentSlide;
+         }
++        if (els.slidePresetSelect) {
++          els.slidePresetSelect.value =
++            currentSlideMeta?.preset || getSlidePresetValue(currentSlide);
++          els.slidePresetSelect.disabled = !canEditSlides || !currentSlide;
++        }
++        syncSlidePresetActionUi(canEditSlides, currentSlide);
+         if (els.duplicateCurrentSlideBtn) {
+           els.duplicateCurrentSlideBtn.disabled = !canEditSlides || !currentSlide;
+         }
+@@ -9800,6 +9958,7 @@
+           ? "Скрыть меню вставки"
+           : "Открыть меню вставки";
+         if (active) {
++          closeShellPanels();
+           closeTransientShellUi({ keep: "insert-palette" });
+           setInteractionMode("insert");
+           scheduleShellPopoverLayout();
+@@ -10016,6 +10175,7 @@
+ 
+       function openContextMenuFromBridge(payload) {
+         if (state.mode !== "edit") return;
++        closeShellPanels();
+         closeTransientShellUi({ keep: "context-menu" });
+         state.contextMenuNodeId = payload.nodeId || state.selectedNodeId;
+         state.contextMenuPayload = {
+@@ -10504,6 +10664,7 @@
+         const items = getSlideTemplateButtons();
+         applyRovingTabindex(items, active ? 0 : -1);
+         if (active) {
++          closeShellPanels();
+           closeTransientShellUi({ keep: "slide-template" });
+           scheduleShellPopoverLayout();
+           if (options.focusFirst !== false) {
+@@ -10785,6 +10946,45 @@
+         return slide;
+       }
+ 
++      function slideHasMeaningfulContent(slide) {
++        if (!(slide instanceof Element)) return false;
++        const text = String(slide.textContent || "")
++          .replace(/\s+/g, " ")
++          .trim();
++        if (text) return true;
++        return Boolean(
++          slide.querySelector(
++            "img, video, iframe, svg, canvas, table, ul, ol, blockquote, pre, figure",
++          ),
++        );
++      }
++
++      function applyCurrentSlidePreset(kind) {
++        const slide = getCurrentSlideModelNode();
++        const nextPreset = String(kind || "").trim();
++        if (!slide || !nextPreset) return;
++        const currentPreset = getSlidePresetValue(slide);
++        const shouldConfirm =
++          slideHasMeaningfulContent(slide) && currentPreset !== nextPreset;
++        if (
++          shouldConfirm &&
++          !window.confirm(
++            `Preset ${getSlidePresetLabel(nextPreset) || nextPreset} заменит текущее содержимое слайда. Slide-level настройки сохранятся. Продолжить?`,
++          )
++        ) {
++          return;
++        }
++        slide.innerHTML = getSlideTemplateInnerHtml(nextPreset);
++        slide.setAttribute("data-slide-preset", nextPreset);
++        ensureUniqueDomIdsInModel(slide, slide);
++        assignEditorNodeIdsInModel(slide);
++        clearSelectedElementState();
++        replaceCurrentSlideInPreview("slide-preset-apply");
++        showToast("Preset применён к текущему слайду. Undo вернёт прошлую версию.", "success", {
++          title: "Слайды",
++        });
++      }
++
+       function insertSlideFromTemplate(kind) {
+         if (!canUseStaticSlideModel()) {
+           showToast(

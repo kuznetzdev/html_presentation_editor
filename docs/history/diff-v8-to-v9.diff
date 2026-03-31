@@ -1,0 +1,775 @@
+--- /mnt/data/presentation-editor-ux-slide-pass-v8.html	2026-03-30 16:34:46.170984656 +0000
++++ /mnt/data/presentation-editor-ux-slide-pass-v9.html	2026-03-30 16:38:45.045782815 +0000
+@@ -95,6 +95,7 @@
+         --z-drawer-backdrop: 65;
+         --z-drawer: 68;
+         --z-mobile-rail: 90;
++        --z-shell-popover: 96;
+         --z-context-menu: 100;
+         --z-modal: 110;
+         --z-toast: 140;
+@@ -188,6 +189,11 @@
+         min-height: 100vh;
+         line-height: 1.45;
+         text-rendering: optimizeLegibility;
++        overflow-x: clip;
++      }
++
++      body[data-shell-locked="true"] {
++        overflow: hidden;
+       }
+ 
+       [hidden],
+@@ -312,6 +318,11 @@
+         padding: 6px 10px;
+         border-radius: 999px;
+         min-height: 32px;
++        min-width: 0;
++        max-width: 100%;
++        overflow: hidden;
++        text-overflow: ellipsis;
++        white-space: nowrap;
+         font-size: 12px;
+         border: 1px solid var(--shell-border);
+         background: var(--shell-panel-elevated);
+@@ -461,6 +472,7 @@
+       }
+ 
+       .topbar-actions {
++        min-width: 0;
+         display: flex;
+         flex-wrap: wrap;
+         align-items: center;
+@@ -587,11 +599,23 @@
+       }
+ 
+       .mobile-command-rail button {
++        display: flex;
++        flex-direction: column;
++        align-items: center;
+         justify-content: center;
++        gap: 4px;
++        text-align: center;
++        line-height: 1.15;
+         min-height: 48px;
+         padding: 8px 6px;
+       }
+ 
++      .mobile-command-rail button::before {
++        content: attr(data-mobile-icon);
++        font-size: 14px;
++        line-height: 1;
++      }
++
+       .mobile-command-rail button.is-active {
+         border-color: var(--shell-accent);
+         background: var(--shell-accent-soft);
+@@ -605,10 +629,23 @@
+        [STYLE 04] Slides + preview stage
+        ====================================================================== */
+       .slides-template-bar {
++        position: fixed;
++        left: -9999px;
++        top: -9999px;
++        z-index: var(--z-shell-popover);
+         display: none;
+         grid-template-columns: repeat(2, minmax(0, 1fr));
+         gap: 8px;
+-        padding: 12px 10px 0;
++        width: min(360px, calc(100vw - 24px));
++        max-width: calc(100vw - 24px);
++        max-height: min(56vh, calc(100dvh - var(--topbar-h) - 40px));
++        overflow: auto;
++        padding: 12px;
++        border: 1px solid var(--shell-border);
++        border-radius: var(--radius-md);
++        background: var(--shell-panel-elevated);
++        box-shadow: var(--shadow-md);
++        backdrop-filter: blur(10px);
+       }
+ 
+       .slides-template-bar.is-open {
+@@ -623,6 +660,7 @@
+       .slides-template-bar button {
+         justify-content: flex-start;
+         min-height: 42px;
++        min-width: 0;
+         font-weight: 600;
+         text-align: left;
+       }
+@@ -678,6 +716,26 @@
+         word-break: break-word;
+       }
+ 
++      .slide-meta-row {
++        display: flex;
++        flex-wrap: wrap;
++        gap: 6px;
++        margin-top: 8px;
++      }
++
++      .slide-tag {
++        display: inline-flex;
++        align-items: center;
++        min-height: 24px;
++        padding: 3px 8px;
++        border: 1px solid var(--shell-border);
++        border-radius: 999px;
++        background: var(--shell-panel-elevated);
++        color: var(--shell-text-muted);
++        font-size: 11px;
++        line-height: 1.2;
++      }
++
+       .slide-actions {
+         display: flex;
+         flex-direction: column;
+@@ -743,6 +801,7 @@
+       #previewLifecyclePill {
+         white-space: nowrap;
+         min-height: 42px;
++        max-width: 100%;
+         align-self: center;
+       }
+ 
+@@ -759,12 +818,16 @@
+       }
+ 
+       .quick-palette {
++        position: fixed;
++        left: -9999px;
++        top: -9999px;
++        z-index: var(--z-shell-popover);
+         display: none;
+-        grid-template-columns: repeat(3, minmax(0, 1fr));
++        grid-template-columns: repeat(2, minmax(0, 1fr));
+         gap: 10px;
+-        width: 100%;
+-        max-width: 100%;
+-        max-height: min(48vh, 360px);
++        width: min(420px, calc(100vw - 24px));
++        max-width: calc(100vw - 24px);
++        max-height: min(62vh, calc(100dvh - var(--topbar-h) - 40px));
+         overflow: auto;
+         padding: 12px;
+         border: 1px solid var(--shell-border);
+@@ -786,6 +849,7 @@
+       .quick-palette button {
+         justify-content: flex-start;
+         min-height: 42px;
++        min-width: 0;
+         font-weight: 600;
+         text-align: left;
+       }
+@@ -2135,7 +2199,7 @@
+        Top bar
+        Глобальные действия редактора: открыть HTML, undo/redo, тема, экспорт.
+        ==================================================================== -->
+-    <header class="topbar">
++    <header class="topbar" id="topbar">
+       <div class="topbar-title">
+         <h1>HTML Presentation Editor</h1>
+         <span id="documentMeta">Документ не загружен</span>
+@@ -2678,6 +2742,14 @@
+                 >слайд: —</span
+               >
+             </div>
++            <div class="field-group compact">
++              <label for="slideTitleOverrideInput">Название в списке слайдов</label>
++              <input
++                id="slideTitleOverrideInput"
++                type="text"
++                placeholder="Например: Вступление"
++              />
++            </div>
+             <div class="field-grid-2 slide-settings-grid">
+               <div class="field-group compact">
+                 <label for="slideBgColorInput">Фон слайда</label>
+@@ -2713,8 +2785,9 @@
+               </button>
+             </div>
+             <div class="small-note slide-status-note">
+-              Базовые настройки текущего слайда вынесены в отдельный блок. HTML
+-              слайда и тонкие операции спрятаны в Advanced.
++              У слайда появились собственные first-class настройки: название для
++              списка, фон и preset отступов. Тонкие structural-операции остаются
++              в Advanced.
+             </div>
+           </div>
+ 
+@@ -3007,20 +3080,39 @@
+         type="button"
+         id="mobileSlidesBtn"
+         class="ghost-btn panel-toggle-btn"
++        data-mobile-icon="☰"
+       >
+         Слайды
+       </button>
+-      <button type="button" id="mobilePreviewBtn" class="ghost-btn">
++      <button
++        type="button"
++        id="mobilePreviewBtn"
++        class="ghost-btn"
++        data-mobile-icon="👁"
++      >
+         Превью
+       </button>
+-      <button type="button" id="mobileEditBtn" class="ghost-btn">Правка</button>
+-      <button type="button" id="mobileInsertBtn" class="primary-btn">
++      <button
++        type="button"
++        id="mobileEditBtn"
++        class="ghost-btn"
++        data-mobile-icon="✎"
++      >
++        Правка
++      </button>
++      <button
++        type="button"
++        id="mobileInsertBtn"
++        class="primary-btn"
++        data-mobile-icon="＋"
++      >
+         Вставить
+       </button>
+       <button
+         type="button"
+         id="mobileInspectorBtn"
+         class="ghost-btn panel-toggle-btn"
++        data-mobile-icon="⚙"
+       >
+         Свойства
+       </button>
+@@ -3608,6 +3700,9 @@
+         unresolvedPreviewAssets: [],
+         lastExportValidationUrl: null,
+         slideTemplateBarOpen: false,
++        shellMetricsRaf: 0,
++        shellPopoverRaf: 0,
++        shellChromeObserver: null,
+         leftPanelOpen: false,
+         rightPanelOpen: false,
+       };
+@@ -3618,6 +3713,7 @@
+       // по всему коду и держать JS проще для поддержки.
+       // ====================================================================
+       const els = {
++        topbar: document.getElementById("topbar"),
+         openHtmlBtn: document.getElementById("openHtmlBtn"),
+         showSlideHtmlBtn: document.getElementById("showSlideHtmlBtn"),
+         exportBtn: document.getElementById("exportBtn"),
+@@ -3695,6 +3791,7 @@
+         selectedSlideBadge: document.getElementById("selectedSlideBadge"),
+         selectedKindBadge: document.getElementById("selectedKindBadge"),
+         currentSlideMetaBadge: document.getElementById("currentSlideMetaBadge"),
++        slideTitleOverrideInput: document.getElementById("slideTitleOverrideInput"),
+         slideBgColorInput: document.getElementById("slideBgColorInput"),
+         slidePaddingPresetSelect: document.getElementById(
+           "slidePaddingPresetSelect",
+@@ -3940,6 +4037,9 @@
+           rotateSelectedImage(90),
+         );
+         els.flipImageBtn.addEventListener("click", flipSelectedImage);
++        els.slideTitleOverrideInput?.addEventListener("change", () =>
++          applyCurrentSlideTitleOverride(els.slideTitleOverrideInput.value),
++        );
+         els.slideBgColorInput?.addEventListener("change", () =>
+           applyCurrentSlideBackground(els.slideBgColorInput.value),
+         );
+@@ -4240,6 +4340,8 @@
+ 
+         window.addEventListener("resize", () => {
+           applyShellPanelState();
++          scheduleShellChromeMetrics();
++          scheduleShellPopoverLayout();
+           positionFloatingToolbar();
+           renderSelectionOverlay();
+           if (
+@@ -4251,6 +4353,7 @@
+         });
+         window.addEventListener("scroll", positionFloatingToolbar, true);
+         window.addEventListener("scroll", renderSelectionOverlay, true);
++        window.addEventListener("scroll", scheduleShellPopoverLayout, true);
+       }
+ 
+       // ====================================================================
+@@ -4683,6 +4786,7 @@
+             slides: STATE.slides.map((slide, index) => ({
+               id: slide.getAttribute(SLIDE_MARKER),
+               title: getSlideTitle(slide),
++              preset: slide.getAttribute('data-slide-preset') || '',
+               index,
+               exportable: Boolean(slide.getAttribute(SLIDE_MARKER) && !slide.getAttribute(SLIDE_MARKER).startsWith('runtime-')),
+             })),
+@@ -6062,9 +6166,15 @@
+           if (isActiveSlide) item.setAttribute("aria-current", "true");
+           const main = document.createElement("div");
+           main.className = "slide-item-main";
++          const presetLabel = getSlidePresetLabel(slide.preset || "");
+           main.innerHTML = `
+           <div class="slide-number">Слайд ${index + 1}</div>
+           <div class="slide-title">${escapeHtml(slide.title || "Пустой слайд")}</div>
++          ${
++            presetLabel
++              ? `<div class="slide-meta-row"><span class="slide-tag">${escapeHtml(presetLabel)}</span></div>`
++              : ""
++          }
+         `;
+           const actions = document.createElement("div");
+           actions.className = "slide-actions";
+@@ -6118,6 +6228,40 @@
+         );
+       }
+ 
++      function getSlidePresetLabel(preset) {
++        switch (String(preset || "").trim()) {
++          case "title":
++            return "Title";
++          case "section":
++            return "Section";
++          case "bullets":
++            return "Bullets";
++          case "media":
++            return "Media";
++          case "two-column":
++            return "2 колонки";
++          default:
++            return "";
++        }
++      }
++
++      function getSlideTitleOverride(slide) {
++        return String(slide?.getAttribute("data-slide-title") || "").trim();
++      }
++
++      function getSlidePaddingPreset(slide) {
++        const stored = String(
++          slide?.getAttribute("data-slide-padding-preset") || "",
++        ).trim();
++        if (stored) return stored;
++        const padding = String(slide?.style?.padding || "").trim();
++        if (padding === "0px") return "none";
++        if (padding === "24px") return "compact";
++        if (padding === "48px") return "default";
++        if (padding === "72px") return "spacious";
++        return "";
++      }
++
+       function moveSlide(index, direction) {
+         if (!state.modelDoc) return;
+         const targetIndex = index + direction;
+@@ -6695,6 +6839,11 @@
+         lines.push(`editingSupported=${state.editingSupported}`);
+         lines.push(`history=${state.historyIndex + 1}/${state.history.length}`);
+         lines.push(`unresolvedAssets=${state.unresolvedPreviewAssets?.length || 0}`);
++        if ((state.unresolvedPreviewAssets?.length || 0) > 0) {
++          lines.push(
++            `unresolvedSample=${state.unresolvedPreviewAssets.slice(0, 3).join(", ")}`,
++          );
++        }
+         lines.push(`syncSeq=${state.lastAppliedSeq}`);
+         lines.push(`syncLocks=${lockCount}`);
+         if (state.diagnostics.length) {
+@@ -6952,6 +7101,171 @@
+         window.setTimeout(removeToast, ttl);
+       }
+ 
++      function closeTransientShellUi(options = {}) {
++        const keep = new Set(
++          Array.isArray(options.keep)
++            ? options.keep.filter(Boolean)
++            : options.keep
++              ? [options.keep]
++              : [],
++        );
++        if (!keep.has("context-menu")) closeContextMenu();
++        if (!keep.has("insert-palette") && isInsertPaletteOpen()) {
++          closeInsertPalette();
++        }
++        if (!keep.has("slide-template") && isSlideTemplateBarOpen()) {
++          closeSlideTemplateBar();
++        }
++      }
++
++      function readShellMetricVar(name, fallback = 0) {
++        const value = parseFloat(
++          getComputedStyle(document.documentElement).getPropertyValue(name),
++        );
++        return Number.isFinite(value) ? value : fallback;
++      }
++
++      function getShellViewportInsets() {
++        return {
++          top: readShellMetricVar("--topbar-h", 64) + 8,
++          right: 8,
++          bottom: (isCompactShell()
++            ? readShellMetricVar("--mobile-rail-h", 0)
++            : 0) + 8,
++          left: 8,
++        };
++      }
++
++      function syncShellViewportLock() {
++        const shouldLock =
++          isCompactShell() && (state.leftPanelOpen || state.rightPanelOpen);
++        document.body.dataset.shellLocked = shouldLock ? "true" : "false";
++      }
++
++      function syncShellChromeMetrics() {
++        const topbarHeight = Math.max(
++          64,
++          Math.ceil(els.topbar?.offsetHeight || 64),
++        );
++        const railVisible = Boolean(
++          els.mobileCommandRail &&
++            getComputedStyle(els.mobileCommandRail).display !== "none",
++        );
++        const railHeight = railVisible
++          ? Math.ceil(els.mobileCommandRail.offsetHeight || 0)
++          : 0;
++        document.documentElement.style.setProperty(
++          "--topbar-h",
++          `${topbarHeight}px`,
++        );
++        document.documentElement.style.setProperty(
++          "--mobile-rail-h",
++          `${railHeight}px`,
++        );
++        syncShellViewportLock();
++        scheduleShellPopoverLayout();
++      }
++
++      function scheduleShellChromeMetrics() {
++        if (state.shellMetricsRaf) return;
++        state.shellMetricsRaf = requestAnimationFrame(() => {
++          state.shellMetricsRaf = 0;
++          syncShellChromeMetrics();
++        });
++      }
++
++      function positionAnchoredPopover(popoverEl, triggerEl, options = {}) {
++        if (!popoverEl || !triggerEl) return;
++        const triggerRect = triggerEl.getBoundingClientRect();
++        if (!triggerRect.width && !triggerRect.height) {
++          popoverEl.style.left = "-9999px";
++          popoverEl.style.top = "-9999px";
++          return;
++        }
++        const gap = Number(options.gap || 8);
++        const align = options.align === "start" ? "start" : "end";
++        const insets = getShellViewportInsets();
++        popoverEl.style.left = "0px";
++        popoverEl.style.top = "0px";
++        popoverEl.style.visibility = "hidden";
++        const width =
++          popoverEl.offsetWidth || Number(options.fallbackWidth || 320);
++        const height =
++          popoverEl.offsetHeight || Number(options.fallbackHeight || 220);
++        let x =
++          align === "start" ? triggerRect.left : triggerRect.right - width;
++        const fitsBelow =
++          triggerRect.bottom + gap + height <= window.innerHeight - insets.bottom;
++        const fitsAbove =
++          triggerRect.top - gap - height >= insets.top;
++        let y = fitsBelow
++          ? triggerRect.bottom + gap
++          : fitsAbove
++            ? triggerRect.top - height - gap
++            : Math.max(
++                insets.top,
++                Math.min(
++                  triggerRect.bottom + gap,
++                  window.innerHeight - insets.bottom - height,
++                ),
++              );
++        x = Math.max(
++          insets.left,
++          Math.min(window.innerWidth - insets.right - width, x),
++        );
++        y = Math.max(
++          insets.top,
++          Math.min(window.innerHeight - insets.bottom - height, y),
++        );
++        popoverEl.style.left = `${Math.round(x)}px`;
++        popoverEl.style.top = `${Math.round(y)}px`;
++        popoverEl.style.visibility = "";
++      }
++
++      function syncShellPopoverLayout() {
++        if (isInsertPaletteOpen()) {
++          positionAnchoredPopover(els.quickPalette, els.toggleInsertPaletteBtn, {
++            align: "end",
++            fallbackWidth: 420,
++          });
++        }
++        if (isSlideTemplateBarOpen()) {
++          positionAnchoredPopover(
++            els.slideTemplateBar,
++            els.toggleSlideTemplateBarBtn,
++            {
++              align: "end",
++              fallbackWidth: 360,
++            },
++          );
++        }
++      }
++
++      function scheduleShellPopoverLayout() {
++        if (state.shellPopoverRaf) return;
++        state.shellPopoverRaf = requestAnimationFrame(() => {
++          state.shellPopoverRaf = 0;
++          syncShellPopoverLayout();
++        });
++      }
++
++      function bindShellChromeMetrics() {
++        if (window.ResizeObserver) {
++          state.shellChromeObserver?.disconnect?.();
++          state.shellChromeObserver = new ResizeObserver(() => {
++            scheduleShellChromeMetrics();
++          });
++          [els.topbar, els.mobileCommandRail].forEach((el) => {
++            if (el) state.shellChromeObserver.observe(el);
++          });
++        }
++        window.addEventListener("orientationchange", scheduleShellChromeMetrics);
++        window.addEventListener("load", scheduleShellChromeMetrics, {
++          once: true,
++        });
++        scheduleShellChromeMetrics();
++      }
++
+       /* ======================================================================
+        [SCRIPT 05] floating toolbar + context menu + insert palette
+        ====================================================================== */
+@@ -7199,6 +7513,7 @@
+ 
+       function openContextMenuForCurrentSelection(clientX, clientY) {
+         if (!state.selectedNodeId) return;
++        closeTransientShellUi({ keep: "context-menu" });
+         const payload = {
+           nodeId: state.selectedNodeId,
+           slideId: state.activeSlideId,
+@@ -8831,12 +9146,23 @@
+         const slideIndex = state.slides.findIndex(
+           (slide) => slide.id === state.activeSlideId,
+         );
++        const currentSlideMeta =
++          slideIndex >= 0
++            ? state.slides.find((slide) => slide.id === state.activeSlideId) || null
++            : null;
++        const presetLabel = getSlidePresetLabel(
++          currentSlideMeta?.preset || currentSlide?.getAttribute("data-slide-preset") || "",
++        );
+         if (els.currentSlideMetaBadge) {
+           els.currentSlideMetaBadge.textContent =
+             slideIndex >= 0
+-              ? `слайд ${slideIndex + 1} / ${state.slides.length}`
++              ? `слайд ${slideIndex + 1} / ${state.slides.length}${presetLabel ? ` • ${presetLabel}` : ""}`
+               : "слайд: —";
+         }
++        if (els.slideTitleOverrideInput) {
++          els.slideTitleOverrideInput.value = getSlideTitleOverride(currentSlide);
++          els.slideTitleOverrideInput.disabled = !canEditSlides || !currentSlide;
++        }
+         if (els.slideBgColorInput) {
+           const rawColor =
+             currentSlide?.style?.backgroundColor ||
+@@ -8846,13 +9172,7 @@
+           els.slideBgColorInput.disabled = !canEditSlides || !currentSlide;
+         }
+         if (els.slidePaddingPresetSelect) {
+-          const padding = (currentSlide?.style?.padding || "").trim();
+-          let preset = "";
+-          if (padding === "0px") preset = "none";
+-          else if (padding === "24px") preset = "compact";
+-          else if (padding === "48px") preset = "default";
+-          else if (padding === "72px") preset = "spacious";
+-          els.slidePaddingPresetSelect.value = preset;
++          els.slidePaddingPresetSelect.value = getSlidePaddingPreset(currentSlide);
+           els.slidePaddingPresetSelect.disabled = !canEditSlides || !currentSlide;
+         }
+         if (els.duplicateCurrentSlideBtn) {
+@@ -9316,8 +9636,9 @@
+           ? "Скрыть меню вставки"
+           : "Открыть меню вставки";
+         if (active) {
+-          closeSlideTemplateBar();
++          closeTransientShellUi({ keep: "insert-palette" });
+           setInteractionMode("insert");
++          scheduleShellPopoverLayout();
+         } else syncInteractionModeFromState();
+         const buttons = getPaletteActionButtons();
+         applyRovingTabindex(buttons, active ? 0 : -1);
+@@ -9531,6 +9852,7 @@
+ 
+       function openContextMenuFromBridge(payload) {
+         if (state.mode !== "edit") return;
++        closeTransientShellUi({ keep: "context-menu" });
+         state.contextMenuNodeId = payload.nodeId || state.selectedNodeId;
+         state.contextMenuPayload = {
+           ...payload,
+@@ -9545,7 +9867,6 @@
+         els.contextMenu.style.top = `${pos.y}px`;
+         els.contextMenu.classList.add("is-open");
+         els.contextMenu.setAttribute("aria-hidden", "false");
+-        closeInsertPalette();
+         window.requestAnimationFrame(() => focusContextMenuButton(0));
+       }
+ 
+@@ -9584,6 +9905,7 @@
+         bindSelectionOverlayInteractions();
+         bindModals();
+         bindShellLayout();
++        bindShellChromeMetrics();
+         bindSlideTemplateActions();
+         bindMessages();
+         bindRuntimeGuards();
+@@ -9940,6 +10262,7 @@
+         const rightOpen = compact && state.rightPanelOpen;
+         document.body.dataset.leftPanelOpen = leftOpen ? "true" : "false";
+         document.body.dataset.rightPanelOpen = rightOpen ? "true" : "false";
++        syncShellViewportLock();
+         if (els.panelBackdrop) {
+           const showBackdrop = leftOpen || rightOpen;
+           els.panelBackdrop.hidden = !showBackdrop;
+@@ -9967,6 +10290,7 @@
+       }
+ 
+       function setShellPanelState(side, open) {
++        closeTransientShellUi();
+         if (side === "left") state.leftPanelOpen = Boolean(open);
+         if (side === "right") state.rightPanelOpen = Boolean(open);
+         if (side === "left" && open) state.rightPanelOpen = false;
+@@ -9979,8 +10303,7 @@
+       }
+ 
+       function toggleShellPanel(side) {
+-        closeContextMenu();
+-        closeInsertPalette();
++        closeTransientShellUi();
+         if (side === "left") setShellPanelState("left", !state.leftPanelOpen);
+         if (side === "right")
+           setShellPanelState("right", !state.rightPanelOpen);
+@@ -10017,8 +10340,8 @@
+         const items = getSlideTemplateButtons();
+         applyRovingTabindex(items, active ? 0 : -1);
+         if (active) {
+-          closeInsertPalette();
+-          closeContextMenu();
++          closeTransientShellUi({ keep: "slide-template" });
++          scheduleShellPopoverLayout();
+           if (options.focusFirst !== false) {
+             window.requestAnimationFrame(() => items[0]?.focus({ preventScroll: true }));
+           }
+@@ -10287,6 +10610,7 @@
+         slide.removeAttribute("id");
+         slide.removeAttribute("style");
+         slide.setAttribute("data-editor-slide-id", getNextSlideId());
++        slide.setAttribute("data-slide-preset", kind);
+         slide.innerHTML = getSlideTemplateInnerHtml(kind);
+         ensureUniqueDomIdsInModel(slide);
+         assignEditorNodeIdsInModel(slide);
+@@ -10388,6 +10712,15 @@
+         if (!sent) rebuildPreviewKeepingContext(slideId);
+       }
+ 
++      function applyCurrentSlideTitleOverride(value) {
++        const slide = getCurrentSlideModelNode();
++        if (!slide) return;
++        const title = String(value || "").trim();
++        if (title) slide.setAttribute("data-slide-title", title);
++        else slide.removeAttribute("data-slide-title");
++        replaceCurrentSlideInPreview("slide-title");
++      }
++
+       function applyCurrentSlideBackground(value) {
+         const slide = getCurrentSlideModelNode();
+         if (!slide) return;
+@@ -10413,7 +10746,10 @@
+       function applyCurrentSlidePaddingPreset(preset) {
+         const slide = getCurrentSlideModelNode();
+         if (!slide) return;
+-        slide.style.padding = getSlidePaddingPresetValue(preset);
++        const nextValue = getSlidePaddingPresetValue(preset);
++        if (preset) slide.setAttribute("data-slide-padding-preset", preset);
++        else slide.removeAttribute("data-slide-padding-preset");
++        slide.style.padding = nextValue;
+         replaceCurrentSlideInPreview("slide-padding");
+       }
+ 
+@@ -10431,14 +10767,16 @@
+       }
+ 
+       function normalizeAssetPath(path) {
+-        let normalized = String(path || "")
++        let normalized = String(path || "").trim();
++        try {
++          normalized = decodeURIComponent(normalized);
++        } catch (error) {}
++        normalized = normalized
++          .replace(/[#?].*$/, "")
+           .replace(/\\/g, "/")
+           .replace(/^\.\//, "")
+           .replace(/^\/+/, "")
+           .trim();
+-        try {
+-          normalized = decodeURIComponent(normalized);
+-        } catch (error) {}
+         return normalized;
+       }
+ 
+@@ -10605,17 +10943,27 @@
+         if (state.modelDoc) rebuildPreviewKeepingContext(state.activeSlideId);
+       }
+ 
++      function formatUnresolvedAssetsInline(limit = 3) {
++        const items = Array.from(state.unresolvedPreviewAssets || []).slice(
++          0,
++          limit,
++        );
++        if (!items.length) return "";
++        return items.map((item) => escapeHtml(item)).join(", ");
++      }
++
+       function updateAssetDirectoryStatus() {
+         if (!els.assetDirectoryStatus) return;
+         const unresolvedCount = state.unresolvedPreviewAssets?.length || 0;
++        const unresolvedPreview = formatUnresolvedAssetsInline();
+         if (!state.assetFileCount) {
+           els.assetDirectoryStatus.innerHTML = unresolvedCount
+-            ? `Папка ресурсов не выбрана. <span class="small-note">Неразрешённых относительных ссылок: ${unresolvedCount}.</span>`
++            ? `Папка ресурсов не выбрана. <span class="small-note">Неразрешённых относительных ссылок: ${unresolvedCount}${unresolvedPreview ? ` — ${unresolvedPreview}` : ""}.</span>`
+             : "Папка ресурсов не выбрана.";
+           return;
+         }
+         els.assetDirectoryStatus.innerHTML = unresolvedCount
+-          ? `<strong>${escapeHtml(state.assetResolverLabel || "Ресурсы подключены")}</strong><span class="small-note">Preview использует найденные относительные файлы, но ещё осталось ссылок без резолва: ${unresolvedCount}.</span>`
++          ? `<strong>${escapeHtml(state.assetResolverLabel || "Ресурсы подключены")}</strong><span class="small-note">Preview использует найденные относительные файлы, но ещё осталось ссылок без резолва: ${unresolvedCount}${unresolvedPreview ? ` — ${unresolvedPreview}` : ""}.</span>`
+           : `<strong>${escapeHtml(state.assetResolverLabel || "Ресурсы подключены")}</strong><span class="small-note">Preview использует найденные относительные файлы.</span>`;
+       }
+ 
+@@ -10653,12 +11001,12 @@
+       function extractRelativeUrlsFromCssText(cssText) {
+         const urls = [];
+         String(cssText || "")
+-          .replace(/url\((['"]?)([^'"\)]+)\)/gi, (full, quote, rawUrl) => {
++          .replace(/url\((['"]?)([^'"\)]+)\1\)/gi, (full, quote, rawUrl) => {
+             if (!isExternalLikeUrl(rawUrl)) urls.push(rawUrl);
+             return full;
+           })
+           .replace(
+-            /@import\s+(?:url\()?\s*(['"]?)([^'"\)\s]+)\s*\)?/gi,
++            /@import\s+(?:url\()?\s*(['"]?)([^'"\)\s]+)\1\s*\)?/gi,
+             (full, quote, rawUrl) => {
+               if (!isExternalLikeUrl(rawUrl)) urls.push(rawUrl);
+               return full;
+@@ -11015,6 +11363,8 @@
+ 
+         updateDiagnostics();
+         applyShellPanelState();
++        scheduleShellChromeMetrics();
++        scheduleShellPopoverLayout();
+         positionFloatingToolbar();
+         renderSelectionOverlay();
+       }

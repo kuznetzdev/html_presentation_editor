@@ -1,0 +1,42 @@
+According to a document from 2026-03-27, текущая hardened-сборка уже стоит на правильном фундаменте: live `iframe`‑preview, `bridge`/`modelDoc`, правки в живом DOM и чистый HTML‑export. Но честно считать, что темы, адаптив, insertion UX и HTML↔PPTX уже доведены до продуктовой планки, пока нельзя. В текущем файле палитра вставки всё ещё живёт как постоянный overlay внутри `preview-stage`, тёмная тема в основном реализована через токены, а responsive-shell опирается в основном на несколько viewport breakpoints; экспорт, который сейчас явно surfaced в UI, — HTML, а не PPTX. fileciteturn7file0 fileciteturn7file1 fileciteturn8file10 fileciteturn8file13 fileciteturn8file14 fileciteturn9file15
+
+Значит архитектуру ломать не надо. Надо сохранять именно тот контур, который уже зафиксирован как source of truth: правдивое превью, `iframe + bridge + modelDoc`, служебный UI снаружи контента, recoverability через history/autosave и чистый export. Это важно ещё и потому, что твои главные техриски уже известны: гонки `parent ↔ iframe`, рассинхрон `modelDoc`, чувствительность к чужому CSS/layout и конфликт с презентационными скриптами. fileciteturn9file1 fileciteturn9file11 fileciteturn9file13
+
+Что я считаю правильным следующим ходом.
+
+## 1. Довести shell до уровня “Apple‑clean, but discoverable”
+Палитру вставки надо убрать из постоянного слоя над холстом и заменить на `+ Добавить` как нормальный **menu button**: Enter/Space/Arrow открывают меню, фокус уходит в первый пункт, Escape закрывает, а команды в меню короткие, группированные и завязанные на текущий контекст. Это совпадает и с APG/WAI для menu button, и с Apple/NNG-подходом: меню должно открываться по запросу, быть коротким, ясно подписанным и не захламлять интерфейс. В твоих же проектных заметках это уже обозначено как high-priority UX-задача. fileciteturn9file14 fileciteturn8file10 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+## 2. Тему и адаптив надо сделать системными, а не косметическими
+Для light/dark сейчас у тебя есть хороший старт в виде token-layer, но до production-уровня не хватает `color-scheme` на `:root`/`meta`, учёта `prefers-color-scheme`, контрастного аудита текста и UI-state, а также поддержки `prefers-reduced-motion`. Для responsive недостаточно одних breakpoint’ов: shell должен использовать и `@media`, и `@container`, чтобы отдельно ужимать inspector, floating toolbar, меню вставки и панели, а не только перестраивать всю сетку целиком. Для продукта такого класса я бы ставил жёсткий target: usable от 320 px до ultrawide без постоянного перекрытия canvas. fileciteturn8file13 fileciteturn8file14 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+## 3. Полноценное превью = не только iframe, но и нормальный asset pipeline
+Сейчас база с live iframe правильная, но для “полноценного превью” надо закрыть ещё один слой: относительные ресурсы. То есть загрузка должна уметь работать не только с одиночным HTML, но и с HTML + папкой ассетов, строить `relativePath -> BlobURL` map для превью и, когда приложение запущено в secure context, поддерживать File System API / directory handles. Сам bridge надо держать на `postMessage`, а входящие сообщения матчить по `event.source === iframe.contentWindow`; политика `sandbox` тоже должна быть осознанной, потому что у `iframe` жёсткие security-ограничения и их нельзя конфигурировать “на глаз”. fileciteturn9file16 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+## 4. Видео и GIF надо сделать first-class media model
+В текущем UI уже есть slot под вставку видео, но медиа-слой надо формализовать как отдельные типы: `image/gif`, `local video`, `online video`. Для HTML-native стороны это означает три режима: картинка/GIF, локальное видео (`mp4`, `webm`, `mov`) и web-embed (YouTube/Vimeo). Для PPTX стороны лучше сразу принять platform caveats: Microsoft рекомендует видео в `.mp4` с H.264/AAC; онлайн-видео в PowerPoint играют с сайта и требуют интернет; GIF можно вставлять как изображение, но PowerPoint for the web прямо пишет, что animated GIF в slide show не воспроизводит. Поэтому GIF в PPTX надо считать best-effort, а для критичной анимации иметь video fallback. PptxGenJS умеет добавлять картинки, GIF, видео и online video, так что этот слой можно собрать и в браузере. fileciteturn8file10 ([support.microsoft.com](https://support.microsoft.com/en-us/office/video-and-audio-file-formats-supported-in-powerpoint-d8b12450-26db-4c7b-a5c1-593d3418fb59))
+
+## 5. HTML↔PPTX надо строить не прямым конвертером, а через canonical scene model
+Самое важное: **не надо делать direct HTML↔PPTX главным контрактом**. По совокупности официальных ограничений это будет хрупко. У PptxGenJS HTML-to-PowerPoint официально покрывает воспроизведение HTML-таблиц, а не произвольного HTML-документа; html2pptx‑подход в целом не является полным HTML-renderer. Зато PptxGenJS в браузере даёт нормальную генерацию **редактируемых** текстовых блоков, shapes, images и media, а PPTXjs умеет браузерный best-effort import `.pptx` в HTML-представление с текстом, shape-ами, media и таблицами. Из этого эффективный путь только один: вводим свой `ProjectDocument` / scene graph и уже к нему пишем адаптеры `HTML import/export` и `PPTX import/export`. Это и даст максимально возможную совместимость “в обе стороны” без архитектурного самообмана. ([gitbrent.github.io](https://gitbrent.github.io/PptxGenJS/docs/html-to-powerpoint.html))
+
+## 6. Как это разбить эффективно
+Я бы вёл проект в пять фаз:
+1. **Shell hardening**: скрытое insert-меню, theme system, contrast/focus audit, container-query responsive shell, asset resolver, export validation. fileciteturn9file1 fileciteturn9file14
+2. **Media model**: image/GIF/video как отдельные node types, local file flow, embed flow, poster/fallback, alt/cover/fit/fill presets. ([support.microsoft.com](https://support.microsoft.com/en-us/office/video-and-audio-file-formats-supported-in-powerpoint-d8b12450-26db-4c7b-a5c1-593d3418fb59))
+3. **PPTX export v1**: браузерный PptxGenJS, генерация editable text/images/shapes/tables/media; тяжёлую генерацию лучше вынести в Web Worker, чтобы shell не фризился. ([gitbrent.github.io](https://gitbrent.github.io/PptxGenJS/docs/integration.html))
+4. **PPTX import v1**: PPTXjs как ingest-layer → нормализация в `ProjectDocument` → рендер в editor canvas. ([github.com](https://github.com/meshesha/PPTXjs/blob/master/README.md))
+5. **Round-trip contract**: что реально editable в обе стороны, а что уходит в graceful fallback. Например: text/image/basic shape/table — editable; arbitrary HTML widgets/JS — HTML-native only, а для PPTX через snapshot/block fallback. Это уже вывод из ограничений библиотек и платформ. ([gitbrent.github.io](https://gitbrent.github.io/PptxGenJS/docs/html-to-powerpoint.html))
+
+## 7. Критерий “это уже серьёзный продукт”
+Я бы считал следующую веху принятой только когда:
+- insert-menu по умолчанию скрыт и никогда не живёт постоянным слоем над слайдом;
+- light/dark проходят contrast audit для текста, focus, selection и controls;
+- shell стабилен на 320 / 640 / 820 / 1100 / 1280 / 1440+;
+- preview остаётся правдивым и не ломается от относительных ассетов;
+- undo/redo/autosave реально спасают от ошибок;
+- HTML export чистый;
+- PPTX export даёт редактируемые text/image/shape/table для core node types, а unsupported контент деградирует мягко, а не рушит файл. fileciteturn9file9 fileciteturn9file13 ([w3.org](https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum.html))
+
+Отдельно оформил это как рабочий документ: [ROADMAP_HTML_PPTX_EDITOR_2026-03-27.md](sandbox:/mnt/data/ROADMAP_HTML_PPTX_EDITOR_2026-03-27.md)
+
+Следующий инженерный проход должен идти уже не вширь, а по этому порядку: **insert UX → theme/responsive system → asset resolver → media model → PPTX export/import adapters**.

@@ -1,0 +1,352 @@
+--- /mnt/data/presentation-editor-ux-slide-pass-v9.html	2026-03-30 19:47:46.674524320 +0000
++++ /mnt/data/presentation-editor-ux-slide-pass-v10.html	2026-03-30 20:04:48.025275695 +0000
+@@ -3450,6 +3450,21 @@
+         "resize",
+         "insert",
+       ]);
++      const STATIC_SLIDE_ORDER_ATTRS = [
++        "data-slide",
++        "data-slide-index",
++        "data-seq",
++        "data-index",
++      ];
++      const TRANSIENT_SLIDE_RUNTIME_ATTRS = [
++        "data-slide",
++        "data-slide-index",
++        "data-seq",
++        "data-index",
++        "data-index-h",
++        "data-index-v",
++        "data-index-f",
++      ];
+ 
+       function createDefaultSelectionPolicy(flags = {}) {
+         const policy = {
+@@ -4742,6 +4757,8 @@
+ 
+         function getSlideTitle(slide) {
+           if (!slide) return 'Слайд';
++          const slideTitleOverride = String(slide.getAttribute('data-slide-title') || '').trim();
++          if (slideTitleOverride) return slideTitleOverride;
+           const heading = slide.querySelector('h1, h2, h3, .slide-title, [data-slide-title]');
+           if (heading && heading.textContent.trim()) return heading.textContent.trim();
+           const text = slide.textContent.replace(/\s+/g, ' ').trim();
+@@ -4778,6 +4795,59 @@
+           return current ? current.getAttribute(SLIDE_MARKER) : null;
+         }
+ 
++        function detectGenericSlideActivationProfile() {
++          const slides = STATE.slides || [];
++          return {
++            usesActiveClass: slides.some((slide) => slide.classList.contains('active')),
++            usesCurrentClass: slides.some((slide) => slide.classList.contains('current')),
++            usesPresentClass: slides.some((slide) => slide.classList.contains('present')),
++            usesPastClass: slides.some((slide) => slide.classList.contains('past')),
++            usesFutureClass: slides.some((slide) => slide.classList.contains('future')),
++            usesNextClass: slides.some((slide) => slide.classList.contains('next')),
++            usesPreviousClass: slides.some((slide) => slide.classList.contains('previous')),
++            usesAriaCurrent: slides.some((slide) => slide.hasAttribute('aria-current')),
++            usesHiddenAttr: slides.some((slide) => slide.hasAttribute('hidden')),
++            usesAriaHidden: slides.some((slide) => slide.hasAttribute('aria-hidden')),
++          };
++        }
++
++        function applyGenericSlideActivation(target, targetIndex) {
++          const slides = STATE.slides || [];
++          if (!target || !slides.length) return false;
++          const profile = detectGenericSlideActivationProfile();
++          const hasKnownActivation =
++            profile.usesActiveClass ||
++            profile.usesCurrentClass ||
++            profile.usesPresentClass ||
++            profile.usesPastClass ||
++            profile.usesFutureClass ||
++            profile.usesNextClass ||
++            profile.usesPreviousClass ||
++            profile.usesAriaCurrent ||
++            profile.usesHiddenAttr ||
++            profile.usesAriaHidden;
++          if (!hasKnownActivation) return false;
++          slides.forEach((slide, index) => {
++            const isTarget = slide === target;
++            if (profile.usesActiveClass) slide.classList.toggle('active', isTarget);
++            if (profile.usesCurrentClass) slide.classList.toggle('current', isTarget);
++            if (profile.usesPresentClass) slide.classList.toggle('present', isTarget);
++            if (profile.usesPastClass) slide.classList.toggle('past', index < targetIndex);
++            if (profile.usesFutureClass) slide.classList.toggle('future', index > targetIndex);
++            if (profile.usesNextClass) slide.classList.toggle('next', index === targetIndex + 1);
++            if (profile.usesPreviousClass) slide.classList.toggle('previous', index === targetIndex - 1);
++            if (profile.usesAriaCurrent) {
++              if (isTarget) slide.setAttribute('aria-current', 'true');
++              else slide.removeAttribute('aria-current');
++            }
++            if (profile.usesHiddenAttr) slide.hidden = !isTarget;
++            if (profile.usesAriaHidden) slide.setAttribute('aria-hidden', isTarget ? 'false' : 'true');
++          });
++          target.scrollIntoView({ block: 'center', inline: 'center', behavior: 'auto' });
++          queueMetadataRefresh();
++          return true;
++        }
++
+         function emitRuntimeMetadata() {
+           STATE.slides = collectSlides();
+           post('runtime-metadata', {
+@@ -5217,32 +5287,53 @@
+         }
+ 
+         function navigateToSlide(slideId, fallbackIndex) {
+-          const target = findSlideById(slideId) || STATE.slides[fallbackIndex] || null;
++          STATE.slides = collectSlides();
++          const parsedFallbackIndex =
++            typeof fallbackIndex === 'number' && Number.isFinite(fallbackIndex)
++              ? fallbackIndex
++              : Number.parseInt(fallbackIndex, 10);
++          const target =
++            findSlideById(slideId) ||
++            (Number.isFinite(parsedFallbackIndex) ? STATE.slides[parsedFallbackIndex] : null) ||
++            null;
+           if (!target) return;
++          const targetIndex = STATE.slides.findIndex((slide) => slide === target);
+           if (STATE.engine === 'reveal' && window.Reveal && typeof window.Reveal.getIndices === 'function' && typeof window.Reveal.slide === 'function') {
+             const idx = window.Reveal.getIndices(target);
+             window.Reveal.slide(idx.h, idx.v, idx.f);
+             return;
+           }
+           if (typeof window.goToSlide === 'function') {
+-            const n = Number(target.getAttribute('data-slide')) || fallbackIndex + 1;
+-            window.goToSlide(n);
++            const nextIndex = targetIndex !== -1
++              ? targetIndex + 1
++              : Number(target.getAttribute('data-slide')) || 1;
++            window.goToSlide(nextIndex);
++            queueMetadataRefresh();
+             return;
+           }
+-          if (typeof window.changeSlide === 'function' && typeof fallbackIndex === 'number') {
++          if (typeof window.changeSlide === 'function' && targetIndex !== -1) {
+             const current = currentSlideId();
+             const currentIndex = STATE.slides.findIndex((slide) => slide.getAttribute(SLIDE_MARKER) === current);
+             if (currentIndex !== -1) {
+-              const delta = fallbackIndex - currentIndex;
+-              if (delta !== 0) window.changeSlide(delta > 0 ? 1 : -1);
+-              return;
++              const delta = targetIndex - currentIndex;
++              if (delta !== 0) {
++                for (let step = 0; step < Math.abs(delta); step += 1) {
++                  window.changeSlide(delta > 0 ? 1 : -1);
++                }
++                queueMetadataRefresh();
++                return;
++              }
+             }
++            if (applyGenericSlideActivation(target, targetIndex)) return;
+           }
+           if (STATE.engine === 'shower' && target.id) {
+             location.hash = '#' + target.id;
++            queueMetadataRefresh();
+             return;
+           }
++          if (applyGenericSlideActivation(target, targetIndex)) return;
+           target.scrollIntoView({ block: 'center', inline: 'center', behavior: 'auto' });
++          queueMetadataRefresh();
+         }
+ 
+         
+@@ -5903,8 +5994,12 @@
+         state.engine = payload.engine || "unknown";
+         state.slides = Array.isArray(payload.slides) ? payload.slides : [];
+         const requested = state.pendingActiveSlideId;
+-        state.activeSlideId =
+-          payload.activeSlideId || requested || state.slides[0]?.id || null;
++        const hasRequestedSlide = Boolean(
++          requested && state.slides.some((slide) => slide.id === requested),
++        );
++        state.activeSlideId = hasRequestedSlide
++          ? requested
++          : payload.activeSlideId || state.activeSlideId || state.slides[0]?.id || null;
+         state.editingSupported = Boolean(
+           payload.editingSupported &&
+           state.modelDoc?.querySelector("[data-editor-node-id]"),
+@@ -5914,13 +6009,14 @@
+           state.activeSlideId = state.slides[0].id;
+         els.documentMeta.textContent = `${state.sourceLabel} • движок: ${state.engine}`;
+         renderSlidesList();
+-        if (requested && state.slides.some((slide) => slide.id === requested)) {
++        scrollActiveSlideListItemIntoView();
++        if (hasRequestedSlide && payload.activeSlideId !== requested) {
+           sendToBridge("navigate-to-slide", {
+             slideId: requested,
+-            index: state.slides.findIndex((slide) => slide.id === requested),
++            index: getSlideIndexById(requested),
+           });
+-          state.pendingActiveSlideId = null;
+         }
++        state.pendingActiveSlideId = null;
+         refreshUi();
+       }
+ 
+@@ -6136,13 +6232,82 @@
+         }
+       }
+ 
++      function getSlideIndexById(slideId) {
++        return state.slides.findIndex((slide) => slide.id === slideId);
++      }
++
++      function scrollActiveSlideListItemIntoView() {
++        const activeItem = els.slidesList?.querySelector(
++          ".slide-item.is-active",
++        );
++        if (!activeItem || typeof activeItem.scrollIntoView !== "function") return;
++        window.requestAnimationFrame(() => {
++          activeItem.scrollIntoView({ block: "nearest", inline: "nearest" });
++        });
++      }
++
++      function requestSlideActivation(slideId, options = {}) {
++        if (!slideId) return;
++        const slideIndex =
++          typeof options.index === "number" && Number.isFinite(options.index)
++            ? options.index
++            : getSlideIndexById(slideId);
++        state.activeSlideId = slideId;
++        state.pendingActiveSlideId = slideId;
++        if (options.closeTransientUi !== false) {
++          closeTransientShellUi({ keep: options.keepUi || "" });
++        }
++        const sent = sendToBridge("navigate-to-slide", {
++          slideId,
++          index: slideIndex >= 0 ? slideIndex : 0,
++        });
++        if (!sent) state.pendingActiveSlideId = null;
++        renderSlidesList();
++        refreshUi();
++        scrollActiveSlideListItemIntoView();
++      }
++
++      function readNumericSlideAttributeValue(slide, attrName) {
++        const rawValue = String(slide?.getAttribute(attrName) || "").trim();
++        if (!/^[-+]?\d+$/.test(rawValue)) return null;
++        return Number(rawValue);
++      }
++
++      function detectStaticSlideOrderBase(slides, attrName) {
++        const numericValues = slides
++          .map((slide) => readNumericSlideAttributeValue(slide, attrName))
++          .filter((value) => Number.isFinite(value));
++        if (numericValues.length < Math.max(2, slides.length - 1)) return null;
++        return numericValues.some((value) => value === 0) ? 0 : 1;
++      }
++
++      function stripInheritedSlideRuntimeAttrs(slide) {
++        if (!(slide instanceof Element)) return;
++        TRANSIENT_SLIDE_RUNTIME_ATTRS.forEach((attrName) =>
++          slide.removeAttribute(attrName),
++        );
++      }
++
++      function syncStaticSlideOrderingMetadata() {
++        const slides = getStaticSlideModelNodes();
++        if (!slides.length) return;
++        STATIC_SLIDE_ORDER_ATTRS.forEach((attrName) => {
++          const base = detectStaticSlideOrderBase(slides, attrName);
++          if (base === null) return;
++          slides.forEach((slide, index) => {
++            slide.setAttribute(attrName, String(index + base));
++          });
++        });
++      }
++
+       function renderSlidesList() {
+         els.slidesList.innerHTML = "";
+         const slides = state.slides;
++        const activeSlideIndex = getSlideIndexById(state.activeSlideId);
+         els.slidesCountLabel.textContent = `${slides.length} ${pluralizeSlides(slides.length)}`;
+         els.activeSlideLabel.textContent =
+-          slides.length && state.activeSlideId
+-            ? `Активный: слайд ${Math.max(1, slides.findIndex((slide) => slide.id === state.activeSlideId) + 1)} из ${slides.length}`
++          activeSlideIndex >= 0
++            ? `Активный: слайд ${activeSlideIndex + 1} из ${slides.length}`
+             : "Слайд не выбран";
+         if (!slides.length) {
+           const empty = document.createElement("div");
+@@ -6205,10 +6370,7 @@
+           actions.append(upBtn, downBtn);
+           item.append(main, actions);
+           item.addEventListener("click", () => {
+-            state.activeSlideId = slide.id;
+-            sendToBridge("navigate-to-slide", { slideId: slide.id, index });
+-            renderSlidesList();
+-            refreshUi();
++            requestSlideActivation(slide.id, { index });
+           });
+           item.addEventListener("keydown", (event) => {
+             if (event.key !== "Enter" && event.key !== " ") return;
+@@ -6217,6 +6379,7 @@
+           });
+           els.slidesList.appendChild(item);
+         });
++        scrollActiveSlideListItemIntoView();
+       }
+ 
+       function hasStaticSlide(slideId) {
+@@ -6278,6 +6441,7 @@
+         if (!currentEl || !targetEl) return;
+         if (direction < 0) targetEl.before(currentEl);
+         else targetEl.after(currentEl);
++        syncStaticSlideOrderingMetadata();
+         commitChange("slide-move");
+         rebuildPreviewKeepingContext(current.id);
+       }
+@@ -10607,8 +10771,12 @@
+         const slide = state.modelDoc.createElement(slideTag.toLowerCase());
+         if (templateSource) copyStructuralSlideAttributes(templateSource, slide);
+         stripRuntimeSlideState(slide);
++        stripInheritedSlideRuntimeAttrs(slide);
+         slide.removeAttribute("id");
+         slide.removeAttribute("style");
++        slide.removeAttribute("data-slide-title");
++        slide.removeAttribute("data-slide-padding-preset");
++        slide.removeAttribute("data-slide-preset");
+         slide.setAttribute("data-editor-slide-id", getNextSlideId());
+         slide.setAttribute("data-slide-preset", kind);
+         slide.innerHTML = getSlideTemplateInnerHtml(kind);
+@@ -10634,6 +10802,7 @@
+         if (!slide) return;
+         if (currentSlide) currentSlide.after(slide);
+         else parent.appendChild(slide);
++        syncStaticSlideOrderingMetadata();
+         commitChange(`slide-template:${kind}`);
+         state.activeSlideId = slide.getAttribute("data-editor-slide-id");
+         rebuildPreviewKeepingContext(state.activeSlideId);
+@@ -10648,11 +10817,14 @@
+         if (!currentSlide) return null;
+         const clone = currentSlide.cloneNode(true);
+         stripRuntimeSlideState(clone);
++        stripInheritedSlideRuntimeAttrs(clone);
+         clone.removeAttribute("data-editor-slide-id");
+         clone
+           .querySelectorAll("[data-editor-node-id]")
+           .forEach((node) => node.removeAttribute("data-editor-node-id"));
+         clone.setAttribute("data-editor-slide-id", getNextSlideId());
++        const titleOverride = getSlideTitleOverride(clone);
++        if (titleOverride) clone.setAttribute("data-slide-title", `${titleOverride} (копия)`);
+         ensureUniqueDomIdsInModel(clone, currentSlide);
+         assignEditorNodeIdsInModel(clone);
+         return clone;
+@@ -10664,6 +10836,7 @@
+         const clone = cloneCurrentSlideForDuplicate();
+         if (!currentSlide || !clone) return;
+         currentSlide.after(clone);
++        syncStaticSlideOrderingMetadata();
+         state.activeSlideId = clone.getAttribute("data-editor-slide-id");
+         commitChange("slide-duplicate");
+         rebuildPreviewKeepingContext(state.activeSlideId);
+@@ -10690,6 +10863,7 @@
+         const nextSlide =
+           slides[currentIndex + 1] || slides[currentIndex - 1] || null;
+         currentSlide.remove();
++        syncStaticSlideOrderingMetadata();
+         state.activeSlideId =
+           nextSlide?.getAttribute("data-editor-slide-id") || null;
+         clearSelectedElementState();

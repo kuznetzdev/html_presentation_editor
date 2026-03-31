@@ -1,0 +1,604 @@
+--- /mnt/data/presentation-editor-ux-slide-pass-v11.html	2026-03-30 21:41:54.507295112 +0000
++++ /mnt/data/presentation-editor-ux-slide-pass-v12.html	2026-03-30 22:05:02.676262200 +0000
+@@ -1300,6 +1300,23 @@
+         display: none;
+       }
+ 
++      .selection-frame.is-tiny .selection-handle[data-handle="n"],
++      .selection-frame.is-tiny .selection-handle[data-handle="s"],
++      .selection-frame.is-tiny .selection-handle[data-handle="e"],
++      .selection-frame.is-tiny .selection-handle[data-handle="w"] {
++        display: none;
++      }
++
++      .selection-frame.is-direct-manip-blocked {
++        border-style: dotted;
++        border-color: var(--shell-border-strong);
++        box-shadow: 0 0 0 1px var(--shell-border);
++      }
++
++      .selection-frame.is-direct-manip-blocked .selection-frame-label {
++        color: var(--shell-text-muted);
++      }
++
+       .selection-frame:focus-visible {
+         outline: none;
+         box-shadow:
+@@ -1316,7 +1333,8 @@
+         touch-action: none;
+       }
+ 
+-      .selection-frame.is-protected .selection-frame-hit-area {
++      .selection-frame.is-protected .selection-frame-hit-area,
++      .selection-frame.is-direct-manip-blocked .selection-frame-hit-area {
+         pointer-events: none;
+         cursor: default;
+       }
+@@ -1362,7 +1380,8 @@
+         touch-action: none;
+       }
+ 
+-      .selection-frame.is-protected .selection-handle {
++      .selection-frame.is-protected .selection-handle,
++      .selection-frame.is-direct-manip-blocked .selection-handle {
+         display: none;
+       }
+ 
+@@ -1491,6 +1510,37 @@
+         cursor: grabbing;
+       }
+ 
++      body[data-toolbar-layout="compact"] .floating-toolbar {
++        left: 8px !important;
++        right: 8px;
++        max-width: none;
++        width: auto;
++        padding: 6px;
++        gap: 4px;
++      }
++
++      body[data-toolbar-layout="compact"] .floating-toolbar-content {
++        width: 100%;
++        display: flex;
++        flex-wrap: nowrap;
++        overflow-x: auto;
++        overflow-y: hidden;
++        overscroll-behavior-x: contain;
++        scrollbar-gutter: stable both-edges;
++      }
++
++      body[data-toolbar-layout="compact"] .floating-toolbar-group {
++        flex: 0 0 auto;
++        gap: 4px;
++        padding-left: 4px;
++      }
++
++      body[data-toolbar-layout="compact"] .floating-toolbar .compact,
++      body[data-toolbar-layout="compact"] .floating-toolbar input,
++      body[data-toolbar-layout="compact"] .floating-toolbar select {
++        flex: 0 0 auto;
++      }
++
+       .context-menu {
+         position: fixed;
+         z-index: var(--z-context-menu);
+@@ -1515,6 +1565,21 @@
+         overflow: auto;
+       }
+ 
++      body[data-context-menu-layout="sheet"] .context-menu {
++        min-width: 0;
++        max-width: none;
++        left: var(--shell-popover-inset) !important;
++        right: var(--shell-popover-inset);
++        border-radius: 18px;
++      }
++
++      body[data-context-menu-layout="sheet"] .context-menu-inner {
++        max-height: min(
++          56vh,
++          calc(100dvh - var(--topbar-h) - var(--mobile-rail-h) - 40px)
++        );
++      }
++
+       .context-menu-section-title {
+         padding: 8px 12px 6px;
+         font-size: 11px;
+@@ -4436,7 +4501,7 @@
+             els.contextMenu.classList.contains("is-open") &&
+             state.contextMenuPayload
+           ) {
+-            openContextMenuFromBridge(state.contextMenuPayload);
++            reopenContextMenuFromState();
+           }
+         });
+         window.addEventListener("scroll", positionFloatingToolbar, true);
+@@ -5182,6 +5247,75 @@
+           return attrs;
+         }
+ 
++        function isTranslateOnlyTransformValue(value) {
++          const raw = String(value || '').trim();
++          if (!raw || raw === 'none') return true;
++          const functions = raw.match(/[a-zA-Z0-9]+\([^)]*\)/g);
++          if (!functions || !functions.length) return false;
++          return functions.every((fn) => /^translate(?:3d|x|y)?\(/i.test(fn.trim()));
++        }
++
++        function hasComplexTransformOnElement(el) {
++          return el instanceof Element && !isTranslateOnlyTransformValue(window.getComputedStyle(el).transform);
++        }
++
++        function hasTransformedAncestor(el, stopNode) {
++          let current = el?.parentElement || null;
++          while (current && current !== stopNode && current !== document.body && current !== document.documentElement) {
++            if (hasComplexTransformOnElement(current)) return true;
++            current = current.parentElement;
++          }
++          return false;
++        }
++
++        function hasNonDefaultZoomOnChain(el, stopNode) {
++          let current = el instanceof Element ? el : null;
++          while (current && current !== stopNode && current !== document.body && current !== document.documentElement) {
++            const zoom = String(window.getComputedStyle(current).zoom || '').trim();
++            if (zoom && zoom !== '1' && zoom !== 'normal') return true;
++            current = current.parentElement;
++          }
++          return false;
++        }
++
++        function getDirectManipulationSafety(el, slide) {
++          if (!(el instanceof Element)) {
++            return {
++              safe: false,
++              reason: 'Элемент больше недоступен для прямого редактирования.',
++            };
++          }
++          if (hasComplexTransformOnElement(el)) {
++            return {
++              safe: false,
++              reason:
++                'У элемента есть собственный transform. Direct manipulation пока отключён, чтобы не сломать layout; используй инспектор для точных значений.',
++            };
++          }
++          if (slide instanceof Element && hasComplexTransformOnElement(slide)) {
++            return {
++              safe: false,
++              reason:
++                'Корневой контейнер слайда использует transform. Direct manipulation пока отключён, чтобы не уехать относительно canvas; используй инспектор.',
++            };
++          }
++          if (hasTransformedAncestor(el, slide)) {
++            return {
++              safe: false,
++              reason:
++                'Элемент находится внутри transformed-контейнера. Direct manipulation пока отключён, чтобы не уехать относительно canvas; используй инспектор.',
++            };
++          }
++          if (hasNonDefaultZoomOnChain(el, slide) || (slide instanceof Element && hasNonDefaultZoomOnChain(slide, null))) {
++            return {
++              safe: false,
++              reason:
++                'В этой зоне используется zoom. Direct manipulation пока отключён, чтобы не дать неверные координаты; используй инспектор.',
++            };
++          }
++          return { safe: true, reason: '' };
++        }
++
+         function collectComputed(el) {
+           const style = window.getComputedStyle(el);
+           return {
+@@ -5204,6 +5338,8 @@
+             zIndex: style.zIndex,
+             margin: style.margin,
+             padding: style.padding,
++            transform: style.transform,
++            translate: style.translate,
+             inlineStyle: el.getAttribute('style') || '',
+           };
+         }
+@@ -5236,6 +5372,7 @@
+           const aspectRatio = isImageElement(el) && el.naturalWidth && el.naturalHeight
+             ? el.naturalWidth / el.naturalHeight
+             : (rect.width > 0 && rect.height > 0 ? rect.width / rect.height : 1);
++          const directManipulation = getDirectManipulationSafety(el, slide);
+           return {
+             slideRect: slideRect
+               ? {
+@@ -5251,6 +5388,10 @@
+               : null,
+             snapTargets: collectSnapTargets(el, slide),
+             aspectRatio,
++            hasComplexTransform: hasComplexTransformOnElement(el),
++            hasTransformedAncestor: hasTransformedAncestor(el, slide),
++            directManipulationSafe: directManipulation.safe,
++            directManipulationReason: directManipulation.reason,
+           };
+         }
+ 
+@@ -6611,6 +6752,20 @@
+ 
+       function guardSelectionAction(action, actionLabel, options = {}) {
+         if (!state.selectedNodeId) return false;
++        if (
++          ["move", "resize", "nudge"].includes(action) &&
++          hasBlockedDirectManipulationContext()
++        ) {
++          showToast(
++            options.message || getDirectManipulationBlockMessage(action === "resize" ? "resize" : "drag"),
++            "warning",
++            {
++              title: actionLabel || "Операция ограничена",
++              ttl: 4200,
++            },
++          );
++          return false;
++        }
+         if (canSelectionAction(action)) return true;
+         showToast(
+           options.message || getSelectionActionBlockMessage(action),
+@@ -7108,6 +7263,8 @@
+         lines.push(`bridgeAlive=${state.bridgeAlive}`);
+         lines.push(`mode=${state.mode}`);
+         lines.push(`interactionMode=${state.interactionMode}`);
++        lines.push(`toolbarLayout=${document.body.dataset.toolbarLayout || "floating"}`);
++        lines.push(`contextMenuLayout=${document.body.dataset.contextMenuLayout || "floating"}`);
+         lines.push(`theme=${state.themePreference}->${state.theme}`);
+         lines.push(`staticSelector=${state.staticSlideSelector || "n/a"}`);
+         lines.push(`slides=${state.slides.length}`);
+@@ -7122,6 +7279,16 @@
+         }
+         lines.push(`syncSeq=${state.lastAppliedSeq}`);
+         lines.push(`syncLocks=${lockCount}`);
++        if (state.selectedNodeId) {
++          lines.push(
++            `directManipSafe=${state.manipulationContext?.directManipulationSafe !== false}`,
++          );
++          if (state.manipulationContext?.directManipulationSafe === false) {
++            lines.push(
++              `directManipReason=${state.manipulationContext?.directManipulationReason || "n/a"}`,
++            );
++          }
++        }
+         if (state.diagnostics.length) {
+           lines.push("---");
+           lines.push(...state.diagnostics);
+@@ -7419,6 +7586,41 @@
+           : window.innerWidth <= 640;
+       }
+ 
++      function getPreviewStageInlineSize() {
++        return Math.max(
++          0,
++          Math.round(els.previewStage?.getBoundingClientRect().width || 0),
++        );
++      }
++
++      function prefersCompactFloatingToolbar() {
++        return Boolean(
++          window.innerWidth <= 640 ||
++            (getPreviewStageInlineSize() > 0 && getPreviewStageInlineSize() < 560),
++        );
++      }
++
++      function prefersContextMenuSheetMode() {
++        return Boolean(
++          prefersShellPopoverSheetMode() ||
++            (getPreviewStageInlineSize() > 0 && getPreviewStageInlineSize() < 520),
++        );
++      }
++
++      function syncOverlayChromeModes() {
++        const compactToolbar = prefersCompactFloatingToolbar();
++        document.body.dataset.toolbarLayout = compactToolbar
++          ? "compact"
++          : "floating";
++        document.body.dataset.contextMenuLayout = prefersContextMenuSheetMode()
++          ? "sheet"
++          : "floating";
++        if (compactToolbar) {
++          state.toolbarPinned = false;
++          state.toolbarPos = null;
++        }
++      }
++
+       function syncShellViewportLock() {
+         const shouldLock =
+           isCompactShell() && (state.leftPanelOpen || state.rightPanelOpen);
+@@ -7426,6 +7628,7 @@
+         document.body.dataset.shellPopoverMode = prefersShellPopoverSheetMode()
+           ? "sheet"
+           : "anchored";
++        syncOverlayChromeModes();
+       }
+ 
+       function syncShellChromeMetrics() {
+@@ -7679,6 +7882,19 @@
+         };
+       }
+ 
++      function hasBlockedDirectManipulationContext() {
++        return Boolean(state.manipulationContext?.directManipulationSafe === false);
++      }
++
++      function getDirectManipulationBlockMessage(kind = "drag") {
++        return (
++          String(state.manipulationContext?.directManipulationReason || "").trim() ||
++          (kind === "resize"
++            ? "Для этого элемента resize через overlay сейчас отключён. Используй поля размера в инспекторе."
++            : "Для этого элемента прямое перемещение через overlay сейчас отключено. Используй поля позиции в инспекторе.")
++        );
++      }
++
+       function canDirectManipulateSelection(kind = "drag") {
+         const policy = state.selectedPolicy || createDefaultSelectionPolicy();
+         const allowed = kind === "resize" ? policy.canResize : policy.canMove;
+@@ -7687,7 +7903,8 @@
+             state.previewReady &&
+             state.selectedNodeId &&
+             state.selectedRect &&
+-            allowed,
++            allowed &&
++            !hasBlockedDirectManipulationContext(),
+         );
+       }
+ 
+@@ -7754,6 +7971,7 @@
+       function getSelectionFrameLabel() {
+         if (!state.selectedPolicy.canMove && !state.selectedPolicy.canResize)
+           return state.selectedFlags.isSlideRoot ? "Слайд защищён" : "Только просмотр";
++        if (hasBlockedDirectManipulationContext()) return "Через инспектор";
+         if (state.activeManipulation?.kind === "resize") return "Размер";
+         if (state.activeManipulation?.kind === "drag") return "Перемещение";
+         if (state.selectedFlags.canEditText)
+@@ -7780,34 +7998,46 @@
+         const isProtected = Boolean(
+           !state.selectedPolicy.canMove && !state.selectedPolicy.canResize,
+         );
++        const directManipBlocked = hasBlockedDirectManipulationContext();
+         const isCompact = stageRect.width < 112 || stageRect.height < 64;
++        const isTiny = stageRect.width < 56 || stageRect.height < 56;
++        const overlayLocked = Boolean(isProtected || directManipBlocked);
+         els.selectionFrame.style.left = `${stageRect.left}px`;
+         els.selectionFrame.style.top = `${stageRect.top}px`;
+         els.selectionFrame.style.width = `${Math.max(0, stageRect.width)}px`;
+         els.selectionFrame.style.height = `${Math.max(0, stageRect.height)}px`;
+         els.selectionFrame.classList.toggle("is-protected", isProtected);
++        els.selectionFrame.classList.toggle(
++          "is-direct-manip-blocked",
++          directManipBlocked,
++        );
+         els.selectionFrame.classList.toggle("is-compact", isCompact);
++        els.selectionFrame.classList.toggle("is-tiny", isTiny);
+         els.selectionFrame.tabIndex = visible ? 0 : -1;
+         els.selectionFrame.setAttribute(
+           "aria-label",
+-          isProtected
+-            ? "Выбран защищённый элемент. Перемещение и изменение размера недоступны."
++          overlayLocked
++            ? directManipBlocked
++              ? getDirectManipulationBlockMessage()
++              : "Выбран защищённый элемент. Перемещение и изменение размера недоступны."
+             : "Выбранный элемент. Перемещай мышью, изменяй размер ручками или стрелками.",
+         );
+         if (els.selectionFrameLabel)
+           els.selectionFrameLabel.textContent = getSelectionFrameLabel();
+         if (els.selectionFrameHitArea) {
+-          els.selectionFrameHitArea.style.pointerEvents = isProtected
++          els.selectionFrameHitArea.style.pointerEvents = overlayLocked
+             ? "none"
+             : "auto";
+-          els.selectionFrameHitArea.title = isProtected
+-            ? "Этот элемент защищён от перемещения и resize"
++          els.selectionFrameHitArea.title = overlayLocked
++            ? directManipBlocked
++              ? getDirectManipulationBlockMessage()
++              : "Этот элемент защищён от перемещения и resize"
+             : state.selectedFlags.canEditText
+               ? "Перетащить элемент или дважды кликнуть для редактирования текста"
+               : "Перетащить выбранный элемент";
+         }
+         els.selectionHandles.forEach((handle) => {
+-          handle.disabled = !state.selectedPolicy.canResize;
++          handle.disabled = !state.selectedPolicy.canResize || directManipBlocked;
+         });
+         renderSelectionGuides();
+       }
+@@ -7825,13 +8055,14 @@
+           isContainer: state.selectedFlags.isContainer,
+           isSlideRoot: state.selectedFlags.isSlideRoot,
+           isProtected: state.selectedFlags.isProtected,
++          origin: "shell",
++          shellClientX: clientX,
++          shellClientY: clientY,
+         };
+         state.contextMenuNodeId = state.selectedNodeId;
+         state.contextMenuPayload = payload;
+         renderContextMenu(payload);
+-        const pos = computeContextMenuPosition(clientX, clientY);
+-        els.contextMenu.style.left = `${pos.x}px`;
+-        els.contextMenu.style.top = `${pos.y}px`;
++        positionContextMenu(clientX, clientY);
+         els.contextMenu.classList.add("is-open");
+         els.contextMenu.setAttribute("aria-hidden", "false");
+         window.requestAnimationFrame(() => getContextMenuButtons()[0]?.focus({ preventScroll: true }));
+@@ -8156,7 +8387,7 @@
+       }
+ 
+       function performKeyboardNudge(dx, dy) {
+-        if (!canSelectionAction("nudge")) return;
++        if (!guardSelectionAction("nudge", "Сдвиг")) return;
+         if (!canDirectManipulateSelection("drag")) return;
+         sendToBridge("nudge-element", {
+           nodeId: state.selectedNodeId,
+@@ -8706,6 +8937,7 @@
+ 
+         els.ftHandleBtn?.addEventListener("pointerdown", (event) => {
+           if (!state.selectedNodeId) return;
++          if (document.body.dataset.toolbarLayout === "compact") return;
+           const rect = els.floatingToolbar.getBoundingClientRect();
+           state.toolbarPinned = true;
+           state.toolbarDragActive = true;
+@@ -8758,6 +8990,17 @@
+         }
+         const toolbar = els.floatingToolbar;
+         toolbar.classList.add("is-visible");
++        toolbar.style.right = "auto";
++        toolbar.style.bottom = "auto";
++
++        if (document.body.dataset.toolbarLayout === "compact") {
++          toolbar.style.left = "8px";
++          toolbar.style.right = "8px";
++          toolbar.style.top = "8px";
++          const toolbarHeight = toolbar.offsetHeight || 52;
++          toolbar.style.top = `${Math.max(8, hostRect.height - toolbarHeight - 8)}px`;
++          return;
++        }
+ 
+         if (state.toolbarPinned && state.toolbarPos) {
+           const pos = clampToolbarPosition(
+@@ -8792,6 +9035,8 @@
+         els.floatingToolbar.classList.remove("is-visible");
+         els.floatingToolbar.style.left = "-9999px";
+         els.floatingToolbar.style.top = "-9999px";
++        els.floatingToolbar.style.right = "auto";
++        els.floatingToolbar.style.bottom = "auto";
+       }
+ 
+       function updateFloatingToolbarContext() {
+@@ -8799,17 +9044,24 @@
+           state.selectedNodeId && state.mode === "edit",
+         );
+         const policy = state.selectedPolicy || createDefaultSelectionPolicy();
++        const isAdvanced = state.complexityMode === "advanced";
++        const compactLayout = document.body.dataset.toolbarLayout === "compact";
+         els.ftTextGroup.hidden =
+           !hasSelection || !state.selectedFlags.canEditText || !policy.canEditText;
+         els.ftMediaGroup.hidden =
+           !hasSelection ||
+           (!state.selectedFlags.isImage && !state.selectedFlags.isVideo);
++        els.ftHandleBtn.hidden = compactLayout || !hasSelection;
++        els.ftCopyStyleBtn.hidden = !isAdvanced || !hasSelection;
++        els.ftPasteStyleBtn.hidden = !isAdvanced || !hasSelection;
+         els.ftReplaceImageBtn.hidden = !state.selectedFlags.isImage;
+-        els.ftCopyImageUrlBtn.hidden = !(
+-          state.selectedFlags.isImage || state.selectedFlags.isVideo
+-        );
+-        els.ftMediaUrlBtn.hidden = !state.selectedFlags.isVideo;
++        els.ftCopyImageUrlBtn.hidden =
++          !isAdvanced || !(
++            state.selectedFlags.isImage || state.selectedFlags.isVideo
++          );
++        els.ftMediaUrlBtn.hidden = !isAdvanced || !state.selectedFlags.isVideo;
+         els.ftFitImageBtn.hidden = !state.selectedFlags.isImage;
++        els.ftHandleBtn.disabled = compactLayout || !hasSelection;
+         els.ftReplaceImageBtn.disabled =
+           !hasSelection || !policy.canReplaceMedia || !state.selectedFlags.isImage;
+         els.ftFitImageBtn.disabled =
+@@ -9175,6 +9427,7 @@
+         const menu = els.contextMenu;
+         menu.style.left = "0px";
+         menu.style.top = "0px";
++        menu.style.right = "auto";
+         menu.classList.add("is-open");
+         const width = menu.offsetWidth || 240;
+         const height = menu.offsetHeight || 260;
+@@ -9187,9 +9440,44 @@
+         return { x, y };
+       }
+ 
++      function positionContextMenu(clientX, clientY) {
++        if (!els.contextMenu) return;
++        els.contextMenu.style.right = "auto";
++        els.contextMenu.style.bottom = "auto";
++        if (document.body.dataset.contextMenuLayout === "sheet") {
++          const insets = getShellViewportInsets();
++          els.contextMenu.style.left = `${Math.round(insets.left)}px`;
++          els.contextMenu.style.top = `${Math.round(
++            Math.max(
++              insets.top,
++              window.innerHeight - insets.bottom - (els.contextMenu.offsetHeight || 280),
++            ),
++          )}px`;
++          els.contextMenu.style.right = `${Math.round(insets.right)}px`;
++          return;
++        }
++        const pos = computeContextMenuPosition(clientX, clientY);
++        els.contextMenu.style.left = `${pos.x}px`;
++        els.contextMenu.style.top = `${pos.y}px`;
++      }
++
++      function reopenContextMenuFromState() {
++        if (!state.contextMenuPayload) return;
++        renderContextMenu(state.contextMenuPayload);
++        const x = Number(state.contextMenuPayload.shellClientX || 0);
++        const y = Number(state.contextMenuPayload.shellClientY || 0);
++        positionContextMenu(x, y);
++        els.contextMenu.classList.add("is-open");
++        els.contextMenu.setAttribute("aria-hidden", "false");
++      }
++
+       function closeContextMenu() {
+         els.contextMenu.classList.remove("is-open");
+         els.contextMenu.setAttribute("aria-hidden", "true");
++        els.contextMenu.style.left = "0px";
++        els.contextMenu.style.top = "0px";
++        els.contextMenu.style.right = "auto";
++        els.contextMenu.style.bottom = "auto";
+         state.contextMenuNodeId = null;
+         state.contextMenuPayload = null;
+       }
+@@ -9682,7 +9970,9 @@
+             ? "Выбран корневой контейнер слайда. Для него доступны безопасные стилевые правки и вставка новых блоков внутрь, но destructive structural-операции, resize и удаление заблокированы."
+             : state.selectedFlags.isProtected
+               ? "Это защищённый системный контейнер deck-framework. Его можно просматривать и в отдельных случаях безопасно стилизовать, но опасные structural-операции и прямые перемещения отключены."
+-              : "Для выбранного элемента ограничений нет.";
++              : hasBlockedDirectManipulationContext()
++                ? getDirectManipulationBlockMessage()
++                : "Для выбранного элемента ограничений нет.";
+         }
+         const structuralLocked = !selectionPolicy.canDelete || !selectionPolicy.canDuplicate;
+         const styleLocked = !selectionPolicy.canEditStyles;
+@@ -9853,10 +10143,14 @@
+           els.flipImageBtn.disabled =
+             !hasSelection || !selectionPolicy.canEditStyles || !state.selectedFlags.isImage;
+         updateFloatingToolbarContext();
+-        if (structuralLocked || styleLocked || attributeLocked) {
++        if (structuralLocked || styleLocked || attributeLocked || hasBlockedDirectManipulationContext()) {
+           els.inspectorHelp.textContent = state.selectedFlags.isSlideRoot
+             ? "Выбран корневой контейнер слайда. Для него доступны безопасные стилевые правки и добавление новых блоков внутрь слайда, но перемещение, resize и destructive structural-операции заблокированы."
+-            : "Выбран защищённый системный контейнер. Он доступен только в режиме чтения: destructive actions, direct manipulation и HTML replace отключены.";
++            : state.selectedFlags.isProtected
++              ? "Выбран защищённый системный контейнер. Он доступен только в режиме чтения: destructive actions, direct manipulation и HTML replace отключены."
++              : hasBlockedDirectManipulationContext()
++                ? `${getDirectManipulationBlockMessage()} Поля позиции и размера в инспекторе остаются доступными.`
++                : "Выбран защищённый системный контейнер. Он доступен только в режиме чтения: destructive actions, direct manipulation и HTML replace отключены.";
+         }
+       }
+ 
+@@ -10178,17 +10472,18 @@
+         closeShellPanels();
+         closeTransientShellUi({ keep: "context-menu" });
+         state.contextMenuNodeId = payload.nodeId || state.selectedNodeId;
++        const frameRect = els.previewFrame.getBoundingClientRect();
++        const x = frameRect.left + (payload.clientX || 0);
++        const y = frameRect.top + (payload.clientY || 0);
+         state.contextMenuPayload = {
+           ...payload,
++          origin: "bridge",
+           nodeId: state.contextMenuNodeId,
++          shellClientX: x,
++          shellClientY: y,
+         };
+         renderContextMenu(state.contextMenuPayload);
+-        const frameRect = els.previewFrame.getBoundingClientRect();
+-        const x = frameRect.left + (payload.clientX || 0);
+-        const y = frameRect.top + (payload.clientY || 0);
+-        const pos = computeContextMenuPosition(x, y);
+-        els.contextMenu.style.left = `${pos.x}px`;
+-        els.contextMenu.style.top = `${pos.y}px`;
++        positionContextMenu(x, y);
+         els.contextMenu.classList.add("is-open");
+         els.contextMenu.setAttribute("aria-hidden", "false");
+         window.requestAnimationFrame(() => focusContextMenuButton(0));
