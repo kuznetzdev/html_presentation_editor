@@ -1,21 +1,10 @@
 # ROADMAP NEXT
 
-## Post-0.13.4 priorities
+## Post-0.13.5 priorities
 
-Stage C is now signed off for the supported positioned envelope. The next open release gate is truthful asset diagnostics under manual-base and remote uncertainty.
+Stage D is now signed off for connected asset-directory truthfulness. The next open release gate is compact-shell focus isolation and drawer hardening.
 
-### 1. Truthful asset diagnostics (`v0.13.5`)
-
-Goals:
-- remove false-clean diagnostic states
-- represent manual-base and remote uncertainty honestly
-
-Substeps:
-- align diagnostics text with actual resolver state
-- distinguish unresolved local assets from remote or manual-base-dependent uncertainty
-- codify asset-resolution error scenarios in Playwright
-
-### 2. Focus isolation and shell hardening (`v0.13.6`)
+### 1. Focus isolation and shell hardening (`v0.13.6`)
 
 Goals:
 - keep hidden drawers and overlays out of the focus order
@@ -26,7 +15,7 @@ Substeps:
 - re-run topbar, menu, popover, and mobile rail stability checks
 - keep shell geometry and keyboard path stable across `390 / 640 / 820`
 
-### 3. Internal zoning without architecture rewrite (`v0.13.7`)
+### 2. Internal zoning without architecture rewrite (`v0.13.7`)
 
 Goals:
 - reduce blast radius inside the large editor file
@@ -37,7 +26,7 @@ Substeps:
 - keep refactors contiguous and responsibility-based before extracting files
 - preserve `parent shell + iframe + bridge + modelDoc`
 
-### 4. System polish after correctness (`v0.14.0`)
+### 3. System polish after correctness (`v0.14.0`)
 
 Goals:
 - keep light/dark parity and visual consistency without re-opening correctness regressions
@@ -49,11 +38,9 @@ Substeps:
 
 ## Suggested version path
 
-1. `0.13.5`
-   focus: truthful asset diagnostics
-2. `0.13.6`
+1. `0.13.6`
    focus: focus isolation and compact shell hardening
-3. `0.13.7`
+2. `0.13.7`
    focus: structure cleanup without architecture rewrite
-4. `0.14.0`
+3. `0.14.0`
    focus: visual and system polish after correctness is already locked

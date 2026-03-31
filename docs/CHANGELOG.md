@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.13.5 - connected asset diagnostics signed off - 2026-03-31
+- promoted Stage D Playwright coverage from placeholder to active release gate for connected asset-directory diagnostics across the signed-off Chromium width set
+- verified that diagnostics no longer collapse back to the previous false-clean zero summary once fixture assets are connected under the shared manual-base contract
+- kept the full active Playwright suite green after enabling the Stage D gate, raising the verified line to `70 passed / 34 skipped`
+
 ## 0.13.4 - direct manipulation coordinate correctness proved - 2026-03-31
 - widened the proven direct-manipulation envelope to nested positioned contexts by tracking `left/right` and `top/bottom` anchors explicitly instead of assuming one inset space
 - preserved truthful blocking for unsafe transformed contexts, so keyboard nudge falls back to diagnostics instead of writing incorrect coordinates

@@ -2,7 +2,7 @@
 
 ## Current version
 
-`0.13.4`
+`0.13.5`
 
 ## Product state
 
@@ -33,6 +33,7 @@ The fixed architecture is unchanged:
 - edit-mode persistence is now proven across undo / redo / autosave restore instead of depending on shell defaults after preview rebuilds
 - direct manipulation is now proven for the supported keyboard-nudge envelope across `absolute`, `fixed`, and nested positioned contexts
 - unsafe transformed manipulation paths stay honestly blocked and surfaced through diagnostics instead of producing incorrect coordinates
+- connected asset-directory diagnostics are now proven through active Stage D browser coverage across the signed-off Chromium width set
 
 ## Important constraints
 
@@ -45,8 +46,8 @@ The fixed architecture is unchanged:
 ## Current weak spots
 
 - direct manipulation is still intentionally conservative for transformed / zoomed layouts outside the signed-off positioned envelope
-- asset fidelity is still partial for deeper relative-asset chains and remote-resolution truthfulness
-- the Playwright harness is now present with stages A-C enabled; diagnostics, dedicated shell hardening, cleanup, and final polish still need staged activation
+- asset fidelity is still partial for deeper remote/manual-base uncertainty outside the connected-directory sign-off path
+- the Playwright harness is now present with stages A-D enabled; dedicated shell hardening, cleanup, and final polish still need staged activation
 - the editor still lives in one large HTML file and needs internal structural cleanup without changing the architecture
 
 ## Engineering audit snapshot
@@ -62,7 +63,7 @@ The fixed architecture is unchanged:
 ### Only partially mitigated
 
 - direct manipulation in transform-heavy or zoom-heavy geometry is blocked safely, not truly solved
-- asset audit distinguishes `unresolved` from `base-URL-dependent`, but coverage is still incomplete
+- asset audit distinguishes `unresolved` from `base-URL-dependent`, and connected-directory truthfulness is now proven, but deeper remote/manual-base uncertainty still lacks a dedicated release gate
 - compact shell drawers / toolbar / context menu are now under repo-local Playwright smoke coverage, but stage-specific shell hardening is still not fully enabled
 - slide lifecycle is now deterministic for create / duplicate / delete / undo / redo, and bridge-driven document reconciliation no longer poisons redo history; deeper bridge resend and runtime repair paths still need proof
 
