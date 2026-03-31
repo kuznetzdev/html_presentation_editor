@@ -4694,6 +4694,7 @@
             {
               resetHistory: true,
               dirty: true,
+              mode: normalizeEditorMode(payload.mode, "edit"),
               preferSlideIndex: payload.activeSlideIndex || 0,
             },
           );
@@ -4724,6 +4725,11 @@
         els.restoreBanner.classList.remove("is-visible");
       }
 
+      function normalizeEditorMode(mode, fallback = "preview") {
+        if (mode === "edit" || mode === "preview") return mode;
+        return fallback === "edit" ? "edit" : "preview";
+      }
+
       // ====================================================================
       // loadHtmlString
       // 1) сбрасывает runtime-состояние,
@@ -4733,6 +4739,8 @@
       // Это центральная точка входа для загрузки презентации.
       // ====================================================================
       function loadHtmlString(htmlString, sourceLabel, options = {}) {
+        const requestedMode = normalizeEditorMode(options.mode, "preview");
+        clearPendingPersistenceTimers();
         cleanupPreviewUrl();
         cleanupExportValidationUrl();
         resetRuntimeState();
@@ -4758,6 +4766,9 @@
             state.modelDoc &&
             state.modelDoc.querySelector("[data-editor-node-id]"),
           );
+          state.mode =
+            requestedMode === "edit" && state.editingSupported ? "edit" : "preview";
+          state.interactionMode = state.mode === "edit" ? "select" : "preview";
         } catch (error) {
           console.error(error);
           setPreviewLifecycleState("idle", { reason: "parse-error" });
@@ -8062,15 +8073,22 @@ ${doc.documentElement.outerHTML}`;
         schedulePersistence(reason, options);
       }
 
+      function clearPendingPersistenceTimers() {
+        window.clearTimeout(state.saveTimer);
+        window.clearTimeout(state.snapshotTimer);
+        state.saveTimer = null;
+        state.snapshotTimer = null;
+      }
+
       function schedulePersistence(reason = "change", options = {}) {
         const snapshotMode =
           typeof options.snapshotMode === "string"
             ? options.snapshotMode
             : "debounced";
-        window.clearTimeout(state.saveTimer);
-        window.clearTimeout(state.snapshotTimer);
+        clearPendingPersistenceTimers();
         state.saveTimer = window.setTimeout(saveProjectToLocalStorage, 250);
         if (state.historyMuted) return;
+        if (snapshotMode === "none") return;
         if (snapshotMode === "immediate") {
           captureHistorySnapshot(reason);
           return;
@@ -8096,6 +8114,7 @@ ${doc.documentElement.outerHTML}`;
           html: serializeCurrentProject(),
           sourceLabel: state.sourceLabel,
           manualBaseUrl: state.manualBaseUrl,
+          mode: normalizeEditorMode(state.mode),
           activeSlideIndex: Math.max(
             0,
             state.slides.findIndex((slide) => slide.id === snapshotActiveSlideId),
@@ -8137,6 +8156,7 @@ ${exportDoc.documentElement.outerHTML}`;
           {
             resetHistory: false,
             dirty: true,
+            mode: normalizeEditorMode(snapshot.mode, state.mode),
             preferSlideIndex: snapshot.activeSlideIndex || 0,
           },
         );
@@ -10696,7 +10716,7 @@ ${exportDoc.documentElement.outerHTML}`;
             clearSelectedElementState();
           }
           noteAppliedSeq(slideId, seq);
-          commitChange("bridge-sync");
+          commitChange("bridge-sync", { snapshotMode: "none" });
           syncSlideRegistry({
             runtimeActiveSlideId:
               String(payload.activeSlideId || "").trim() || state.runtimeActiveSlideId,
@@ -13250,6 +13270,7 @@ ${exportDoc.documentElement.outerHTML}`;
             savedAt: Date.now(),
             sourceLabel: state.sourceLabel,
             manualBaseUrl: getManualBaseUrl(),
+            mode: normalizeEditorMode(state.mode),
             activeSlideIndex: Math.max(
               0,
               state.slides.findIndex(

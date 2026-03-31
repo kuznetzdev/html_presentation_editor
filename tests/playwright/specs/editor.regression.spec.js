@@ -103,12 +103,14 @@ test.describe("Editor regression coverage", () => {
       activeIndex: initialActiveIndex + 2,
       count: initialCount + 2,
     });
+    await expect.poll(() => evaluateEditor(page, "state.mode")).toBe("edit");
 
     await clickEditorControl(page, "#redoBtn");
     await waitForSlideActivationState(page, {
       activeIndex: initialActiveIndex + 2,
       count: initialCount + 1,
     });
+    await expect.poll(() => evaluateEditor(page, "state.mode")).toBe("edit");
   });
 
   test("text edit, image replace, and block insertion stay functional @stage-c", async (
@@ -187,6 +189,7 @@ test.describe("Editor regression coverage", () => {
     await expect(previewLocator(page, "#hero-copy")).toContainText(
       "Autosave recovery text",
     );
+    await expect.poll(() => evaluateEditor(page, "state.mode")).toBe("edit");
   });
 
   test("export validation popup strips editor chrome @stage-a", async ({ page }, testInfo) => {

@@ -6,6 +6,8 @@
 - create, duplicate, delete, undo, redo, and autosave recovery are now proven through Playwright on desktop, shell, and compact Chromium widths
 - compact-width Stage B regression scenarios now use the truthful shell route: slide creation from the left drawer, slide mutation from the inspector drawer, and preview interaction after drawers are explicitly closed
 - history snapshots now track the intended active slide target during structural mutations, so restore paths stop landing on stale slide indices
+- bridge-driven document reconciliation no longer appends hidden history entries, so redo stays available after runtime repair and restore paths
+- autosave and history snapshots now preserve the requested editor mode, so recovery returns to `edit` instead of silently degrading to preview
 
 ## Still open
 

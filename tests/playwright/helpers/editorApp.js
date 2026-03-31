@@ -118,12 +118,18 @@ async function waitForPreviewReady(page) {
 }
 
 async function gotoFreshEditor(page) {
-  await page.goto(TARGET_URL, { waitUntil: "domcontentloaded" });
+  await page.goto(TARGET_URL, {
+    waitUntil: "domcontentloaded",
+    timeout: 30_000,
+  });
   await page.evaluate(() => {
     window.localStorage.clear();
     window.sessionStorage.clear();
   });
-  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.reload({
+    waitUntil: "domcontentloaded",
+    timeout: 30_000,
+  });
   await expect(page.locator("#openHtmlBtn")).toBeVisible();
   await expect(page.locator("#restoreBanner")).toBeHidden();
 }
@@ -399,22 +405,27 @@ async function closeCompactShellPanels(page) {
   );
   if (!hasOpenPanel) return;
 
-  const backdrop = page.locator("#panelBackdrop");
-  if (await backdrop.isVisible()) {
-    await backdrop.click({ position: { x: 4, y: 4 } });
-  } else {
-    for (const panel of ["slides", "inspector"]) {
-      const config = SHELL_PANEL_CONFIG[panel];
-      const button = page.locator(config.buttonSelector);
-      if (!(await button.isVisible())) continue;
-      const openExpression =
-        panel === "slides"
-          ? "Boolean(state.leftPanelOpen)"
-          : "Boolean(state.rightPanelOpen)";
-      if (await evaluateEditor(page, openExpression)) {
-        await button.click();
-        break;
-      }
+  for (const panel of ["slides", "inspector"]) {
+    const config = SHELL_PANEL_CONFIG[panel];
+    const button = page.locator(config.buttonSelector);
+    if (!(await button.isVisible())) continue;
+    const openExpression =
+      panel === "slides"
+        ? "Boolean(state.leftPanelOpen)"
+        : "Boolean(state.rightPanelOpen)";
+    if (await evaluateEditor(page, openExpression)) {
+      await button.click();
+    }
+  }
+
+  const stillOpen = await evaluateEditor(
+    page,
+    "Boolean(state.leftPanelOpen || state.rightPanelOpen)",
+  );
+  if (stillOpen) {
+    const backdrop = page.locator("#panelBackdrop");
+    if (await backdrop.isVisible()) {
+      await backdrop.click({ position: { x: 4, y: 4 }, force: true });
     }
   }
 
@@ -430,37 +441,52 @@ async function waitForSlideActivationState(page, options) {
     count: Number(options?.count),
   };
 
-  await page.waitForFunction(
-    (expected) => {
-      const snapshot = JSON.parse(
-        globalThis.eval(`JSON.stringify({
-          activeCount: state.slides.filter((slide) => slide.isActive).length,
-          activeIndex: state.slides.findIndex((slide) => slide.isActive),
-          activeSlideId: state.activeSlideId || null,
-          count: state.slides.length,
-          hasPendingRequest: Boolean(state.requestedSlideActivation),
-          previewLifecycle: state.previewLifecycle || "",
-          previewReady: Boolean(state.previewReady),
-          runtimeActiveSlideId: state.runtimeActiveSlideId || null
-        })`),
-      );
-
-      if (snapshot.count !== expected.count) return false;
-      if (!snapshot.previewReady || snapshot.previewLifecycle !== "ready") return false;
-      if (snapshot.hasPendingRequest) return false;
-      if (snapshot.activeCount !== 1) return false;
-      if (snapshot.activeSlideId !== snapshot.runtimeActiveSlideId) return false;
-      if (
-        typeof expected.activeIndex === "number" &&
-        snapshot.activeIndex !== expected.activeIndex
-      ) {
-        return false;
-      }
-      return true;
-    },
-    payload,
-    { timeout: 20_000 },
-  );
+  const snapshotExpression = `JSON.stringify({
+    activeCount: state.slides.filter((slide) => slide.isActive).length,
+    activeIndex: state.slides.findIndex((slide) => slide.isActive),
+    activeSlideId: state.activeSlideId || null,
+    count: state.slides.length,
+    hasPendingRequest: Boolean(state.requestedSlideActivation),
+    historyIndex: state.historyIndex,
+    historyLength: state.history.length,
+    previewLifecycle: state.previewLifecycle || "",
+    previewReady: Boolean(state.previewReady),
+    requestedSlideActivation: state.requestedSlideActivation || null,
+    runtimeActiveSlideId: state.runtimeActiveSlideId || null,
+    undoDisabled: document.getElementById("undoBtn")?.disabled ?? null,
+    redoDisabled: document.getElementById("redoBtn")?.disabled ?? null
+  })`;
+  try {
+    await page.waitForFunction(
+      ({ expected, expression }) => {
+        const snapshot = JSON.parse(globalThis.eval(expression));
+        if (snapshot.count !== expected.count) return false;
+        if (!snapshot.previewReady || snapshot.previewLifecycle !== "ready") {
+          return false;
+        }
+        if (snapshot.hasPendingRequest) return false;
+        if (snapshot.activeCount !== 1) return false;
+        if (snapshot.activeSlideId !== snapshot.runtimeActiveSlideId) {
+          return false;
+        }
+        if (
+          typeof expected.activeIndex === "number" &&
+          snapshot.activeIndex !== expected.activeIndex
+        ) {
+          return false;
+        }
+        return true;
+      },
+      { expected: payload, expression: snapshotExpression },
+      { timeout: 20_000 },
+    );
+  } catch (error) {
+    const snapshot = await evaluateEditor(page, snapshotExpression);
+    throw new Error(
+      `Slide activation wait failed: expected=${JSON.stringify(payload)} actual=${snapshot}`,
+      { cause: error },
+    );
+  }
 }
 
 async function openExportValidationPopup(page) {

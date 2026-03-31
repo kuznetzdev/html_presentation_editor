@@ -5,6 +5,9 @@
 - added shell-aware browser helpers so compact-width regression scenarios use the real slide-list and inspector drawers instead of hidden desktop controls
 - removed the timing hole where structural slide mutations relied on debounced history capture, making undo/redo deterministic under immediate create/duplicate/delete sequences
 - captured structural slide history against the intended active slide target, not the stale runtime-confirmed slide, so restored drafts and undo states land on the correct slide index
+- persisted editor mode through history snapshots and autosave payloads so undo, redo, and draft recovery return to the truthful `edit` state instead of silently dropping back to preview
+- stopped runtime `bridge-sync` reconciliation from creating background history entries, which removed the redo-invalidating race after slide rebuilds and restores
+- hardened cold-start Playwright navigation for the signed-off mobile width set so the Stage B gate does not fail on harness-only `page.goto` timeouts
 - kept the full active Playwright suite green after enabling Stage B coverage
 
 ## 0.13.2 - export preview parity proved - 2026-03-31

@@ -2,6 +2,8 @@
 
 ## Post-0.13.3 priorities
 
+Stage B is now revalidated after locking edit-mode persistence, removing the `bridge-sync` history race, and hardening the mobile cold-start QA path. The next open release gate remains direct-manipulation correctness.
+
 ### 1. Direct manipulation coordinate correctness (`v0.13.4`)
 
 Goals:

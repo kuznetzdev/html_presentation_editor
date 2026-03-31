@@ -30,6 +30,7 @@ The fixed architecture is unchanged:
 - export-validation preview remains reachable on compact widths through the visible export flow
 - create / duplicate / delete / undo / redo slide flow is now proven through runtime-confirmed Playwright coverage
 - autosave recovery is now proven on desktop and compact widths through the real shell workflow
+- edit-mode persistence is now proven across undo / redo / autosave restore instead of depending on shell defaults after preview rebuilds
 
 ## Important constraints
 
@@ -43,7 +44,7 @@ The fixed architecture is unchanged:
 
 - direct manipulation is still intentionally conservative for transformed / zoomed / nested layouts
 - asset fidelity is still partial for deeper relative-asset chains and remote-resolution truthfulness
-- the Playwright harness is now present with stages A and B enabled; manipulation, diagnostics, and dedicated shell hardening still need staged activation
+- the Playwright harness is now present with stages A and B enabled and revalidated; manipulation, diagnostics, and dedicated shell hardening still need staged activation
 - the editor still lives in one large HTML file and needs internal structural cleanup without changing the architecture
 
 ## Engineering audit snapshot
@@ -61,7 +62,7 @@ The fixed architecture is unchanged:
 - direct manipulation in complex geometry is blocked safely, not truly solved
 - asset audit distinguishes `unresolved` from `base-URL-dependent`, but coverage is still incomplete
 - compact shell drawers / toolbar / context menu are now under repo-local Playwright smoke coverage, but stage-specific shell hardening is still not fully enabled
-- slide lifecycle is now deterministic for create / duplicate / delete / undo / redo, but deeper bridge resend and runtime repair paths still need proof
+- slide lifecycle is now deterministic for create / duplicate / delete / undo / redo, and bridge-driven document reconciliation no longer poisons redo history; deeper bridge resend and runtime repair paths still need proof
 
 ### Still critical
 

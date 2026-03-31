@@ -19,6 +19,7 @@ Covered in Playwright:
 - delete current slide with confirmation
 - undo and redo after immediate slide mutations
 - runtime-confirmed active-slide convergence after each step
+- edit mode remains active after undo and redo instead of falling back to preview during snapshot restore
 
 ### 2. Autosave recovery through the real shell workflow
 
@@ -28,17 +29,20 @@ Covered in Playwright:
 - use inspector controls on compact widths
 - close compact drawers before returning interaction to the preview iframe
 - reload, restore draft, and assert recovered content
+- restore draft back into `edit` mode after the preview/runtime bridge is rebuilt
 
 ### 3. Full active suite stayed green after Stage B
 
 Commands:
 
 - `npx playwright test --grep "@stage-b"`
+- `npx playwright test tests/playwright/specs/editor.regression.spec.js --project chromium-mobile-640 --grep "@stage-b" --repeat-each 5`
 - `npx playwright test`
 
 Observed results:
 
 - stage B suite: `12 passed`, `4 skipped`
+- mobile-640 repeat gate: `10 passed`
 - full active suite: `46 passed`, `58 skipped`
 
 ## Scope intentionally left for later stages
