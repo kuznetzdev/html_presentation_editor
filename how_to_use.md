@@ -5,7 +5,7 @@
 1. Открой файл:
 
 ```
-presentation-editor.html
+editor/presentation-editor-v12.html
 ```
 
 в браузере (Chrome / Edge / Firefox)
