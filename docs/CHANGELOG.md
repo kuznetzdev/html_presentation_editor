@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 0.13.3 - deterministic slide activation proved - 2026-03-31
+- promoted Stage B Playwright coverage from placeholder to release gate for create, duplicate, delete, undo/redo, and autosave-recovery flows across the signed-off Chromium width set
+- added shell-aware browser helpers so compact-width regression scenarios use the real slide-list and inspector drawers instead of hidden desktop controls
+- removed the timing hole where structural slide mutations relied on debounced history capture, making undo/redo deterministic under immediate create/duplicate/delete sequences
+- captured structural slide history against the intended active slide target, not the stale runtime-confirmed slide, so restored drafts and undo states land on the correct slide index
+- kept the full active Playwright suite green after enabling Stage B coverage
+
 ## 0.13.2 - export preview parity proved - 2026-03-31
 - added Playwright proof for manual-base parity between live preview and export-validation preview on the signed-off Chromium width set
 - aligned manual base URL handling behind one shell path so load, restore, autosave, and rendered-output contracts stop drifting semantically

@@ -2,7 +2,7 @@
 
 ## Current version
 
-`0.13.2`
+`0.13.3`
 
 ## Product state
 
@@ -28,7 +28,8 @@ The fixed architecture is unchanged:
 - clean export path without bridge script, editor markers, or preview-only base markers
 - manual-base parity between live preview and export-validation preview is now explicitly proven in browser QA
 - export-validation preview remains reachable on compact widths through the visible export flow
-- autosave / undo / redo plumbing remains active
+- create / duplicate / delete / undo / redo slide flow is now proven through runtime-confirmed Playwright coverage
+- autosave recovery is now proven on desktop and compact widths through the real shell workflow
 
 ## Important constraints
 
@@ -42,7 +43,7 @@ The fixed architecture is unchanged:
 
 - direct manipulation is still intentionally conservative for transformed / zoomed / nested layouts
 - asset fidelity is still partial for deeper relative-asset chains and remote-resolution truthfulness
-- the Playwright harness is now present, but only stage A is enabled; slide flow, manipulation, diagnostics, and shell hardening still need staged activation
+- the Playwright harness is now present with stages A and B enabled; manipulation, diagnostics, and dedicated shell hardening still need staged activation
 - the editor still lives in one large HTML file and needs internal structural cleanup without changing the architecture
 
 ## Engineering audit snapshot
@@ -60,7 +61,7 @@ The fixed architecture is unchanged:
 - direct manipulation in complex geometry is blocked safely, not truly solved
 - asset audit distinguishes `unresolved` from `base-URL-dependent`, but coverage is still incomplete
 - compact shell drawers / toolbar / context menu are now under repo-local Playwright smoke coverage, but stage-specific shell hardening is still not fully enabled
-- slide lifecycle is more deterministic, but still depends on runtime metadata timing and bridge resend logic
+- slide lifecycle is now deterministic for create / duplicate / delete / undo / redo, but deeper bridge resend and runtime repair paths still need proof
 
 ### Still critical
 

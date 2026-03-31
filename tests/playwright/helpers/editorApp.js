@@ -26,6 +26,16 @@ const BASIC_MANUAL_BASE_URL =
   "http://127.0.0.1:4173/tests/fixtures/playwright/";
 const ASSET_MANUAL_BASE_URL =
   "http://127.0.0.1:4173/tests/fixtures/export-asset-parity/";
+const SHELL_PANEL_CONFIG = Object.freeze({
+  inspector: {
+    buttonSelector: "#mobileInspectorBtn",
+    panelSelector: "#inspectorPanel",
+  },
+  slides: {
+    buttonSelector: "#mobileSlidesBtn",
+    panelSelector: "#slidesPanel",
+  },
+});
 
 async function evaluateEditor(page, expression) {
   return page.evaluate((source) => globalThis.eval(source), expression);
@@ -337,6 +347,122 @@ async function assertHiddenPanelsAreInert(page) {
   expect(offenders).toEqual([]);
 }
 
+async function ensureShellPanelVisible(page, panel) {
+  const config = SHELL_PANEL_CONFIG[panel];
+  if (!config) return;
+
+  const buttonLocator = page.locator(config.buttonSelector);
+  if (!(await buttonLocator.isVisible())) {
+    await expect(page.locator(config.panelSelector)).toBeVisible();
+    return;
+  }
+
+  const openExpression =
+    panel === "slides"
+      ? "Boolean(state.leftPanelOpen)"
+      : "Boolean(state.rightPanelOpen)";
+  const panelIsOpen = await evaluateEditor(page, openExpression);
+  if (!panelIsOpen) {
+    await expect(buttonLocator).toBeEnabled();
+    await buttonLocator.click();
+    await page.waitForFunction((expression) => globalThis.eval(expression), openExpression);
+  }
+
+  await expect(page.locator(config.panelSelector)).toBeVisible();
+}
+
+async function ensureEditorControlVisible(page, selector, options = {}) {
+  const control = page.locator(selector);
+  if (await control.isVisible()) return control;
+
+  if (options.panel) {
+    await ensureShellPanelVisible(page, options.panel);
+  }
+
+  await expect(control).toBeVisible();
+  return control;
+}
+
+async function clickEditorControl(page, selector, options = {}) {
+  const control = await ensureEditorControlVisible(page, selector, options);
+  await expect(control).toBeEnabled();
+  await control.click();
+}
+
+async function closeCompactShellPanels(page) {
+  const compact = await page.evaluate(() => window.innerWidth <= 1024);
+  if (!compact) return;
+
+  const hasOpenPanel = await evaluateEditor(
+    page,
+    "Boolean(state.leftPanelOpen || state.rightPanelOpen)",
+  );
+  if (!hasOpenPanel) return;
+
+  const backdrop = page.locator("#panelBackdrop");
+  if (await backdrop.isVisible()) {
+    await backdrop.click({ position: { x: 4, y: 4 } });
+  } else {
+    for (const panel of ["slides", "inspector"]) {
+      const config = SHELL_PANEL_CONFIG[panel];
+      const button = page.locator(config.buttonSelector);
+      if (!(await button.isVisible())) continue;
+      const openExpression =
+        panel === "slides"
+          ? "Boolean(state.leftPanelOpen)"
+          : "Boolean(state.rightPanelOpen)";
+      if (await evaluateEditor(page, openExpression)) {
+        await button.click();
+        break;
+      }
+    }
+  }
+
+  await page.waitForFunction(
+    () => !globalThis.eval("state.leftPanelOpen || state.rightPanelOpen"),
+  );
+}
+
+async function waitForSlideActivationState(page, options) {
+  const payload = {
+    activeIndex:
+      typeof options?.activeIndex === "number" ? options.activeIndex : null,
+    count: Number(options?.count),
+  };
+
+  await page.waitForFunction(
+    (expected) => {
+      const snapshot = JSON.parse(
+        globalThis.eval(`JSON.stringify({
+          activeCount: state.slides.filter((slide) => slide.isActive).length,
+          activeIndex: state.slides.findIndex((slide) => slide.isActive),
+          activeSlideId: state.activeSlideId || null,
+          count: state.slides.length,
+          hasPendingRequest: Boolean(state.requestedSlideActivation),
+          previewLifecycle: state.previewLifecycle || "",
+          previewReady: Boolean(state.previewReady),
+          runtimeActiveSlideId: state.runtimeActiveSlideId || null
+        })`),
+      );
+
+      if (snapshot.count !== expected.count) return false;
+      if (!snapshot.previewReady || snapshot.previewLifecycle !== "ready") return false;
+      if (snapshot.hasPendingRequest) return false;
+      if (snapshot.activeCount !== 1) return false;
+      if (snapshot.activeSlideId !== snapshot.runtimeActiveSlideId) return false;
+      if (
+        typeof expected.activeIndex === "number" &&
+        snapshot.activeIndex !== expected.activeIndex
+      ) {
+        return false;
+      }
+      return true;
+    },
+    payload,
+    { timeout: 20_000 },
+  );
+}
+
 async function openExportValidationPopup(page) {
   const openFromCurrentState = async (trigger) => {
     const popupPromise = page
@@ -393,9 +519,13 @@ module.exports = {
   assertHiddenPanelsAreInert,
   assertNoHorizontalOverflow,
   assertShellGeometry,
+  clickEditorControl,
   clickPreview,
+  closeCompactShellPanels,
   collectFixturePayloads,
   connectAssetDirectory,
+  ensureEditorControlVisible,
+  ensureShellPanelVisible,
   evaluateEditor,
   getPreviewRect,
   gotoFreshEditor,
@@ -406,5 +536,6 @@ module.exports = {
   previewLocator,
   readDiagnostics,
   setMode,
+  waitForSlideActivationState,
   waitForPreviewReady,
 };

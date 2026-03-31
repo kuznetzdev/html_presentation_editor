@@ -8056,33 +8056,49 @@ ${doc.documentElement.outerHTML}`;
         }
       }
 
-      function commitChange(reason) {
+      function commitChange(reason, options = {}) {
         state.dirty = true;
         refreshUi();
-        schedulePersistence(reason);
+        schedulePersistence(reason, options);
       }
 
-      function schedulePersistence(reason = "change") {
+      function schedulePersistence(reason = "change", options = {}) {
+        const snapshotMode =
+          typeof options.snapshotMode === "string"
+            ? options.snapshotMode
+            : "debounced";
         window.clearTimeout(state.saveTimer);
         window.clearTimeout(state.snapshotTimer);
         state.saveTimer = window.setTimeout(saveProjectToLocalStorage, 250);
-        if (!state.historyMuted) {
-          state.snapshotTimer = window.setTimeout(
-            () => captureHistorySnapshot(reason),
-            320,
-          );
+        if (state.historyMuted) return;
+        if (snapshotMode === "immediate") {
+          captureHistorySnapshot(reason);
+          return;
         }
+        state.snapshotTimer = window.setTimeout(
+          () => captureHistorySnapshot(reason),
+          320,
+        );
       }
 
       function captureHistorySnapshot(reason, options = {}) {
         if (!state.modelDoc) return;
+        const slideIds = state.slides.map((slide) => slide.id);
+        const requestedSlideId = getRequestedSlideId();
+        const snapshotActiveSlideId = slideIds.includes(requestedSlideId)
+          ? requestedSlideId
+          : slideIds.includes(state.activeSlideId)
+            ? state.activeSlideId
+            : slideIds.includes(state.runtimeActiveSlideId)
+              ? state.runtimeActiveSlideId
+              : state.slides[0]?.id || null;
         const snapshot = {
           html: serializeCurrentProject(),
           sourceLabel: state.sourceLabel,
           manualBaseUrl: state.manualBaseUrl,
           activeSlideIndex: Math.max(
             0,
-            state.slides.findIndex((slide) => slide.id === state.activeSlideId),
+            state.slides.findIndex((slide) => slide.id === snapshotActiveSlideId),
           ),
         };
         const sameAsCurrent =
@@ -12344,9 +12360,12 @@ ${exportDoc.documentElement.outerHTML}`;
         if (currentSlide) currentSlide.after(slide);
         else parent.appendChild(slide);
         syncStaticSlideOrderingMetadata();
-        commitChange(`slide-template:${kind}`);
         const slideId = slide.getAttribute("data-editor-slide-id");
+        stageSlideActivationRequest(slideId, {
+          source: "slide-template-model",
+        });
         syncSlideRegistry({ currentActiveId: slideId });
+        commitChange(`slide-template:${kind}`, { snapshotMode: "immediate" });
         rebuildPreviewKeepingContext(slideId);
         closeSlideTemplateBar();
         showToast("Новый слайд добавлен после текущего.", "success", {
@@ -12422,8 +12441,11 @@ ${exportDoc.documentElement.outerHTML}`;
             slideId: cloneId,
           });
         }
-        commitChange("slide-duplicate");
+        stageSlideActivationRequest(cloneId, {
+          source: "slide-duplicate-model",
+        });
         syncSlideRegistry({ currentActiveId: cloneId });
+        commitChange("slide-duplicate", { snapshotMode: "immediate" });
         rebuildPreviewKeepingContext(cloneId);
         showToast("Текущий слайд продублирован.", "success", {
           title: "Слайды",
@@ -12453,8 +12475,11 @@ ${exportDoc.documentElement.outerHTML}`;
           nextSlide?.getAttribute("data-editor-slide-id") || null;
         state.pendingPreviewSelection = null;
         clearSelectedElementState();
-        commitChange("slide-delete");
+        stageSlideActivationRequest(nextSlideId, {
+          source: "slide-delete-model",
+        });
         syncSlideRegistry({ currentActiveId: nextSlideId });
+        commitChange("slide-delete", { snapshotMode: "immediate" });
         rebuildPreviewKeepingContext(nextSlideId);
         showToast("Слайд удалён. При необходимости используй Undo.", "success", {
           title: "Слайды",

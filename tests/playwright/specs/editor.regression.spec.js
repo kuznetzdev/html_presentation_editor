@@ -2,7 +2,9 @@ const path = require("path");
 const { test, expect } = require("@playwright/test");
 const {
   BASIC_MANUAL_BASE_URL,
+  closeCompactShellPanels,
   EXPORT_FIXTURE_ROOT,
+  clickEditorControl,
   clickPreview,
   evaluateEditor,
   getPreviewRect,
@@ -11,6 +13,7 @@ const {
   openExportValidationPopup,
   previewLocator,
   setMode,
+  waitForSlideActivationState,
 } = require("../helpers/editorApp");
 
 const PATTERN_IMAGE_PATH = path.join(
@@ -60,43 +63,52 @@ test.describe("Editor regression coverage", () => {
     testInfo,
   ) => {
     test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only stateful flow.");
-    test.skip(true, "Enable during stage B hardening.");
 
     await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
 
     const initialCount = await slideCount(page);
-
-    await page.click("#toggleSlideTemplateBarBtn");
-    await page.click('[data-slide-template="title"]');
-    await page.waitForFunction(
-      (count) => globalThis.eval("state.slides.length") === count,
-      initialCount + 1,
+    const initialActiveIndex = await evaluateEditor(
+      page,
+      "state.slides.findIndex((slide) => slide.isActive)",
     );
 
-    await page.click("#duplicateCurrentSlideBtn");
-    await page.waitForFunction(
-      (count) => globalThis.eval("state.slides.length") === count,
-      initialCount + 2,
-    );
+    await clickEditorControl(page, "#toggleSlideTemplateBarBtn", { panel: "slides" });
+    await clickEditorControl(page, '[data-slide-template="title"]', {
+      panel: "slides",
+    });
+    await waitForSlideActivationState(page, {
+      activeIndex: initialActiveIndex + 1,
+      count: initialCount + 1,
+    });
+
+    await clickEditorControl(page, "#duplicateCurrentSlideBtn", {
+      panel: "inspector",
+    });
+    await waitForSlideActivationState(page, {
+      activeIndex: initialActiveIndex + 2,
+      count: initialCount + 2,
+    });
 
     page.once("dialog", (dialog) => dialog.accept());
-    await page.click("#deleteCurrentSlideBtn");
-    await page.waitForFunction(
-      (count) => globalThis.eval("state.slides.length") === count,
-      initialCount + 1,
-    );
+    await clickEditorControl(page, "#deleteCurrentSlideBtn", {
+      panel: "inspector",
+    });
+    await waitForSlideActivationState(page, {
+      activeIndex: initialActiveIndex + 2,
+      count: initialCount + 1,
+    });
 
-    await page.click("#undoBtn");
-    await page.waitForFunction(
-      (count) => globalThis.eval("state.slides.length") === count,
-      initialCount + 2,
-    );
+    await clickEditorControl(page, "#undoBtn");
+    await waitForSlideActivationState(page, {
+      activeIndex: initialActiveIndex + 2,
+      count: initialCount + 2,
+    });
 
-    await page.click("#redoBtn");
-    await page.waitForFunction(
-      (count) => globalThis.eval("state.slides.length") === count,
-      initialCount + 1,
-    );
+    await clickEditorControl(page, "#redoBtn");
+    await waitForSlideActivationState(page, {
+      activeIndex: initialActiveIndex + 2,
+      count: initialCount + 1,
+    });
   });
 
   test("text edit, image replace, and block insertion stay functional @stage-c", async (
@@ -153,14 +165,14 @@ test.describe("Editor regression coverage", () => {
 
   test("autosave recovery restores the last draft @stage-b", async ({ page }, testInfo) => {
     test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only autosave flow.");
-    test.skip(true, "Enable during stage B hardening.");
 
     await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
     await selectTextNode(page, "#hero-copy");
-    await page.click("#editTextBtn");
+    await clickEditorControl(page, "#editTextBtn", { panel: "inspector" });
     const copy = previewLocator(page, "#hero-copy");
     await copy.press(process.platform === "darwin" ? "Meta+A" : "Control+A");
     await copy.fill("Autosave recovery text");
+    await closeCompactShellPanels(page);
     await clickPreview(page, "#cta-box");
 
     await page.waitForFunction(() =>
