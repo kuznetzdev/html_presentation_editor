@@ -1,44 +1,10 @@
 # ROADMAP NEXT
 
-## Post-0.13.1 priorities
+## Post-0.13.6 priorities
 
-### 1. Preview lifecycle and slide-flow state machine
+Stage E is now signed off for compact-shell drawer close and hidden-panel inertness. The next open release gate is responsibility-based cleanup inside the large editor file.
 
-Goals:
-- make slide activation deterministic under runtime lag
-- reduce bridge/watchdog/desync edge cases
-- separate shell intent from runtime-confirmed state more clearly
-
-Substeps:
-- isolate a stricter activation state machine around `activeSlideId`, `pendingActiveSlideId`, `runtimeActiveSlideId`
-- harden `loadHtmlString()`, `applyRuntimeMetadata()`, `requestSlideActivation()`, `applySlideUpdateFromBridge()`, `applyDocumentSyncFromBridge()`
-- tighten stale-seq and slide-lock handling so preview resends do not loop silently
-
-### 2. Asset fidelity and export parity
-
-Goals:
-- close the largest preview/export mismatch paths
-- make unresolved asset diagnostics actionable
-
-Substeps:
-- cover CSS `url()`, `@import`, `srcset`, `poster`, and inline-style rewrites as one asset pipeline
-- unify preview audit and export audit expectations
-- surface base-URL-dependent assets in visible shell copy, not only internal state
-- validate clean export and validation preview against the same asset rules
-
-### 3. Direct manipulation support envelope
-
-Goals:
-- move from safe blocking to true support for more layouts
-- keep incorrect coordinates impossible
-
-Substeps:
-- model coordinate origins for nested positioned containers explicitly
-- audit overlay-shell coordinates vs iframe coordinates under scroll and resize
-- keep transformed / zoomed layouts blocked unless exact mapping is proven
-- add stronger end-of-manipulation commit/cancel synchronization
-
-### 4. Internal zoning without architecture rewrite
+### 1. Internal zoning without architecture rewrite (`v0.13.7`)
 
 Goals:
 - reduce blast radius inside the large editor file
@@ -49,21 +15,19 @@ Substeps:
 - keep refactors contiguous and responsibility-based before extracting files
 - preserve `parent shell + iframe + bridge + modelDoc`
 
-### 5. Validation automation
+### 2. System polish after correctness (`v0.14.0`)
 
 Goals:
-- reduce dependence on manual browser smoke checks for every shell/layout pass
+- keep light/dark parity and visual consistency without re-opening correctness regressions
 
 Substeps:
-- codify responsive shell QA for the signed-off width set
-- codify light/dark and keyboard-basics smoke checks
-- add a minimal repo-local command that fails on layout regressions before tagging
+- re-run visual baselines after stage F cleanup
+- normalize controls, spacing, radius, and shadows
+- avoid any new shell-drift or hidden-focus regressions while polishing
 
 ## Suggested version path
 
-1. `0.13.2`
-   focus: preview lifecycle and slide activation hardening
-2. `0.13.3`
-   focus: asset fidelity and export parity
-3. `0.14.0`
-   focus: direct-manipulation expansion plus internal zoning
+1. `0.13.7`
+   focus: structure cleanup without architecture rewrite
+2. `0.14.0`
+   focus: visual and system polish after correctness is already locked

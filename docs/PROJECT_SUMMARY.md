@@ -2,7 +2,7 @@
 
 ## Current version
 
-`0.13.1`
+`0.13.6`
 
 ## Product state
 
@@ -19,13 +19,22 @@ The fixed architecture is unchanged:
 - load full HTML deck from text into isolated iframe preview
 - switch between Preview and Edit without rebuilding the whole architecture
 - generic slide activation and runtime-confirmed active slide sync
+- Playwright harness for Chromium, Firefox, WebKit, and signed-off narrow/wide Chromium widths
 - select elements inside iframe and inspect/edit them from the shell
 - direct manipulation for simple cases, including verified drag of an `absolute` element
 - shell layout now uses measured chrome offsets instead of circular height assumptions
 - drawers, popovers, context menu, preview note, and compact floating toolbar behave predictably across the signed-off width set
 - narrow-width shell overlays fall back to sheet mode instead of trying to preserve fragile anchored placement
 - clean export path without bridge script, editor markers, or preview-only base markers
-- autosave / undo / redo plumbing remains active
+- manual-base parity between live preview and export-validation preview is now explicitly proven in browser QA
+- export-validation preview remains reachable on compact widths through the visible export flow
+- create / duplicate / delete / undo / redo slide flow is now proven through runtime-confirmed Playwright coverage
+- autosave recovery is now proven on desktop and compact widths through the real shell workflow
+- edit-mode persistence is now proven across undo / redo / autosave restore instead of depending on shell defaults after preview rebuilds
+- direct manipulation is now proven for the supported keyboard-nudge envelope across `absolute`, `fixed`, and nested positioned contexts
+- unsafe transformed manipulation paths stay honestly blocked and surfaced through diagnostics instead of producing incorrect coordinates
+- connected asset-directory diagnostics are now proven through active Stage D browser coverage across the signed-off Chromium width set
+- compact-shell drawers are now proven to close through the real backdrop hit-area on `390 / 640 / 820`, and hidden panels stay out of the focus order after close
 
 ## Important constraints
 
@@ -37,9 +46,9 @@ The fixed architecture is unchanged:
 
 ## Current weak spots
 
-- direct manipulation is still intentionally conservative for transformed / zoomed / nested layouts
-- asset fidelity is still partial for CSS `url()`, `srcset`, `poster`, and deeper relative-asset chains
-- there is still no automated repo-local validation pipeline; release confidence remains browser-smoke based
+- direct manipulation is still intentionally conservative for transformed / zoomed layouts outside the signed-off positioned envelope
+- asset fidelity is still partial for deeper remote/manual-base uncertainty outside the connected-directory sign-off path
+- the Playwright harness is now present with stages A-E enabled; structural cleanup and final polish still need staged activation
 - the editor still lives in one large HTML file and needs internal structural cleanup without changing the architecture
 
 ## Engineering audit snapshot
@@ -54,10 +63,10 @@ The fixed architecture is unchanged:
 
 ### Only partially mitigated
 
-- direct manipulation in complex geometry is blocked safely, not truly solved
-- asset audit distinguishes `unresolved` from `base-URL-dependent`, but coverage is still incomplete
-- compact shell drawers / toolbar / context menu are now signed off for the target width set, but still rely on manual browser QA rather than automated checks
-- slide lifecycle is more deterministic, but still depends on runtime metadata timing and bridge resend logic
+- direct manipulation in transform-heavy or zoom-heavy geometry is blocked safely, not truly solved
+- asset audit distinguishes `unresolved` from `base-URL-dependent`, and connected-directory truthfulness is now proven, but deeper remote/manual-base uncertainty still lacks a dedicated release gate
+- compact shell drawers / toolbar / context menu are now under repo-local Playwright coverage, and drawer close/inertness is proven on narrow widths, but broader shell cleanup is still pending
+- slide lifecycle is now deterministic for create / duplicate / delete / undo / redo, and bridge-driven document reconciliation no longer poisons redo history; deeper bridge resend and runtime repair paths still need proof
 
 ### Still critical
 
