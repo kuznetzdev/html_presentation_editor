@@ -90,9 +90,15 @@ async function waitForPreviewReady(page) {
   try {
     await page.waitForFunction(
       () =>
-        globalThis.eval(
-          "Boolean(state.modelDoc) && state.previewLifecycle === 'ready' && Boolean(state.previewReady)",
-        ),
+        globalThis.eval(`(() => {
+          const frame = document.getElementById("previewFrame");
+          const frameDoc = frame?.contentDocument || null;
+          return Boolean(state.modelDoc) &&
+            state.previewLifecycle === "ready" &&
+            Boolean(state.previewReady) &&
+            Boolean(frameDoc) &&
+            frameDoc.readyState === "complete";
+        })()`),
       undefined,
       { timeout: 20_000 },
     );
@@ -395,6 +401,70 @@ async function clickEditorControl(page, selector, options = {}) {
   await control.click();
 }
 
+async function waitForSelectedEntityKind(page, expectedKind) {
+  await page.waitForFunction(
+    (kind) =>
+      globalThis.eval(
+        "typeof getSelectedEntityKindForUi === 'function' ? getSelectedEntityKindForUi() : 'none'",
+      ) === kind,
+    expectedKind,
+  );
+}
+
+async function readSelectionUiState(page) {
+  return page.evaluate(() => {
+    const isVisible = (selector) => {
+      const element = document.querySelector(selector);
+      if (!(element instanceof HTMLElement)) return false;
+      const rect = element.getBoundingClientRect();
+      const style = window.getComputedStyle(element);
+      return (
+        !element.hidden &&
+        element.getAttribute("aria-hidden") !== "true" &&
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        rect.width > 0 &&
+        rect.height > 0
+      );
+    };
+
+    const visibleInspectorSections = Array.from(
+      document.querySelectorAll(".inspector-section"),
+    )
+      .filter((section) => {
+        if (!(section instanceof HTMLElement)) return false;
+        const rect = section.getBoundingClientRect();
+        const style = window.getComputedStyle(section);
+        return (
+          !section.hidden &&
+          section.getAttribute("aria-hidden") !== "true" &&
+          !section.classList.contains("is-entity-hidden") &&
+          style.display !== "none" &&
+          style.visibility !== "hidden" &&
+          rect.width > 0 &&
+          rect.height > 0
+        );
+      })
+      .map((section) => section.id);
+
+    return {
+      backdropVisible: isVisible("#panelBackdrop"),
+      inspectorVisible: isVisible("#inspectorPanel"),
+      kindBadge: document.getElementById("selectedKindBadge")?.textContent?.trim() || "",
+      leftPanelOpen: globalThis.eval("Boolean(state.leftPanelOpen)"),
+      rightPanelOpen: globalThis.eval("Boolean(state.rightPanelOpen)"),
+      selectedEntityKind: globalThis.eval(
+        "typeof getSelectedEntityKindForUi === 'function' ? getSelectedEntityKindForUi() : 'none'",
+      ),
+      selectedFlags: JSON.parse(globalThis.eval("JSON.stringify(state.selectedFlags || {})")),
+      selectionPolicyText:
+        document.getElementById("selectionPolicyText")?.textContent?.trim() || "",
+      toolbarVisible: isVisible("#floatingToolbar"),
+      visibleInspectorSections,
+    };
+  });
+}
+
 async function activateSlideByIndex(page, index) {
   const targetIndex = Number(index);
   if (!Number.isInteger(targetIndex) || targetIndex < 0) {
@@ -593,8 +663,10 @@ module.exports = {
   openInsertPalette,
   openHtmlFixture,
   previewLocator,
+  readSelectionUiState,
   readDiagnostics,
   setMode,
   waitForSlideActivationState,
+  waitForSelectedEntityKind,
   waitForPreviewReady,
 };

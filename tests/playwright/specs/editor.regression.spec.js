@@ -14,8 +14,10 @@ const {
   openExportValidationPopup,
   openInsertPalette,
   previewLocator,
+  readSelectionUiState,
   setMode,
   waitForSlideActivationState,
+  waitForSelectedEntityKind,
 } = require("../helpers/editorApp");
 
 const PATTERN_IMAGE_PATH = path.join(
@@ -68,6 +70,30 @@ async function selectContainerNode(page, selector, options = {}) {
         "Boolean(state.selectedNodeId) && Boolean(state.selectedFlags.isContainer)",
       ),
   );
+}
+
+async function selectVideoNode(page, selector, options = {}) {
+  await clickPreview(page, selector, options);
+  await page.waitForFunction(
+    () =>
+      globalThis.eval(
+        "Boolean(state.selectedNodeId) && Boolean(state.selectedFlags.isVideo)",
+      ),
+  );
+  await waitForSelectedEntityKind(page, "video");
+}
+
+async function selectSlideRoot(page, slideIndex) {
+  await previewLocator(page, "section.slide")
+    .nth(slideIndex)
+    .click({ position: { x: 12, y: 12 } });
+  await page.waitForFunction(
+    () =>
+      globalThis.eval(
+        "Boolean(state.selectedNodeId) && Boolean(state.selectedFlags.isSlideRoot)",
+      ),
+  );
+  await waitForSelectedEntityKind(page, "slide-root");
 }
 
 test.describe("Editor regression coverage", () => {
@@ -182,6 +208,33 @@ test.describe("Editor regression coverage", () => {
     await expect(previewLocator(page, "video")).toHaveCount(2);
   });
 
+  test("native video selection resolves to canonical video entity kind @stage-c", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only selection flow.");
+
+    await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
+    await activateSlideByIndex(page, 2);
+    await closeCompactShellPanels(page);
+
+    await selectVideoNode(page, "#demo-video");
+
+    const ui = await readSelectionUiState(page);
+    expect(ui.selectedEntityKind).toBe("video");
+    expect(ui.kindBadge).toBe("kind: video");
+    expect(ui.selectedFlags.isVideo).toBe(true);
+    expect(ui.selectedFlags.isContainer).toBe(false);
+    expect(ui.visibleInspectorSections).toEqual(
+      expect.arrayContaining([
+        "appearanceInspectorSection",
+        "elementActionsSection",
+        "imageSection",
+      ]),
+    );
+    expect(ui.visibleInspectorSections).not.toContain("selectionPolicySection");
+  });
+
   test("autosave recovery restores the last draft @stage-b", async ({ page }, testInfo) => {
     test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only autosave flow.");
 
@@ -260,5 +313,50 @@ test.describe("Editor regression coverage", () => {
     await expect(page.locator("#diagnosticsBox")).toContainText(
       /directManipSafe=false|directManipReason=/,
     );
+  });
+
+  test("compact shell closes slide drawer and routes primary surface by entity kind @stage-e", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!/(390|640|820)/.test(testInfo.project.name), "Compact shell only.");
+
+    await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
+
+    await activateSlideByIndex(page, 2);
+    await expect.poll(() => evaluateEditor(page, "Boolean(state.leftPanelOpen)")).toBe(false);
+    await expect.poll(() => evaluateEditor(page, "Boolean(state.rightPanelOpen)")).toBe(false);
+    await expect(page.locator("#panelBackdrop")).toBeHidden();
+
+    await selectTextNode(page, "#media-heading");
+    let ui = await readSelectionUiState(page);
+    expect(ui.selectedEntityKind).toBe("text");
+    expect(ui.toolbarVisible).toBe(true);
+    expect(ui.inspectorVisible).toBe(false);
+    expect(ui.rightPanelOpen).toBe(false);
+
+    await selectVideoNode(page, "#demo-video");
+    ui = await readSelectionUiState(page);
+    expect(ui.selectedEntityKind).toBe("video");
+    expect(ui.toolbarVisible).toBe(false);
+    expect(ui.inspectorVisible).toBe(true);
+    expect(ui.rightPanelOpen).toBe(true);
+    expect(ui.backdropVisible).toBe(true);
+    expect(ui.visibleInspectorSections).toEqual(
+      expect.arrayContaining([
+        "appearanceInspectorSection",
+        "elementActionsSection",
+        "imageSection",
+      ]),
+    );
+
+    await closeCompactShellPanels(page);
+    await selectSlideRoot(page, 2);
+    ui = await readSelectionUiState(page);
+    expect(ui.selectedEntityKind).toBe("slide-root");
+    expect(ui.inspectorVisible).toBe(true);
+    expect(ui.rightPanelOpen).toBe(true);
+    expect(ui.visibleInspectorSections).toContain("selectionPolicySection");
+    expect(ui.visibleInspectorSections).not.toContain("imageSection");
   });
 });
