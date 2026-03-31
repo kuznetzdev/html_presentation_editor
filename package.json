@@ -1,0 +1,33 @@
+{
+  "name": "html-presentation-editor",
+  "version": "0.13.1",
+  "description": "Local HTML presentation editor with Playwright regression coverage.",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:pw": "playwright test",
+    "test:pw:headed": "playwright test --headed",
+    "test:pw:update": "playwright test --update-snapshots",
+    "test:asset-parity": "node scripts/validate-export-asset-parity.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kuznetzdev/html_presentation_editor.git"
+  },
+  "keywords": [
+    "playwright",
+    "html",
+    "presentation",
+    "qa"
+  ],
+  "author": "Codex hardening workflow",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/kuznetzdev/html_presentation_editor/issues"
+  },
+  "homepage": "https://github.com/kuznetzdev/html_presentation_editor#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}
