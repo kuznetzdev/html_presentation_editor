@@ -2699,13 +2699,13 @@
                 id="interactionStatePill"
                 class="status-pill"
                 aria-live="polite"
-                >Preview</span
+                >Просмотр</span
               >
               <span
                 id="previewLifecyclePill"
                 class="status-pill"
                 aria-live="polite"
-                >Empty</span
+                >Пусто</span
               >
               <button
                 type="button"
@@ -3950,7 +3950,7 @@
         switch (lifecycle) {
           case "loading":
             return {
-              label: "Loading",
+              label: "Загрузка",
               className: "status-pill is-accent",
               title: "Iframe загружается и bridge ещё инициализируется.",
               buttonLabel: "↻ Превью",
@@ -3962,7 +3962,7 @@
             };
           case "recovering":
             return {
-              label: "Recovering",
+              label: "Сборка",
               className: "status-pill is-accent",
               title: "Shell пересоздаёт iframe и заново поднимает bridge.",
               buttonLabel: "↻ Восстановить",
@@ -3974,7 +3974,7 @@
             };
           case "bridge-degraded":
             return {
-              label: "Bridge lost",
+              label: "Без связи",
               className: "status-pill is-warning",
               title: "Heartbeat от iframe не приходит вовремя.",
               buttonLabel: "↻ Восстановить",
@@ -3986,7 +3986,7 @@
             };
           case "desync-suspected":
             return {
-              label: "Sync check",
+              label: "Проверка",
               className: "status-pill is-warning",
               title: "Shell зафиксировал подозрение на рассинхрон между modelDoc и live DOM.",
               buttonLabel: "↻ Восстановить",
@@ -3998,7 +3998,7 @@
             };
           case "ready":
             return {
-              label: "Ready",
+              label: "Готово",
               className: "status-pill is-ok",
               title: "Iframe и bridge синхронизированы и готовы к работе.",
               buttonLabel: "↻ Превью",
@@ -4008,7 +4008,7 @@
             };
           default:
             return {
-              label: "Empty",
+              label: "Пусто",
               className: "status-pill",
               title: "HTML ещё не загружен.",
               buttonLabel: "↻ Превью",
@@ -9043,37 +9043,37 @@ ${exportDoc.documentElement.outerHTML}`;
         switch (mode) {
           case "select":
             return {
-              label: "Select",
+              label: "Выбор",
               className: "status-pill is-accent",
               title: "Можно выбирать элементы и менять свойства.",
             };
           case "text-edit":
             return {
-              label: "Text",
+              label: "Текст",
               className: "status-pill is-accent",
               title: "Редактируется текст выбранного элемента.",
             };
           case "insert":
             return {
-              label: "Insert",
+              label: "Вставка",
               className: "status-pill is-warning",
               title: "Открыто меню вставки блоков.",
             };
           case "drag":
             return {
-              label: "Move",
+              label: "Перенос",
               className: "status-pill is-accent",
               title: "Элемент перемещается на холсте.",
             };
           case "resize":
             return {
-              label: "Resize",
+              label: "Размер",
               className: "status-pill is-accent",
               title: "Размер выбранного элемента изменяется.",
             };
           default:
             return {
-              label: "Preview",
+              label: "Просмотр",
               className: "status-pill",
               title: "Редактор не вмешивается в DOM презентации.",
             };
