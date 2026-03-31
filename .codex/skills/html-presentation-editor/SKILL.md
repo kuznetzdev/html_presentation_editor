@@ -23,6 +23,7 @@ Primary documents:
 3. `docs/PROJECT_SUMMARY.md`
 4. `docs/ROADMAP_NEXT.md`
 5. `README.md`
+6. `.codex/skills/html-presentation-editor/references/project-map.md`
 
 ## Product identity
 
