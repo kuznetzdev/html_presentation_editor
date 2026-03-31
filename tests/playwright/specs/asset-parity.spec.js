@@ -90,7 +90,6 @@ test.describe("Asset parity regression", () => {
     testInfo,
   ) => {
     test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only parity assertion.");
-    test.skip(true, "Enable during stage A parity hardening.");
 
     await gotoFreshEditor(page);
     await openHtmlFixture(page, ASSET_PARITY_CASE_PATH, {

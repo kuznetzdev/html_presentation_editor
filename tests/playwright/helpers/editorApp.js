@@ -338,26 +338,45 @@ async function assertHiddenPanelsAreInert(page) {
 }
 
 async function openExportValidationPopup(page) {
-  const popupPromise = page.waitForEvent("popup", { timeout: 4_000 }).catch(() => null);
-  await expect(page.locator("#validateExportBtn")).toBeEnabled();
-  await page.click("#validateExportBtn");
+  const openFromCurrentState = async (trigger) => {
+    const popupPromise = page
+      .waitForEvent("popup", { timeout: 4_000 })
+      .catch(() => null);
+    await trigger();
 
-  let popup = await popupPromise;
-  if (!popup) {
-    const fallbackUrl = await evaluateEditor(
-      page,
-      `state.lastExportValidationUrl || ""`,
-    );
-    if (!fallbackUrl) {
-      throw new Error("Validation popup did not open and no fallback URL was stored.");
+    let popup = await popupPromise;
+    if (!popup) {
+      const fallbackUrl = await evaluateEditor(
+        page,
+        `state.lastExportValidationUrl || ""`,
+      );
+      if (!fallbackUrl) {
+        throw new Error("Validation popup did not open and no fallback URL was stored.");
+      }
+      popup = await page.context().newPage();
+      await popup.goto(fallbackUrl, { waitUntil: "domcontentloaded" });
+    } else {
+      await popup.waitForLoadState("domcontentloaded");
     }
-    popup = await page.context().newPage();
-    await popup.goto(fallbackUrl, { waitUntil: "domcontentloaded" });
-  } else {
-    await popup.waitForLoadState("domcontentloaded");
+
+    return popup;
+  };
+
+  const validateExportBtn = page.locator("#validateExportBtn");
+  if (await validateExportBtn.isVisible()) {
+    await expect(validateExportBtn).toBeEnabled();
+    return openFromCurrentState(() => validateExportBtn.click());
   }
 
-  return popup;
+  const exportBtn = page.locator("#exportBtn");
+  await expect(exportBtn).toBeVisible();
+  await expect(exportBtn).toBeEnabled();
+  await exportBtn.click();
+  const toastActionBtn = page.locator(".toast-action-btn", {
+    hasText: "Открыть проверку",
+  });
+  await expect(toastActionBtn).toBeVisible();
+  return openFromCurrentState(() => toastActionBtn.click());
 }
 
 function isChromiumOnlyProject(projectName) {

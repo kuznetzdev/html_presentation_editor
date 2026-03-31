@@ -2,7 +2,7 @@
 
 ## Current version
 
-`0.13.1`
+`0.13.2`
 
 ## Product state
 
@@ -19,12 +19,15 @@ The fixed architecture is unchanged:
 - load full HTML deck from text into isolated iframe preview
 - switch between Preview and Edit without rebuilding the whole architecture
 - generic slide activation and runtime-confirmed active slide sync
+- Playwright harness for Chromium, Firefox, WebKit, and signed-off narrow/wide Chromium widths
 - select elements inside iframe and inspect/edit them from the shell
 - direct manipulation for simple cases, including verified drag of an `absolute` element
 - shell layout now uses measured chrome offsets instead of circular height assumptions
 - drawers, popovers, context menu, preview note, and compact floating toolbar behave predictably across the signed-off width set
 - narrow-width shell overlays fall back to sheet mode instead of trying to preserve fragile anchored placement
 - clean export path without bridge script, editor markers, or preview-only base markers
+- manual-base parity between live preview and export-validation preview is now explicitly proven in browser QA
+- export-validation preview remains reachable on compact widths through the visible export flow
 - autosave / undo / redo plumbing remains active
 
 ## Important constraints
@@ -38,8 +41,8 @@ The fixed architecture is unchanged:
 ## Current weak spots
 
 - direct manipulation is still intentionally conservative for transformed / zoomed / nested layouts
-- asset fidelity is still partial for CSS `url()`, `srcset`, `poster`, and deeper relative-asset chains
-- there is still no automated repo-local validation pipeline; release confidence remains browser-smoke based
+- asset fidelity is still partial for deeper relative-asset chains and remote-resolution truthfulness
+- the Playwright harness is now present, but only stage A is enabled; slide flow, manipulation, diagnostics, and shell hardening still need staged activation
 - the editor still lives in one large HTML file and needs internal structural cleanup without changing the architecture
 
 ## Engineering audit snapshot
@@ -56,7 +59,7 @@ The fixed architecture is unchanged:
 
 - direct manipulation in complex geometry is blocked safely, not truly solved
 - asset audit distinguishes `unresolved` from `base-URL-dependent`, but coverage is still incomplete
-- compact shell drawers / toolbar / context menu are now signed off for the target width set, but still rely on manual browser QA rather than automated checks
+- compact shell drawers / toolbar / context menu are now under repo-local Playwright smoke coverage, but stage-specific shell hardening is still not fully enabled
 - slide lifecycle is more deterministic, but still depends on runtime metadata timing and bridge resend logic
 
 ### Still critical

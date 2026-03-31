@@ -4687,7 +4687,7 @@
           const payload = state.restorePayload;
           state.restorePayload = null;
           hideRestoreBanner();
-          els.baseUrlInput.value = payload.manualBaseUrl || "";
+          setManualBaseUrl(payload.manualBaseUrl || "");
           loadHtmlString(
             payload.html,
             payload.sourceLabel || "Автовосстановление",
@@ -4746,7 +4746,7 @@
         state.sourceLabel = sourceLabel;
         state.sourceHtml = htmlString;
         state.doctypeString = extractDoctype(htmlString) || "<!DOCTYPE html>";
-        state.manualBaseUrl = els.baseUrlInput.value.trim();
+        setManualBaseUrl(els.baseUrlInput?.value || "");
         state.bridgeToken = createBridgeToken();
         state.mode = "preview";
         state.interactionMode = "preview";
@@ -5211,9 +5211,27 @@
         base.setAttribute("href", baseHref);
       }
 
+      function getManualBaseUrl(fallbackValue = "") {
+        const fromState = String(state.manualBaseUrl || "").trim();
+        if (fromState) return fromState;
+        return String(fallbackValue || els.baseUrlInput?.value || "").trim();
+      }
+
+      function setManualBaseUrl(nextValue = "") {
+        const normalized = String(nextValue || "").trim();
+        state.manualBaseUrl = normalized;
+        if (els.baseUrlInput && els.baseUrlInput.value !== normalized) {
+          els.baseUrlInput.value = normalized;
+        }
+        return normalized;
+      }
+
       function createRenderedOutputContract(options = {}) {
         const keepEditorArtifacts = options.keepEditorArtifacts !== false;
         const includeBridge = Boolean(options.includeBridge);
+        const manualBaseUrl = String(
+          options.manualBaseUrl ?? options.baseHref ?? getManualBaseUrl(),
+        ).trim();
         return {
           renderMode: String(options.renderMode || "preview").trim() || "preview",
           applyAssetResolver: Boolean(
@@ -5223,7 +5241,8 @@
           includeBridge,
           auditAssets: Boolean(options.auditAssets),
           captureAuditToState: Boolean(options.captureAuditToState),
-          baseHref: String(options.baseHref ?? state.manualBaseUrl ?? "").trim(),
+          manualBaseUrl,
+          baseHref: manualBaseUrl,
           previewOnly: keepEditorArtifacts && includeBridge,
           exportSafe: !keepEditorArtifacts,
         };
@@ -5278,7 +5297,7 @@
           includeBridge: true,
           auditAssets: true,
           captureAuditToState: true,
-          baseHref: state.manualBaseUrl.trim(),
+          manualBaseUrl: getManualBaseUrl(),
         });
       }
 
@@ -7860,7 +7879,7 @@ ${doc.documentElement.outerHTML}`;
         return buildRenderedOutputPackage({
           renderMode: "export",
           keepEditorArtifacts: false,
-          baseHref: state.manualBaseUrl.trim(),
+          manualBaseUrl: getManualBaseUrl(),
         });
       }
 
@@ -7870,7 +7889,7 @@ ${doc.documentElement.outerHTML}`;
           applyAssetResolver: Boolean(state.assetResolverMap),
           keepEditorArtifacts: false,
           auditAssets: true,
-          baseHref: state.manualBaseUrl.trim(),
+          manualBaseUrl: getManualBaseUrl(),
         });
         if (!pack) return null;
         cleanupExportValidationUrl();
@@ -8095,7 +8114,7 @@ ${exportDoc.documentElement.outerHTML}`;
       function restoreSnapshot(snapshot) {
         if (!snapshot?.html) return;
         state.historyMuted = true;
-        els.baseUrlInput.value = snapshot.manualBaseUrl || "";
+        setManualBaseUrl(snapshot.manualBaseUrl || "");
         loadHtmlString(
           snapshot.html,
           snapshot.sourceLabel || state.sourceLabel || "Восстановленная версия",
@@ -13205,7 +13224,7 @@ ${exportDoc.documentElement.outerHTML}`;
             version: 3,
             savedAt: Date.now(),
             sourceLabel: state.sourceLabel,
-            manualBaseUrl: els.baseUrlInput.value.trim(),
+            manualBaseUrl: getManualBaseUrl(),
             activeSlideIndex: Math.max(
               0,
               state.slides.findIndex(

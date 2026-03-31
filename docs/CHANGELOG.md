@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 0.13.2 - export preview parity proved - 2026-03-31
+- added Playwright proof for manual-base parity between live preview and export-validation preview on the signed-off Chromium width set
+- aligned manual base URL handling behind one shell path so load, restore, autosave, and rendered-output contracts stop drifting semantically
+- exposed `manualBaseUrl` directly in the rendered-output contract while preserving `baseHref` for the DOM-level output package
+- verified export-validation chrome stripping through a truthful UX route on compact widths by using the visible export action when the desktop-only validate button is hidden
+- kept the full active Playwright suite green after the stage A changes
+- preserved the fixed `parent shell + iframe + bridge + modelDoc` architecture without widening the asset-rewrite scope yet
+
 ## 0.13.1 - shell hardening - 2026-03-31
 - removed the feedback loop between design-time chrome sizes and measured runtime offsets; shell now uses `--topbar-min-h` for styling and `--shell-top-offset` / `--mobile-rail-offset` for live geometry
 - hardened topbar, secondary row, preview note, panel internals, and button sizing against frozen width assumptions via predictable grid/min-width rules

@@ -8,6 +8,7 @@ const {
   getPreviewRect,
   isChromiumOnlyProject,
   loadBasicDeck,
+  openExportValidationPopup,
   previewLocator,
   setMode,
 } = require("../helpers/editorApp");
@@ -178,13 +179,9 @@ test.describe("Editor regression coverage", () => {
 
   test("export validation popup strips editor chrome @stage-a", async ({ page }, testInfo) => {
     test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only export contract.");
-    test.skip(true, "Enable during stage A hardening.");
 
     await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "preview" });
-    const popupPromise = page.waitForEvent("popup");
-    await page.click("#validateExportBtn");
-    const popup = await popupPromise;
-    await popup.waitForLoadState("domcontentloaded");
+    const popup = await openExportValidationPopup(page);
 
     await expect(popup.locator("#selectionOverlay")).toHaveCount(0);
     await expect(popup.locator('[data-editor-selected="true"]')).toHaveCount(0);
