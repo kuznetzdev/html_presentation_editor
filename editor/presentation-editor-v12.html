@@ -830,6 +830,23 @@
           box-shadow 0.16s ease;
       }
 
+      .slide-item[draggable="true"] {
+        cursor: grab;
+        user-select: none;
+      }
+
+      .slide-item.is-dragging {
+        opacity: 0.58;
+        cursor: grabbing;
+        border-style: dashed;
+      }
+
+      .slide-item.is-drop-target {
+        border-color: var(--shell-accent);
+        background: var(--shell-accent-soft);
+        box-shadow: inset 0 0 0 1px var(--shell-selection-ring);
+      }
+
       .slide-item::before {
         content: "";
         position: absolute;
@@ -917,8 +934,16 @@
 
       .slide-actions {
         display: flex;
-        flex-direction: column;
-        gap: 6px;
+        align-items: flex-start;
+      }
+
+      .slide-menu-trigger {
+        width: 36px;
+        min-width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        font-size: 18px;
+        line-height: 1;
       }
 
       .preview-shell {
@@ -4191,6 +4216,11 @@
         pendingInsertPosition: "after",
         contextMenuNodeId: null,
         contextMenuPayload: null,
+        slideRailDrag: {
+          slideId: null,
+          hoverIndex: -1,
+          suppressClickUntil: 0,
+        },
         restorePayload: null,
         copiedStyle: null,
         theme: "light",
@@ -7783,6 +7813,109 @@
         });
       }
 
+      function canUseSlideRailDragDrop() {
+        return canUseStaticSlideModel() && !isCompactShell();
+      }
+
+      function clearSlideRailDropTarget() {
+        els.slidesList
+          ?.querySelectorAll(".slide-item.is-drop-target, .slide-item.is-dragging")
+          .forEach((node) => node.classList.remove("is-drop-target", "is-dragging"));
+      }
+
+      function setSlideRailDropTarget(index) {
+        const nextIndex = Number.isFinite(index) ? Number(index) : -1;
+        if (state.slideRailDrag.hoverIndex === nextIndex) return;
+        els.slidesList
+          ?.querySelector(`.slide-item.is-drop-target[data-index="${state.slideRailDrag.hoverIndex}"]`)
+          ?.classList.remove("is-drop-target");
+        state.slideRailDrag.hoverIndex = nextIndex;
+        if (nextIndex < 0) return;
+        els.slidesList
+          ?.querySelector(`.slide-item[data-index="${nextIndex}"]`)
+          ?.classList.add("is-drop-target");
+      }
+
+      function resetSlideRailDragState() {
+        state.slideRailDrag.slideId = null;
+        state.slideRailDrag.hoverIndex = -1;
+        state.slideRailDrag.suppressClickUntil = Date.now() + 180;
+        clearSlideRailDropTarget();
+      }
+
+      function maybeAutoScrollSlideRail(clientY) {
+        if (!els.slidesList) return;
+        const rect = els.slidesList.getBoundingClientRect();
+        const edge = 48;
+        const step = 20;
+        if (clientY < rect.top + edge) {
+          els.slidesList.scrollTop -= step;
+        } else if (clientY > rect.bottom - edge) {
+          els.slidesList.scrollTop += step;
+        }
+      }
+
+      function openSlideRailContextMenu(slideId, slideIndex, clientX, clientY) {
+        if (state.mode !== "edit") return;
+        closeShellPanels();
+        closeTransientShellUi({ keep: "context-menu" });
+        state.contextMenuNodeId = null;
+        state.contextMenuPayload = {
+          menuScope: "slide-rail",
+          slideId,
+          slideIndex,
+          slideCount: state.slides.length,
+          origin: "shell",
+          shellClientX: clientX,
+          shellClientY: clientY,
+        };
+        renderContextMenu(state.contextMenuPayload);
+        positionContextMenu(clientX, clientY);
+        els.contextMenu.classList.add("is-open");
+        els.contextMenu.setAttribute("aria-hidden", "false");
+        window.requestAnimationFrame(() => focusContextMenuButton(0));
+      }
+
+      function moveSlideToIndex(fromIndex, toIndex, options = {}) {
+        if (!canUseStaticSlideModel()) return;
+        const slides = state.slides;
+        if (!slides.length) return;
+        const normalizedFromIndex = Math.max(0, Math.min(slides.length - 1, fromIndex));
+        const normalizedToIndex = Math.max(0, Math.min(slides.length - 1, toIndex));
+        if (normalizedFromIndex === normalizedToIndex) return;
+        const current = slides[normalizedFromIndex];
+        const target = slides[normalizedToIndex];
+        const currentEl = getSlideModelNodeById(current?.id);
+        const targetEl = getSlideModelNodeById(target?.id);
+        if (!current || !target || !currentEl || !targetEl) return;
+        const reorderedSlides = slides.slice();
+        const [movedSlide] = reorderedSlides.splice(normalizedFromIndex, 1);
+        reorderedSlides.splice(normalizedToIndex, 0, movedSlide);
+        if (normalizedToIndex < normalizedFromIndex) targetEl.before(currentEl);
+        else targetEl.after(currentEl);
+        syncStaticSlideOrderingMetadata();
+        const activateMovedSlide = options.activateMovedSlide !== false;
+        let nextActiveId = current.id;
+        if (!activateMovedSlide) {
+          nextActiveId = state.activeSlideId;
+          if (nextActiveId === current.id) {
+            const fallbackIndex = Math.min(
+              normalizedFromIndex,
+              Math.max(0, reorderedSlides.length - 1),
+            );
+            nextActiveId = reorderedSlides[fallbackIndex]?.id || reorderedSlides[0]?.id || null;
+          }
+        }
+        const nextActiveIndex = Math.max(0, reorderedSlides.findIndex((slide) => slide.id === nextActiveId));
+        stageSlideActivationRequest(nextActiveId, {
+          source: "slide-move-model",
+          index: nextActiveIndex,
+        });
+        commitChange("slide-move");
+        syncSlideRegistry({ currentActiveId: nextActiveId });
+        rebuildPreviewKeepingContext(nextActiveId);
+      }
+
       function renderSlidesList() {
         els.slidesList.innerHTML = "";
         const slides = state.slides;
@@ -7811,6 +7944,7 @@
           item.className = `slide-item ${isActiveSlide ? "is-active" : ""}`;
           if (isPendingSlide) item.classList.add("is-pending");
           item.dataset.index = String(index);
+          item.dataset.slideId = slide.id;
           item.setAttribute("role", "button");
           item.setAttribute("tabindex", "0");
           item.setAttribute(
@@ -7819,6 +7953,8 @@
           );
           if (isActiveSlide) item.setAttribute("aria-current", "true");
           item.setAttribute("aria-busy", isPendingSlide ? "true" : "false");
+          const canDragSlideRail = canUseSlideRailDragDrop() && hasStaticSlide(slide.id);
+          if (canDragSlideRail) item.setAttribute("draggable", "true");
           const main = document.createElement("div");
           main.className = "slide-item-main";
           const slideNode = state.modelDoc?.querySelector(
@@ -7846,42 +7982,76 @@
         `;
           const actions = document.createElement("div");
           actions.className = "slide-actions";
-          const upBtn = document.createElement("button");
-          upBtn.type = "button";
-          upBtn.className = "icon-btn";
-          upBtn.textContent = "↑";
-          upBtn.setAttribute("aria-label", "Поднять слайд выше");
-          upBtn.title = "Поднять выше в HTML";
-          upBtn.disabled =
-            !state.modelDoc || index === 0 || !hasStaticSlide(slide.id);
-          upBtn.addEventListener("click", (event) => {
+          const menuBtn = document.createElement("button");
+          menuBtn.type = "button";
+          menuBtn.className = "icon-btn slide-menu-trigger";
+          menuBtn.textContent = "⋯";
+          menuBtn.setAttribute("aria-label", `Открыть действия для слайда ${index + 1}`);
+          menuBtn.title = "Действия со слайдом";
+          menuBtn.addEventListener("click", (event) => {
             event.stopPropagation();
-            moveSlide(index, -1);
+            const rect = menuBtn.getBoundingClientRect();
+            openSlideRailContextMenu(
+              slide.id,
+              index,
+              rect.left + rect.width / 2,
+              rect.bottom + 6,
+            );
           });
-          const downBtn = document.createElement("button");
-          downBtn.type = "button";
-          downBtn.className = "icon-btn";
-          downBtn.textContent = "↓";
-          downBtn.setAttribute("aria-label", "Опустить слайд ниже");
-          downBtn.title = "Опустить ниже в HTML";
-          downBtn.disabled =
-            !state.modelDoc ||
-            index === slides.length - 1 ||
-            !hasStaticSlide(slide.id);
-          downBtn.addEventListener("click", (event) => {
-            event.stopPropagation();
-            moveSlide(index, 1);
-          });
-          actions.append(upBtn, downBtn);
+          actions.append(menuBtn);
           item.append(main, actions);
           item.addEventListener("click", () => {
+            if (Date.now() < state.slideRailDrag.suppressClickUntil) return;
             requestSlideActivation(slide.id, { index });
           });
+          item.addEventListener("contextmenu", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            openSlideRailContextMenu(slide.id, index, event.clientX, event.clientY);
+          });
           item.addEventListener("keydown", (event) => {
+            if (event.key === "ContextMenu" || (event.shiftKey && event.key === "F10")) {
+              event.preventDefault();
+              const rect = item.getBoundingClientRect();
+              openSlideRailContextMenu(
+                slide.id,
+                index,
+                rect.left + Math.min(rect.width - 18, 42),
+                rect.top + Math.min(rect.height - 12, 28),
+              );
+              return;
+            }
             if (event.key !== "Enter" && event.key !== " ") return;
             event.preventDefault();
             item.click();
           });
+          if (canDragSlideRail) {
+            item.addEventListener("dragstart", (event) => {
+              state.slideRailDrag.slideId = slide.id;
+              state.slideRailDrag.hoverIndex = index;
+              state.slideRailDrag.suppressClickUntil = 0;
+              item.classList.add("is-dragging");
+              event.dataTransfer?.setData("text/plain", slide.id);
+              if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
+            });
+            item.addEventListener("dragover", (event) => {
+              if (!state.slideRailDrag.slideId) return;
+              event.preventDefault();
+              if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+              setSlideRailDropTarget(index);
+              maybeAutoScrollSlideRail(event.clientY);
+            });
+            item.addEventListener("drop", (event) => {
+              if (!state.slideRailDrag.slideId) return;
+              event.preventDefault();
+              const fromIndex = getSlideIndexById(state.slideRailDrag.slideId);
+              resetSlideRailDragState();
+              moveSlideToIndex(fromIndex, index, { activateMovedSlide: false });
+            });
+            item.addEventListener("dragend", () => {
+              resetSlideRailDragState();
+            });
+          }
           els.slidesList.appendChild(item);
         });
         scrollActiveSlideListItemIntoView();
@@ -7963,25 +8133,7 @@
       }
 
       function moveSlide(index, direction) {
-        if (!state.modelDoc) return;
-        const targetIndex = index + direction;
-        const slides = state.slides;
-        const current = slides[index];
-        const target = slides[targetIndex];
-        if (!current || !target) return;
-        const currentEl = state.modelDoc.querySelector(
-          `[data-editor-slide-id="${cssEscape(current.id)}"]`,
-        );
-        const targetEl = state.modelDoc.querySelector(
-          `[data-editor-slide-id="${cssEscape(target.id)}"]`,
-        );
-        if (!currentEl || !targetEl) return;
-        if (direction < 0) targetEl.before(currentEl);
-        else targetEl.after(currentEl);
-        syncStaticSlideOrderingMetadata();
-        commitChange("slide-move");
-        syncSlideRegistry({ currentActiveId: current.id });
-        rebuildPreviewKeepingContext(current.id);
+        moveSlideToIndex(index, index + direction);
       }
 
       function canSelectionAction(action) {
@@ -10801,6 +10953,60 @@ ${exportDoc.documentElement.outerHTML}`;
       // Меню строится динамически под текущий тип элемента: текст, картинка,
       // video/iframe, контейнер. Это уменьшает шум и делает меню «человечным».
       function buildContextMenuItems(payload) {
+        if (payload?.menuScope === "slide-rail") {
+          const slideIndex = Number(payload.slideIndex);
+          const slideCount = Number(payload.slideCount || state.slides.length || 0);
+          const items = [
+            {
+              section: "structure",
+              action: "slide-duplicate",
+              icon: "⧉",
+              label: "Дублировать слайд",
+              hint: "",
+            },
+          ];
+          if (slideIndex > 0) {
+            items.push({
+              section: "structure",
+              action: "slide-move-top",
+              icon: "⇡",
+              label: "Переместить в начало",
+              hint: "",
+            });
+            items.push({
+              section: "structure",
+              action: "slide-move-up",
+              icon: "↑",
+              label: "Поднять выше",
+              hint: "",
+            });
+          }
+          if (slideIndex >= 0 && slideIndex < slideCount - 1) {
+            items.push({
+              section: "structure",
+              action: "slide-move-down",
+              icon: "↓",
+              label: "Опустить ниже",
+              hint: "",
+            });
+            items.push({
+              section: "structure",
+              action: "slide-move-bottom",
+              icon: "⇣",
+              label: "Переместить в конец",
+              hint: "",
+            });
+          }
+          items.push({
+            section: "remove",
+            action: "slide-delete",
+            icon: "✕",
+            label: "Удалить слайд",
+            hint: "",
+            danger: true,
+          });
+          return items;
+        }
         const items = [];
         const entityKind = getEntityKindFromPayload({
           ...state.selectedFlags,
@@ -11129,7 +11335,47 @@ ${exportDoc.documentElement.outerHTML}`;
       }
 
       async function handleContextMenuAction(action) {
+        const slideRailPayload =
+          state.contextMenuPayload?.menuScope === "slide-rail"
+            ? state.contextMenuPayload
+            : null;
         switch (action) {
+          case "slide-duplicate":
+            if (slideRailPayload?.slideId) duplicateSlideById(slideRailPayload.slideId);
+            break;
+          case "slide-move-top":
+            if (slideRailPayload)
+              moveSlideToIndex(Number(slideRailPayload.slideIndex), 0);
+            break;
+          case "slide-move-up":
+            if (slideRailPayload)
+              moveSlideToIndex(
+                Number(slideRailPayload.slideIndex),
+                Number(slideRailPayload.slideIndex) - 1,
+              );
+            break;
+          case "slide-move-down":
+            if (slideRailPayload)
+              moveSlideToIndex(
+                Number(slideRailPayload.slideIndex),
+                Number(slideRailPayload.slideIndex) + 1,
+              );
+            break;
+          case "slide-move-bottom":
+            if (slideRailPayload)
+              moveSlideToIndex(
+                Number(slideRailPayload.slideIndex),
+                Math.max(0, state.slides.length - 1),
+              );
+            break;
+          case "slide-delete":
+            if (
+              slideRailPayload?.slideId &&
+              window.confirm("Удалить этот слайд?")
+            ) {
+              deleteSlideById(slideRailPayload.slideId);
+            }
+            break;
           case "edit-html":
             openElementHtmlEditor();
             break;
@@ -13243,6 +13489,13 @@ ${exportDoc.documentElement.outerHTML}`;
         );
       }
 
+      function getSlideModelNodeById(slideId) {
+        if (!state.modelDoc || !slideId) return null;
+        return state.modelDoc.querySelector(
+          `[data-editor-slide-id="${cssEscape(slideId)}"]`,
+        );
+      }
+
       function getStaticSlideModelNodes() {
         if (!state.modelDoc) return [];
         return Array.from(state.modelDoc.querySelectorAll("[data-editor-slide-id]"));
@@ -13512,10 +13765,11 @@ ${exportDoc.documentElement.outerHTML}`;
         return current;
       }
 
-      function cloneCurrentSlideForDuplicate() {
-        const currentSlide = getCurrentSlideModelNode();
+      function cloneSlideForDuplicate(slideId = state.activeSlideId) {
+        const currentSlide = getSlideModelNodeById(slideId);
         if (!currentSlide) return null;
         const selectedNode =
+          slideId === state.activeSlideId &&
           state.selectedNodeId &&
           currentSlide.querySelector(
             `[data-editor-node-id="${cssEscape(state.selectedNodeId)}"]`,
@@ -13541,10 +13795,14 @@ ${exportDoc.documentElement.outerHTML}`;
         };
       }
 
-      function duplicateCurrentSlide() {
+      function cloneCurrentSlideForDuplicate() {
+        return cloneSlideForDuplicate(state.activeSlideId);
+      }
+
+      function duplicateSlideById(slideId) {
         if (!canUseStaticSlideModel()) return;
-        const currentSlide = getCurrentSlideModelNode();
-        const duplicatePayload = cloneCurrentSlideForDuplicate();
+        const currentSlide = getSlideModelNodeById(slideId);
+        const duplicatePayload = cloneSlideForDuplicate(slideId);
         const clone = duplicatePayload?.clone || null;
         if (!currentSlide || !clone) return;
         currentSlide.after(clone);
@@ -13566,10 +13824,14 @@ ${exportDoc.documentElement.outerHTML}`;
         });
       }
 
-      function deleteCurrentSlide() {
+      function duplicateCurrentSlide() {
+        duplicateSlideById(state.activeSlideId);
+      }
+
+      function deleteSlideById(slideId) {
         if (!canUseStaticSlideModel()) return;
         const slides = getStaticSlideModelNodes();
-        const currentSlide = getCurrentSlideModelNode();
+        const currentSlide = getSlideModelNodeById(slideId);
         if (!currentSlide) return;
         if (slides.length <= 1) {
           showToast("Нельзя удалить единственный слайд.", "warning", {
@@ -13579,7 +13841,7 @@ ${exportDoc.documentElement.outerHTML}`;
         }
         const currentIndex = slides.findIndex(
           (slide) =>
-            slide.getAttribute("data-editor-slide-id") === state.activeSlideId,
+            slide.getAttribute("data-editor-slide-id") === slideId,
         );
         const nextSlide =
           slides[currentIndex + 1] || slides[currentIndex - 1] || null;
@@ -13598,6 +13860,10 @@ ${exportDoc.documentElement.outerHTML}`;
         showToast("Слайд удалён. При необходимости используй Undo.", "success", {
           title: "Слайды",
         });
+      }
+
+      function deleteCurrentSlide() {
+        deleteSlideById(state.activeSlideId);
       }
 
       function replaceCurrentSlideInPreview(reason = "slide-style") {
