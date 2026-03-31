@@ -303,9 +303,9 @@
       }
 
       .icon-btn {
-        width: 32px;
-        min-width: 32px;
-        height: 32px;
+        width: 44px;
+        min-width: 44px;
+        height: 44px;
         padding: 0;
         display: inline-flex;
         align-items: center;
@@ -314,8 +314,8 @@
       }
 
       .compact {
-        min-width: 34px;
-        min-height: 34px;
+        min-width: 44px;
+        min-height: 44px;
         padding: 6px 8px;
       }
 
@@ -2061,7 +2061,7 @@
 /* ======================================================================
        [STYLE 08] Responsive + accessibility
        ====================================================================== */
-      body[data-complexity-mode="basic"] [data-ui-level="advanced"] {
+      body[data-complexity-mode="basic"] [data-ui-level="advanced"]:not([data-force-basic-visible="true"]) {
         display: none !important;
       }
 
@@ -2931,6 +2931,7 @@
                 type="button"
                 id="ftHandleBtn"
                 class="compact toolbar-handle"
+                aria-label="Перетащить панель быстрых действий"
                 title="Перетащить панель"
               >
                 ⋮⋮
@@ -2939,6 +2940,7 @@
                 type="button"
                 id="ftCollapseBtn"
                 class="compact"
+                aria-label="Свернуть или развернуть панель быстрых действий"
                 title="Свернуть/развернуть"
               >
                 ▾
@@ -2949,6 +2951,7 @@
                     type="button"
                     id="ftDeleteBtn"
                     class="compact"
+                    aria-label="Удалить выбранный элемент"
                     title="Удалить"
                   >
                     🗑
@@ -2957,6 +2960,7 @@
                     type="button"
                     id="ftDuplicateBtn"
                     class="compact"
+                    aria-label="Дублировать выбранный элемент"
                     title="Дублировать"
                   >
                     ⧉
@@ -2965,6 +2969,7 @@
                     type="button"
                     id="ftCopyStyleBtn"
                     class="compact"
+                    aria-label="Копировать стиль выбранного элемента"
                     title="Копировать стиль"
                   >
                     🎨+
@@ -2973,6 +2978,7 @@
                     type="button"
                     id="ftPasteStyleBtn"
                     class="compact"
+                    aria-label="Вставить стиль в выбранный элемент"
                     title="Вставить стиль"
                   >
                     🎨⇣
@@ -2983,6 +2989,7 @@
                     type="button"
                     id="ftEditTextBtn"
                     class="compact"
+                    aria-label="Редактировать текст"
                     title="Редактировать текст"
                   >
                     ✎
@@ -2991,6 +2998,7 @@
                     type="button"
                     id="ftBoldBtn"
                     class="compact"
+                    aria-label="Сделать текст жирным"
                     title="Жирный"
                   >
                     <strong>B</strong>
@@ -2999,6 +3007,7 @@
                     type="button"
                     id="ftItalicBtn"
                     class="compact"
+                    aria-label="Сделать текст курсивом"
                     title="Курсив"
                   >
                     <em>I</em>
@@ -3019,6 +3028,7 @@
                     type="button"
                     id="ftReplaceImageBtn"
                     class="compact"
+                    aria-label="Заменить изображение"
                     title="Заменить изображение"
                   >
                     🖼
@@ -3027,6 +3037,7 @@
                     type="button"
                     id="ftCopyImageUrlBtn"
                     class="compact"
+                    aria-label="Копировать URL медиа"
                     title="Копировать URL изображения"
                   >
                     🔗
@@ -3035,6 +3046,7 @@
                     type="button"
                     id="ftMediaUrlBtn"
                     class="compact"
+                    aria-label="Изменить URL медиа"
                     title="Изменить URL медиа"
                   >
                     🎞
@@ -3043,6 +3055,7 @@
                     type="button"
                     id="ftFitImageBtn"
                     class="compact"
+                    aria-label="Вписать изображение по ширине"
                     title="Вписать по ширине"
                   >
                     ↔
@@ -3407,7 +3420,7 @@
             data-entity-groups="image,video"
           >
             <h3>Изображение / media</h3>
-            <div class="field-group compact" data-ui-level="advanced">
+            <div class="field-group compact">
               <label for="imageSrcInput">src</label>
               <div class="inline-with-button">
                 <input
@@ -4072,6 +4085,7 @@
         selectedHtml: "",
         selectedRect: null,
         selectedAttrs: {},
+        selectedEntityKind: "none",
         selectedFlags: {
           canEditText: false,
           isImage: false,
@@ -4083,6 +4097,7 @@
         },
         selectedPolicy: createDefaultSelectionPolicy(),
         manipulationContext: null,
+        rightPanelUserOpen: false,
         liveSelectionRect: null,
         activeManipulation: null,
         activeGuides: { vertical: [], horizontal: [] },
@@ -5950,14 +5965,22 @@
           return el instanceof Element && el.tagName === 'IMG';
         }
 
-        function isVideoFrame(el) {
+        function isEmbeddedVideoFrame(el) {
           return el instanceof Element && el.tagName === 'IFRAME' && /(youtube|youtu\\.be|vimeo)/i.test(el.getAttribute('src') || '');
+        }
+
+        function isVideoElement(el) {
+          return el instanceof Element && (el.tagName === 'VIDEO' || isEmbeddedVideoFrame(el));
+        }
+
+        function isVideoFrame(el) {
+          return isVideoElement(el);
         }
 
         function isContainerElement(el) {
           if (!(el instanceof Element)) return false;
           if (el.hasAttribute(SLIDE_MARKER)) return false;
-          if (isImageElement(el) || isVideoFrame(el) || canEditText(el)) return false;
+          if (isImageElement(el) || isVideoElement(el) || canEditText(el)) return false;
           return el.children.length > 0 || ['DIV','SECTION','ARTICLE','MAIN','HEADER','FOOTER','ASIDE','NAV','FIGURE','UL','OL','TABLE'].includes(el.tagName);
         }
 
@@ -5967,6 +5990,17 @@
 
         function isCriticalStructure(el) {
           return el instanceof Element && el.matches('.reveal, .slides, .shower, .deck, .deck-container, .remark-slide-container');
+        }
+
+        function getEntityKind(el) {
+          if (!(el instanceof Element)) return 'none';
+          if (isSlideRoot(el)) return 'slide-root';
+          if (isCriticalStructure(el)) return 'protected';
+          if (canEditText(el)) return 'text';
+          if (isImageElement(el)) return 'image';
+          if (isVideoElement(el)) return 'video';
+          if (isContainerElement(el)) return 'container';
+          return 'element';
         }
 
         function createProtectionPolicy(el) {
@@ -5986,7 +6020,7 @@
             canDuplicate: true,
             canWrap: true,
             canAddChild: isContainerElement(el),
-            canReplaceMedia: isImageElement(el) || isVideoFrame(el),
+            canReplaceMedia: isImageElement(el) || isVideoElement(el),
           };
           if (isSlideRoot(el)) {
             return {
@@ -6267,6 +6301,7 @@
 
         function postSelection(el) {
           if (!el) return;
+          const entityKind = getEntityKind(el);
           post('element-selected', {
             nodeId: el.getAttribute(EDITOR_MARKER),
             slideId: el.closest('[' + SLIDE_MARKER + ']')?.getAttribute(SLIDE_MARKER) || null,
@@ -6275,9 +6310,10 @@
             attrs: getAttributes(el),
             computed: collectComputed(el),
             rect: getRect(el),
+            entityKind,
             canEditText: canEditText(el),
             isImage: isImageElement(el),
-            isVideo: isVideoFrame(el),
+            isVideo: entityKind === 'video',
             isContainer: isContainerElement(el),
             isSlideRoot: isSlideRoot(el),
             isProtected: isProtectedElement(el),
@@ -6323,6 +6359,7 @@
 
         function notifyElementUpdated(el) {
           if (!el) return;
+          const entityKind = getEntityKind(el);
           post('element-updated', {
             nodeId: el.getAttribute(EDITOR_MARKER),
             slideId: el.closest('[' + SLIDE_MARKER + ']')?.getAttribute(SLIDE_MARKER) || null,
@@ -6331,9 +6368,10 @@
             attrs: getAttributes(el),
             computed: collectComputed(el),
             rect: getRect(el),
+            entityKind,
             canEditText: canEditText(el),
             isImage: isImageElement(el),
-            isVideo: isVideoFrame(el),
+            isVideo: entityKind === 'video',
             isContainer: isContainerElement(el),
             isSlideRoot: isSlideRoot(el),
             isProtected: isProtectedElement(el),
@@ -6868,10 +6906,11 @@
             slideId: el.closest('[' + SLIDE_MARKER + ']')?.getAttribute(SLIDE_MARKER) || null,
             clientX: event.clientX,
             clientY: event.clientY,
+            entityKind: getEntityKind(el),
             isImage: isImageElement(el),
             canEditText: canEditText(el),
             isContainer: isContainerElement(el),
-            isVideo: isVideoFrame(el),
+            isVideo: isVideoElement(el),
             isSlideRoot: isSlideRoot(el),
             isProtected: isProtectedElement(el),
             protectionPolicy: createProtectionPolicy(el),
@@ -7286,6 +7325,58 @@
       // applyElementSelection
       // Обновляет данные о выбранном элементе: тег, html, computed styles,
       // флаги типа (text/image/video/container) и атрибуты.
+      const CANONICAL_ENTITY_KINDS = new Set([
+        "text",
+        "image",
+        "video",
+        "container",
+        "element",
+        "slide-root",
+        "protected",
+        "none",
+      ]);
+
+      function readCanonicalEntityKind(kind) {
+        const normalized = String(kind || "")
+          .trim()
+          .toLowerCase();
+        return CANONICAL_ENTITY_KINDS.has(normalized) ? normalized : "";
+      }
+
+      function normalizeEntityKind(kind, fallback = "none") {
+        return (
+          readCanonicalEntityKind(kind) ||
+          readCanonicalEntityKind(fallback) ||
+          "none"
+        );
+      }
+
+      function getEntityKindFromFlags(flags = {}) {
+        if (!flags || typeof flags !== "object") return "none";
+        if (flags.isSlideRoot) return "slide-root";
+        if (flags.isProtected) return "protected";
+        if (flags.canEditText) return "text";
+        if (flags.isImage) return "image";
+        if (flags.isVideo) return "video";
+        if (flags.isContainer) return "container";
+        const hasAnyKnownFlag = Boolean(
+          flags.canEditText ||
+            flags.isImage ||
+            flags.isVideo ||
+            flags.isContainer ||
+            flags.isSlideRoot ||
+            flags.isProtected,
+        );
+        return hasAnyKnownFlag ? "element" : "none";
+      }
+
+      function getEntityKindFromPayload(payload = {}) {
+        return normalizeEntityKind(
+          payload.entityKind,
+          getEntityKindFromFlags(payload),
+        );
+      }
+
       function getDefaultSelectedFlags() {
         return {
           canEditText: false,
@@ -7299,6 +7390,18 @@
       }
 
       function deriveSelectedFlagsFromPayload(payload = {}) {
+        const canonicalKind = readCanonicalEntityKind(payload.entityKind);
+        if (canonicalKind) {
+          return {
+            canEditText: canonicalKind === "text",
+            isImage: canonicalKind === "image",
+            isVideo: canonicalKind === "video",
+            isContainer: canonicalKind === "container",
+            isSlideRoot: canonicalKind === "slide-root",
+            isProtected: canonicalKind === "protected",
+            isTextEditing: Boolean(payload.isTextEditing),
+          };
+        }
         return {
           canEditText: Boolean(payload.canEditText),
           isImage: Boolean(payload.isImage),
@@ -7319,6 +7422,7 @@
         state.liveSelectionRect = null;
         state.selectedAttrs = payload.attrs || {};
         state.manipulationContext = payload.manipulationContext || null;
+        state.selectedEntityKind = getEntityKindFromPayload(payload);
         const nextFlags = deriveSelectedFlagsFromPayload(payload);
         state.selectedFlags = nextFlags;
         state.selectedPolicy = normalizeSelectionPolicy(
@@ -7338,6 +7442,7 @@
           }
         }
         updateInspectorFromSelection();
+        syncSelectionShellSurface();
         positionFloatingToolbar();
         renderSelectionOverlay();
         renderSlidesList();
@@ -7362,6 +7467,7 @@
         state.selectedRect = null;
         state.liveSelectionRect = null;
         state.selectedAttrs = {};
+        state.selectedEntityKind = "none";
         state.manipulationContext = null;
         state.activeManipulation = null;
         state.activeGuides = { vertical: [], horizontal: [] };
@@ -7441,6 +7547,7 @@
           state.liveSelectionRect = null;
           state.selectedAttrs = payload.attrs || state.selectedAttrs;
           state.selectedTag = payload.tag || state.selectedTag;
+          state.selectedEntityKind = getEntityKindFromPayload(payload);
           state.manipulationContext = payload.manipulationContext || state.manipulationContext;
           state.activeGuides = { vertical: [], horizontal: [] };
           const nextFlags = deriveSelectedFlagsFromPayload(payload);
@@ -7455,6 +7562,7 @@
         renderSlidesList();
         if (isCurrentSelection) {
           updateInspectorFromSelection();
+          syncSelectionShellSurface();
           positionFloatingToolbar();
           focusSelectionFrameForKeyboard();
         }
@@ -7557,6 +7665,9 @@
         if (!activationRequest) return;
         if (options.closeTransientUi !== false) {
           closeTransientShellUi({ keep: options.keepUi || "" });
+        }
+        if (isCompactShell() && options.closePanels !== false) {
+          closeShellPanels();
         }
         syncSlideRegistry({ currentActiveId: slideId });
         dispatchPendingSlideActivation(options.reason || "request-slide-activation");
@@ -7665,6 +7776,7 @@
           upBtn.type = "button";
           upBtn.className = "icon-btn";
           upBtn.textContent = "↑";
+          upBtn.setAttribute("aria-label", "Поднять слайд выше");
           upBtn.title = "Поднять выше в HTML";
           upBtn.disabled =
             !state.modelDoc || index === 0 || !hasStaticSlide(slide.id);
@@ -7676,6 +7788,7 @@
           downBtn.type = "button";
           downBtn.className = "icon-btn";
           downBtn.textContent = "↓";
+          downBtn.setAttribute("aria-label", "Опустить слайд ниже");
           downBtn.title = "Опустить ниже в HTML";
           downBtn.disabled =
             !state.modelDoc ||
@@ -10254,6 +10367,10 @@ ${exportDoc.documentElement.outerHTML}`;
           hideFloatingToolbar();
           return;
         }
+        if (isCompactShell() && getSelectionPrimarySurface() !== "toolbar") {
+          hideFloatingToolbar();
+          return;
+        }
         const iframeRect = els.previewFrame.getBoundingClientRect();
         const hostRect = els.previewStage.getBoundingClientRect();
         if (!iframeRect.width || !iframeRect.height) {
@@ -10448,20 +10565,16 @@ ${exportDoc.documentElement.outerHTML}`;
       // video/iframe, контейнер. Это уменьшает шум и делает меню «человечным».
       function buildContextMenuItems(payload) {
         const items = [];
-        const isText = Boolean(
-          payload.canEditText || state.selectedFlags.canEditText,
-        );
-        const isImage = Boolean(payload.isImage || state.selectedFlags.isImage);
-        const isContainer = Boolean(
-          payload.isContainer || state.selectedFlags.isContainer,
-        );
-        const isSlideRoot = Boolean(
-          payload.isSlideRoot || state.selectedFlags.isSlideRoot,
-        );
-        const isProtected = Boolean(
-          payload.isProtected || state.selectedFlags.isProtected,
-        );
-        const isVideo = Boolean(payload.isVideo || state.selectedFlags.isVideo);
+        const entityKind = getEntityKindFromPayload({
+          ...state.selectedFlags,
+          ...payload,
+        });
+        const isText = entityKind === "text";
+        const isImage = entityKind === "image";
+        const isContainer = entityKind === "container";
+        const isSlideRoot = entityKind === "slide-root";
+        const isProtected = entityKind === "protected";
+        const isVideo = entityKind === "video";
         const isAdvanced = state.complexityMode === "advanced";
         const policy = normalizeSelectionPolicy(
           payload.protectionPolicy || state.selectedPolicy,
@@ -10999,21 +11112,58 @@ ${exportDoc.documentElement.outerHTML}`;
 
       function getSelectedEntityKindForUi() {
         if (!(state.selectedNodeId && state.mode === "edit")) return "none";
-        if (state.selectedFlags.isProtected && !state.selectedFlags.isSlideRoot) {
-          return "protected";
+        return normalizeEntityKind(
+          state.selectedEntityKind,
+          getEntityKindFromFlags(state.selectedFlags),
+        );
+      }
+
+      function getSelectionPrimarySurface(entityKind = getSelectedEntityKindForUi()) {
+        if (!(state.selectedNodeId && state.mode === "edit")) return "none";
+        const kind = normalizeEntityKind(
+          entityKind,
+          getEntityKindFromFlags(state.selectedFlags),
+        );
+        if (!isCompactShell()) return "inspector";
+        if (
+          kind === "video" ||
+          kind === "slide-root" ||
+          kind === "protected" ||
+          hasBlockedDirectManipulationContext()
+        ) {
+          return "inspector";
         }
-        if (state.selectedFlags.isSlideRoot) return "slide-root";
-        if (state.selectedFlags.isImage) return "image";
-        if (state.selectedFlags.isVideo) return "video";
-        if (state.selectedFlags.canEditText) return "text";
-        if (state.selectedFlags.isContainer) return "container";
-        return "element";
+        if (
+          kind === "text" ||
+          kind === "image" ||
+          kind === "container" ||
+          kind === "element"
+        ) {
+          return "toolbar";
+        }
+        return "inspector";
+      }
+
+      function syncSelectionShellSurface(entityKind = getSelectedEntityKindForUi()) {
+        if (!isCompactShell() || state.mode !== "edit" || !state.selectedNodeId)
+          return;
+        const primarySurface = getSelectionPrimarySurface(entityKind);
+        state.leftPanelOpen = false;
+        if (primarySurface === "inspector") {
+          state.rightPanelOpen = true;
+        } else if (!state.rightPanelUserOpen) {
+          state.rightPanelOpen = false;
+        }
+        applyShellPanelState();
       }
 
       function setInspectorSectionVisibility(section, visible) {
         if (!section) return;
+        section.hidden = !visible;
         section.classList.toggle("is-entity-hidden", !visible);
         section.setAttribute("aria-hidden", visible ? "false" : "true");
+        syncShellPanelFocusableState(section, visible);
+        setElementInertState(section, !visible);
       }
 
       function syncInspectorEntitySections(hasSelection) {
@@ -11021,17 +11171,20 @@ ${exportDoc.documentElement.outerHTML}`;
         const visibleKindsBySection = new Map([
           [els.elementActionsSection, new Set(["text", "image", "video", "container", "element", "slide-root"])],
           [els.textInspectorSection, new Set(["text"])],
-          [els.geometryInspectorSection, new Set(["text", "image", "video", "container", "element", "slide-root"])],
-          [els.appearanceInspectorSection, new Set(["text", "image", "video", "container", "element", "slide-root"])],
+          [els.geometryInspectorSection, new Set(["text", "image", "video", "container", "element"])],
+          [els.appearanceInspectorSection, new Set(["text", "image", "video", "container", "element"])],
           [els.imageSection, new Set(["image", "video"])],
           [els.selectionPolicySection, new Set(["protected", "slide-root"])],
         ]);
         visibleKindsBySection.forEach((visibleKinds, section) => {
           if (!section) return;
-          const visible =
-            hasSelection &&
-            visibleKinds.has(kind) &&
-            !(kind === "protected" && section !== els.selectionPolicySection);
+          let visible = hasSelection && visibleKinds.has(kind);
+          if (section === els.geometryInspectorSection) {
+            visible =
+              visible &&
+              (state.complexityMode === "advanced" ||
+                hasBlockedDirectManipulationContext());
+          }
           setInspectorSectionVisibility(section, visible);
         });
       }
@@ -11114,7 +11267,7 @@ ${exportDoc.documentElement.outerHTML}`;
       }
 
 
-      function updateInspectorFromSelection() {
+      function updateInspectorFromSelectionLegacy() {
         const hasSelection = Boolean(
           state.selectedNodeId && state.mode === "edit",
         );
@@ -11459,6 +11612,410 @@ ${exportDoc.documentElement.outerHTML}`;
               : hasBlockedDirectManipulationContext()
                 ? `${getDirectManipulationBlockMessage()} Поля позиции и размера в инспекторе остаются доступными.`
                 : "Выбран защищённый системный контейнер. Он доступен только в режиме чтения: destructive actions, direct manipulation и HTML replace отключены.";
+        }
+      }
+
+      function updateInspectorFromSelection() {
+        const hasSelection = Boolean(
+          state.selectedNodeId && state.mode === "edit",
+        );
+        const entityKind = hasSelection ? getSelectedEntityKindForUi() : "none";
+        const selectionPolicy = hasSelection
+          ? state.selectedPolicy || createDefaultSelectionPolicy(state.selectedFlags)
+          : createDefaultSelectionPolicy();
+        const isTextSelection = entityKind === "text";
+        const isImageSelection = entityKind === "image";
+        const isVideoSelection = entityKind === "video";
+        const isMediaSelection = isImageSelection || isVideoSelection;
+        const directManipulationBlocked =
+          hasSelection &&
+          entityKind !== "slide-root" &&
+          entityKind !== "protected" &&
+          hasBlockedDirectManipulationContext();
+
+        els.elementTagInput.value = hasSelection
+          ? state.selectedTag || "вЂ”"
+          : "вЂ”";
+        els.selectedNodeBadge.textContent = `node: ${hasSelection ? state.selectedNodeId : "вЂ”"}`;
+        els.selectedSlideBadge.textContent = `slide: ${hasSelection ? state.activeSlideId || "вЂ”" : "вЂ”"}`;
+        els.selectedKindBadge.textContent = `kind: ${hasSelection ? entityKind : "вЂ”"}`;
+        syncInspectorEntitySections(hasSelection);
+        if (els.selectionPolicyText && !hasSelection) {
+          els.selectionPolicyText.textContent =
+            "Р’С‹Р±РµСЂРё СЌР»РµРјРµРЅС‚, С‡С‚РѕР±С‹ СѓРІРёРґРµС‚СЊ РѕРіСЂР°РЅРёС‡РµРЅРёСЏ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ.";
+        }
+
+        const controls = [
+          els.boldBtn,
+          els.italicBtn,
+          els.underlineBtn,
+          els.fontSizeSelect,
+          els.textColorInput,
+          els.showElementHtmlBtn,
+          els.duplicateElementBtn,
+          els.deleteElementBtn,
+          els.moveElementUpBtn,
+          els.moveElementDownBtn,
+          els.resetStylesBtn,
+          els.copyStyleBtn,
+          els.pasteStyleBtn,
+          els.elementIdInput,
+          els.elementClassInput,
+          els.displaySelect,
+          els.positionSelect,
+          els.zIndexInput,
+          els.widthInput,
+          els.heightInput,
+          els.leftInput,
+          els.topInput,
+          els.bgColorInput,
+          els.borderColorInput,
+          els.borderStyleSelect,
+          els.borderWidthInput,
+          els.marginInput,
+          els.paddingInput,
+          els.editTextBtn,
+          els.imageSrcInput,
+          els.applyImageSrcBtn,
+          els.imageAltInput,
+          els.replaceImageBtn,
+          els.fitImageBtn,
+          els.copyImageUrlBtn,
+          els.openImageBtn,
+          els.resetImageSizeBtn,
+          els.rotateImageBtn,
+          els.flipImageBtn,
+          ...els.alignButtons,
+        ];
+        controls.forEach((control) => {
+          if (control) control.disabled = !hasSelection;
+        });
+
+        [
+          els.ftDeleteBtn,
+          els.ftDuplicateBtn,
+          els.ftEditTextBtn,
+          els.ftReplaceImageBtn,
+          els.ftCopyStyleBtn,
+          els.ftPasteStyleBtn,
+          els.ftCopyImageUrlBtn,
+          els.ftMediaUrlBtn,
+          els.ftFitImageBtn,
+          els.ftBoldBtn,
+          els.ftItalicBtn,
+          els.ftColorInput,
+          els.ftFontSizeSelect,
+        ].forEach((control) => {
+          if (control) control.disabled = !hasSelection;
+        });
+
+        if (els.currentSlideMetaBadge) {
+          const slideIndex = state.slides.findIndex(
+            (slide) => slide.id === state.activeSlideId,
+          );
+          els.currentSlideMetaBadge.textContent =
+            slideIndex >= 0
+              ? `СЃР»Р°Р№Рґ ${slideIndex + 1} / ${state.slides.length}`
+              : "СЃР»Р°Р№Рґ: вЂ”";
+        }
+
+        if (!hasSelection || !state.selectedComputed) {
+          els.elementIdInput.value = "";
+          els.elementClassInput.value = "";
+          els.fontSizeSelect.value = "";
+          els.ftFontSizeSelect.value = "";
+          els.textColorInput.value = "#000000";
+          els.ftColorInput.value = "#000000";
+          els.bgColorInput.value = "#ffffff";
+          els.borderColorInput.value = "#000000";
+          els.borderStyleSelect.value = "";
+          els.displaySelect.value = "";
+          els.positionSelect.value = "";
+          els.zIndexInput.value = "";
+          els.widthInput.value = "";
+          els.heightInput.value = "";
+          els.leftInput.value = "";
+          els.topInput.value = "";
+          els.marginInput.value = "";
+          els.paddingInput.value = "";
+          els.imageSrcInput.value = "";
+          els.imageAltInput.value = "";
+          if (els.showSlideHtmlBtn) {
+            els.showSlideHtmlBtn.disabled =
+              !state.activeSlideId || !hasStaticSlide(state.activeSlideId);
+          }
+          if (els.reloadPreviewBtn) {
+            els.reloadPreviewBtn.disabled = !state.modelDoc;
+          }
+          const imageAltField = els.imageAltInput?.closest(".field-group");
+          if (imageAltField instanceof HTMLElement) {
+            imageAltField.style.display = "";
+            imageAltField.hidden = false;
+            imageAltField.setAttribute("aria-hidden", "false");
+          }
+          [
+            els.replaceImageBtn,
+            els.fitImageBtn,
+            els.copyImageUrlBtn,
+            els.openImageBtn,
+            els.resetImageSizeBtn,
+            els.rotateImageBtn,
+            els.flipImageBtn,
+          ].forEach((btn) => {
+            if (btn) btn.style.display = "";
+          });
+          els.alignButtons.forEach((button) =>
+            button.classList.remove("is-active"),
+          );
+          [
+            els.boldBtn,
+            els.italicBtn,
+            els.underlineBtn,
+            els.ftBoldBtn,
+            els.ftItalicBtn,
+          ].forEach((button) => button.classList.remove("is-active"));
+          if (els.selectionPolicyText) {
+            els.selectionPolicyText.textContent =
+              "Р’С‹Р±РµСЂРё СЌР»РµРјРµРЅС‚, С‡С‚РѕР±С‹ СѓРІРёРґРµС‚СЊ РѕРіСЂР°РЅРёС‡РµРЅРёСЏ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ.";
+          }
+          if (els.inspectorHelp) {
+            els.inspectorHelp.textContent = getSelectionGuidanceCopy(false);
+          }
+          updateFloatingToolbarContext();
+          return;
+        }
+
+        if (els.selectionPolicyText) {
+          if (entityKind === "slide-root") {
+            els.selectionPolicyText.textContent =
+              selectionPolicy.reason ||
+              "Выбран корневой контейнер слайда. Доступны только безопасные действия уровня слайда.";
+          } else if (entityKind === "protected") {
+            els.selectionPolicyText.textContent =
+              selectionPolicy.reason ||
+              "Выбран защищённый контейнер. Он доступен только в режиме чтения.";
+          } else if (directManipulationBlocked) {
+            els.selectionPolicyText.textContent = `${getDirectManipulationBlockMessage()} Поля размера и позиции остаются доступными в инспекторе.`;
+          } else if (selectionPolicy.reason) {
+            els.selectionPolicyText.textContent = selectionPolicy.reason;
+          } else if (entityKind === "container" && selectionPolicy.canAddChild) {
+            els.selectionPolicyText.textContent =
+              "Выбран контейнер. Можно менять его оформление и добавлять внутрь новые блоки через Insert.";
+          } else {
+            els.selectionPolicyText.textContent =
+              "Для выбранного элемента ограничений нет.";
+          }
+        }
+
+        const styleLocked = !selectionPolicy.canEditStyles;
+        const attributeLocked = !selectionPolicy.canEditAttributes;
+        const geometryLocked =
+          !selectionPolicy.canMove &&
+          !selectionPolicy.canResize &&
+          !selectionPolicy.canReorder;
+        els.elementIdInput.value = state.selectedAttrs.id || "";
+        els.elementClassInput.value = state.selectedAttrs.class || "";
+        els.elementIdInput.disabled = !hasSelection || attributeLocked;
+        els.elementClassInput.disabled = !hasSelection || attributeLocked;
+        els.showElementHtmlBtn.disabled =
+          !hasSelection ||
+          !selectionPolicy.canEditHtml ||
+          entityKind === "slide-root" ||
+          entityKind === "protected";
+        els.showSlideHtmlBtn.disabled =
+          !state.activeSlideId || !hasStaticSlide(state.activeSlideId);
+        els.duplicateElementBtn.disabled = !hasSelection || !selectionPolicy.canDuplicate;
+        els.deleteElementBtn.disabled = !hasSelection || !selectionPolicy.canDelete;
+        els.moveElementUpBtn.disabled = !hasSelection || !selectionPolicy.canReorder;
+        els.moveElementDownBtn.disabled = !hasSelection || !selectionPolicy.canReorder;
+        els.resetStylesBtn.disabled = !hasSelection || !selectionPolicy.canEditStyles;
+        els.pasteStyleBtn.disabled = !hasSelection || !selectionPolicy.canEditStyles;
+
+        const fontSize = parseInt(state.selectedComputed.fontSize, 10);
+        const supportedSizes = ["12", "14", "16", "20", "24", "32", "48"];
+        const normalizedSize = supportedSizes.includes(String(fontSize))
+          ? String(fontSize)
+          : "";
+        els.fontSizeSelect.value = normalizedSize;
+        els.ftFontSizeSelect.value = normalizedSize;
+        els.textColorInput.value = rgbToHex(
+          state.selectedComputed.color || "#000000",
+        );
+        els.ftColorInput.value = rgbToHex(
+          state.selectedComputed.color || "#000000",
+        );
+        els.bgColorInput.value = rgbToHex(
+          state.selectedComputed.backgroundColor || "#ffffff",
+        );
+        els.borderColorInput.value = rgbToHex(
+          state.selectedComputed.borderColor || "#000000",
+        );
+        els.borderStyleSelect.value = safeSelectValue(
+          els.borderStyleSelect,
+          state.selectedComputed.borderStyle,
+        );
+        els.displaySelect.value = safeSelectValue(
+          els.displaySelect,
+          state.selectedComputed.display,
+        );
+        els.positionSelect.value = safeSelectValue(
+          els.positionSelect,
+          state.selectedComputed.position,
+        );
+        els.zIndexInput.value = sanitizeCssValue(state.selectedComputed.zIndex);
+        els.widthInput.value = sanitizeCssValue(state.selectedComputed.width);
+        els.heightInput.value = sanitizeCssValue(state.selectedComputed.height);
+        els.leftInput.value = sanitizeCssValue(state.selectedComputed.left);
+        els.topInput.value = sanitizeCssValue(state.selectedComputed.top);
+        els.marginInput.value = sanitizeCssValue(state.selectedComputed.margin);
+        els.paddingInput.value = sanitizeCssValue(
+          state.selectedComputed.padding,
+        );
+        els.borderWidthInput.value = sanitizeCssValue(
+          state.selectedComputed.borderWidth,
+        );
+
+        const alignment = state.selectedComputed.textAlign || "left";
+        els.alignButtons.forEach((button) =>
+          button.classList.toggle(
+            "is-active",
+            button.dataset.align === alignment,
+          ),
+        );
+        const boldActive = ["700", "800", "900", "bold"].includes(
+          state.selectedComputed.fontWeight,
+        );
+        const italicActive = state.selectedComputed.fontStyle === "italic";
+        els.boldBtn.classList.toggle("is-active", boldActive);
+        els.ftBoldBtn.classList.toggle("is-active", boldActive);
+        els.italicBtn.classList.toggle("is-active", italicActive);
+        els.ftItalicBtn.classList.toggle("is-active", italicActive);
+        els.underlineBtn.classList.toggle(
+          "is-active",
+          (state.selectedComputed.textDecorationLine || "").includes(
+            "underline",
+          ),
+        );
+
+        [
+          els.boldBtn,
+          els.italicBtn,
+          els.underlineBtn,
+          els.fontSizeSelect,
+          els.textColorInput,
+          ...els.alignButtons,
+        ].forEach((control) => {
+          if (!control) return;
+          control.disabled =
+            !hasSelection ||
+            !selectionPolicy.canEditStyles ||
+            !selectionPolicy.canEditText ||
+            !isTextSelection;
+        });
+
+        [
+          els.displaySelect,
+          els.positionSelect,
+          els.zIndexInput,
+          els.widthInput,
+          els.heightInput,
+          els.leftInput,
+          els.topInput,
+        ].forEach((control) => {
+          if (!control) return;
+          control.disabled = !hasSelection || styleLocked || geometryLocked;
+        });
+
+        [
+          els.bgColorInput,
+          els.borderColorInput,
+          els.borderStyleSelect,
+          els.borderWidthInput,
+          els.marginInput,
+          els.paddingInput,
+        ].forEach((control) => {
+          if (!control) return;
+          control.disabled = !hasSelection || styleLocked;
+        });
+
+        els.editTextBtn.disabled =
+          !hasSelection || !selectionPolicy.canEditText || !isTextSelection;
+        if (isMediaSelection) {
+          els.imageSrcInput.value = state.selectedAttrs.src || "";
+          els.imageAltInput.value = isImageSelection
+            ? state.selectedAttrs.alt || ""
+            : "";
+        } else {
+          els.imageSrcInput.value = "";
+          els.imageAltInput.value = "";
+        }
+        els.imageSrcInput.disabled =
+          !hasSelection ||
+          !selectionPolicy.canEditAttributes ||
+          !selectionPolicy.canReplaceMedia ||
+          !isMediaSelection;
+        els.applyImageSrcBtn.disabled = els.imageSrcInput.disabled;
+        els.imageAltInput.disabled =
+          !hasSelection || !selectionPolicy.canEditAttributes || !isImageSelection;
+        const imageAltField = els.imageAltInput?.closest(".field-group");
+        if (imageAltField instanceof HTMLElement) {
+          const showAltField = isImageSelection;
+          imageAltField.style.display = showAltField ? "" : "none";
+          imageAltField.hidden = !showAltField;
+          imageAltField.setAttribute("aria-hidden", showAltField ? "false" : "true");
+          syncShellPanelFocusableState(imageAltField, showAltField);
+          setElementInertState(imageAltField, !showAltField);
+        }
+        [
+          els.replaceImageBtn,
+          els.fitImageBtn,
+          els.resetImageSizeBtn,
+          els.rotateImageBtn,
+          els.flipImageBtn,
+        ].forEach((btn) => {
+          if (!btn) return;
+          btn.style.display = isImageSelection ? "" : "none";
+          btn.hidden = !isImageSelection;
+          btn.setAttribute("aria-hidden", isImageSelection ? "false" : "true");
+        });
+        [els.copyImageUrlBtn, els.openImageBtn].forEach((btn) => {
+          if (!btn) return;
+          btn.style.display = isMediaSelection ? "" : "none";
+          btn.hidden = !isMediaSelection;
+          btn.setAttribute("aria-hidden", isMediaSelection ? "false" : "true");
+        });
+        if (els.replaceImageBtn) {
+          els.replaceImageBtn.disabled =
+            !hasSelection || !selectionPolicy.canReplaceMedia || !isImageSelection;
+        }
+        if (els.fitImageBtn) {
+          els.fitImageBtn.disabled =
+            !hasSelection || !selectionPolicy.canEditStyles || !isImageSelection;
+        }
+        if (els.copyImageUrlBtn) {
+          els.copyImageUrlBtn.disabled = !hasSelection || !isMediaSelection;
+        }
+        if (els.openImageBtn) {
+          els.openImageBtn.disabled =
+            !hasSelection ||
+            !isMediaSelection ||
+            !String(state.selectedAttrs.src || "").trim();
+        }
+        if (els.resetImageSizeBtn) {
+          els.resetImageSizeBtn.disabled =
+            !hasSelection || !selectionPolicy.canEditStyles || !isImageSelection;
+        }
+        if (els.rotateImageBtn) {
+          els.rotateImageBtn.disabled =
+            !hasSelection || !selectionPolicy.canEditStyles || !isImageSelection;
+        }
+        if (els.flipImageBtn) {
+          els.flipImageBtn.disabled =
+            !hasSelection || !selectionPolicy.canEditStyles || !isImageSelection;
+        }
+        updateFloatingToolbarContext();
+        if (els.inspectorHelp) {
+          els.inspectorHelp.textContent = getSelectionGuidanceCopy(hasSelection);
         }
       }
 
@@ -11985,6 +12542,17 @@ ${exportDoc.documentElement.outerHTML}`;
         button.setAttribute("aria-expanded", expanded ? "true" : "false");
       }
 
+      function shouldForceBasicAdvancedControl(node) {
+        return Boolean(
+          node === els.geometryInspectorSection &&
+            state.mode === "edit" &&
+            state.selectedNodeId &&
+            getSelectedEntityKindForUi() !== "slide-root" &&
+            getSelectedEntityKindForUi() !== "protected" &&
+            hasBlockedDirectManipulationContext(),
+        );
+      }
+
       function applyComplexityModeUi() {
         const isAdvanced = state.complexityMode === "advanced";
         document.body.dataset.complexityMode = state.complexityMode;
@@ -11993,7 +12561,23 @@ ${exportDoc.documentElement.outerHTML}`;
         document
           .querySelectorAll('[data-ui-level="advanced"]')
           .forEach((node) => {
-            node.hidden = !isAdvanced;
+            if (!(node instanceof HTMLElement)) return;
+            const forceVisible = shouldForceBasicAdvancedControl(node);
+            const entityVisible = !node.classList.contains("is-entity-hidden");
+            const visible = node.classList.contains("inspector-section")
+              ? entityVisible && (isAdvanced || forceVisible)
+              : isAdvanced || forceVisible;
+            node.hidden = !visible;
+            node.setAttribute("aria-hidden", visible ? "false" : "true");
+            if (forceVisible) {
+              node.setAttribute("data-force-basic-visible", "true");
+            } else {
+              node.removeAttribute("data-force-basic-visible");
+            }
+            syncShellPanelFocusableState(node, visible);
+            try {
+              node.inert = !visible;
+            } catch (error) {}
           });
       }
 
@@ -12209,6 +12793,11 @@ ${exportDoc.documentElement.outerHTML}`;
           });
       }
 
+      function setElementInertState(element, inert) {
+        if (!element || !("inert" in element)) return;
+        element.inert = inert;
+      }
+
       function applyShellPanelState() {
         const compact = isCompactShell();
         const leftOpen = compact && state.leftPanelOpen;
@@ -12252,20 +12841,25 @@ ${exportDoc.documentElement.outerHTML}`;
         panel.hidden = !shouldShow;
         panel.setAttribute("aria-hidden", shouldShow ? "false" : "true");
         syncShellPanelFocusableState(panel, shouldShow);
-        try {
-          panel.inert = !shouldShow;
-        } catch (error) {}
+        setElementInertState(panel, !shouldShow);
       }
 
       function setShellPanelState(side, open) {
         closeTransientShellUi();
         if (side === "left") state.leftPanelOpen = Boolean(open);
-        if (side === "right") state.rightPanelOpen = Boolean(open);
-        if (side === "left" && open) state.rightPanelOpen = false;
+        if (side === "right") {
+          state.rightPanelOpen = Boolean(open);
+          state.rightPanelUserOpen = Boolean(open);
+        }
+        if (side === "left" && open) {
+          state.rightPanelOpen = false;
+          state.rightPanelUserOpen = false;
+        }
         if (side === "right" && open) state.leftPanelOpen = false;
         if (!isCompactShell()) {
           state.leftPanelOpen = false;
           state.rightPanelOpen = false;
+          state.rightPanelUserOpen = false;
         }
         applyShellPanelState();
       }
@@ -12280,6 +12874,7 @@ ${exportDoc.documentElement.outerHTML}`;
       function closeShellPanels() {
         state.leftPanelOpen = false;
         state.rightPanelOpen = false;
+        state.rightPanelUserOpen = false;
         applyShellPanelState();
       }
 
@@ -13321,9 +13916,6 @@ ${exportDoc.documentElement.outerHTML}`;
           case "layout-two-col":
             insertLayoutPreset("two-col");
             break;
-          case "layout-title-subtitle":
-            insertLayoutPreset("title-subtitle");
-            break;
           default:
             handled = false;
         }
@@ -13476,12 +14068,43 @@ ${exportDoc.documentElement.outerHTML}`;
             return "Refresh the preview to restore model and DOM parity.";
           default:
             if (state.mode === "edit") {
-              return hasSelection
-                ? "Live selection ready."
-                : "Insert palette ready.";
+              if (!hasSelection) return "Insert palette ready.";
+              if (isCompactShell()) {
+                return getSelectionPrimarySurface() === "toolbar"
+                  ? "Quick actions ready."
+                  : "Inspector ready for the current selection.";
+              }
+              return "Selection ready in inspector.";
             }
             return "Live preview stable.";
         }
+      }
+
+      function getSelectionGuidanceCopy(hasSelection) {
+        if (!hasSelection) {
+          return "Кликни по элементу внутри слайда, чтобы выбрать его. Двойной клик по тексту запускает редактирование.";
+        }
+        const entityKind = getSelectedEntityKindForUi();
+        const primarySurface = getSelectionPrimarySurface(entityKind);
+        if (entityKind === "protected") {
+          return "Выбран защищённый контейнер. Inspector открыт автоматически и объясняет, почему прямое редактирование недоступно.";
+        }
+        if (entityKind === "slide-root") {
+          return "Выбран корневой контейнер слайда. Inspector открыт автоматически, потому что slide-safe действия и policy собраны в Properties.";
+        }
+        if (hasBlockedDirectManipulationContext()) {
+          return `${getDirectManipulationBlockMessage()} Основной путь редактирования сейчас — inspector, включая поля размера и позиции.`;
+        }
+        if (isCompactShell()) {
+          if (primarySurface === "toolbar") {
+            return "Быстрые действия доступны на нижней панели. Более подробные настройки остаются в Properties.";
+          }
+          if (entityKind === "video") {
+            return "Выбрано видео. Inspector открыт автоматически, потому что media-настройки и замена источника собраны в Properties.";
+          }
+          return "Inspector открыт автоматически для текущего выбора.";
+        }
+        return "Контекстные действия и настройки доступны справа в inspector. Изменения применяются сразу в preview и синхронизируются в модель документа.";
       }
 
       function syncWorkspaceStateUi(hasPresentation, hasSelection) {
@@ -13584,9 +14207,7 @@ ${exportDoc.documentElement.outerHTML}`;
                 : state.assetFileCount
                   ? `Папка ресурсов подключена. Вставка и правки выполняются поверх живого preview, переписанных относительных ссылок: ${state.previewAssetAuditCounts?.resolved || 0}.`
                   : "Кнопка «Вставить» открывает скрытую палитру блоков. Правый клик показывает действия по текущему элементу.";
-        els.inspectorHelp.textContent = hasSelection
-          ? "Изменения применяются сразу в iframe и синхронизируются в модель документа для корректного экспорта."
-          : "Кликни по элементу внутри слайда, чтобы выбрать его. Двойной клик по тексту начинает редактирование.";
+        els.inspectorHelp.textContent = getSelectionGuidanceCopy(hasSelection);
       }
 
       function syncPreviewStatusSummaryUi(hasPresentation, hasSelection) {
