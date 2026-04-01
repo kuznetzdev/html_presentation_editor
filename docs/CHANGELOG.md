@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## 0.13.10 - editing ux hardening signed off - 2026-04-01
+- unified shell and iframe text-edit ownership so space, enter, backspace,
+  arrows, and regular typing stay inside the active editable context instead
+  of leaking into slide navigation or shell shortcuts
+- stopped aggressive blur teardown from kicking users out of inline editing
+  when focus briefly moves through transient shell UI on the same selection
+- tightened capability messaging so protected and direct-manipulation-blocked
+  states explain the real restriction and keep inspector-based geometry edits
+  available where they remain safe
+- kept selection context menus compact on desktop and compact shells, and made
+  floating toolbar and context menu mutually exclusive transient surfaces
+- expanded Stage C through Stage F Playwright coverage for text-edit focus,
+  blocked direct manipulation, compact context-menu geometry, theme-safe
+  editing affordances, and the new visual context-menu baseline
+
 ## 0.13.9 - slide rail actions signed off - 2026-04-01
 - added desktop slide-rail drag and drop reorder as the primary structural path
 - added a unified slide context menu with duplicate, move, and delete actions
