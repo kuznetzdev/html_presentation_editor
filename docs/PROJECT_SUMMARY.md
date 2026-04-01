@@ -2,7 +2,7 @@
 
 ## Current version
 
-`0.13.9`
+`0.13.11`
 
 ## Product state
 
@@ -35,6 +35,8 @@ The fixed architecture is unchanged:
   signed-off drag/resize paths and honest blocked-state feedback
 - keep shell layout, drawers, popovers, context menu, preview note, and
   compact toolbar predictable across the signed-off width set
+- resolve shell light/dark theme before first paint, so dark mode no longer
+  flashes through contradictory light segmented controls
 - create, duplicate, delete, undo, redo, autosave, and restore slides
   deterministically
 - reorder slides from the rail on desktop with drag and drop
@@ -59,8 +61,11 @@ The fixed architecture is unchanged:
   without changing the runtime architecture
 - stage-driven polish for shell consistency, visual cleanup, and internal code
   zoning still remains after correctness sign-off
+- focused technical docs are now aligned with the prepaint theme contract and
+  transient surface mutual-exclusion rules, but broader repo docs still need
+  periodic sync after each signed-off shell pass
 
 ## Verification snapshot
 
-- `npm test` on `main`: `125 passed / 67 skipped`
+- focused Stage D-F Playwright shell/editor matrix: green
 - `npm run test:asset-parity`: green

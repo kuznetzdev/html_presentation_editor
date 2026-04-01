@@ -128,6 +128,73 @@ test.describe("Editor shell smoke @harness", () => {
     expect(ui.toolbarVisible).toBe(true);
   });
 
+  test("dark theme keeps inspector density toggle semantic and functional @stage-f", async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem("presentation-editor:theme:v1", "dark");
+    });
+    await page.goto("/editor/presentation-editor-v12.html", {
+      waitUntil: "domcontentloaded",
+    });
+    await expect(page.locator("#openHtmlBtn")).toBeVisible();
+
+    const readToggleStyles = () =>
+      page.evaluate(() => {
+        const wrap = document.querySelector(".inspector-density-toggle");
+        const basic = document.getElementById("basicModeBtn");
+        const advanced = document.getElementById("advancedModeBtn");
+        const read = (node) => {
+          if (!(node instanceof HTMLElement)) return null;
+          const style = window.getComputedStyle(node);
+          return {
+            backgroundColor: style.backgroundColor,
+            color: style.color,
+          };
+        };
+        return {
+          theme: document.body.dataset.theme,
+          complexityMode: document.body.dataset.complexityMode,
+          wrap: read(wrap),
+          basic: read(basic),
+          advanced: read(advanced),
+        };
+      });
+
+    let styles = await readToggleStyles();
+    expect(styles.theme).toBe("dark");
+    expect(styles.wrap?.backgroundColor).not.toBe("rgb(242, 242, 247)");
+    expect(styles.basic?.backgroundColor).not.toBe("rgb(255, 255, 255)");
+    expect(styles.advanced?.backgroundColor).not.toBe("rgb(242, 242, 247)");
+
+    await page.evaluate(() => {
+      globalThis.eval('setThemePreference("light", false)');
+    });
+
+    styles = await readToggleStyles();
+    expect(styles.theme).toBe("light");
+    expect(styles.basic?.backgroundColor).toBe("rgb(255, 255, 255)");
+    expect(styles.advanced?.backgroundColor).toBe("rgb(242, 242, 247)");
+
+    await page.evaluate(() => {
+      globalThis.eval('setThemePreference("dark", false)');
+    });
+
+    styles = await readToggleStyles();
+    expect(styles.theme).toBe("dark");
+    expect(styles.basic?.backgroundColor).not.toBe("rgb(255, 255, 255)");
+
+    await page.click("#advancedModeBtn");
+    await expect.poll(() => evaluateEditor(page, "state.complexityMode")).toBe("advanced");
+
+    styles = await readToggleStyles();
+    expect(styles.complexityMode).toBe("advanced");
+    expect(styles.advanced?.backgroundColor).not.toBe("rgb(255, 255, 255)");
+
+    await page.click("#basicModeBtn");
+    await expect.poll(() => evaluateEditor(page, "state.complexityMode")).toBe("basic");
+  });
+
   test("intermediate shell breakpoint exposes structured chrome groups @stage-f", async (
     { page },
     testInfo,

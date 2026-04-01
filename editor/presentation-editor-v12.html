@@ -5,6 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
     <title>HTML Presentation Editor</title>
+    <script>
+      (() => {
+        const THEME_KEY = "presentation-editor:theme:v1";
+        const validPreferences = new Set(["light", "dark", "system"]);
+        let preference = "system";
+        try {
+          const storedPreference = window.localStorage.getItem(THEME_KEY);
+          if (validPreferences.has(storedPreference)) preference = storedPreference;
+        } catch (error) {}
+        const resolvedTheme =
+          preference === "system" &&
+          window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : preference === "system"
+              ? "light"
+              : preference;
+        document.documentElement.dataset.theme = resolvedTheme;
+        document.documentElement.dataset.themePreference = preference;
+        document.documentElement.dataset.themeBooting = "true";
+        document.documentElement.style.colorScheme = resolvedTheme;
+      })();
+    </script>
     <style>
       /* ======================================================================
        HTML Presentation Editor — normalized shell stylesheet
@@ -132,7 +155,7 @@
           sans-serif;
       }
 
-      body[data-theme="dark"] {
+      :root[data-theme="dark"] {
         color-scheme: dark;
         --shell-bg: #111214;
         --shell-panel: #1c1d20;
@@ -269,6 +292,16 @@
           box-shadow var(--motion-fast) var(--motion-ease),
           opacity var(--motion-fast) var(--motion-ease),
           transform var(--motion-fast) var(--motion-ease);
+      }
+
+      :root[data-theme-booting="true"] *,
+      :root[data-theme-booting="true"] *::before,
+      :root[data-theme-booting="true"] *::after,
+      :root[data-theme-transition="locked"] *,
+      :root[data-theme-transition="locked"] *::before,
+      :root[data-theme-transition="locked"] *::after {
+        transition: none !important;
+        animation: none !important;
       }
 
       button:hover:not(:disabled) {
@@ -418,36 +451,74 @@
         overflow: hidden;
         min-width: 0;
         padding: 2px;
-        border: 1px solid rgba(29, 29, 31, 0.08);
+        border: 1px solid var(--shell-border-strong);
         border-radius: 10px;
-        background: #f2f2f7;
+        background: var(--shell-field-bg);
+        background-color: var(--shell-field-bg);
       }
 
       .mode-toggle button {
+        all: unset;
+        box-sizing: border-box;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        cursor: pointer;
+        padding: 0;
         min-width: 92px;
         min-height: 32px;
-        border: 0;
-        border-right: 0;
         border-radius: 8px;
-        background: transparent;
-        color: var(--shell-text-muted);
+        background: var(--shell-field-bg);
+        color: color-mix(in srgb, var(--shell-text) 68%, transparent);
+        -webkit-text-fill-color: currentColor;
         font-weight: 600;
+        transition:
+          background-color var(--motion-fast) var(--motion-ease),
+          color var(--motion-fast) var(--motion-ease),
+          box-shadow var(--motion-fast) var(--motion-ease);
+      }
+
+      .mode-toggle button > span {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-height: 32px;
+        padding: 0 12px;
+        border-radius: inherit;
+        pointer-events: none;
       }
 
       .mode-toggle button:last-child {
         border-right: 0;
       }
 
+      .mode-toggle button:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+      }
+
+      .mode-toggle button:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 4px var(--shell-focus);
+      }
+
+      .mode-toggle button:hover:not(:disabled):not(.is-active) {
+        background: color-mix(in srgb, var(--shell-panel) 72%, transparent);
+        color: var(--shell-text);
+      }
+
       .mode-toggle button.is-active {
-        background: var(--shell-panel);
-        color: rgb(0, 113, 227);
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        background: var(--shell-panel-elevated);
+        color: var(--shell-accent);
+        -webkit-text-fill-color: var(--shell-accent);
+        box-shadow: var(--shadow-sm);
       }
 
       .mode-toggle button.is-active:disabled {
-        background: rgb(255, 255, 255);
-        color: rgb(0, 113, 227);
-        -webkit-text-fill-color: rgb(0, 113, 227);
+        color: var(--shell-accent);
+        -webkit-text-fill-color: var(--shell-accent);
         opacity: 1;
       }
 
@@ -2664,7 +2735,7 @@
           --canvas-stage-border: #364252;
         }
 
-        body[data-theme="dark"] {
+        :root[data-theme="dark"] {
           --shell-border: #8ea6cd;
           --shell-border-strong: #d6e3ff;
           --shell-focus: rgba(120, 176, 255, 0.5);
@@ -2795,10 +2866,10 @@
       <div class="topbar-center">
         <div class="mode-toggle" role="group" aria-label="Режим работы">
           <button type="button" id="previewModeBtn" class="is-active">
-            Превью
+            <span>Превью</span>
           </button>
           <button type="button" id="editModeBtn" disabled>
-            Редактирование
+            <span>Редактирование</span>
           </button>
         </div>
 
@@ -3318,9 +3389,9 @@
               aria-label="Сложность инспектора"
             >
               <button type="button" id="basicModeBtn" class="is-active">
-                Basic
+                <span>Basic</span>
               </button>
-              <button type="button" id="advancedModeBtn">Advanced</button>
+              <button type="button" id="advancedModeBtn"><span>Advanced</span></button>
             </div>
             <button
               type="button"
@@ -13180,11 +13251,32 @@ ${exportDoc.documentElement.outerHTML}`;
         }
       }
 
-      function applyResolvedTheme(theme) {
+      function queueThemeTransitionUnlock() {
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => {
+            delete document.documentElement.dataset.themeTransition;
+            delete document.documentElement.dataset.themeBooting;
+          });
+        });
+      }
+
+      function syncThemeDatasets(theme) {
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.dataset.themePreference = state.themePreference;
+        if (document.body) {
+          document.body.dataset.theme = theme;
+          document.body.dataset.themePreference = state.themePreference;
+        }
+        document.documentElement.style.colorScheme = theme;
+      }
+
+      function applyResolvedTheme(theme, options = {}) {
+        const suppressTransitions = options.suppressTransitions !== false;
+        if (suppressTransitions) {
+          document.documentElement.dataset.themeTransition = "locked";
+        }
         state.theme = theme === "dark" ? "dark" : "light";
-        document.body.dataset.theme = state.theme;
-        document.body.dataset.themePreference = state.themePreference;
-        document.documentElement.style.colorScheme = state.theme;
+        syncThemeDatasets(state.theme);
         if (els.themeToggleBtn) {
           const buttonLabel = getThemePreferenceLabel();
           const aria = `Тема редактора: ${buttonLabel}. Нажми, чтобы переключить режим темы.`;
@@ -13192,6 +13284,7 @@ ${exportDoc.documentElement.outerHTML}`;
           els.themeToggleBtn.setAttribute("aria-label", aria);
           els.themeToggleBtn.title = aria;
         }
+        if (suppressTransitions) queueThemeTransitionUnlock();
       }
 
       function initTheme() {
@@ -13209,6 +13302,7 @@ ${exportDoc.documentElement.outerHTML}`;
           state.themePreference === "system"
             ? resolveSystemTheme()
             : state.themePreference,
+          { suppressTransitions: true },
         );
 
         const media = window.matchMedia
@@ -13217,7 +13311,9 @@ ${exportDoc.documentElement.outerHTML}`;
         if (media && !media.__presentationEditorThemeBound) {
           const onChange = (event) => {
             if (state.themePreference !== "system") return;
-            applyResolvedTheme(event.matches ? "dark" : "light");
+            applyResolvedTheme(event.matches ? "dark" : "light", {
+              suppressTransitions: true,
+            });
             showToast(
               `Системная тема изменилась: ${event.matches ? "тёмная" : "светлая"}.`,
               "success",
@@ -13239,6 +13335,7 @@ ${exportDoc.documentElement.outerHTML}`;
         state.themePreference = nextPreference;
         applyResolvedTheme(
           nextPreference === "system" ? resolveSystemTheme() : nextPreference,
+          { suppressTransitions: true },
         );
         if (persist) {
           try {

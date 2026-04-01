@@ -118,6 +118,8 @@ Non-negotiable architectural prohibitions:
 - do not pollute presentation DOM with shell ownership
 - do not accept dirty export output
 - do not solve structural debt with new override piles
+- do not paper over shell theme bugs with delayed after-paint overrides
+- do not stack multiple visual layers for one segmented-control state
 - do not tolerate race-prone state transitions without proof
 
 ## Current Release Gates
@@ -197,3 +199,7 @@ When touching `presentation-editor-v12.html`:
 - avoid duplicated state controllers
 - add tests before behavior fixes
 - do not weaken architecture invariants for short-term convenience
+- for theme work, prefer `:root/html[data-theme]` prepaint ownership over
+  component-local dark selectors
+- for shell chrome, keep context menu, floating toolbar, and drawer routing
+  mutually exclusive

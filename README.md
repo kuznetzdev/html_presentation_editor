@@ -13,10 +13,10 @@ need deeper deck surgery.
 
 ## Current state
 
-- Current package version: `0.13.9`
+- Current package version: `0.13.11`
 - Main runtime file: `editor/presentation-editor-v12.html`
 - Architecture remains fixed: `parent shell + iframe preview + bridge + modelDoc`
-- Full Playwright suite on `main`: `125 passed / 67 skipped`
+- Focused Stage D-F Playwright shell proof: green
 - Asset parity validation: green
 
 ## What is working
@@ -30,6 +30,10 @@ need deeper deck surgery.
 - Duplicate, delete, undo, redo, autosave, and restore deterministically
 - Reorder slides from the rail on desktop with drag and drop
 - Open a unified slide action menu from the rail, with compact-safe kebab access
+- Resolve light and dark shell theme before first paint so segmented controls,
+  menus, and inspector chrome do not flash contradictory surfaces
+- Keep transient shell surfaces mutually exclusive instead of stacking floating
+  toolbar, context menu, and compact drawers into competing layers
 - Export clean HTML without editor-only chrome or bridge residue
 
 ## Product rules

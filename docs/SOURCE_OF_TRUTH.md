@@ -54,6 +54,8 @@ the basic path.
 
 - no dead ends
 - predictable UX
+- shell theme resolves before first paint and must not flash contradictory
+  light/dark chrome
 - preview equals runtime truth
 - recoverability through undo, redo, and autosave
 - shell UI stays outside presentation content
@@ -115,6 +117,10 @@ Owns:
 - Desktop may use drag-and-drop reorder in the rail
 - Compact widths should prefer explicit menu actions over fragile drag paths
 - Blocked actions must fail honestly with feedback, not silently
+- One shell control should own one visible surface state; do not stack nested
+  visual layers to fake active/inactive behavior
+- Floating toolbar, context menu, and compact shell drawers remain mutually
+  exclusive transient surfaces
 
 ## Current signed-off capabilities
 

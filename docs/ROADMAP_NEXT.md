@@ -1,10 +1,10 @@
 # ROADMAP NEXT
 
-## Post-0.13.9 priorities
+## Post-0.13.11 priorities
 
-Stage D is now signed off for slide-rail reorder and slide action workflows.
+Editing ownership hardening and shell theme prepaint are now signed off.
 The next work should stay focused on polish and internal cleanup, not on
-changing the architecture.
+changing the architecture or reopening the shell-state contract.
 
 ### 1. Internal zoning without architecture rewrite (`v0.14.0`)
 
@@ -14,6 +14,8 @@ Goals:
 - keep the fixed runtime architecture unchanged
 - make shell, preview lifecycle, slide flow, and manipulation zones easier to
   reason about
+- preserve root-owned theme bootstrap and transient-surface routing while
+  reducing single-file complexity
 
 Substeps:
 
@@ -37,6 +39,8 @@ Substeps:
   "presentation tool first, HTML editor second"
 - avoid new shell drift, focus-order regressions, and overlay conflicts while
   polishing
+- keep dark/light parity attached to the same semantic tokens instead of
+  introducing branchy theme-specific overrides
 
 ## Suggested version path
 

@@ -1,9 +1,9 @@
 ---
 name: html-presentation-editor
-description: Project-local skill for kuznetzdev/html_presentation_editor. Use before any work on the editor runtime, shell UI, bridge/modelDoc synchronization, slide model, direct manipulation, export/assets, and Playwright regression coverage around `editor/presentation-editor-v12.html`.
+description: Project-local skill for kuznetzdev/html_presentation_editor. Use before any work on the editor runtime, shell UI, theme system, transient surface routing, bridge/modelDoc synchronization, slide model, direct manipulation, export/assets, and Playwright regression coverage around `editor/presentation-editor-v12.html`.
 risk: medium
 source: project
-version: "1.1"
+version: "1.2"
 ---
 
 # SKILL: html-presentation-editor
@@ -124,6 +124,12 @@ For slide and shell work, inspect:
 - Prefer explicit menu actions on compact widths over drag-heavy behavior
 - Do not solve a UX problem by adding more persistent chrome
 - Do not add new dependencies for small interaction fixes
+- Theme state belongs on the document root first; prefer root-scoped semantic
+  tokens over delayed body-only theme boot or per-component dark override piles
+- Segmented controls should have one honest visual surface per state; do not
+  stack nested backgrounds just to mask theme timing bugs
+- Floating toolbar, context menu, insert palette, and compact drawers must be
+  routed as mutually exclusive transient surfaces
 
 ## Validation rules
 
@@ -135,6 +141,8 @@ Useful commands:
 ```bash
 npm test
 npm run test:asset-parity
+npx playwright test tests/playwright/specs/shell.smoke.spec.js --project=chromium-desktop --grep "@stage-f|@stage-e|@stage-d"
+npx playwright test tests/playwright/specs/editor.regression.spec.js --project=chromium-desktop --grep "@stage-f|@stage-e|@stage-d"
 ```
 
 For stage-specific work, use focused Playwright grep runs before the full suite.

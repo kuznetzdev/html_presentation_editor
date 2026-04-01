@@ -3,6 +3,49 @@
 Ниже — последовательные рабочие промпты для Codex/ИИ-агента.
 
 ---
+## PROMPT 0 — актуальный handoff после 0.13.11
+
+Ты продолжаешь разработку `HTML Presentation Editor` в репозитории
+`C:\Users\Kuznetz\Desktop\proga\html_presentation_editor`.
+
+Обязательно:
+- сначала прочитай `docs/SOURCE_OF_TRUTH.md`, `docs/CHANGELOG.md`,
+  `docs/PROJECT_SUMMARY.md`, `docs/ROADMAP_NEXT.md`
+- используй лучшие доступные skills и plugins по задаче
+- обязательно используй локальный skill
+  `.codex/skills/html-presentation-editor/SKILL.md`
+- при работе с shell/theme/transient UI держись контракта из локального skill
+
+Текущий signed-off контекст:
+- архитектура фиксирована: `parent shell + iframe preview + bridge + modelDoc`
+- text editing ownership уже hardened
+- context menu и floating toolbar уже routed как mutually exclusive transient surfaces
+- dark/light shell theme теперь резолвится до first paint через root-owned theme bootstrap
+- segmented controls теперь имеют один честный surface на state, без stacked fake layers
+
+Что уже сделано:
+1. Убраны white flash и conflicting layers в dark theme
+2. Theme state переведён на `documentElement` prepaint contract
+3. Theme transitions во время boot/switch временно lock-ятся
+4. Segmented controls возвращены к button-owned visual surface
+5. README, SOURCE_OF_TRUTH, CHANGELOG и локальный skill синхронизированы
+6. Focused Playwright Stage D-F regressions зелёные
+
+Что нельзя ломать:
+- preview truth
+- clean export
+- root-owned theme bootstrap
+- transient surface mutual exclusion
+- signed-off light visual contract
+
+Что делать дальше:
+1. Найди следующий реальный UX/product bug или structural cleanup target
+2. Не лечи проблемы override-пластырями
+3. Сначала добавь/обнови targeted regression
+4. Потом меняй contiguous zone в `editor/presentation-editor-v12.html`
+5. После правки обнови docs, если меняется shell contract или signed-off behavior
+
+---
 ## PROMPT 1 — восстановление контекста
 
 Ты продолжаешь разработку HTML Presentation Editor.

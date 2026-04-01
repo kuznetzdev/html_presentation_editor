@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## 0.13.11 - shell theme prepaint and surface ownership hardening - 2026-04-01
+- moved shell theme resolution onto the document root before first paint, so
+  dark preference no longer boots through a light-shell flash
+- locked theme transitions during boot and explicit theme switches, which
+  removed the temporary white segmented-control surfaces in dark mode
+- normalized shell segmented controls to one button-owned surface per state
+  instead of stacked nested layers, preserving the signed-off light visual
+  contract while keeping dark mode stable
+- kept Stage D and Stage F shell regressions green for immediate theme-safe
+  segmented controls, ios-gamma desktop chrome, and transient surface routing
+
 ## 0.13.10 - editing ux hardening signed off - 2026-04-01
 - unified shell and iframe text-edit ownership so space, enter, backspace,
   arrows, and regular typing stay inside the active editable context instead
