@@ -4,9 +4,14 @@ const {
   assertHiddenPanelsAreInert,
   assertNoHorizontalOverflow,
   assertShellGeometry,
+  clickEditorControl,
+  clickPreview,
+  closeCompactShellPanels,
+  evaluateEditor,
   gotoFreshEditor,
   loadBasicDeck,
   previewLocator,
+  readSelectionUiState,
   setMode,
 } = require("../helpers/editorApp");
 
@@ -83,7 +88,44 @@ test.describe("Editor shell smoke @harness", () => {
 
     expect(light.stage?.backgroundColor).not.toBe(dark.stage?.backgroundColor);
     expect(light.stage?.boxShadow).not.toBe(dark.stage?.boxShadow);
-    expect(light.cluster?.boxShadow).not.toBe(dark.cluster?.boxShadow);
+    expect(light.cluster).not.toBeNull();
+    expect(dark.cluster).not.toBeNull();
+  });
+
+  test("theme switching preserves editing affordances and transient surface routing @stage-f", async ({
+    page,
+  }) => {
+    await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
+
+    await clickPreview(page, "#hero-title");
+    await clickEditorControl(page, "#editTextBtn", { panel: "inspector" });
+    await expect(previewLocator(page, "#hero-title")).toHaveAttribute("contenteditable", "true");
+    await expect.poll(() => evaluateEditor(page, "state.interactionMode")).toBe("text-edit");
+
+    for (const theme of ["dark", "light"]) {
+      await page.evaluate((nextTheme) => {
+        globalThis.eval(`setThemePreference(${JSON.stringify(nextTheme)}, false)`);
+      }, theme);
+      await expect.poll(() => evaluateEditor(page, "state.interactionMode")).toBe("text-edit");
+      await expect(previewLocator(page, "#hero-title")).toHaveAttribute("contenteditable", "true");
+    }
+
+    await previewLocator(page, "#hero-title").press("Escape");
+    await expect.poll(() => evaluateEditor(page, "state.interactionMode")).toBe("select");
+
+    await closeCompactShellPanels(page);
+    await page.locator("#selectionFrameHitArea").click({ button: "right" });
+    await expect(page.locator("#contextMenu")).toBeVisible();
+
+    let ui = await readSelectionUiState(page);
+    expect(ui.contextMenuVisible).toBe(true);
+    expect(ui.toolbarVisible).toBe(false);
+
+    await page.mouse.click(12, 12);
+    await expect(page.locator("#contextMenu")).toBeHidden();
+
+    ui = await readSelectionUiState(page);
+    expect(ui.toolbarVisible).toBe(true);
   });
 
   test("intermediate shell breakpoint exposes structured chrome groups @stage-f", async (

@@ -470,6 +470,13 @@ async function readSelectionUiState(page) {
       );
     };
 
+    const readWidth = (selector) => {
+      const element = document.querySelector(selector);
+      if (!(element instanceof HTMLElement)) return null;
+      const rect = element.getBoundingClientRect();
+      return rect.width > 0 ? rect.width : null;
+    };
+
     const visibleInspectorSections = Array.from(
       document.querySelectorAll(".inspector-section"),
     )
@@ -490,8 +497,13 @@ async function readSelectionUiState(page) {
       .map((section) => section.id);
 
     return {
+      activeSlideId: String(globalThis.eval("state.activeSlideId || ''")),
       backdropVisible: isVisible("#panelBackdrop"),
+      contextMenuLayout: document.body.dataset.contextMenuLayout || "",
+      contextMenuVisible: isVisible("#contextMenu"),
+      contextMenuWidth: readWidth("#contextMenu"),
       inspectorVisible: isVisible("#inspectorPanel"),
+      interactionMode: String(globalThis.eval("state.interactionMode || ''")),
       kindBadge: document.getElementById("selectedKindBadge")?.textContent?.trim() || "",
       leftPanelOpen: globalThis.eval("Boolean(state.leftPanelOpen)"),
       rightPanelOpen: globalThis.eval("Boolean(state.rightPanelOpen)"),
@@ -526,12 +538,81 @@ async function activateSlideByIndex(page, index) {
 }
 
 async function dragSlideRailItem(page, fromIndex, toIndex) {
+  const slideItem = (index) => page.locator(`#slidesPanel .slide-item[data-index="${index}"]`);
+  const ensureMeasuredItem = async (index, label) => {
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      const locator = slideItem(index);
+      try {
+        await expect(locator).toBeVisible();
+        await locator.scrollIntoViewIfNeeded();
+        await expect(locator).toBeVisible();
+        const box = await locator.boundingBox();
+        if (box) {
+          return { box, locator };
+        }
+      } catch (error) {
+        if (attempt === 5) {
+          throw error;
+        }
+      }
+      await page.waitForTimeout(100);
+    }
+    throw new Error(`Slide rail item ${label} is not measurable.`);
+  };
+
   await ensureShellPanelVisible(page, "slides");
-  const source = page.locator(`#slidesPanel .slide-item[data-index="${fromIndex}"]`);
-  const target = page.locator(`#slidesPanel .slide-item[data-index="${toIndex}"]`);
-  await expect(source).toBeVisible();
-  await expect(target).toBeVisible();
-  await source.dragTo(target);
+  const readOrder = () => evaluateEditor(page, "JSON.stringify(state.slideRegistryOrder)");
+  const beforeOrder = await readOrder();
+  const dragWithHtml5 = async () => {
+    const { box: sourceBox, locator: source } = await ensureMeasuredItem(fromIndex, fromIndex);
+    const { box: targetBox, locator: target } = await ensureMeasuredItem(toIndex, toIndex);
+    await source.dragTo(target, {
+      sourcePosition: {
+        x: Math.round(sourceBox.width / 2),
+        y: Math.round(sourceBox.height / 2),
+      },
+      targetPosition: {
+        x: Math.round(targetBox.width / 2),
+        y: Math.max(8, Math.round(targetBox.height - 12)),
+      },
+    });
+  };
+
+  const dragWithMouse = async () => {
+    const { box: sourceBox } = await ensureMeasuredItem(fromIndex, fromIndex);
+    const { box: targetBox } = await ensureMeasuredItem(toIndex, toIndex);
+    const startX = Math.round(sourceBox.x + sourceBox.width / 2);
+    const startY = Math.round(sourceBox.y + sourceBox.height / 2);
+    const endX = Math.round(targetBox.x + targetBox.width / 2);
+    const endY = Math.round(targetBox.y + Math.max(8, Math.round(targetBox.height - 12)));
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.waitForTimeout(80);
+    await page.mouse.move(Math.round((startX + endX) / 2), Math.round((startY + endY) / 2), {
+      steps: 10,
+    });
+    await page.waitForTimeout(80);
+    await page.mouse.move(endX, endY, { steps: 16 });
+    await page.waitForTimeout(60);
+    await page.mouse.up();
+  };
+
+  for (const strategy of [dragWithHtml5, dragWithMouse, dragWithHtml5]) {
+    try {
+      await strategy();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!/not attached|Target closed|Element is not attached/i.test(message)) {
+        throw error;
+      }
+    }
+    if ((await readOrder()) !== beforeOrder) {
+      break;
+    }
+    await page.waitForTimeout(100);
+  }
+
+  await expect.poll(readOrder, { timeout: 2000 }).not.toBe(beforeOrder);
 }
 
 async function openSlideRailContextMenu(page, index, options = {}) {

@@ -100,6 +100,11 @@ async function selectSlideRoot(page, slideIndex) {
   await waitForSelectedEntityKind(page, "slide-root");
 }
 
+async function forceLightTheme(page) {
+  await evaluateEditor(page, "setThemePreference('light', false)");
+  await expect.poll(() => page.locator("body").getAttribute("data-theme")).toBe("light");
+}
+
 test.describe("Editor regression coverage", () => {
   test("create duplicate delete and undo/redo keep slide activation deterministic @stage-b", async (
     { page },
@@ -168,13 +173,30 @@ test.describe("Editor regression coverage", () => {
     await clickEditorControl(page, "#editTextBtn", { panel: "inspector" });
     const title = previewLocator(page, "#hero-title");
     await expect(title).toHaveAttribute("contenteditable", "true");
+    const activeSlideIdBefore = await evaluateEditor(page, "state.activeSlideId");
+    await expect.poll(() => evaluateEditor(page, "state.interactionMode")).toBe("text-edit");
     await title.press(process.platform === "darwin" ? "Meta+A" : "Control+A");
-    await title.fill("Edited hero title");
+    await title.type("Edited hero");
+    await title.press("Space");
+    await title.type("title");
+    await title.press("End");
+    await title.press("Enter");
+    await title.type("focus stays here");
+    await title.press("ArrowLeft");
+    await title.press("Backspace");
+    await title.type("e");
+    await expect(previewLocator(page, "#hero-title")).toContainText("Edited hero title");
+    await expect(previewLocator(page, "#hero-title")).toContainText("focus stays he");
+    await expect.poll(() => evaluateEditor(page, "state.activeSlideId")).toBe(activeSlideIdBefore);
+    await expect.poll(() => evaluateEditor(page, "state.interactionMode")).toBe("text-edit");
+    await expect(title).toHaveAttribute("contenteditable", "true");
     await closeCompactShellPanels(page);
     await clickPreview(page, "#cta-box");
     await expect(previewLocator(page, "#hero-title")).toContainText("Edited hero title");
+    await expect(previewLocator(page, "#hero-title")).toContainText("focus stays he");
 
     await selectImageNode(page, "#hero-image");
+    await expect(page.locator("#editTextBtn")).toBeDisabled();
     await clickEditorControl(page, "#replaceImageBtn", { panel: "inspector" });
     await page.setInputFiles("#replaceImageInput", PATTERN_IMAGE_PATH);
     await expect(previewLocator(page, "#hero-image")).toHaveAttribute("alt", "pattern.svg");
@@ -404,11 +426,47 @@ test.describe("Editor regression coverage", () => {
     await expect(page.locator("#diagnosticsBox")).toContainText(
       /directManipSafe=false|directManipReason=/,
     );
+    await expect(page.locator("#selectionPolicyText")).toContainText(/инспектор/i);
+    await expect(page.locator("#leftInput")).toBeEnabled();
+    await expect(page.locator("#topInput")).toBeEnabled();
+  });
+
+  test("selection editability stays honest and context menu stays compact @stage-c @stage-d @stage-e", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only shell flow.");
+
+    await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
+
+    await selectImageNode(page, "#hero-image");
+    let ui = await readSelectionUiState(page);
+    expect(ui.selectedFlags.canEditText).toBe(false);
+    await expect(page.locator("#editTextBtn")).toBeDisabled();
+
+    await selectTextNode(page, "#hero-title");
+    await closeCompactShellPanels(page);
+    await page.locator("#selectionFrameHitArea").click({ button: "right" });
+    await expect(page.locator("#contextMenu")).toBeVisible();
+
+    ui = await readSelectionUiState(page);
+    expect(ui.contextMenuVisible).toBe(true);
+    expect(ui.toolbarVisible).toBe(false);
+    expect(ui.contextMenuWidth).not.toBeNull();
+    expect(ui.contextMenuWidth).toBeLessThanOrEqual(360);
+    expect(ui.contextMenuLayout === "sheet" || ui.contextMenuLayout === "floating").toBe(true);
+
+    await page.mouse.click(12, 12);
+    await expect(page.locator("#contextMenu")).toBeHidden();
+
+    ui = await readSelectionUiState(page);
+    expect(ui.contextMenuVisible).toBe(false);
+    expect(ui.toolbarVisible).toBe(true);
   });
 
   test("desktop rail drag reorder updates slide order @stage-d", async ({ page }, testInfo) => {
     test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only stateful flow.");
-    test.skip(/390|640|820/.test(testInfo.project.name), "Desktop-only rail drag flow.");
+    test.skip(/390|640|820|1100/.test(testInfo.project.name), "Desktop-only rail drag flow.");
 
     await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
 
@@ -459,6 +517,80 @@ test.describe("Editor regression coverage", () => {
     });
   });
 
+  test("desktop shell applies ios-gamma visual contract without changing actions @stage-d", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only shell flow.");
+    test.skip(/390|640|820/.test(testInfo.project.name), "Desktop-only shell contract.");
+
+    await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
+    await forceLightTheme(page);
+
+    const expectColorClose = (value, expected, alphaFloor = 0.95, tolerance = 5) => {
+      expect(typeof value).toBe("string");
+      const channels = value.match(/[\d.]+/g)?.map(Number) ?? [];
+      expect(channels.length).toBeGreaterThanOrEqual(3);
+      expected.forEach((channel, index) => {
+        expect(Math.abs((channels[index] ?? NaN) - channel)).toBeLessThanOrEqual(tolerance);
+      });
+      if (channels.length >= 4) {
+        expect(channels[3]).toBeGreaterThanOrEqual(alphaFloor);
+      }
+    };
+
+    const shellState = await page.evaluate(() => {
+      const read = (selector) => {
+        const element = document.querySelector(selector);
+        if (!(element instanceof HTMLElement)) return null;
+        const style = window.getComputedStyle(element);
+        return {
+          backgroundColor: style.backgroundColor,
+          borderColor: style.borderColor,
+          borderRadius: style.borderRadius,
+          boxShadow: style.boxShadow,
+          color: style.color,
+          fontSize: style.fontSize,
+          minHeight: style.minHeight,
+          position: style.position,
+        };
+      };
+
+      return {
+        topbar: read("#topbar"),
+        activeModeButton: read("#editModeBtn.is-active"),
+        stateCluster: read("#topbarStateCluster"),
+        activeSlide: read("#slidesPanel .slide-item.is-active .slide-item-main"),
+      };
+    });
+
+    expect(shellState.topbar?.backgroundColor).toBe("rgb(255, 255, 255)");
+    expect(shellState.topbar?.minHeight).toBe("52px");
+    expectColorClose(shellState.activeModeButton?.color, [0, 113, 227], 0.95, 12);
+    expectColorClose(shellState.activeModeButton?.backgroundColor, [255, 255, 255], 0.88);
+    expect(shellState.stateCluster?.borderRadius).toBe("12px");
+    expectColorClose(shellState.activeSlide?.borderColor, [0, 113, 227], 0.9);
+    expectColorClose(shellState.activeSlide?.backgroundColor, [255, 255, 255], 0.95);
+
+    await openSlideRailContextMenu(page, 1);
+    const contextMenu = await page.evaluate(() => {
+      const menu = document.getElementById("contextMenu");
+      const item = menu?.querySelector("button");
+      if (!(menu instanceof HTMLElement) || !(item instanceof HTMLElement)) return null;
+      const menuStyle = window.getComputedStyle(menu);
+      const itemStyle = window.getComputedStyle(item);
+      return {
+        menuBackground: menuStyle.backgroundColor,
+        menuRadius: menuStyle.borderRadius,
+        itemMinHeight: itemStyle.minHeight,
+      };
+    });
+
+    expect(contextMenu?.menuBackground).toBe("rgb(255, 255, 255)");
+    expect(contextMenu?.menuRadius).toBe("12px");
+    expect(contextMenu?.itemMinHeight).toBe("32px");
+  });
+
   test("compact shell closes slide drawer and routes primary surface by entity kind @stage-e", async (
     { page },
     testInfo,
@@ -502,5 +634,40 @@ test.describe("Editor regression coverage", () => {
     expect(ui.rightPanelOpen).toBe(true);
     expect(ui.visibleInspectorSections).toContain("selectionPolicySection");
     expect(ui.visibleInspectorSections).not.toContain("imageSection");
+  });
+
+  test("compact toolbar stays docked and reduced motion disables shell transitions @stage-e", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!/(390|640|820)/.test(testInfo.project.name), "Compact shell only.");
+
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
+    await forceLightTheme(page);
+    await activateSlideByIndex(page, 2);
+    await closeCompactShellPanels(page);
+    await selectTextNode(page, "#media-heading");
+
+    const compactState = await page.evaluate(() => {
+      const toolbar = document.getElementById("floatingToolbar");
+      const menu = document.getElementById("contextMenu");
+      if (!(toolbar instanceof HTMLElement) || !(menu instanceof HTMLElement)) return null;
+      const toolbarStyle = window.getComputedStyle(toolbar);
+      const menuStyle = window.getComputedStyle(menu);
+      return {
+        toolbarPosition: toolbarStyle.position,
+        toolbarLeft: toolbarStyle.left,
+        toolbarRight: toolbarStyle.right,
+        toolbarTransition: toolbarStyle.transitionDuration,
+        menuTransition: menuStyle.transitionDuration,
+      };
+    });
+
+    expect(compactState?.toolbarPosition).toBe("fixed");
+    expect(compactState?.toolbarLeft).toBe("8px");
+    expect(compactState?.toolbarRight).toBe("8px");
+    expect(compactState?.toolbarTransition).toBe("0s");
+    expect(compactState?.menuTransition).toBe("0s");
   });
 });
