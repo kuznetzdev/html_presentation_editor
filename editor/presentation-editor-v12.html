@@ -540,6 +540,20 @@
         padding: 0 10px;
       }
 
+      /* [LAYER-MODEL v2] selection mode toggle */
+      .selection-mode-toggle {
+        flex-shrink: 0;
+        border-radius: 8px;
+        margin-bottom: 6px;
+      }
+
+      .selection-mode-toggle button {
+        min-width: 64px;
+        min-height: 24px;
+        padding: 0 8px;
+        font-size: 11px;
+      }
+
       .mini-badge {
         display: inline-flex;
         align-items: center;
@@ -1619,6 +1633,21 @@
         user-select: none;
       }
 
+      .crumb-kind {
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--shell-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-right: 4px;
+        opacity: 0.75;
+      }
+
+      .selection-breadcrumb:hover .crumb-kind,
+      .selection-breadcrumb.is-current .crumb-kind {
+        opacity: 1;
+      }
+
       .preview-dropzone,
       .preview-loading {
         position: absolute;
@@ -2391,6 +2420,11 @@
 
       .context-menu-section-title:first-child {
         border-top: 0;
+      }
+
+      .context-menu button.is-current-layer {
+        font-weight: 700;
+        background: color-mix(in srgb, var(--shell-accent-soft) 30%, transparent);
       }
 
       .context-menu button {
@@ -3826,6 +3860,19 @@
               <span class="mini-badge" id="selectedKindBadge">Тип: —</span>
               <span class="mini-badge" id="selectedNodeBadge" data-ui-level="advanced">node: —</span>
             </div>
+            <!-- [LAYER-MODEL v2] selection mode toggle -->
+            <div
+              class="mode-toggle selection-mode-toggle"
+              role="group"
+              aria-label="Режим выделения"
+            >
+              <button type="button" id="smartModeBtn" class="is-active">
+                <span>⊞ Листы</span>
+              </button>
+              <button type="button" id="containerModeBtn">
+                <span>▣ Группы</span>
+              </button>
+            </div>
             <div
               class="selection-breadcrumbs"
               id="selectionBreadcrumbs"
@@ -4639,6 +4686,8 @@
       const TOOLBAR_SESSION_KEY = "presentation-editor:toolbar-position:v1";
       const COPIED_STYLE_KEY = "presentation-editor:copied-style:v1";
       const UI_COMPLEXITY_STORAGE_KEY = "presentation-editor:ui-complexity:v1";
+      // [LAYER-MODEL v2] selection mode persistence
+      const SELECTION_MODE_STORAGE_KEY = "presentation-editor:selection-mode:v1";
       const MAX_VISIBLE_TOASTS = 4;
       const THEME_PREFERENCES = ["system", "light", "dark"];
       const BRIDGE_MUTATION_TYPES = new Set([
@@ -4995,6 +5044,7 @@
         theme: "light",
         themePreference: "system",
         complexityMode: "basic",
+        selectionMode: "smart", // [LAYER-MODEL v2] 'smart' | 'container'
         inspectorSections: {},
         lastSavedAt: 0,
         commandSeq: 0,
@@ -5171,6 +5221,9 @@
         ),
         basicModeBtn: document.getElementById("basicModeBtn"),
         advancedModeBtn: document.getElementById("advancedModeBtn"),
+        // [LAYER-MODEL v2]
+        smartModeBtn: document.getElementById("smartModeBtn"),
+        containerModeBtn: document.getElementById("containerModeBtn"),
         elementTagInput: document.getElementById("elementTagInput"),
         elementIdInput: document.getElementById("elementIdInput"),
         elementClassInput: document.getElementById("elementClassInput"),
@@ -6136,6 +6189,8 @@
 
         els.previewFrame.onload = () => {
           sendToBridge("set-mode", { mode: state.mode });
+          // [LAYER-MODEL v2] sync selection mode after iframe load
+          sendToBridge("set-selection-mode", { containerMode: state.selectionMode === "container" });
         };
 
         if (options.resetHistory) {
@@ -7279,6 +7334,10 @@
           activeCommandSeq: 0,
           directManipulation: null,
           inlineTextEdit: null,
+          // [LAYER-MODEL v2] candidate cache
+          cachedCandidateStack: [],
+          cachedCandidateStackPos: { x: 0, y: 0, timestamp: 0 },
+          containerMode: false, // [LAYER-MODEL v2] synced from shell
         };
 
         function post(type, payload, options) {
@@ -7760,6 +7819,12 @@
               '[data-editor-hover="true"] {' +
               'outline: 1px dashed rgba(38, 103, 255, 0.5) !important;' +
               'outline-offset: 2px !important;' +
+              '}' +
+              '[data-editor-highlight="ghost"]:not([data-editor-selected="true"]) {' +
+              'outline: 2px dashed rgba(38, 103, 255, 0.6) !important;' +
+              'outline-offset: 3px !important;' +
+              'background: rgba(38, 103, 255, 0.08) !important;' +
+              'transition: background 120ms ease, outline 120ms ease;' +
               '}' +
               '[data-editor-flash="true"] {' +
               'animation: presentation-editor-flash 720ms ease-out;' +
@@ -8818,6 +8883,24 @@
           return el;
         }
 
+        // [LAYER-MODEL v2] cached wrapper for collectSelectionCandidates
+        function getOrCollectCandidates(target, clientX, clientY) {
+          const dx = clientX - STATE.cachedCandidateStackPos.x;
+          const dy = clientY - STATE.cachedCandidateStackPos.y;
+          const age = Date.now() - STATE.cachedCandidateStackPos.timestamp;
+          if (
+            STATE.cachedCandidateStack.length &&
+            Math.hypot(dx, dy) < 4 &&
+            age < 100
+          ) {
+            return STATE.cachedCandidateStack;
+          }
+          const result = collectSelectionCandidates(target, clientX, clientY);
+          STATE.cachedCandidateStack = result;
+          STATE.cachedCandidateStackPos = { x: clientX, y: clientY, timestamp: Date.now() };
+          return result;
+        }
+
         function collectSelectionCandidates(target, clientX, clientY) {
           const fallbackTarget = getNearestSelectionTarget(target);
           const stack = Number.isFinite(clientX) && Number.isFinite(clientY)
@@ -8883,8 +8966,31 @@
               };
             }
           }
-          const candidates = collectSelectionCandidates(target, clientX, clientY);
+          const candidates = getOrCollectCandidates(target, clientX, clientY);
           if (!candidates.length) return null;
+          // [LAYER-MODEL v2] container mode — prefer containers over leaves
+          if (options?.containerMode) {
+            const containerCandidates = candidates
+              .filter((c) => {
+                const ek = getEntityKind(c.el);
+                return ek === 'container' || ek === 'element' || ek === 'slide-root';
+              })
+              .filter((c) => Number.isFinite(c.stackIndex))
+              .sort((a, b) => a.stackIndex - b.stackIndex);
+            if (containerCandidates.length) {
+              const picked = containerCandidates[0];
+              const pathEntries = buildSelectionPathEntries(picked.el, {
+                selectionLeafEl: picked.el,
+              });
+              if (pathEntries.length) {
+                return {
+                  pathEntries,
+                  selectedEl: picked.el,
+                  selectionLeafEl: picked.el,
+                };
+              }
+            }
+          }
           const topmostCandidate = candidates
             .filter((candidate) => Number.isFinite(candidate.stackIndex))
             .sort((left, right) => left.stackIndex - right.stackIndex)[0] || null;
@@ -8937,6 +9043,37 @@
               selectedEl: pathEntries[nextIndex].el,
               selectionLeafEl,
             };
+          }
+          if (options?.deepSelect) {
+            const scoredCandidates = candidates
+              .map((c) => ({ c, score: scoreSelectionCandidate(c) }))
+              .sort((a, b) => b.score - a.score)
+              .map((x) => x.c);
+            if (scoredCandidates.length) {
+              const deepCurrentIdx = scoredCandidates.findIndex(
+                (c) => (c.selectionNodeId || c.nodeId) === STATE.selectedNodeId,
+              );
+              const deepNextIdx =
+                deepCurrentIdx !== -1
+                  ? (deepCurrentIdx + 1) % scoredCandidates.length
+                  : 0;
+              const picked = scoredCandidates[deepNextIdx];
+              if (picked?.el) {
+                const deepLeaf =
+                  resolvePreferredSelectionLeaf(picked.el, picked.slide) ||
+                  picked.el;
+                const deepPath = buildSelectionPathEntries(deepLeaf, {
+                  selectionLeafEl: deepLeaf,
+                });
+                if (deepPath.length) {
+                  return {
+                    pathEntries: deepPath,
+                    selectedEl: picked.el,
+                    selectionLeafEl: deepLeaf,
+                  };
+                }
+              }
+            }
           }
           return {
             pathEntries,
@@ -9847,14 +9984,18 @@
 
         document.addEventListener('click', (event) => {
           if (!STATE.editMode) return;
+          const _isMod = event.ctrlKey || event.metaKey;
           const selection = resolveSelectionFromTarget(event.target, {
             clientX: event.clientX,
             clientY: event.clientY,
             cycleAncestors: Boolean(event.altKey),
+            deepSelect: Boolean(_isMod && !event.altKey),
+            containerMode: STATE.containerMode, // [LAYER-MODEL v2]
           });
           if (!selection?.selectedEl) return;
           if (event.target.closest('a[href]')) event.preventDefault();
           if (event.altKey) event.preventDefault();
+          if (_isMod && !event.altKey) event.preventDefault();
           selectElement(selection.selectedEl, {
             focusText: false,
             selectionLeafEl: selection.selectionLeafEl,
@@ -9894,6 +10035,26 @@
             selectionLeafEl: selection.selectionLeafEl,
             selectionPathEntries: selection.pathEntries,
           });
+          const _allCandidates = getOrCollectCandidates(
+            event.target,
+            event.clientX,
+            event.clientY,
+          );
+          const _candidateStack = _allCandidates
+            .map((c) => ({
+              c,
+              score: scoreSelectionCandidate(c),
+              nodeId: c.selectionNodeId || c.nodeId,
+              entityKind: getEntityKind(c.el),
+              label: getSelectionBreadcrumbLabel(
+                c.el,
+                getEntityKind(c.el),
+                c.nodeId,
+              ),
+            }))
+            .filter((x) => x.nodeId)
+            .sort((a, b) => b.score - a.score)
+            .map(({ c, score, ...info }) => info);
           post('context-menu', {
             nodeId: el.getAttribute(EDITOR_MARKER),
             slideId: el.closest('[' + SLIDE_MARKER + ']')?.getAttribute(SLIDE_MARKER) || null,
@@ -9907,6 +10068,7 @@
             isSlideRoot: isSlideRoot(el),
             isProtected: isProtectedElement(el),
             protectionPolicy: createProtectionPolicy(el),
+            candidateStack: _candidateStack,
           });
         }, true);
 
@@ -10086,6 +10248,8 @@
                   clientX,
                   clientY,
                   cycleAncestors: Boolean(payload.cycleAncestors),
+                  deepSelect: Boolean(payload.deepSelect),
+                  containerMode: Boolean(payload.containerMode), // [LAYER-MODEL v2]
                 });
                 if (!selection?.selectedEl) break;
                 selectElement(selection.selectedEl, {
@@ -10175,6 +10339,31 @@
               }
               case 'flash-node': {
                 flashNodeById(payload.nodeId);
+                break;
+              }
+              case 'highlight-node': {
+                document
+                  .querySelectorAll('[data-editor-highlight="ghost"]')
+                  .forEach((el) => el.removeAttribute('data-editor-highlight'));
+                if (payload.nodeId) {
+                  const _hl = findNodeById(payload.nodeId);
+                  if (_hl) _hl.setAttribute('data-editor-highlight', 'ghost');
+                }
+                break;
+              }
+              // [LAYER-MODEL v2] sync selection mode to iframe
+              case 'set-selection-mode': {
+                STATE.containerMode = Boolean(payload.containerMode);
+                break;
+              }
+              case 'select-best-child-of': {
+                const _scParent = findNodeById(payload.nodeId);
+                if (!(_scParent instanceof Element)) break;
+                const _scSlide = getSelectionSlide(_scParent);
+                if (!(_scSlide instanceof Element)) break;
+                const _scLeaf = resolvePreferredSelectionLeaf(_scParent, _scSlide);
+                if (!(_scLeaf instanceof Element) || _scLeaf === _scParent) break;
+                selectElement(_scLeaf, { source: 'keyboard' });
                 break;
               }
               case 'request-slide-sync': {
@@ -11423,6 +11612,8 @@
         state.previewUrl = URL.createObjectURL(previewPack.blob);
         els.previewFrame.onload = () => {
           sendToBridge("set-mode", { mode: state.mode });
+          // [LAYER-MODEL v2] sync selection mode after iframe load
+          sendToBridge("set-selection-mode", { containerMode: state.selectionMode === "container" });
         };
         els.previewFrame.src = state.previewUrl;
         hideFloatingToolbar();
@@ -13007,9 +13198,10 @@ ${exportDoc.documentElement.outerHTML}`;
         if (hasBlockedDirectManipulationContext()) return "Через инспектор";
         if (state.activeManipulation?.kind === "resize") return "Размер";
         if (state.activeManipulation?.kind === "drag") return "Перемещение";
+        const _kindLbl = getEntityKindLabel(state.selectedEntityKind);
         if (state.selectedFlags.canEditText)
-          return "Перетащить / двойной клик для текста";
-        return "Переместить";
+          return _kindLbl ? `${_kindLbl} · Двойной клик → текст` : "Двойной клик → текст";
+        return _kindLbl || "Переместить";
       }
 
       function renderSelectionOverlay() {
@@ -13128,10 +13320,12 @@ ${exportDoc.documentElement.outerHTML}`;
         ) {
           return false;
         }
+        // [LAYER-MODEL v2] forward containerMode flag
         return sendToBridge("proxy-select-at-point", {
           clientX: localX,
           clientY: localY,
           cycleAncestors: Boolean(options.cycleAncestors),
+          containerMode: state.selectionMode === "container",
         });
       }
 
@@ -13581,15 +13775,36 @@ ${exportDoc.documentElement.outerHTML}`;
             navigateSelectedTableCell(event.shiftKey ? "previous" : "next");
             return;
           }
-          if (
-            event.key === "Enter" &&
-            state.selectedFlags.canEditText &&
-            state.selectedPolicy.canEditText
-          ) {
+          if (event.key === "Enter" && event.shiftKey && !state.selectedFlags.isTextEditing) {
             event.preventDefault();
-            startTextEditing();
-            setInteractionMode("text-edit");
-            renderSelectionOverlay();
+            const _shPath = state.selectionPath || [];
+            const _shCurIdx = _shPath.findIndex(
+              (e) => (e.selectionNodeId || e.nodeId) === state.selectedNodeId,
+            );
+            const _shParent =
+              _shCurIdx !== -1 && _shCurIdx < _shPath.length - 1
+                ? _shPath[_shCurIdx + 1]
+                : null;
+            if (_shParent) {
+              sendToBridge("select-element", {
+                nodeId: _shParent.selectionNodeId || _shParent.nodeId,
+              });
+            }
+            return;
+          }
+          if (event.key === "Enter" && !event.shiftKey && !state.selectedFlags.isTextEditing) {
+            if (!state.selectedFlags.canEditText) {
+              event.preventDefault();
+              sendToBridge("select-best-child-of", { nodeId: state.selectedNodeId });
+              return;
+            }
+            if (state.selectedFlags.canEditText && state.selectedPolicy.canEditText) {
+              event.preventDefault();
+              startTextEditing();
+              setInteractionMode("text-edit");
+              renderSelectionOverlay();
+            }
+            return;
           }
         });
         els.selectionHandles.forEach((handle) => {
@@ -14709,12 +14924,35 @@ ${exportDoc.documentElement.outerHTML}`;
             hint: "Delete",
             danger: true,
           });
+        const _cStack = Array.isArray(payload?.candidateStack)
+          ? payload.candidateStack
+          : [];
+        if (_cStack.length > 1) {
+          const _layerKindIcons = {
+            text: "T", image: "⬛", video: "▶", container: "⬚",
+            table: "⊞", "table-cell": "⊞", "code-block": "</>",
+            svg: "⬡", fragment: "◈", "slide-root": "◻",
+            protected: "🔒", element: "◇",
+          };
+          _cStack.forEach((candidate) => {
+            items.push({
+              section: "layers",
+              action: "select-layer-item:" + candidate.nodeId,
+              icon: _layerKindIcons[candidate.entityKind] || "◇",
+              label: candidate.label || candidate.nodeId,
+              hint: getEntityKindLabel(candidate.entityKind),
+              nodeId: candidate.nodeId,
+              isCurrent: candidate.nodeId === state.selectedNodeId,
+            });
+          });
+        }
         return items;
       }
 
       function renderContextMenu(payload) {
         const items = buildContextMenuItems(payload);
         const sections = [
+          ["layers", "Слои под курсором"],
           ["format", "Форматирование"],
           ["media", "Медиа"],
           ["structure", "Структура"],
@@ -14732,7 +14970,9 @@ ${exportDoc.documentElement.outerHTML}`;
             const button = document.createElement("button");
             button.type = "button";
             button.dataset.menuAction = item.action;
+            if (item.nodeId) button.dataset.layerNodeId = item.nodeId;
             if (item.danger) button.classList.add("danger-item");
+            if (item.isCurrent) button.classList.add("is-current-layer");
             button.title = item.hint
               ? `${item.label} (${item.hint})`
               : item.label;
@@ -14957,6 +15197,12 @@ ${exportDoc.documentElement.outerHTML}`;
             break;
           case "paste-style":
             pasteStyleToSelected();
+            break;
+          default:
+            if (action.startsWith("select-layer-item:")) {
+              const _layerNodeId = action.slice("select-layer-item:".length);
+              if (_layerNodeId) sendToBridge("select-element", { nodeId: _layerNodeId });
+            }
             break;
         }
         closeContextMenu();
@@ -15766,11 +16012,28 @@ ${exportDoc.documentElement.outerHTML}`;
           button.className = `selection-breadcrumb${entry.current ? " is-current" : ""}${entry.isLeaf ? " is-leaf" : ""}`;
           button.dataset.selectionPathNodeId = entry.nodeId;
           button.dataset.selectionNodeId = entry.selectionNodeId || entry.nodeId;
-          button.textContent = entry.label || entry.nodeId;
+          if (entry.entityKind) button.dataset.entityKind = entry.entityKind;
+          const _crumbKind = entry.entityKind ? getEntityKindLabel(entry.entityKind) : "";
+          if (_crumbKind) {
+            const _kindEl = document.createElement("span");
+            _kindEl.className = "crumb-kind";
+            _kindEl.textContent = _crumbKind;
+            button.appendChild(_kindEl);
+          }
+          const _labelEl = document.createElement("span");
+          _labelEl.textContent = entry.label || entry.nodeId;
+          button.appendChild(_labelEl);
           if (entry.current) {
             button.setAttribute("aria-current", "true");
             button.setAttribute("aria-pressed", "true");
           }
+          const _bnodeId = entry.selectionNodeId || entry.nodeId;
+          button.addEventListener("pointerenter", () => {
+            if (_bnodeId) sendToBridge("highlight-node", { nodeId: _bnodeId });
+          });
+          button.addEventListener("pointerleave", () => {
+            sendToBridge("highlight-node", { nodeId: null });
+          });
           fragment.appendChild(button);
           if (index < state.selectionPath.length - 1) {
             const separator = document.createElement("span");
@@ -16570,6 +16833,19 @@ ${exportDoc.documentElement.outerHTML}`;
           true,
         );
 
+        els.contextMenu.addEventListener("pointerover", (event) => {
+          const _lBtn = event.target?.closest?.("[data-layer-node-id]");
+          if (_lBtn?.dataset?.layerNodeId) {
+            sendToBridge("highlight-node", { nodeId: _lBtn.dataset.layerNodeId });
+          }
+        }, true);
+
+        els.contextMenu.addEventListener("pointerout", (event) => {
+          if (event.target?.closest?.("[data-layer-node-id]")) {
+            sendToBridge("highlight-node", { nodeId: null });
+          }
+        }, true);
+
         els.contextMenu.addEventListener("keydown", (event) => {
           const items = getContextMenuButtons();
           if (!items.length) return;
@@ -16662,6 +16938,7 @@ ${exportDoc.documentElement.outerHTML}`;
         initTheme();
         initInspectorSections();
         initComplexityMode();
+        initSelectionMode(); // [LAYER-MODEL v2]
         initFloatingToolbarState();
         ensureNoviceShellOnboardingUi();
         ensureNoviceSummaryStructure();
@@ -16841,6 +17118,34 @@ ${exportDoc.documentElement.outerHTML}`;
         refreshUi();
       }
 
+      // [LAYER-MODEL v2] selection mode toggle
+      function initSelectionMode() {
+        let mode = "smart";
+        try {
+          const raw = localStorage.getItem(SELECTION_MODE_STORAGE_KEY);
+          if (raw === "container") mode = "container";
+        } catch (error) {}
+        setSelectionMode(mode, false);
+      }
+
+      function setSelectionMode(mode, persist = true) {
+        state.selectionMode = mode === "container" ? "container" : "smart";
+        if (persist) {
+          try {
+            localStorage.setItem(SELECTION_MODE_STORAGE_KEY, state.selectionMode);
+          } catch (error) {}
+        }
+        // [LAYER-MODEL v2] sync container mode to iframe
+        sendToBridge("set-selection-mode", { containerMode: state.selectionMode === "container" });
+        applySelectionModeUi();
+      }
+
+      function applySelectionModeUi() {
+        const isContainer = state.selectionMode === "container";
+        setToggleButtonState(els.smartModeBtn, !isContainer);
+        setToggleButtonState(els.containerModeBtn, isContainer);
+      }
+
       function setToggleButtonState(button, active) {
         if (!button) return;
         button.classList.toggle("is-active", Boolean(active));
@@ -16915,6 +17220,13 @@ ${exportDoc.documentElement.outerHTML}`;
         );
         els.advancedModeBtn?.addEventListener("click", () =>
           setComplexityMode("advanced"),
+        );
+        // [LAYER-MODEL v2] selection mode toggle
+        els.smartModeBtn?.addEventListener("click", () =>
+          setSelectionMode("smart"),
+        );
+        els.containerModeBtn?.addEventListener("click", () =>
+          setSelectionMode("container"),
         );
         els.exportBtn?.addEventListener("click", exportHtml);
         els.themeToggleBtn?.addEventListener("click", toggleTheme);
