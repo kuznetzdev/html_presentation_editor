@@ -3,7 +3,7 @@ name: html-presentation-editor
 description: Project-local skill for kuznetzdev/html_presentation_editor. Use before any work on the editor runtime, shell UI, theme system, transient surface routing, bridge/modelDoc synchronization, slide model, direct manipulation, export/assets, and Playwright regression coverage around `editor/presentation-editor-v12.html`.
 risk: medium
 source: project
-version: "1.2"
+version: "1.3"
 ---
 
 # SKILL: html-presentation-editor
@@ -39,6 +39,8 @@ The product promise is:
 
 `Open -> select -> edit -> save`
 
+Blank state is onboarding, not editing.
+
 ## UX doctrine
 
 The default user must not need to understand HTML.
@@ -53,6 +55,15 @@ Basic mode should feel like a standard presentation tool:
 - simple slide operations
 - clear recovery paths
 
+Basic mode must also:
+
+- hide advanced inspector, HTML, raw attribute, and diagnostics surfaces
+  entirely
+- keep blank state on a single-path onboarding flow
+- keep loaded preview on a compact slide-summary path
+- keep loaded edit selection-first with one relevant card instead of a full
+  inspector dump
+
 ### Advanced mode
 
 Advanced mode may expose deeper control:
@@ -64,6 +75,20 @@ Advanced mode may expose deeper control:
 - structural edits
 
 Do not leak advanced complexity into the basic path.
+
+### Shell workflow contract
+
+Shell visibility is driven by:
+
+- `body[data-editor-workflow="empty"]`
+- `body[data-editor-workflow="loaded-preview"]`
+- `body[data-editor-workflow="loaded-edit"]`
+
+Interpretation:
+
+- `empty`: onboarding only, no editing shell
+- `loaded-preview`: slide rail visible, `Edit` is the obvious next action
+- `loaded-edit`: selected-element workflow is primary
 
 ## Fixed architecture
 
@@ -128,8 +153,15 @@ For slide and shell work, inspect:
   tokens over delayed body-only theme boot or per-component dark override piles
 - Segmented controls should have one honest visual surface per state; do not
   stack nested backgrounds just to mask theme timing bugs
-- Floating toolbar, context menu, insert palette, and compact drawers must be
-  routed as mutually exclusive transient surfaces
+- Floating toolbar, context menu, insert palette, slide template bar, topbar
+  overflow, and compact drawers must be routed as mutually exclusive transient
+  surfaces
+- If desktop/intermediate topbar commands stop fitting, solve it with
+  shell-owned width metrics and a transient overflow path for secondary
+  actions; do not move the compact-shell breakpoint just to hide the problem
+- If the task changes novice-path shell behavior, update the focused
+  Playwright helper and `tests/playwright/specs/shell.smoke.spec.js` first so
+  `data-editor-workflow` and shell-surface visibility stay explicitly covered
 
 ## Validation rules
 
@@ -155,4 +187,5 @@ A correct change for this project makes the editor:
 - safer under real deck conditions
 - more truthful in preview/export behavior
 - simpler in the basic path
+- more explicit in the novice empty -> preview -> edit workflow
 - still powerful in advanced mode without contaminating the default UX

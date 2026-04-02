@@ -1,5 +1,52 @@
 # CHANGELOG
 
+## 0.13.14 - novice shell summary cards and CTA polish signed off - 2026-04-01
+- promoted loaded preview into a clearer novice decision point with a visible
+  primary `Начать редактирование` CTA instead of forcing the user to infer the
+  next step from mode toggles alone
+- turned the basic preview inspector into a real compact slide-summary path by
+  showing summary context while hiding the full slide editor controls until the
+  user explicitly enters edit mode
+- turned the basic selected-element path into a friendlier summary-led card
+  with human-readable type copy, while keeping raw node metadata and the `Тег`
+  field advanced-only
+- upgraded the onboarding and summary surfaces visually so the empty state,
+  preview CTA, and novice inspector cards feel intentional rather than like
+  leftover utility chrome
+
+## 0.13.13 - novice-first shell workflow hardening signed off - 2026-04-01
+- introduced the shell-owned workflow contract on
+  `body[data-editor-workflow="empty|loaded-preview|loaded-edit"]` and now
+  drive shell-panel visibility from workflow state instead of leaked
+  disable-state chrome
+- turned blank state into a single-path onboarding surface with one obvious
+  `Open HTML` start action, a demoted `Paste HTML` path, and no pre-load
+  inspector, slide rail, mode toggles, complexity toggles, or edit-only
+  actions
+- kept preview/edit architecture intact while making loaded preview clearly
+  lead into editing by auto-activating the first slide, keeping the rail
+  visible, and visually promoting `Edit` as the next action
+- hardened basic mode so advanced inspector sections, HTML editors, raw
+  attributes, and diagnostics are fully concealed instead of merely disabled,
+  while loaded edit now resolves into a selection-first compact inspector path
+- rewrote blocked-manipulation and open-modal shell copy into novice wording,
+  simplified topbar command labels, and kept wide desktop free of horizontal
+  overflow under the pruned empty-state chrome
+- expanded `shell.smoke` and Playwright helper coverage for the novice
+  empty/load/edit workflow, advanced reveal/conceal transitions, and updated
+  topbar/basic-mode expectations
+## 0.13.12 - topbar command fit hardening signed off - 2026-04-01
+- kept desktop and intermediate topbar chrome inside the viewport by routing
+  secondary commands through a button-owned overflow surface instead of
+  letting the topbar action row squeeze the preview stage
+- preserved the primary path by keeping `Open` and `Export` inline while
+  `Theme`, `Undo`, and `Redo` move into overflow only when shell-owned width
+  metrics say the inline command budget is exhausted
+- extended transient-surface mutual exclusion so topbar overflow now closes
+  cleanly against insert palette, context menu, and slide template surfaces
+- added focused Playwright proof for the `chromium-shell-1100` intermediate
+  topbar contract without changing the compact-shell breakpoint
+
 ## 0.13.11 - shell theme prepaint and surface ownership hardening - 2026-04-01
 - moved shell theme resolution onto the document root before first paint, so
   dark preference no longer boots through a light-shell flash

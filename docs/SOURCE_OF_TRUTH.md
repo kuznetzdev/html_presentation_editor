@@ -25,6 +25,24 @@ The default user path is:
 
 The user should be able to do normal work without understanding HTML.
 
+Blank state is onboarding, not editing.
+
+### Shell workflow contract
+
+The shell owns a workflow marker on `body`:
+
+- `data-editor-workflow="empty"`
+- `data-editor-workflow="loaded-preview"`
+- `data-editor-workflow="loaded-edit"`
+
+This marker is the contract for shell chrome visibility.
+
+- `empty` shows one obvious start path and no editing shell
+- `loaded-preview` keeps slide navigation visible and exposes one obvious path
+  into edit
+- `loaded-edit` becomes selection-first and shows only the relevant editing
+  surface for the current context
+
 ### Basic mode
 
 Basic mode is for presentation editing, not code editing.
@@ -36,6 +54,20 @@ It should prioritize:
 - minimal UI noise
 - safe defaults
 - no dead ends
+
+In basic mode:
+
+- blank state hides slide rail, inspector, mode toggle, complexity toggle, and
+  edit actions entirely
+- loaded preview shows slide rail plus a compact slide summary, not the full
+  inspector
+- loaded preview should expose an obvious primary path into editing with a
+  novice-readable CTA instead of relying on mode-toggle literacy
+- loaded edit shows the selected element path first and only the controls a
+  normal presenter expects
+- selected-element basic mode should start with a summary card and human labels,
+  while raw node metadata and tag-level controls remain advanced-only
+- HTML, diagnostics, raw attributes, and structural internals stay hidden
 
 ### Advanced mode
 
@@ -116,8 +148,23 @@ Owns:
 - The rail is for navigation and simple structure actions
 - Desktop may use drag-and-drop reorder in the rail
 - Compact widths should prefer explicit menu actions over fragile drag paths
+- Empty state must present a single-path onboarding card with `Open HTML` as
+  the primary CTA and `Paste HTML` as a secondary path
+- Before a deck loads, shell chrome must not leak power-user controls through
+  disabled buttons, collapsed panels, or hidden-but-mounted inspector sections
+- After a deck loads in preview, `Edit` should read as the obvious next action
+  without changing the preview/edit architecture
+- In basic preview, slide context should stay summary-first instead of showing
+  dormant editor controls before the user chooses to edit
+- In basic edit, the first canvas click should resolve into one clear selected
+  element path instead of a full inspector dump
+- Intermediate desktop widths may route secondary topbar commands through a
+  transient overflow surface, but `Open` and `Export` stay inline
 - Blocked actions must fail honestly with feedback, not silently
 - One shell control should own one visible surface state; do not stack nested
+  fake layers to hide timing or spacing bugs
+- Topbar overflow participates in the same mutual-exclusion routing as context
+  menu, insert palette, and slide template surfaces
   visual layers to fake active/inactive behavior
 - Floating toolbar, context menu, and compact shell drawers remain mutually
   exclusive transient surfaces
