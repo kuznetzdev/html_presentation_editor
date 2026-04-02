@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stage L Tables</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #10233f;
+      --muted: #5d6f88;
+      --line: rgba(16, 35, 63, 0.12);
+      --line-strong: rgba(16, 35, 63, 0.24);
+      --surface: #f4f7fb;
+      --accent: #2f6fed;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: #eef3fb;
+      color: var(--ink);
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    .deck {
+      padding: 28px;
+      display: grid;
+      gap: 24px;
+    }
+
+    .slide {
+      width: 1280px;
+      height: 720px;
+      position: relative;
+      overflow: hidden;
+      border-radius: 28px;
+      background:
+        radial-gradient(circle at top right, rgba(47, 111, 237, 0.14), transparent 32%),
+        linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+      box-shadow: 0 32px 80px rgba(15, 23, 42, 0.12);
+    }
+
+    .eyebrow {
+      position: absolute;
+      left: 88px;
+      top: 70px;
+      font-size: 14px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .title {
+      position: absolute;
+      left: 88px;
+      top: 108px;
+      max-width: 860px;
+      font-size: 56px;
+      line-height: 1.02;
+      font-weight: 800;
+    }
+
+    .lede {
+      position: absolute;
+      left: 88px;
+      top: 184px;
+      max-width: 720px;
+      font-size: 21px;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+
+    .report-shell {
+      position: absolute;
+      left: 88px;
+      top: 274px;
+      width: 1104px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+    }
+
+    .report-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      table-layout: fixed;
+      font-size: 18px;
+    }
+
+    .report-table col:first-child { width: 34%; }
+    .report-table col:not(:first-child) { width: 22%; }
+
+    .summary-head { background: var(--surface); }
+
+    .summary-head th {
+      padding: 16px 18px;
+      text-align: left;
+      font-size: 15px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line-strong);
+    }
+
+    .summary-head th:first-child {
+      border-left: 1px solid var(--line);
+      border-top-left-radius: 16px;
+    }
+
+    .summary-head th:last-child {
+      border-right: 1px solid var(--line);
+      border-top-right-radius: 16px;
+    }
+
+    .summary-row th,
+    .summary-row td {
+      padding: 18px;
+      border-bottom: 1px solid var(--line);
+      border-left: 1px solid var(--line);
+      background: #ffffff;
+      vertical-align: top;
+    }
+
+    .summary-row td:last-child,
+    .summary-row th:last-child {
+      border-right: 1px solid var(--line);
+    }
+
+    .summary-row:last-child th:first-child { border-bottom-left-radius: 16px; }
+    .summary-row:last-child td:last-child { border-bottom-right-radius: 16px; }
+
+    .summary-row.is-highlighted th,
+    .summary-row.is-highlighted td {
+      background: linear-gradient(180deg, #fbfdff 0%, #f1f6ff 100%);
+    }
+
+    .region-head {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .metric-cell {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    .metric-cell strong {
+      display: block;
+      font-size: 28px;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .metric-cell span {
+      display: block;
+      font-size: 14px;
+      line-height: 1.45;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .summary-note {
+      margin-top: 14px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <main class="deck" data-doc-type="presentation" data-version="1.0">
+    <section class="slide" data-slide-id="table-stage-l" data-slide-kind="report">
+      <div class="eyebrow" data-node-id="table-kicker" data-node-type="text" data-editable="true">
+        Stage L
+      </div>
+      <h1 class="title" data-node-id="table-title" data-node-type="text" data-editable="true">
+        Tables need native DOM editing, not HTML string rebuilds
+      </h1>
+      <p class="lede" data-node-id="table-lede" data-node-type="text" data-editable="true">
+        Dense report decks mix header cells, row labels and multiline metrics. The editor
+        must keep `thead` and `tbody` intact while allowing predictable cell editing.
+      </p>
+
+      <div class="report-shell" data-node-id="table-shell" data-node-type="container">
+        <table class="report-table analytics-table" data-node-id="report-table" data-node-type="table">
+          <colgroup>
+            <col />
+            <col />
+            <col />
+            <col />
+          </colgroup>
+          <thead class="summary-head sticky-head" data-node-id="report-head" data-node-type="table">
+            <tr class="summary-head-row" data-node-id="report-head-row" data-node-type="table">
+              <th class="region-column-head" scope="col" data-node-id="header-region" data-node-type="table-cell" data-editable="true">
+                Region
+              </th>
+              <th class="metric-column-head" scope="col" data-node-id="header-q1" data-node-type="table-cell" data-editable="true">
+                Pipeline
+              </th>
+              <th class="metric-column-head" scope="col" data-node-id="header-q2" data-node-type="table-cell" data-editable="true">
+                Activation
+              </th>
+              <th class="metric-column-head" scope="col" data-node-id="header-q3" data-node-type="table-cell" data-editable="true">
+                Expansion
+              </th>
+            </tr>
+          </thead>
+          <tbody class="summary-body striped-body" data-node-id="report-body" data-node-type="table">
+            <tr class="summary-row is-highlighted" data-node-id="row-west" data-node-type="table">
+              <th class="region-head" scope="row" data-node-id="row-west-label" data-node-type="table-cell" data-editable="true">
+                West
+              </th>
+              <td class="metric-cell" data-node-id="cell-west-q1" data-node-type="table-cell" data-editable="true">
+                <strong>32%</strong>
+                <span>Enterprise renewals landed ahead of plan.</span>
+              </td>
+              <td class="metric-cell" data-node-id="cell-west-q2" data-node-type="table-cell" data-editable="true">
+                <strong>18%</strong>
+                <span>Activation gap narrowed after the guided rollout.</span>
+              </td>
+              <td class="metric-cell" data-node-id="cell-west-q3" data-node-type="table-cell" data-editable="true">
+                <strong>11%</strong>
+                <span>Upsell motion started from existing CSM coverage.</span>
+              </td>
+            </tr>
+            <tr class="summary-row" data-node-id="row-east" data-node-type="table">
+              <th class="region-head" scope="row" data-node-id="row-east-label" data-node-type="table-cell" data-editable="true">
+                East
+              </th>
+              <td class="metric-cell" data-node-id="cell-east-q1" data-node-type="table-cell" data-editable="true">
+                <strong>27%</strong>
+                <span>Two lighthouse accounts expanded into platform bundles.</span>
+              </td>
+              <td class="metric-cell" data-node-id="cell-east-q2" data-node-type="table-cell" data-editable="true">
+                <strong>21%</strong>
+                <span>Activation stabilized once onboarding was re-sequenced.</span>
+              </td>
+              <td class="metric-cell" data-node-id="cell-east-q3" data-node-type="table-cell" data-editable="true">
+                <strong>14%</strong>
+                <span>Expansion is gated by procurement turnaround.</span>
+              </td>
+            </tr>
+            <tr class="summary-row" data-node-id="row-central" data-node-type="table">
+              <th class="region-head" scope="row" data-node-id="row-central-label" data-node-type="table-cell" data-editable="true">
+                Central
+              </th>
+              <td class="metric-cell" data-node-id="cell-central-q1" data-node-type="table-cell" data-editable="true">
+                <strong>24%</strong>
+                <span>Late-quarter close pressure left pipeline coverage thin.</span>
+              </td>
+              <td class="metric-cell" data-node-id="cell-central-q2" data-node-type="table-cell" data-editable="true">
+                <strong>16%</strong>
+                <span>Adoption grew after the admin template refresh.</span>
+              </td>
+              <td class="metric-cell" data-node-id="cell-central-q3" data-node-type="table-cell" data-editable="true">
+                <strong>9%</strong>
+                <span>Expansion is healthy but still partner-led.</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="summary-note" data-node-id="table-footnote" data-node-type="text" data-editable="true">
+          Mixed table contract: `thead` column headers + `tbody` row headers with editable
+          multiline metric cells.
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

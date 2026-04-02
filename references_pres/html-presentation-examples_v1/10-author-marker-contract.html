@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Author Marker Contract</title>
+  <style>
+    body { margin: 0; background: #f3f6fb; font-family: Inter, Arial, sans-serif; }
+    .deck { padding: 24px; display: grid; gap: 24px; }
+    .slide {
+      width: 1280px;
+      height: 720px;
+      position: relative;
+      overflow: hidden;
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
+    }
+    .text { position: absolute; color: #0f172a; }
+    .note {
+      position: absolute;
+      left: 88px;
+      top: 320px;
+      max-width: 720px;
+      font-size: 24px;
+      line-height: 1.45;
+      color: #334155;
+    }
+  </style>
+</head>
+<body>
+  <main class="deck" data-doc-type="presentation" data-version="1.0">
+    <section class="slide" data-slide-id="locked-contract" data-slide-kind="content">
+      <div
+        class="text"
+        data-node-id="locked-title"
+        data-node-type="text"
+        data-editable="false"
+        style="left:88px;top:92px;font-size:64px;font-weight:800;line-height:1;max-width:780px;"
+      >
+        Lock this author marker
+      </div>
+      <p
+        class="note"
+        data-node-id="note-body"
+        data-node-type="text"
+        data-editable="true"
+      >
+        This deck proves that authored editability must win over text heuristics.
+      </p>
+    </section>
+  </main>
+</body>
+</html>

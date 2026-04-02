@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>07 — Relative assets multi-file presentation</title>
+  <link rel="stylesheet" href="css/corporate-theme.css" />
+</head>
+<body>
+  <main class="deck">
+    <header class="topbar"><span class="badge">Пример 07 • relative assets</span><span class="badge">Дата: <span id="todaySlot">—</span></span></header>
+    <section class="slides"><div class="card"><h1>Презентация с относительными путями и внешними файлами</h1><p class="lead">Этот пример специально нужен для проверки asset resolver: CSS подключён отдельным файлом, изображения лежат в <code>assets/</code>, а логика — в отдельном JS.</p><ul class="metrics"><li><span class="metric-value">3</span><span class="metric-label">SVG-ассета</span></li><li><span class="metric-value">1</span><span class="metric-label">внешний CSS</span></li><li><span class="metric-value">1</span><span class="metric-label">внешний JS</span></li></ul></div><div class="sidebar-stack"><img class="media" src="assets/product-shot.svg" alt="Product shot" /></div></section>
+    <section class="slides" style="padding-top:0"><div class="card"><h2 style="margin-top:0">Что проверять в редакторе</h2><p class="lead">Тут особенно полезно проверить:</p><ul class="lead" style="padding-left:22px;display:grid;gap:10px;"><li>relative CSS paths</li><li>relative image paths</li><li>preview/export consistency</li><li>unresolved asset diagnostics</li></ul></div><div class="sidebar-stack"><img class="media" src="assets/hero-graph.svg" alt="Hero graph" /><img class="media" src="assets/team-cards.svg" alt="Team cards" /></div></section>
+    <footer class="footer"><span class="badge">HTML + CSS + JS + SVG assets</span><span class="badge">Подходит для тестов asset edge cases</span></footer>
+  </main>
+  <script src="js/asset-demo.js"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>04 — Data driven rendered presentation</title>
+  <style>
+    :root{--bg:#f8fafc;--panel:#ffffff;--line:#d7e0eb;--text:#142033;--muted:#61748a;--accent:#245dff}
+    *{box-sizing:border-box} html,body{margin:0;height:100%}
+    body{font-family:Inter,system-ui,Arial,sans-serif;background:linear-gradient(180deg,#edf2f9,#f8fafc);color:var(--text)}
+    .app{height:100vh;display:grid;grid-template-columns:280px 1fr}.sidebar{padding:20px;border-right:1px solid var(--line);background:rgba(255,255,255,.76);backdrop-filter:blur(14px);overflow:auto}
+    .sidebar h1{font-size:1.1rem;margin:0 0 14px}.slide-link{display:block;width:100%;padding:12px 14px;margin-bottom:10px;border:1px solid var(--line);border-radius:16px;background:#fff;text-align:left}
+    .slide-link.is-active{border-color:#245dff;background:#eef3ff;color:#245dff;font-weight:700}.stage{padding:24px}
+    .slide{display:none;min-height:calc(100vh - 48px);padding:42px;border-radius:28px;border:1px solid var(--line);background:var(--panel)}.slide.is-active{display:grid;align-content:center;gap:18px}
+    h2{margin:0;font-size:clamp(2.2rem,4vw,4rem);line-height:1.04}.lead{margin:0;max-width:880px;color:var(--muted);font-size:1.12rem;line-height:1.7}.list,.tiles{display:grid;gap:14px}.tiles{grid-template-columns:repeat(3,minmax(0,1fr))}.tile{padding:22px;border-radius:22px;background:#f7faff;border:1px solid var(--line)}
+    .footer-nav{display:flex;gap:12px;margin-top:12px}button.nav{padding:12px 16px;border:1px solid var(--line);border-radius:14px;background:#fff}
+    @media (max-width:900px){.app{grid-template-columns:1fr}.sidebar{border-right:0;border-bottom:1px solid var(--line)}.tiles{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="app"><aside class="sidebar"><h1>Пример 04 • data-driven rendering</h1><div id="sidebarLinks"></div></aside><main class="stage"><div id="slidesRoot"></div></main></div>
+  <script>
+    const slides=[
+      {id:'intro',title:'Презентация рендерится из JavaScript-данных',lead:'Этот пример полезен для тестов редактора на динамически созданный DOM. В исходном HTML почти нет слайдов — они появляются после рендера массива объектов.',html:'<div class="list"><div class="tile">Слайды создаются из JSON-подобной структуры.</div><div class="tile">Узлы появляются после выполнения JS.</div><div class="tile">Это хороший stress-case для modelDoc и runtime metadata.</div></div>'},
+      {id:'advantages',title:'Плюсы data-driven подхода',lead:'Можно быстро менять порядок, шаблоны и данные без ручной сборки HTML на каждый слайд.',html:'<div class="tiles"><article class="tile"><strong>Гибкость</strong><p class="lead" style="font-size:1rem;max-width:none">Легко генерировать deck из API или CMS.</p></article><article class="tile"><strong>Повторяемость</strong><p class="lead" style="font-size:1rem;max-width:none">Один шаблон, много разных презентаций.</p></article><article class="tile"><strong>Минус</strong><p class="lead" style="font-size:1rem;max-width:none">Редактору сложнее работать, если DOM рождается только после JS.</p></article></div>'},
+      {id:'qa',title:'Что стоит проверить в редакторе',lead:'Нужно убедиться, что editor-bridge правильно считывает runtime-узлы, создаёт selection IDs и не теряет активный слайд.',html:'<ol class="lead" style="padding-left:24px;display:grid;gap:12px"><li>Появляются ли runtime slides в списке.</li><li>Работают ли выбор и редактирование.</li><li>Нет ли рассинхрона при rebuild preview.</li></ol>'}
+    ];
+    const sidebar=document.getElementById('sidebarLinks'); const root=document.getElementById('slidesRoot'); let activeIndex=0;
+    function renderDeck(){
+      sidebar.innerHTML=slides.map((slide,index)=>`<button class="slide-link ${index===activeIndex?'is-active':''}" data-index="${index}">${index+1}. ${slide.title}</button>`).join('');
+      root.innerHTML=slides.map((slide,index)=>`<section class="slide ${index===activeIndex?'is-active':''}" id="${slide.id}"><h2>${slide.title}</h2><p class="lead">${slide.lead}</p>${slide.html}<div class="footer-nav"><button class="nav" data-action="prev" ${index===0?'disabled':''}>← Назад</button><button class="nav" data-action="next" ${index===slides.length-1?'disabled':''}>Дальше →</button></div></section>`).join('');
+      [...document.querySelectorAll('.slide-link')].forEach(btn=>btn.addEventListener('click',()=>{activeIndex=Number(btn.dataset.index);renderDeck();location.hash=slides[activeIndex].id;}));
+      [...document.querySelectorAll('.nav')].forEach(btn=>btn.addEventListener('click',()=>{if(btn.dataset.action==='prev')activeIndex=Math.max(0,activeIndex-1);if(btn.dataset.action==='next')activeIndex=Math.min(slides.length-1,activeIndex+1);renderDeck();location.hash=slides[activeIndex].id;}));
+    }
+    const hashIndex=slides.findIndex(slide=>slide.id===location.hash.replace('#','')); if(hashIndex>=0) activeIndex=hashIndex; renderDeck();
+  </script>
+</body>
+</html>

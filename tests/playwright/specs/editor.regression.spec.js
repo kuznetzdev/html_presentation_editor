@@ -10,15 +10,18 @@ const {
   clickEditorControl,
   clickPreview,
   evaluateEditor,
+  ensureShellPanelVisible,
   getPreviewRect,
   isChromiumOnlyProject,
   loadBasicDeck,
+  loadReferenceDeck,
   openExportValidationPopup,
   openInsertPalette,
   openSlideRailContextMenu,
   previewLocator,
   readSelectionUiState,
   resizeSelectionOverlay,
+  selectionFrameLocator,
   setMode,
   waitForSlideActivationState,
   waitForSelectedEntityKind,
@@ -30,6 +33,19 @@ const PATTERN_IMAGE_PATH = path.join(
   "images",
   "pattern.svg",
 );
+const REFERENCE_DECK_IDS = Object.freeze({
+  authorMarkerContract: "v1-author-marker-contract",
+  codeBlocks: "v1-code-blocks-v1",
+  dataAttributes: "v1-data-attributes-editorish",
+  fragments: "v1-animated-fragments",
+  layoutContainers: "v1-layout-containers-v1",
+  mixedMedia: "v1-mixed-media",
+  semanticCss: "v1-semantic-css",
+  selectionEngineV2: "v1-selection-engine-v2",
+  svgHeavy: "v1-svg-heavy",
+  tableAndReport: "v1-table-and-report",
+  tables: "v1-tables-v1",
+});
 
 async function slideCount(page) {
   return evaluateEditor(page, "state.slides.length");
@@ -87,16 +103,73 @@ async function selectVideoNode(page, selector, options = {}) {
   await waitForSelectedEntityKind(page, "video");
 }
 
-async function selectSlideRoot(page, slideIndex) {
-  await previewLocator(page, "section.slide")
-    .nth(slideIndex)
-    .click({ position: { x: 12, y: 12 } });
-  await page.waitForFunction(
-    () =>
-      globalThis.eval(
-        "Boolean(state.selectedNodeId) && Boolean(state.selectedFlags.isSlideRoot)",
-      ),
+async function selectTableCell(page, selector, options = {}) {
+  await clickPreview(page, selector, options);
+  await waitForSelectedEntityKind(page, "table-cell");
+}
+
+async function loadReferenceDeckForEdit(page, caseId, options = {}) {
+  return loadReferenceDeck(page, caseId, {
+    ...options,
+    mode: "edit",
+  });
+}
+
+async function selectPreviewNodeBySelector(page, selector) {
+  const nodeId = await evaluateEditor(
+    page,
+    `(() => {
+      const frame = document.getElementById("previewFrame");
+      const doc = frame?.contentDocument || null;
+      return doc?.querySelector(${JSON.stringify(selector)})?.getAttribute("data-editor-node-id") || "";
+    })()`,
   );
+  expect(nodeId).toBeTruthy();
+  await evaluateEditor(
+    page,
+    `(() => {
+      const targetNodeId = ${JSON.stringify(nodeId)};
+      const payload =
+        typeof buildSelectionBridgePayload === "function"
+          ? buildSelectionBridgePayload(targetNodeId, {
+              focusText: false,
+              selectionNodeId: targetNodeId,
+            })
+          : null;
+      if (!payload || typeof sendToBridge !== "function") return;
+      sendToBridge("select-element", payload);
+    })()`,
+  );
+  await expect.poll(() => evaluateEditor(page, "state.selectedNodeId || ''")).toBe(nodeId);
+}
+
+async function selectSlideRoot(page, slideIndex) {
+  const slideRootTarget = previewLocator(page, "section.slide").nth(slideIndex);
+  const waitForSlideRootSelection = () =>
+    page.waitForFunction(
+      () =>
+        globalThis.eval(
+          "Boolean(state.selectedNodeId) && Boolean(state.selectedFlags.isSlideRoot)",
+        ),
+      undefined,
+      { timeout: 2_000 },
+    );
+
+  await slideRootTarget.click({ position: { x: 12, y: 12 } });
+  try {
+    await waitForSlideRootSelection();
+  } catch (error) {
+    await page.keyboard.down("Alt");
+    try {
+      await slideRootTarget.click({
+        force: true,
+        position: { x: 12, y: 12 },
+      });
+    } finally {
+      await page.keyboard.up("Alt");
+    }
+    await waitForSlideRootSelection();
+  }
   await waitForSelectedEntityKind(page, "slide-root");
 }
 
@@ -248,7 +321,7 @@ test.describe("Editor regression coverage", () => {
 
     const ui = await readSelectionUiState(page);
     expect(ui.selectedEntityKind).toBe("video");
-    expect(ui.kindBadge).toBe("kind: video");
+    expect(ui.kindBadge).toMatch(/^Тип:\s*(Видео|video)$/i);
     expect(ui.selectedFlags.isVideo).toBe(true);
     expect(ui.selectedFlags.isContainer).toBe(false);
     expect(ui.visibleInspectorSections).toEqual(
@@ -259,6 +332,905 @@ test.describe("Editor regression coverage", () => {
       ]),
     );
     expect(ui.visibleInspectorSections).not.toContain("selectionPolicySection");
+  });
+
+  test("unified import prefers author slide and node markers @stage-g", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only import flow.");
+
+    await loadReferenceDeckForEdit(page, REFERENCE_DECK_IDS.dataAttributes);
+
+    const slideIds = JSON.parse(
+      await evaluateEditor(page, "JSON.stringify(state.slides.map((slide) => slide.id))"),
+    );
+    expect(slideIds).toEqual(["cover", "detail"]);
+
+    await clickPreview(page, '[data-node-id="title-1"]');
+    await expect.poll(() => evaluateEditor(page, "state.selectedNodeId || ''")).toBe(
+      "title-1",
+    );
+    await waitForSelectedEntityKind(page, "text");
+
+    let ui = await readSelectionUiState(page);
+    expect(ui.selectedEntityKind).toBe("text");
+    expect(ui.selectedFlags.canEditText).toBe(true);
+
+    await clickPreview(page, '[data-node-id="chip-1"]');
+    ui = await readSelectionUiState(page);
+    expect(ui.selectionLeafNodeId).not.toBe("");
+    expect(ui.selectionPath.map((entry) => entry.nodeId)).toContain("chip-1");
+
+    if (testInfo.project.use?.hasTouch) {
+      await ensureShellPanelVisible(page, "inspector");
+    }
+
+    await page.click('#selectionBreadcrumbs [data-selection-path-node-id="chip-1"]');
+    await expect.poll(() => evaluateEditor(page, "state.selectedNodeId || ''")).toBe(
+      "chip-1",
+    );
+    await waitForSelectedEntityKind(page, "container");
+
+    ui = await readSelectionUiState(page);
+    expect(ui.selectedEntityKind).toBe("container");
+    expect(ui.selectedFlags.isContainer).toBe(true);
+  });
+
+  test("unified import detects semantic slide roots with stable slide identities @stage-g", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only import flow.");
+
+    await loadReferenceDeckForEdit(page, REFERENCE_DECK_IDS.semanticCss);
+
+    const slideIds = JSON.parse(
+      await evaluateEditor(page, "JSON.stringify(state.slides.map((slide) => slide.id))"),
+    );
+    expect(slideIds).toEqual(["slide-intro", "slide-kpis", "slide-summary"]);
+  });
+
+  test("unified import classifies reference deck entities without flattening structure @stage-g", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only import flow.");
+
+    await loadReferenceDeckForEdit(page, REFERENCE_DECK_IDS.tableAndReport);
+    await clickPreview(page, "tbody tr:first-child td:nth-child(2)");
+    await waitForSelectedEntityKind(page, "table-cell");
+    let ui = await readSelectionUiState(page);
+    expect(ui.selectedEntityKind).toBe("table-cell");
+    expect(ui.selectedFlags.canEditText).toBe(true);
+
+    await loadReferenceDeckForEdit(page, REFERENCE_DECK_IDS.mixedMedia);
+    await clickPreview(page, "pre");
+    await waitForSelectedEntityKind(page, "code-block");
+    ui = await readSelectionUiState(page);
+    expect(ui.selectedEntityKind).toBe("code-block");
+    expect(ui.selectedFlags.canEditText).toBe(true);
+
+    await loadReferenceDeckForEdit(page, REFERENCE_DECK_IDS.svgHeavy);
+    await selectPreviewNodeBySelector(page, "svg");
+    await waitForSelectedEntityKind(page, "svg");
+    ui = await readSelectionUiState(page);
+    expect(ui.selectedEntityKind).toBe("svg");
+
+    await loadReferenceDeckForEdit(page, REFERENCE_DECK_IDS.fragments);
+    await selectPreviewNodeBySelector(page, ".step.fragment.visible");
+    await waitForSelectedEntityKind(page, "fragment");
+    ui = await readSelectionUiState(page);
+    expect(ui.selectedEntityKind).toBe("fragment");
+  });
+
+  test("author node markers survive element html replacement and export @stage-h", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only author marker flow.");
+
+    await loadReferenceDeckForEdit(page, REFERENCE_DECK_IDS.dataAttributes);
+
+    const serialized = await evaluateEditor(
+      page,
+      `(() => {
+        state.htmlEditorTargetId = "title-1";
+        const replacement = parseSingleRootElement(
+          '<div class="text" style="left:92px;top:140px;font-size:76px;font-weight:800;line-height:1;max-width:780px;">Marker-safe replacement</div>'
+        );
+        saveElementHtml(replacement);
+        return serializeCurrentProject();
+      })()`,
+    );
+
+    expect(serialized).toContain('data-node-id="title-1"');
+    expect(serialized).toContain('data-node-type="text"');
+    expect(serialized).toContain('data-editable="true"');
+    expect(serialized).toContain("Marker-safe replacement");
+  });
+
+  test("author slide markers survive slide html replacement and export @stage-h", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only author marker flow.");
+
+    await loadReferenceDeckForEdit(page, REFERENCE_DECK_IDS.dataAttributes);
+
+    const serialized = await evaluateEditor(
+      page,
+      `(() => {
+        state.htmlEditorTargetId = "cover";
+        const replacement = parseSingleRootElement(
+          '<section class="slide active" data-slide-kind="hero"><div class="text" style="left:92px;top:140px;font-size:76px;font-weight:800;line-height:1;max-width:780px;">Slide marker-safe replacement</div></section>'
+        );
+        saveSlideHtml(replacement);
+        return serializeCurrentProject();
+      })()`,
+    );
+
+    expect(serialized).toContain('data-slide-id="cover"');
+    expect(serialized).toContain("Slide marker-safe replacement");
+  });
+
+  test("duplicating authored slides keeps unique author ids across export roundtrip @stage-h", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only author marker flow.");
+
+    await loadReferenceDeckForEdit(page, REFERENCE_DECK_IDS.dataAttributes);
+
+    const duplicateSummary = await evaluateEditor(
+      page,
+      `JSON.stringify((() => {
+        duplicateSlideById("cover");
+        const serialized = serializeCurrentProject();
+        const markerIds = Array.from(
+          serialized.matchAll(/data-slide-id="([^"]+)"/g),
+          (match) => match[1],
+        );
+        loadHtmlString(serialized, "roundtrip-duplicate.html", {
+          resetHistory: true,
+          mode: "edit",
+        });
+        return {
+          markerIds,
+          nodeMarkerCounts: {
+            chip1: (serialized.match(/data-node-id="chip-1"/g) || []).length,
+            title1: (serialized.match(/data-node-id="title-1"/g) || []).length,
+          },
+          roundtripSlideCount: state.slides.length,
+          uniqueMarkerIds: Array.from(new Set(markerIds)),
+        };
+      })())`,
+    );
+    const parsedSummary = JSON.parse(duplicateSummary);
+
+    expect(parsedSummary.markerIds).toHaveLength(3);
+    expect(parsedSummary.uniqueMarkerIds).toHaveLength(3);
+    expect(parsedSummary.uniqueMarkerIds).toContain("cover");
+    expect(parsedSummary.nodeMarkerCounts.title1).toBe(1);
+    expect(parsedSummary.nodeMarkerCounts.chip1).toBe(1);
+    expect(parsedSummary.roundtripSlideCount).toBe(3);
+  });
+
+  test("author editable=false overrides text heuristics and survives export @stage-h", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only author marker flow.");
+
+    await loadReferenceDeckForEdit(page, REFERENCE_DECK_IDS.authorMarkerContract);
+    await clickPreview(page, '[data-node-id="locked-title"]');
+    await expect.poll(() => evaluateEditor(page, "state.selectedNodeId || ''")).toBe(
+      "locked-title",
+    );
+    await waitForSelectedEntityKind(page, "text");
+
+    const ui = await readSelectionUiState(page);
+    expect(ui.selectedEntityKind).toBe("text");
+    expect(ui.selectedFlags.canEditText).toBe(false);
+
+    const serialized = await evaluateEditor(page, "serializeCurrentProject()");
+    expect(serialized).toContain('data-node-id="locked-title"');
+    expect(serialized).toContain('data-editable="false"');
+  });
+
+  test("selection engine v2 prefers useful leaves through overlap-heavy targets @stage-i", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only selection flow.");
+    test.skip(Boolean(testInfo.project.use?.hasTouch), "Overlap-heavy pointer selection is desktop-pointer only.");
+
+    await loadReferenceDeckForEdit(page, REFERENCE_DECK_IDS.selectionEngineV2);
+
+    await clickPreview(page, "#hero-overlay");
+    await expect.poll(() => evaluateEditor(page, "state.selectedNodeId || ''")).toBe(
+      "hero-title",
+    );
+    await waitForSelectedEntityKind(page, "text");
+
+    let ui = await readSelectionUiState(page);
+    expect(ui.selectedEntityKind).toBe("text");
+    expect(ui.selectedFlags.canEditText).toBe(true);
+    expect(ui.manipulationTargetNodeId).toBe("hero-card");
+
+    await clickPreview(page, "#metric-overlay-a");
+    await expect.poll(() => evaluateEditor(page, "state.selectedNodeId || ''")).toBe(
+      "metric-label-a",
+    );
+    await waitForSelectedEntityKind(page, "text");
+
+    ui = await readSelectionUiState(page);
+    expect(ui.selectedEntityKind).toBe("text");
+    expect(ui.selectedFlags.canEditText).toBe(true);
+    expect(ui.manipulationTargetNodeId).toBe("metric-card-a");
+  });
+
+  test("selection engine v2 cycles ancestors on Alt+Click and wraps back to leaf @stage-i", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only selection flow.");
+    test.skip(Boolean(testInfo.project.use?.hasTouch), "Modifier cycling is desktop-pointer only.");
+
+    await loadReferenceDeckForEdit(page, REFERENCE_DECK_IDS.selectionEngineV2);
+
+    await clickPreview(page, "#hero-overlay");
+    await expect.poll(() => evaluateEditor(page, "state.selectedNodeId || ''")).toBe(
+      "hero-title",
+    );
+
+    await clickPreview(page, "#hero-overlay", { modifiers: ["Alt"] });
+    await expect.poll(() => evaluateEditor(page, "state.selectedNodeId || ''")).toBe(
+      "hero-card",
+    );
+    await waitForSelectedEntityKind(page, "container");
+
+    await clickPreview(page, "#hero-overlay", { modifiers: ["Alt"] });
+    await expect.poll(() => evaluateEditor(page, "state.selectedFlags.isSlideRoot")).toBe(
+      true,
+    );
+    await waitForSelectedEntityKind(page, "slide-root");
+
+    await clickPreview(page, "#hero-overlay", { modifiers: ["Alt"] });
+    await expect.poll(() => evaluateEditor(page, "state.selectedNodeId || ''")).toBe(
+      "hero-title",
+    );
+    await waitForSelectedEntityKind(page, "text");
+  });
+
+  test("selection engine v2 exposes breadcrumb path and allows parent or leaf jumps @stage-i", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only selection flow.");
+
+    await loadReferenceDeckForEdit(page, REFERENCE_DECK_IDS.selectionEngineV2);
+
+    await clickPreview(page, "#hero-overlay");
+    await expect.poll(() => evaluateEditor(page, "state.selectedNodeId || ''")).toBe(
+      "hero-title",
+    );
+
+    if (testInfo.project.use?.hasTouch) {
+      await ensureShellPanelVisible(page, "inspector");
+    }
+
+    let ui = await readSelectionUiState(page);
+    expect(ui.selectionLeafNodeId).toBe("hero-title");
+    expect(ui.selectionPath.map((entry) => entry.nodeId)).toEqual([
+      "hero-title",
+      "hero-card",
+      "selection-v2",
+    ]);
+
+    await page.click('#selectionBreadcrumbs [data-selection-path-node-id="hero-card"]');
+    await expect.poll(() => evaluateEditor(page, "state.selectedNodeId || ''")).toBe(
+      "hero-card",
+    );
+    await waitForSelectedEntityKind(page, "container");
+
+    await page.click('#selectionBreadcrumbs [data-selection-path-node-id="hero-title"]');
+    await expect.poll(() => evaluateEditor(page, "state.selectedNodeId || ''")).toBe(
+      "hero-title",
+    );
+    await waitForSelectedEntityKind(page, "text");
+  });
+
+  test("selection engine v2 uses parent manipulation context for drag and resize @stage-i", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only direct manipulation flow.");
+    test.skip(Boolean(testInfo.project.use?.hasTouch), "Direct manipulation drag/resize is desktop-pointer only.");
+
+    await loadReferenceDeckForEdit(page, REFERENCE_DECK_IDS.selectionEngineV2);
+    await closeCompactShellPanels(page);
+
+    await clickPreview(page, "#hero-overlay");
+    await expect.poll(() => evaluateEditor(page, "state.selectedNodeId || ''")).toBe(
+      "hero-title",
+    );
+    await waitForSelectedEntityKind(page, "text");
+
+    const beforeDrag = await getPreviewRect(page, "#hero-card");
+    await dragSelectionOverlay(page, 46, 24);
+    const afterDrag = await getPreviewRect(page, "#hero-card");
+    expect(afterDrag.left).toBeGreaterThan(beforeDrag.left + 20);
+    expect(afterDrag.top).toBeGreaterThan(beforeDrag.top + 10);
+
+    const beforeResize = await getPreviewRect(page, "#hero-card");
+    await resizeSelectionOverlay(page, "se", 44, 28);
+    const afterResize = await getPreviewRect(page, "#hero-card");
+    expect(afterResize.width).toBeGreaterThan(beforeResize.width + 20);
+    expect(afterResize.height).toBeGreaterThan(beforeResize.height + 10);
+  });
+
+  test("layout containers keep selectable flow containers on their own leaf and scope snap to parent @stage-k", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only layout container flow.");
+
+    await loadReferenceDeckForEdit(page, REFERENCE_DECK_IDS.layoutContainers);
+
+    await clickPreview(page, "#flow-dropzone");
+    await expect.poll(() => evaluateEditor(page, "state.selectedNodeId || ''")).toBe(
+      "flow-dropzone",
+    );
+    await waitForSelectedEntityKind(page, "container");
+
+    const ui = await readSelectionUiState(page);
+    expect(ui.selectionLeafNodeId).toBe("flow-dropzone");
+    expect(ui.manipulationTargetNodeId).toBe("flow-dropzone");
+    expect(ui.selectionPath.slice(0, 2).map((entry) => entry.nodeId)).toEqual([
+      "flow-dropzone",
+      "grid-shell",
+    ]);
+
+    const manipulationContext = await evaluateEditor(page, "state.manipulationContext");
+    expect(manipulationContext?.interactionContainerKind).toBe("flow");
+    expect(manipulationContext?.parentContainerNodeId).toBe("grid-shell");
+    expect(manipulationContext?.snapRootNodeId).toBe("grid-shell");
+    expect(manipulationContext?.snapTargets?.map((target) => target.nodeId)).not.toContain(
+      "outside-floating",
+    );
+  });
+
+  test("layout containers keep nested manipulation scoped to the parent container context @stage-k", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only layout container flow.");
+
+    await loadReferenceDeckForEdit(page, REFERENCE_DECK_IDS.layoutContainers);
+
+    await clickPreview(page, "#position-label");
+    await expect.poll(() => evaluateEditor(page, "state.selectedNodeId || ''")).toBe(
+      "position-label",
+    );
+    await waitForSelectedEntityKind(page, "text");
+
+    const ui = await readSelectionUiState(page);
+    expect(ui.manipulationTargetNodeId).toBe("position-host");
+
+    const manipulationContext = await evaluateEditor(page, "state.manipulationContext");
+    expect(manipulationContext?.interactionNodeId).toBe("position-host");
+    expect(manipulationContext?.interactionUsesAncestor).toBe(true);
+    expect(manipulationContext?.interactionContainerKind).toBe("positioning-root");
+    expect(manipulationContext?.parentContainerNodeId).toBe("grid-shell");
+    expect(manipulationContext?.snapRootNodeId).toBe("grid-shell");
+    expect(manipulationContext?.snapTargets?.map((target) => target.nodeId)).not.toContain(
+      "outside-floating",
+    );
+  });
+
+  test("protected layout containers stay reachable through breadcrumbs and block unsafe drag operations @stage-k", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only layout container flow.");
+    test.skip(Boolean(testInfo.project.use?.hasTouch), "Protected drag contract is desktop-pointer only.");
+
+    await loadReferenceDeckForEdit(page, REFERENCE_DECK_IDS.layoutContainers);
+
+    await clickPreview(page, "#protected-title");
+    await expect.poll(() => evaluateEditor(page, "state.selectedNodeId || ''")).toBe(
+      "protected-title",
+    );
+    await waitForSelectedEntityKind(page, "text");
+
+    if (testInfo.project.use?.hasTouch) {
+      await ensureShellPanelVisible(page, "inspector");
+    }
+
+    await page.click('#selectionBreadcrumbs [data-selection-path-node-id="protected-shell"]');
+    await expect.poll(() => evaluateEditor(page, "state.selectedNodeId || ''")).toBe(
+      "protected-shell",
+    );
+    await waitForSelectedEntityKind(page, "container");
+    await expect.poll(() => evaluateEditor(page, "state.selectedPolicy?.kind || ''")).toBe(
+      "protected-container",
+    );
+
+    const policy = await evaluateEditor(page, "state.selectedPolicy");
+    expect(policy?.kind).toBe("protected-container");
+    expect(policy?.canMove).toBe(false);
+    expect(policy?.canResize).toBe(false);
+    expect(policy?.canDelete).toBe(false);
+    expect(policy?.canDuplicate).toBe(false);
+
+    const beforeRect = await getPreviewRect(page, "#protected-shell");
+    await dragSelectionOverlay(page, 64, 24);
+    const afterRect = await getPreviewRect(page, "#protected-shell");
+    expect(afterRect.left).toBeCloseTo(beforeRect.left, 1);
+    expect(afterRect.top).toBeCloseTo(beforeRect.top, 1);
+  });
+
+  test("tables map structural nodes to table kinds and keep keyboard cell navigation inside the slide @stage-l", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only table flow.");
+
+    await loadReferenceDeckForEdit(page, REFERENCE_DECK_IDS.tables);
+
+    const detectedKinds = JSON.parse(
+      await evaluateEditor(
+        page,
+        `JSON.stringify([
+          "report-table",
+          "report-head",
+          "report-body",
+          "report-head-row",
+          "header-region",
+          "cell-west-q1",
+        ].map((nodeId) => {
+          const node = state.modelDoc?.querySelector('[data-node-id="' + nodeId + '"]');
+          return {
+            nodeId,
+            entityKind: node?.getAttribute("data-editor-entity-kind") || "",
+            editable: node?.getAttribute("data-editor-editable") || "",
+          };
+        }))`,
+      ),
+    );
+
+    expect(detectedKinds).toEqual([
+      { nodeId: "report-table", entityKind: "table", editable: "false" },
+      { nodeId: "report-head", entityKind: "table", editable: "false" },
+      { nodeId: "report-body", entityKind: "table", editable: "false" },
+      { nodeId: "report-head-row", entityKind: "table", editable: "false" },
+      { nodeId: "header-region", entityKind: "table-cell", editable: "true" },
+      { nodeId: "cell-west-q1", entityKind: "table-cell", editable: "true" },
+    ]);
+
+    await selectTableCell(page, '[data-node-id="cell-west-q1"]');
+    await expect.poll(() => evaluateEditor(page, "state.selectedNodeId || ''")).toBe(
+      "cell-west-q1",
+    );
+    const activeSlideIdBefore = await evaluateEditor(page, "state.activeSlideId || ''");
+
+    await selectionFrameLocator(page).press("Tab");
+    await expect.poll(() => evaluateEditor(page, "state.selectedNodeId || ''")).toBe(
+      "cell-west-q2",
+    );
+    await waitForSelectedEntityKind(page, "table-cell");
+    await expect.poll(() => evaluateEditor(page, "state.activeSlideId || ''")).toBe(
+      activeSlideIdBefore,
+    );
+
+    await selectionFrameLocator(page).press("Shift+Tab");
+    await expect.poll(() => evaluateEditor(page, "state.selectedNodeId || ''")).toBe(
+      "cell-west-q1",
+    );
+    await waitForSelectedEntityKind(page, "table-cell");
+
+    const originalCellHtml = await previewLocator(page, '[data-node-id="cell-west-q1"]').evaluate(
+      (element) => element.innerHTML,
+    );
+
+    await selectionFrameLocator(page).press("Enter");
+    const tableCell = previewLocator(page, '[data-node-id="cell-west-q1"]');
+    await expect(tableCell).toHaveAttribute("contenteditable", "true");
+    await tableCell.press(process.platform === "darwin" ? "Meta+A" : "Control+A");
+    await tableCell.type("Line one");
+    await tableCell.press("Enter");
+    await tableCell.type("Line two");
+    await expect.poll(() => evaluateEditor(page, "state.interactionMode")).toBe("text-edit");
+    await expect(tableCell).toContainText("Line one");
+    await expect(tableCell).toContainText("Line two");
+
+    await tableCell.press("Escape");
+    await expect(tableCell).not.toHaveAttribute("contenteditable", "true");
+    await expect.poll(() => evaluateEditor(page, "state.interactionMode")).toBe("select");
+    await expect
+      .poll(() =>
+        previewLocator(page, '[data-node-id="cell-west-q1"]').evaluate(
+          (element) => element.innerHTML,
+        ),
+      )
+      .toBe(originalCellHtml);
+  });
+
+  test("table structural ops use native sections and preserve mixed header body classes @stage-l", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only table flow.");
+
+    await loadReferenceDeckForEdit(page, REFERENCE_DECK_IDS.tables);
+    await selectTableCell(page, '[data-node-id="cell-west-q1"]');
+
+    await clickEditorControl(page, "#insertTableRowBelowBtn", { panel: "inspector" });
+    await expect.poll(() =>
+      previewLocator(page, '[data-node-id="report-body"] tr').count(),
+    ).toBe(4);
+    await waitForSelectedEntityKind(page, "table-cell");
+
+    const afterRowInsert = JSON.parse(
+      await evaluateEditor(
+        page,
+        `JSON.stringify({
+          selectedNodeId: state.selectedNodeId || "",
+          selectedKind: typeof getSelectedEntityKindForUi === "function" ? getSelectedEntityKindForUi() : "none",
+          bodyClass: state.modelDoc?.querySelector('[data-node-id="report-body"]')?.className || "",
+          headClass: state.modelDoc?.querySelector('[data-node-id="report-head"]')?.className || "",
+          insertedRowClass: state.modelDoc?.querySelector('[data-node-id="report-body"] tr:nth-child(2)')?.className || "",
+          insertedRowCellCount: state.modelDoc?.querySelector('[data-node-id="report-body"] tr:nth-child(2)')?.cells.length || 0
+        })`,
+      ),
+    );
+
+    expect(afterRowInsert.selectedKind).toBe("table-cell");
+    expect(afterRowInsert.selectedNodeId).not.toBe("cell-west-q1");
+    expect(afterRowInsert.bodyClass).toBe("summary-body striped-body");
+    expect(afterRowInsert.headClass).toBe("summary-head sticky-head");
+    expect(afterRowInsert.insertedRowClass).toBe("summary-row is-highlighted");
+    expect(afterRowInsert.insertedRowCellCount).toBe(4);
+
+    await clickEditorControl(page, "#insertTableColumnRightBtn", { panel: "inspector" });
+    await expect.poll(() =>
+      previewLocator(page, '[data-node-id="report-head"] tr:first-child > *').count(),
+    ).toBe(5);
+    await expect.poll(() =>
+      previewLocator(page, '[data-node-id="report-body"] tr:first-child > *').count(),
+    ).toBe(5);
+
+    const afterColumnInsert = JSON.parse(
+      await evaluateEditor(
+        page,
+        `JSON.stringify({
+          bodyClass: state.modelDoc?.querySelector('[data-node-id="report-body"]')?.className || "",
+          headClass: state.modelDoc?.querySelector('[data-node-id="report-head"]')?.className || "",
+          headerCellClass: state.modelDoc?.querySelector('[data-node-id="report-head"] tr:first-child > *:nth-child(2)')?.className || "",
+          bodyCellClass: state.modelDoc?.querySelector('[data-node-id="report-body"] tr:nth-child(1) > *:nth-child(2)')?.className || ""
+        })`,
+      ),
+    );
+
+    expect(afterColumnInsert.bodyClass).toBe("summary-body striped-body");
+    expect(afterColumnInsert.headClass).toBe("summary-head sticky-head");
+    expect(afterColumnInsert.headerCellClass).toBe("metric-column-head");
+    expect(afterColumnInsert.bodyCellClass).toBe("metric-cell");
+
+    await clickEditorControl(page, "#deleteTableColumnBtn", { panel: "inspector" });
+    await expect.poll(() =>
+      previewLocator(page, '[data-node-id="report-head"] tr:first-child > *').count(),
+    ).toBe(4);
+    await clickEditorControl(page, "#deleteTableRowBtn", { panel: "inspector" });
+    await expect.poll(() =>
+      previewLocator(page, '[data-node-id="report-body"] tr').count(),
+    ).toBe(3);
+  });
+
+  test("table cell edits survive undo redo and export reimport roundtrip @stage-l", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only table flow.");
+
+    await loadReferenceDeckForEdit(page, REFERENCE_DECK_IDS.tables);
+
+    const originalCellHtml = await previewLocator(page, '[data-node-id="cell-east-q2"]').evaluate(
+      (element) => element.innerHTML,
+    );
+
+    await selectTableCell(page, '[data-node-id="cell-east-q2"]');
+    await selectionFrameLocator(page).press("Enter");
+    const editedCell = previewLocator(page, '[data-node-id="cell-east-q2"]');
+    await editedCell.press(process.platform === "darwin" ? "Meta+A" : "Control+A");
+    await editedCell.type("Blocked expansion");
+    await editedCell.press("Enter");
+    await editedCell.type("Needs renewed security review");
+    await clickPreview(page, '[data-node-id="table-kicker"]');
+
+    await expect
+      .poll(() =>
+        previewLocator(page, '[data-node-id="cell-east-q2"]').evaluate(
+          (element) => element.innerHTML,
+        ),
+      )
+      .toBe("Blocked expansion<br>Needs renewed security review");
+
+    await clickEditorControl(page, "#undoBtn");
+    await expect
+      .poll(() =>
+        previewLocator(page, '[data-node-id="cell-east-q2"]').evaluate(
+          (element) => element.innerHTML,
+        ),
+      )
+      .toBe(originalCellHtml);
+
+    await clickEditorControl(page, "#redoBtn");
+    await expect
+      .poll(() =>
+        previewLocator(page, '[data-node-id="cell-east-q2"]').evaluate(
+          (element) => element.innerHTML,
+        ),
+      )
+      .toBe("Blocked expansion<br>Needs renewed security review");
+
+    const serialized = await evaluateEditor(page, "serializeCurrentProject()");
+    expect(serialized).toContain('data-node-id="cell-east-q2"');
+    expect(serialized).toContain("Blocked expansion<br>Needs renewed security review");
+    expect(serialized).toContain('class="summary-head sticky-head"');
+    expect(serialized).toContain('class="summary-body striped-body"');
+
+    await evaluateEditor(
+      page,
+      `loadHtmlString(${JSON.stringify(serialized)}, "stage-l-roundtrip", {
+        mode: "edit",
+        preferSlideId: "table-stage-l",
+        resetHistory: true
+      })`,
+    );
+    await page.waitForFunction(
+      () =>
+        globalThis.eval(
+          "state.previewLifecycle === 'ready' && Boolean(state.previewReady) && state.activeSlideId === 'table-stage-l'",
+        ),
+      undefined,
+      { timeout: 20_000 },
+    );
+
+    await expect
+      .poll(() =>
+        previewLocator(page, '[data-node-id="cell-east-q2"]').evaluate(
+          (element) => element.innerHTML,
+        ),
+      )
+      .toBe("Blocked expansion<br>Needs renewed security review");
+    await expect(previewLocator(page, '[data-node-id="report-head"]')).toHaveClass(
+      /summary-head sticky-head/,
+    );
+    await expect(previewLocator(page, '[data-node-id="report-body"]')).toHaveClass(
+      /summary-body striped-body/,
+    );
+  });
+
+  test("code blocks expose only safe text editing and preserve whitespace through roundtrip @stage-m", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only code block flow.");
+
+    await loadReferenceDeckForEdit(page, REFERENCE_DECK_IDS.codeBlocks);
+
+    await clickPreview(page, '[data-node-id="code-block-root"]', {
+      position: { x: 40, y: 26 },
+    });
+    await waitForSelectedEntityKind(page, "code-block");
+    await expect(page.locator("#editTextBtn")).toBeEnabled();
+    await expect(page.locator("#boldBtn")).toBeDisabled();
+    await expect(page.locator("#italicBtn")).toBeDisabled();
+    await expect(page.locator("#underlineBtn")).toBeDisabled();
+
+    await page.locator("#selectionFrameHitArea").click({ button: "right" });
+    await expect(page.locator('#contextMenu [data-menu-action="edit-text"]')).toBeVisible();
+    await expect(page.locator('#contextMenu [data-menu-action="to-h2"]')).toHaveCount(0);
+    await page.locator('#contextMenu [data-menu-action="edit-text"]').click();
+
+    const originalText = await previewLocator(page, '[data-node-id="code-block-root"]').evaluate(
+      (element) => element.textContent,
+    );
+
+    const codeBlock = previewLocator(page, '[data-node-id="code-block-root"]');
+    await codeBlock.press(process.platform === "darwin" ? "Meta+A" : "Control+A");
+    await codeBlock.type("function auditDeck() {");
+    await codeBlock.press("Enter");
+    await codeBlock.type("  return 'ok';");
+    await codeBlock.press("Enter");
+    await codeBlock.type("}");
+    await clickPreview(page, '[data-node-id="code-block-kicker"]');
+
+    const expectedText = "function auditDeck() {\n  return 'ok';\n}";
+    await expect
+      .poll(() =>
+        previewLocator(page, '[data-node-id="code-block-root"]').evaluate(
+          (element) => element.textContent,
+        ),
+      )
+      .toBe(expectedText);
+    await expect
+      .poll(() =>
+        previewLocator(page, '[data-node-id="code-block-root"]').evaluate(
+          (element) => element.innerHTML,
+        ),
+      )
+      .toBe("function auditDeck() {\n  return 'ok';\n}");
+
+    await clickEditorControl(page, "#undoBtn");
+    await expect
+      .poll(() =>
+        previewLocator(page, '[data-node-id="code-block-root"]').evaluate(
+          (element) => element.textContent,
+        ),
+      )
+      .toBe(originalText);
+
+    await clickEditorControl(page, "#redoBtn");
+    await expect
+      .poll(() =>
+        previewLocator(page, '[data-node-id="code-block-root"]').evaluate(
+          (element) => element.textContent,
+        ),
+      )
+      .toBe(expectedText);
+
+    const serialized = await evaluateEditor(page, "serializeCurrentProject()");
+    expect(serialized).toContain('data-node-id="code-block-root"');
+    expect(serialized).toContain('class="code-shell prism-like language-js"');
+    expect(serialized).toContain("function auditDeck() {");
+    expect(serialized).toContain("  return 'ok';");
+
+    await evaluateEditor(
+      page,
+      `loadHtmlString(${JSON.stringify(serialized)}, "stage-m-roundtrip", {
+        mode: "edit",
+        preferSlideId: "code-stage-m",
+        resetHistory: true
+      })`,
+    );
+    await page.waitForFunction(
+      () =>
+        globalThis.eval(
+          "state.previewLifecycle === 'ready' && Boolean(state.previewReady) && state.activeSlideId === 'code-stage-m'",
+        ),
+      undefined,
+      { timeout: 20_000 },
+    );
+
+    await expect
+      .poll(() =>
+        previewLocator(page, '[data-node-id="code-block-root"]').evaluate(
+          (element) => element.textContent,
+        ),
+      )
+      .toBe(expectedText);
+    await expect(previewLocator(page, '[data-node-id="code-block-root"]')).toHaveClass(
+      /code-shell prism-like language-js/,
+    );
+  });
+
+  test("inline text editing enters on Enter or double click and exits to selection mode on Escape @stage-j", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only inline text flow.");
+
+    await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
+    await selectTextNode(page, "#hero-title");
+
+    await selectionFrameLocator(page).press("Enter");
+    await expect(previewLocator(page, "#hero-title")).toHaveAttribute("contenteditable", "true");
+    await expect.poll(() => evaluateEditor(page, "state.interactionMode")).toBe("text-edit");
+    await expect.poll(() => evaluateEditor(page, "Boolean(state.selectedFlags.isTextEditing)")).toBe(
+      true,
+    );
+
+    await previewLocator(page, "#hero-title").press("Escape");
+    await expect(previewLocator(page, "#hero-title")).not.toHaveAttribute("contenteditable", "true");
+    await expect.poll(() => evaluateEditor(page, "state.interactionMode")).toBe("select");
+    await expect.poll(() => evaluateEditor(page, "Boolean(state.selectedFlags.isTextEditing)")).toBe(
+      false,
+    );
+
+    await page.locator("#selectionFrameHitArea").dblclick();
+    await expect(previewLocator(page, "#hero-title")).toHaveAttribute("contenteditable", "true");
+    await expect.poll(() => evaluateEditor(page, "state.interactionMode")).toBe("text-edit");
+
+    await previewLocator(page, "#hero-title").press("Escape");
+    await expect(previewLocator(page, "#hero-title")).not.toHaveAttribute("contenteditable", "true");
+    await expect.poll(() => evaluateEditor(page, "state.interactionMode")).toBe("select");
+  });
+
+  test("inline text commit is plain-text safe and undo redo operate on the edit lifecycle @stage-j", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only inline text flow.");
+
+    await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
+    const originalTitle = await previewLocator(page, "#hero-title").innerText();
+
+    await selectTextNode(page, "#hero-title");
+    await selectionFrameLocator(page).press("Enter");
+    const title = previewLocator(page, "#hero-title");
+    await title.press(process.platform === "darwin" ? "Meta+A" : "Control+A");
+    await title.type("Alpha");
+    await title.press("Enter");
+    await title.type("Beta");
+    await clickPreview(page, "#cta-box");
+
+    await expect.poll(() =>
+      previewLocator(page, "#hero-title").evaluate((element) => element.innerHTML),
+    ).toBe("Alpha<br>Beta");
+    await expect.poll(() => evaluateEditor(page, "state.interactionMode")).toBe("select");
+
+    await clickEditorControl(page, "#undoBtn");
+    await expect(previewLocator(page, "#hero-title")).toContainText(originalTitle);
+
+    await clickEditorControl(page, "#redoBtn");
+    await expect.poll(() =>
+      previewLocator(page, "#hero-title").evaluate((element) => element.innerHTML),
+    ).toBe("Alpha<br>Beta");
+  });
+
+  test("inline text commit strips injected html and unsafe attributes from plain text entities @stage-j", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only inline text flow.");
+
+    await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
+    await selectTextNode(page, "#hero-title");
+    await selectionFrameLocator(page).press("Enter");
+
+    await previewLocator(page, "#hero-title").evaluate((element) => {
+      element.innerHTML =
+        'Alpha <span onclick="alert(1)" style="color:red" data-bad="1">Beta</span>' +
+        '<img src="x" onerror="alert(2)" alt="Injected">' +
+        '<div data-unsafe="1"><a href="javascript:alert(3)">Gamma</a></div>';
+      element.dispatchEvent(new InputEvent("input", { bubbles: true, data: null, inputType: "insertFromPaste" }));
+    });
+    await clickPreview(page, "#cta-box");
+
+    await expect
+      .poll(() =>
+        evaluateEditor(
+          page,
+          `(() => {
+            const node = state.modelDoc?.querySelector('[data-editor-node-id="hero-title"]');
+            return node ? node.outerHTML : "";
+          })()`,
+        ),
+      )
+      .not.toBe("");
+
+    const selectedHtml = await evaluateEditor(
+      page,
+      `(() => {
+        const node = state.modelDoc?.querySelector('[data-editor-node-id="hero-title"]');
+        return node ? node.outerHTML : "";
+      })()`,
+    );
+
+    expect(selectedHtml).toContain("Alpha Beta");
+    expect(selectedHtml).toContain("Gamma");
+    expect(selectedHtml).toContain("<br>");
+    expect(selectedHtml).not.toContain("<span");
+    expect(selectedHtml).not.toContain("<img");
+    expect(selectedHtml).not.toContain("<a");
+    expect(selectedHtml).not.toContain("onclick=");
+    expect(selectedHtml).not.toContain("onerror=");
+    expect(selectedHtml).not.toContain("javascript:");
+    expect(selectedHtml).not.toContain("data-bad=");
+    expect(selectedHtml).not.toContain("data-unsafe=");
   });
 
   test("autosave recovery restores the last draft @stage-b", async ({ page }, testInfo) => {

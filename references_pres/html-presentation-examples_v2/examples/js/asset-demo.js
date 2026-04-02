@@ -1,0 +1,1 @@
+document.addEventListener('DOMContentLoaded',()=>{const today=new Intl.DateTimeFormat('ru-RU',{dateStyle:'long'}).format(new Date());const slot=document.getElementById('todaySlot');if(slot)slot.textContent=today;});

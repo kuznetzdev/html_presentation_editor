@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stress Nested Layout Presentation</title>
+  <style>
+    * { box-sizing:border-box; }
+    body { margin:0; background:#cfd6df; font-family:Inter,Arial,sans-serif; }
+    .deck { padding:24px; display:grid; gap:24px; }
+    .slide { width:1280px; height:720px; background:#fff; border-radius:24px; overflow:hidden; position:relative; }
+    .frame { position:absolute; inset:28px; border-radius:20px; background:#f8fafc; border:1px solid #e5e7eb; display:grid; grid-template-columns:260px 1fr; }
+    .sidebar { border-right:1px solid #e5e7eb; padding:18px; display:flex; flex-direction:column; gap:12px; }
+    .nav-item { padding:12px 14px; background:#fff; border:1px solid #e5e7eb; border-radius:12px; }
+    .content { position:relative; padding:20px; display:grid; grid-template-rows:auto 1fr; gap:18px; }
+    .top { display:flex; justify-content:space-between; align-items:center; gap:16px; }
+    .canvas { position:relative; border-radius:18px; background:#fff; border:1px solid #e5e7eb; overflow:hidden; }
+    .inner-grid { position:absolute; inset:18px; display:grid; grid-template-columns:1.2fr .8fr; gap:18px; }
+    .stack { display:grid; grid-template-rows:auto 1fr auto; gap:16px; }
+    .panel { background:#f8fafc; border:1px solid #e5e7eb; border-radius:16px; padding:16px; }
+    .floating { position:absolute; right:22px; top:22px; background:#111827; color:#fff; border-radius:14px; padding:10px 14px; }
+  </style>
+</head>
+<body>
+  <div class="deck">
+    <section class="slide active">
+      <div class="frame">
+        <aside class="sidebar">
+          <div class="nav-item">Overview</div>
+          <div class="nav-item">Slides</div>
+          <div class="nav-item">Themes</div>
+          <div class="nav-item">Export</div>
+        </aside>
+        <div class="content">
+          <div class="top">
+            <div>
+              <div style="font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:#6b7280;">Stress test</div>
+              <div style="font-size:34px;font-weight:700;">Глубокая вложенность layout-контейнеров</div>
+            </div>
+            <div style="padding:10px 14px;border-radius:999px;background:#e0f2fe;color:#075985;">grid + flex + absolute</div>
+          </div>
+          <div class="canvas">
+            <div class="floating">floating badge</div>
+            <div class="inner-grid">
+              <div class="stack">
+                <div class="panel"><strong>Header block</strong><br/>Многоуровневая структура для теста selection path.</div>
+                <div class="panel" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                  <div class="panel">Nested A</div>
+                  <div class="panel">Nested B</div>
+                  <div class="panel">Nested C</div>
+                  <div class="panel">Nested D</div>
+                </div>
+                <div class="panel">Footer note</div>
+              </div>
+              <div class="stack">
+                <div class="panel">Side panel 1</div>
+                <div class="panel">Side panel 2</div>
+                <div class="panel">Side panel 3</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

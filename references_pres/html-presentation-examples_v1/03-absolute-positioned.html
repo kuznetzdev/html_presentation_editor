@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Absolute Positioned Presentation</title>
+  <style>
+    body { margin:0; background:#0f1220; font-family:Inter,Arial,sans-serif; }
+    .deck { padding:24px; display:grid; gap:24px; }
+    .slide { width:1280px; height:720px; position:relative; overflow:hidden; border-radius:24px; background:#0b1020; color:#eef2ff; }
+    .blob { position:absolute; border-radius:999px; filter:blur(8px); opacity:.9; }
+    .card { position:absolute; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12); backdrop-filter:blur(4px); border-radius:18px; padding:18px 20px; }
+    .title { position:absolute; left:72px; top:72px; font-size:70px; line-height:1; max-width:700px; margin:0; }
+    .caption { position:absolute; left:76px; top:248px; font-size:24px; line-height:1.4; max-width:620px; color:#cdd6f4; }
+  </style>
+</head>
+<body>
+  <div class="deck">
+    <section class="slide active">
+      <div class="blob" style="width:320px;height:320px;right:120px;top:70px;background:#4f46e5;"></div>
+      <div class="blob" style="width:240px;height:240px;right:240px;bottom:120px;background:#0ea5e9;"></div>
+      <h1 class="title">Абсолютное позиционирование и слои</h1>
+      <p class="caption">Хороший тест для selection overlay, drag, resize и определения визуальных границ элементов.</p>
+      <div class="card" style="left:76px;bottom:78px;width:280px;">Layer A: text card</div>
+      <div class="card" style="left:390px;bottom:78px;width:240px;">Layer B: semi-transparent</div>
+      <div class="card" style="right:72px;bottom:72px;width:300px;height:180px;">Layer C: fixed size block</div>
+    </section>
+
+    <section class="slide">
+      <div class="card" style="left:80px;top:80px;width:500px;height:220px;">Элемент 1</div>
+      <div class="card" style="left:200px;top:180px;width:500px;height:220px;">Элемент 2 перекрывает Element 1</div>
+      <div class="card" style="left:320px;top:280px;width:500px;height:220px;">Элемент 3 перекрывает Element 2</div>
+      <h2 style="position:absolute;right:80px;top:100px;font-size:44px;max-width:320px;line-height:1.05;margin:0;">Тест перекрытий и z-order</h2>
+    </section>
+  </div>
+</body>
+</html>

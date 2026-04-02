@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>01 — Basic static inline presentation</title>
+</head>
+<body style="margin:0;font-family:Inter,Arial,sans-serif;background:#f5f7fb;color:#142033;">
+  <main style="display:grid;gap:28px;padding:28px;max-width:1280px;margin:0 auto;">
+    <section style="min-height:calc(100vh - 56px);background:#ffffff;border:1px solid #d8e0eb;border-radius:28px;padding:56px;display:grid;align-content:center;gap:18px;">
+      <span style="display:inline-flex;width:max-content;padding:8px 14px;border-radius:999px;background:#e8efff;color:#245dff;font-weight:700;">Пример 01 • inline styles</span>
+      <h1 style="margin:0;font-size:clamp(2.6rem,5vw,5rem);line-height:1;">HTML-презентация без CSS-файлов и библиотек</h1>
+      <p style="margin:0;max-width:800px;font-size:1.2rem;line-height:1.7;color:#4a5b74;">
+        Этот пример показывает самый прямой способ написания HTML deck: обычные <code>&lt;section&gt;</code>,
+        вся стилизация живёт прямо в тегах, без JS и без внешних зависимостей.
+      </p>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;">
+        <div style="padding:18px 22px;border-radius:22px;background:#f3f7ff;border:1px solid #d8e0eb;min-width:180px;">
+          <strong style="display:block;font-size:2rem;">3</strong>
+          <span style="color:#607089;">слайда</span>
+        </div>
+        <div style="padding:18px 22px;border-radius:22px;background:#f3f7ff;border:1px solid #d8e0eb;min-width:180px;">
+          <strong style="display:block;font-size:2rem;">0</strong>
+          <span style="color:#607089;">внешних файлов</span>
+        </div>
+        <div style="padding:18px 22px;border-radius:22px;background:#f3f7ff;border:1px solid #d8e0eb;min-width:180px;">
+          <strong style="display:block;font-size:2rem;">1</strong>
+          <span style="color:#607089;">HTML-документ</span>
+        </div>
+      </div>
+    </section>
+
+    <section style="min-height:calc(100vh - 56px);background:#142033;color:#f7faff;border-radius:28px;padding:56px;display:grid;grid-template-columns:1.1fr .9fr;gap:32px;align-items:center;">
+      <div>
+        <h2 style="margin:0 0 18px;font-size:2.4rem;">Когда такой способ полезен</h2>
+        <ul style="margin:0;padding-left:22px;display:grid;gap:12px;font-size:1.15rem;line-height:1.55;color:#d4deec;">
+          <li>Быстрый прототип без структуры проекта.</li>
+          <li>Тесты редактора на простом single-file HTML.</li>
+          <li>Проверка базового текста, блоков и цветов.</li>
+        </ul>
+      </div>
+      <div style="display:grid;gap:16px;">
+        <div style="padding:24px;border-radius:24px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);">
+          <strong style="display:block;margin-bottom:8px;">Плюсы</strong>
+          <span style="color:#d4deec;">Максимально прозрачно, легко читать, удобно для ручной правки.</span>
+        </div>
+        <div style="padding:24px;border-radius:24px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);">
+          <strong style="display:block;margin-bottom:8px;">Минусы</strong>
+          <span style="color:#d4deec;">Нет переиспользуемых классов, быстро разрастается и сложнее сопровождать.</span>
+        </div>
+      </div>
+    </section>
+
+    <section style="min-height:calc(100vh - 56px);background:linear-gradient(135deg,#eff6ff,#ffffff);border:1px solid #d8e0eb;border-radius:28px;padding:56px;display:grid;align-content:center;gap:18px;">
+      <h2 style="margin:0;font-size:2.4rem;">Что проверить в редакторе</h2>
+      <ol style="margin:0;padding-left:24px;display:grid;gap:12px;font-size:1.15rem;line-height:1.6;color:#4a5b74;max-width:880px;">
+        <li>Выбор текста и контейнеров.</li>
+        <li>Редактирование inline-стилей.</li>
+        <li>Дублирование, удаление и экспорт single-file deck.</li>
+      </ol>
+    </section>
+  </main>
+</body>
+</html>

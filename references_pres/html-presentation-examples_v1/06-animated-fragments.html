@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animated Fragments Presentation</title>
+  <style>
+    body { margin:0; background:#0b1020; font-family:Inter,Arial,sans-serif; }
+    .deck { padding:24px; display:grid; gap:24px; }
+    .slide { width:1280px; height:720px; background:#ffffff; border-radius:24px; padding:64px; position:relative; overflow:hidden; }
+    .fragment { opacity:0; transform:translateY(18px); transition:all .35s ease; }
+    .fragment.visible { opacity:1; transform:translateY(0); }
+    .timeline { display:grid; gap:14px; margin-top:28px; max-width:760px; }
+    .step { padding:18px 20px; border-radius:16px; background:#f4f6fb; border:1px solid #e6e8f0; font-size:22px; }
+  </style>
+</head>
+<body>
+  <div class="deck">
+    <section class="slide active" data-slide-id="animated-1">
+      <h1 style="font-size:60px;line-height:1.05;max-width:820px;margin:0 0 14px;">Слайды с fragment-элементами и staged reveal</h1>
+      <p style="font-size:24px;color:#4b5563;max-width:780px;">Такие документы часто используют классы visible/hidden или step-based reveal логику. Редактор должен не ломать её при сохранении.</p>
+      <div class="timeline">
+        <div class="step fragment visible" data-fragment-index="1">Шаг 1 — показать проблему.</div>
+        <div class="step fragment" data-fragment-index="2">Шаг 2 — объяснить подход.</div>
+        <div class="step fragment" data-fragment-index="3">Шаг 3 — сформулировать вывод.</div>
+      </div>
+      <button style="position:absolute;right:40px;bottom:36px;padding:12px 16px;border:none;border-radius:12px;background:#111827;color:#fff;cursor:pointer;" onclick="const next=document.querySelector('.slide.active .fragment:not(.visible)'); if(next) next.classList.add('visible');">Next fragment</button>
+    </section>
+  </div>
+</body>
+</html>

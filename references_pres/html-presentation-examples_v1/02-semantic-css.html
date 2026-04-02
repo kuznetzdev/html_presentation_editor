@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Semantic CSS Presentation</title>
+  <style>
+    :root { --bg:#f4f1ea; --surface:#fffdf8; --text:#1f1b18; --muted:#6b625d; --accent:#0d5c63; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:Inter,Arial,sans-serif; background:#ddd7cb; }
+    .deck { display:grid; gap:24px; padding:24px; }
+    .slide { width:1280px; height:720px; background:var(--surface); border-radius:24px; padding:56px 64px; color:var(--text); position:relative; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.12); }
+    .eyebrow { font-size:13px; text-transform:uppercase; letter-spacing:.18em; color:var(--muted); }
+    .hero { display:grid; grid-template-columns:1.2fr .8fr; gap:40px; align-items:center; height:100%; }
+    h1,h2 { margin:0 0 20px; line-height:1.02; }
+    h1 { font-size:68px; max-width:8ch; }
+    h2 { font-size:48px; }
+    p { font-size:24px; line-height:1.45; color:#413a35; max-width:34ch; }
+    .panel { background:#f1ebe2; border:1px solid rgba(0,0,0,.06); border-radius:20px; padding:24px; }
+    .grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:28px; }
+    .kpi { font-size:40px; font-weight:700; margin-bottom:8px; }
+    .small { font-size:16px; color:var(--muted); }
+    .footer { position:absolute; right:40px; bottom:28px; font-size:16px; color:var(--muted); }
+  </style>
+</head>
+<body>
+  <main class="deck">
+    <section class="slide active" id="slide-intro">
+      <div class="hero">
+        <div>
+          <div class="eyebrow">Semantic HTML + Embedded CSS</div>
+          <h1>Редактор должен любить нормальную структуру</h1>
+          <p>Презентация использует main/section/article и переиспользуемые CSS-классы вместо inline styles.</p>
+        </div>
+        <aside class="panel">
+          <div class="small">Проверка</div>
+          <ul>
+            <li>Заголовки и абзацы.</li>
+            <li>Семантические контейнеры.</li>
+            <li>Стили в &lt;style&gt;.</li>
+          </ul>
+        </aside>
+      </div>
+      <div class="footer">1 / 3</div>
+    </section>
+
+    <section class="slide" id="slide-kpis">
+      <div class="eyebrow">KPI blocks</div>
+      <h2>Типовой business-style layout</h2>
+      <div class="grid-3">
+        <article class="panel"><div class="kpi">+27%</div><div class="small">рост конверсии</div></article>
+        <article class="panel"><div class="kpi">14</div><div class="small">сценариев тестирования</div></article>
+        <article class="panel"><div class="kpi">3.2с</div><div class="small">среднее время загрузки</div></article>
+      </div>
+      <div class="footer">2 / 3</div>
+    </section>
+
+    <section class="slide" id="slide-summary">
+      <div class="eyebrow">Summary</div>
+      <h2>Чего ждать от редактора</h2>
+      <p>Если editor корректно работает с такой разметкой, значит базовые сценарии для корпоративных презентаций уже покрыты.</p>
+      <div class="footer">3 / 3</div>
+    </section>
+  </main>
+</body>
+</html>

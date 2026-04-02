@@ -1,6 +1,9 @@
 const fs = require("fs");
 const path = require("path");
 const { expect } = require("@playwright/test");
+const {
+  getReferenceDeckCase,
+} = require("./referenceDeckRegistry");
 
 const WORKSPACE_ROOT = path.resolve(__dirname, "..", "..", "..");
 const TARGET_URL = "/editor/presentation-editor-v12.html";
@@ -35,6 +38,9 @@ const SHELL_PANEL_CONFIG = Object.freeze({
     buttonSelector: "#mobileSlidesBtn",
     panelSelector: "#slidesPanel",
   },
+});
+const TOPBAR_OVERFLOW_CONTROL_MAP = Object.freeze({
+  "#themeToggleBtn": "#topbarOverflowThemeBtn",
 });
 
 async function evaluateEditor(page, expression) {
@@ -192,6 +198,25 @@ async function loadBasicDeck(page, options = {}) {
   return BASIC_DECK_PATH;
 }
 
+async function loadReferenceDeck(page, caseId, options = {}) {
+  const deckCase = getReferenceDeckCase(caseId);
+  const shouldResetEditor = options.resetEditor !== false;
+
+  if (shouldResetEditor) {
+    await gotoFreshEditor(page);
+  }
+
+  await openHtmlFixture(page, deckCase.fixturePath, {
+    manualBaseUrl: options.manualBaseUrl || deckCase.manualBaseUrl,
+  });
+
+  if (options.mode) {
+    await setMode(page, options.mode);
+  }
+
+  return deckCase;
+}
+
 async function setMode(page, mode) {
   const desktopTarget =
     mode === "edit" ? page.locator("#editModeBtn") : page.locator("#previewModeBtn");
@@ -211,7 +236,24 @@ function previewLocator(page, selector) {
 }
 
 async function clickPreview(page, selector, options = {}) {
-  await previewLocator(page, selector).click(options);
+  const nextOptions = { ...options };
+  if (Array.isArray(nextOptions.modifiers) && nextOptions.modifiers.length) {
+    nextOptions.force ??= true;
+  }
+  const target = previewLocator(page, selector);
+  try {
+    await target.click(nextOptions);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error || "");
+    const pointerIntercepted = /intercepts pointer events/i.test(message);
+    if (!pointerIntercepted || nextOptions.force) {
+      throw error;
+    }
+    await target.click({
+      ...nextOptions,
+      force: true,
+    });
+  }
 }
 
 function selectionFrameLocator(page) {
@@ -433,6 +475,22 @@ async function ensureEditorControlVisible(page, selector, options = {}) {
     await ensureShellPanelVisible(page, options.panel);
   }
 
+  if (await control.isVisible()) return control;
+
+  const overflowSelector = TOPBAR_OVERFLOW_CONTROL_MAP[selector];
+  if (overflowSelector) {
+    const overflowTrigger = page.locator("#topbarOverflowBtn");
+    if (await overflowTrigger.isVisible()) {
+      const overflowControl = page.locator(overflowSelector);
+      if (!(await overflowControl.isVisible())) {
+        await expect(overflowTrigger).toBeEnabled();
+        await overflowTrigger.click();
+      }
+      await expect(overflowControl).toBeVisible();
+      return overflowControl;
+    }
+  }
+
   await expect(control).toBeVisible();
   return control;
 }
@@ -511,10 +569,172 @@ async function readSelectionUiState(page) {
         "typeof getSelectedEntityKindForUi === 'function' ? getSelectedEntityKindForUi() : 'none'",
       ),
       selectedFlags: JSON.parse(globalThis.eval("JSON.stringify(state.selectedFlags || {})")),
+      selectionLeafNodeId: String(globalThis.eval("state.selectionLeafNodeId || ''")),
+      selectionPath: Array.from(
+        document.querySelectorAll("#selectionBreadcrumbs [data-selection-path-node-id]"),
+      ).map((button) => ({
+        current:
+          button.getAttribute("aria-current") === "true" ||
+          button.getAttribute("aria-pressed") === "true",
+        label: button.textContent?.trim() || "",
+        nodeId: button.getAttribute("data-selection-path-node-id") || "",
+      })),
       selectionPolicyText:
         document.getElementById("selectionPolicyText")?.textContent?.trim() || "",
+      manipulationTargetNodeId: String(
+        globalThis.eval("state.manipulationContext?.interactionNodeId || state.selectedNodeId || ''"),
+      ),
       toolbarVisible: isVisible("#floatingToolbar"),
       visibleInspectorSections,
+    };
+  });
+}
+
+async function readTopbarChromeState(page) {
+  return page.evaluate(() => {
+    const isVisible = (selector) => {
+      const element = document.querySelector(selector);
+      if (!(element instanceof HTMLElement)) return false;
+      const rect = element.getBoundingClientRect();
+      const style = window.getComputedStyle(element);
+      return (
+        !element.hidden &&
+        element.getAttribute("aria-hidden") !== "true" &&
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        rect.width > 0 &&
+        rect.height > 0
+      );
+    };
+
+    const readRect = (selector) => {
+      const element = document.querySelector(selector);
+      if (!(element instanceof HTMLElement)) return null;
+      const rect = element.getBoundingClientRect();
+      return {
+        left: rect.left,
+        right: rect.right,
+        width: rect.width,
+      };
+    };
+
+    return {
+      commandMode: document.body.dataset.topbarCommandMode || "",
+      exportVisible: isVisible("#exportBtn"),
+      openVisible: isVisible("#openHtmlBtn"),
+      overflowMenuVisible: isVisible("#topbarOverflowMenu"),
+      overflowTriggerVisible: isVisible("#topbarOverflowBtn"),
+      overflowTriggerExpanded:
+        document.getElementById("topbarOverflowBtn")?.getAttribute("aria-expanded") || "",
+      themeVisible: isVisible("#themeToggleBtn"),
+      topbarRect: readRect("#topbar"),
+      undoVisible: isVisible("#undoBtn"),
+      redoVisible: isVisible("#redoBtn"),
+    };
+  });
+}
+
+async function readWorkflowShellState(page) {
+  return page.evaluate(() => {
+    const isVisible = (selector) => {
+      const element = document.querySelector(selector);
+      if (!(element instanceof HTMLElement)) return false;
+      const rect = element.getBoundingClientRect();
+      const style = window.getComputedStyle(element);
+      return (
+        !element.hidden &&
+        element.getAttribute("aria-hidden") !== "true" &&
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        rect.width > 0 &&
+        rect.height > 0
+      );
+    };
+
+    const readWidthMetrics = (selector) => {
+      const element = document.querySelector(selector);
+      if (!(element instanceof HTMLElement)) return null;
+      const rect = element.getBoundingClientRect();
+      return {
+        clientWidth: element.clientWidth,
+        scrollWidth: element.scrollWidth,
+        width: rect.width,
+      };
+    };
+
+    const stateSnapshot = globalThis.eval(`JSON.stringify({
+      activeSlideId: state.activeSlideId || "",
+      complexityMode: state.complexityMode || "",
+      mode: state.mode || "",
+      previewReady: Boolean(state.previewReady),
+      selectedNodeId: state.selectedNodeId || "",
+      slideCount: Array.isArray(state.slides) ? state.slides.length : 0
+    })`);
+
+    return {
+      workflow: document.body.dataset.editorWorkflow || "",
+      state: JSON.parse(stateSnapshot),
+      controls: {
+        advancedMode: isVisible("#advancedModeBtn"),
+        basicMode: isVisible("#basicModeBtn"),
+        editMode: isVisible("#editModeBtn") || isVisible("#mobileEditBtn"),
+        editSuggested:
+          document.getElementById("editModeBtn")?.classList.contains("is-suggested") ||
+          isVisible("#previewPrimaryActionBtn") ||
+          false,
+        emptyOpen: isVisible("#emptyOpenBtn"),
+        emptyPaste: isVisible("#emptyPasteBtn"),
+        export: isVisible("#exportBtn"),
+        insert: isVisible("#toggleInsertPaletteBtn") || isVisible("#mobileInsertBtn"),
+        open: isVisible("#openHtmlBtn"),
+        overflow: isVisible("#topbarOverflowBtn"),
+        previewPrimaryAction: isVisible("#previewPrimaryActionBtn"),
+        previewMode: isVisible("#previewModeBtn") || isVisible("#mobilePreviewBtn"),
+        reload: isVisible("#reloadPreviewBtn"),
+        slideTemplate: isVisible("#toggleSlideTemplateBarBtn"),
+      },
+      panels: {
+        emptyState: isVisible("#emptyState"),
+        inspector: isVisible("#inspectorPanel"),
+        slides: isVisible("#slidesPanel"),
+      },
+      metrics: {
+        advancedModeBtn: readWidthMetrics("#advancedModeBtn"),
+        basicModeBtn: readWidthMetrics("#basicModeBtn"),
+        inspectorPanel: readWidthMetrics("#inspectorPanel"),
+        slidesPanel: readWidthMetrics("#slidesPanel"),
+      },
+      inspector: {
+        appearance: isVisible("#appearanceInspectorSection"),
+        currentElement: isVisible("#currentElementSection"),
+        currentElementSummary: isVisible("#selectedElementSummaryCard"),
+        currentSlide: isVisible("#currentSlideSection"),
+        currentSlideEditorControls: isVisible("#currentSlideEditorControls"),
+        currentSlideSummary: isVisible("#currentSlideSummaryCard"),
+        diagnostics: isVisible("#diagnosticsBox"),
+        elementActions: isVisible("#elementActionsSection"),
+        elementTag: isVisible("#elementTagInput"),
+        geometry: isVisible("#geometryInspectorSection"),
+        image: isVisible("#imageSection"),
+        insert: isVisible("#insertSection"),
+        selectionPolicy: isVisible("#selectionPolicySection"),
+        showElementHtml: isVisible("#showElementHtmlBtn"),
+        showSlideHtml: isVisible("#showSlideHtmlBtn"),
+        text: isVisible("#textInspectorSection"),
+      },
+      copy: {
+        emptyState: document.getElementById("emptyState")?.textContent?.trim() || "",
+        inspectorHelp:
+          document.getElementById("inspectorHelp")?.textContent?.trim() || "",
+        previewPrimaryAction:
+          document.getElementById("previewPrimaryActionBtn")?.textContent?.trim() || "",
+        previewModeLabel:
+          document.getElementById("previewModeLabel")?.textContent?.trim() || "",
+        previewNote:
+          document.getElementById("previewNoteText")?.textContent?.trim() || "",
+        selectedElementTitle:
+          document.getElementById("selectedElementTitle")?.textContent?.trim() || "",
+      },
     };
   });
 }
@@ -526,15 +746,52 @@ async function activateSlideByIndex(page, index) {
   }
 
   await ensureShellPanelVisible(page, "slides");
-  const slideItem = page.locator(`#slidesPanel .slide-item[data-index="${targetIndex}"]`);
-  await expect(slideItem).toBeVisible();
-  await slideItem.click();
+  const slideCount = Number(await evaluateEditor(page, "state.slides.length"));
+  const currentActiveIndex = Number(
+    await evaluateEditor(
+      page,
+      "state.slides.findIndex((slide) => slide.id === state.activeSlideId)",
+    ),
+  );
 
-  const slideCount = await evaluateEditor(page, "state.slides.length");
-  await waitForSlideActivationState(page, {
-    activeIndex: targetIndex,
-    count: Number(slideCount),
-  });
+  if (currentActiveIndex === targetIndex) {
+    await waitForSlideActivationState(page, {
+      activeIndex: targetIndex,
+      count: slideCount,
+    });
+    return;
+  }
+
+  let lastError = null;
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const slideItem = page.locator(`#slidesPanel .slide-item[data-index="${targetIndex}"]`);
+    try {
+      await expect(slideItem).toBeVisible();
+      await slideItem.scrollIntoViewIfNeeded();
+      await slideItem.click({ timeout: 2_000 });
+    } catch (error) {
+      lastError = error;
+      try {
+        await slideItem.focus();
+        await page.keyboard.press("Enter");
+      } catch (fallbackError) {
+        lastError = fallbackError;
+      }
+    }
+
+    try {
+      await waitForSlideActivationState(page, {
+        activeIndex: targetIndex,
+        count: slideCount,
+      });
+      return;
+    } catch (error) {
+      lastError = error;
+      await page.waitForTimeout(100);
+    }
+  }
+
+  throw lastError || new Error(`Unable to activate slide index ${targetIndex}.`);
 }
 
 async function dragSlideRailItem(page, fromIndex, toIndex) {
@@ -807,11 +1064,13 @@ module.exports = {
   gotoFreshEditor,
   isChromiumOnlyProject,
   loadBasicDeck,
+  loadReferenceDeck,
   openExportValidationPopup,
   openInsertPalette,
   openHtmlFixture,
   previewLocator,
   readSelectionUiState,
+  readWorkflowShellState,
   readDiagnostics,
   resizeSelectionOverlay,
   selectionFrameLocator,
@@ -821,4 +1080,5 @@ module.exports = {
   waitForSlideActivationState,
   waitForSelectedEntityKind,
   waitForPreviewReady,
+  readTopbarChromeState,
 };

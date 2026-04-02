@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Code Blocks v1</title>
+  <style>
+    body { margin: 0; background: #0f172a; font-family: Inter, Arial, sans-serif; }
+    .deck { padding: 24px; display: grid; gap: 24px; }
+    .slide {
+      width: 1280px;
+      height: 720px;
+      padding: 56px;
+      box-sizing: border-box;
+      background: linear-gradient(135deg, #111827, #172554);
+      border-radius: 24px;
+      color: #e2e8f0;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+      gap: 28px;
+      height: 100%;
+      align-items: start;
+    }
+    .eyebrow { font-size: 14px; letter-spacing: .16em; text-transform: uppercase; color: #93c5fd; }
+    .title { margin: 18px 0 12px; font-size: 54px; line-height: 1.02; max-width: 10ch; }
+    .lede { margin: 0; font-size: 22px; line-height: 1.45; color: #cbd5e1; max-width: 20ch; }
+    .code-shell {
+      margin: 0;
+      padding: 24px 26px;
+      border-radius: 20px;
+      background: rgba(15, 23, 42, 0.88);
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      overflow: auto;
+    }
+    .code-shell {
+      white-space: pre-wrap;
+      font: 500 20px/1.55 "IBM Plex Mono", "Fira Code", Consolas, monospace;
+      color: #e2e8f0;
+    }
+    .side-card {
+      padding: 22px 24px;
+      border-radius: 20px;
+      background: rgba(15, 23, 42, 0.52);
+      border: 1px solid rgba(96, 165, 250, 0.22);
+      color: #dbeafe;
+    }
+    .side-card strong {
+      display: block;
+      margin-bottom: 12px;
+      font-size: 18px;
+      color: #f8fafc;
+    }
+  </style>
+</head>
+<body>
+  <div class="deck">
+    <section class="slide active" data-slide-id="code-stage-m">
+      <div class="layout">
+        <div style="display:grid; gap:22px;">
+          <div>
+            <div class="eyebrow">Code block contract</div>
+            <h1 class="title">Whitespace-safe editing for imported snippets</h1>
+            <p class="lede" data-node-id="code-block-kicker">
+              Блок кода должен редактироваться как plain-text, не теряя отступы, переводы строк и author classes.
+            </p>
+          </div>
+          <pre
+            data-node-id="code-block-root"
+            class="code-shell prism-like language-js"
+          >const reviewer = "ops";
+function openDeck() {
+  return reviewer;
+}</pre>
+        </div>
+        <aside class="side-card" data-node-id="code-block-notes">
+          <strong>Что важно сохранить</strong>
+          <div>1. Корневой <code>&lt;pre&gt;</code> и вложенный <code>&lt;code&gt;</code>.</div>
+          <div>2. Отступы второй строки.</div>
+          <div>3. CSS-классы для syntax/highlight пайплайна.</div>
+        </aside>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

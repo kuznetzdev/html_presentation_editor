@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>03 — CSS Scroll Snap deck</title>
+  <style>
+    :root{--bg:#08111a;--text:#f8fbff;--muted:#bfd0e5;--accent:#60a5fa;--line:rgba(255,255,255,.12);--card:rgba(255,255,255,.08)}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;scroll-behavior:smooth;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Arial,sans-serif}
+    body{overflow:hidden}.deck{height:100vh;overflow-y:auto;scroll-snap-type:y mandatory}.slide{height:100vh;scroll-snap-align:start;padding:44px 54px;display:grid;align-content:center;gap:18px;border-bottom:1px solid var(--line)}
+    .slide:nth-child(1){background:radial-gradient(circle at top left,rgba(96,165,250,.28),transparent 30%),linear-gradient(180deg,#07111c,#0f1728)}
+    .slide:nth-child(2){background:linear-gradient(135deg,#0f1728,#07111c)}
+    .slide:nth-child(3){background:linear-gradient(180deg,#111827,#0b1320)}
+    h1,h2{margin:0} h1{font-size:clamp(2.8rem,6vw,5rem);line-height:1} h2{font-size:2.4rem}
+    p.lead{max-width:860px;font-size:1.16rem;line-height:1.7;color:var(--muted);margin:0}
+    .nav{position:fixed;right:20px;top:50%;transform:translateY(-50%);display:grid;gap:10px;z-index:10}
+    .dot{width:14px;height:14px;border-radius:999px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.18)}
+    .dot.is-active{background:var(--accent);border-color:var(--accent)}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.card{padding:22px;border-radius:24px;background:var(--card);border:1px solid var(--line);backdrop-filter:blur(10px)}
+    code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    @media (max-width:900px){.slide{padding:24px}.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <nav class="nav" aria-label="Индикатор слайдов">
+    <button class="dot is-active" data-target="s1" aria-label="Слайд 1"></button>
+    <button class="dot" data-target="s2" aria-label="Слайд 2"></button>
+    <button class="dot" data-target="s3" aria-label="Слайд 3"></button>
+  </nav>
+  <main class="deck" id="deck">
+    <section class="slide" id="s1"><span style="color:#93c5fd;font-weight:700">Пример 03 • CSS Scroll Snap</span><h1>Презентация как скролл-контейнер</h1><p class="lead">Здесь слайды — это полноэкранные секции внутри контейнера с <code>scroll-snap-type</code>. Это хороший тест для редактора на нестандартную навигацию и на полноэкранные slide layouts.</p></section>
+    <section class="slide" id="s2"><h2>Плюсы такого подхода</h2><div class="grid"><div class="card"><strong>Нативно</strong><p class="lead" style="font-size:1rem;max-width:none">Минимум JavaScript, максимум платформенных возможностей браузера.</p></div><div class="card"><strong>Плавно</strong><p class="lead" style="font-size:1rem;max-width:none">Переходы между слайдами читаются естественно, особенно на touch-устройствах.</p></div><div class="card"><strong>Просто тестировать</strong><p class="lead" style="font-size:1rem;max-width:none">Редактор может проверить корректность selection и overlay в полноэкранных секциях.</p></div><div class="card"><strong>Ограничение</strong><p class="lead" style="font-size:1rem;max-width:none">Структура deck другая, это не reveal-style markup и не page-by-page renderer.</p></div></div></section>
+    <section class="slide" id="s3"><h2>Что проверить</h2><ol class="lead" style="padding-left:24px;display:grid;gap:12px;"><li>Работает ли selection на полноэкранных слайдах.</li><li>Не ломается ли overlay при прокрутке.</li><li>Остаётся ли экспорт предсказуемым.</li></ol></section>
+  </main>
+  <script>
+    const deck=document.getElementById('deck'); const dots=[...document.querySelectorAll('.dot')];
+    dots.forEach(dot=>dot.addEventListener('click',()=>{document.getElementById(dot.dataset.target)?.scrollIntoView({behavior:'smooth',block:'start'});}));
+    const observer=new IntersectionObserver((entries)=>{entries.forEach(entry=>{if(!entry.isIntersecting)return;dots.forEach(dot=>dot.classList.toggle('is-active',dot.dataset.target===entry.target.id));});},{root:deck,threshold:0.65});
+    document.querySelectorAll('.slide').forEach(slide=>observer.observe(slide));
+  </script>
+</body>
+</html>

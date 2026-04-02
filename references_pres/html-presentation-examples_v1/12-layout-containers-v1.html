@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Layout containers v1</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, system-ui, sans-serif;
+      }
+
+      body {
+        margin: 0;
+        background: #e5edf7;
+      }
+
+      .deck {
+        padding: 24px;
+        display: grid;
+        gap: 24px;
+      }
+
+      section.slide {
+        position: relative;
+        min-height: 720px;
+        overflow: hidden;
+        border-radius: 28px;
+        background: linear-gradient(180deg, #fbfdff 0%, #eef5ff 100%);
+        box-shadow: 0 18px 48px rgba(15, 23, 42, 0.12);
+      }
+
+      .layout-grid {
+        position: absolute;
+        inset: 56px 56px 132px;
+        display: grid;
+        grid-template-columns: minmax(220px, 0.95fr) minmax(0, 1.05fr);
+        gap: 20px;
+      }
+
+      .panel {
+        border-radius: 22px;
+        border: 1px solid rgba(37, 99, 235, 0.16);
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+      }
+
+      .dropzone {
+        min-height: 220px;
+        border: 2px dashed rgba(59, 130, 246, 0.45);
+        background:
+          linear-gradient(180deg, rgba(239, 246, 255, 0.96), rgba(219, 234, 254, 0.72)),
+          radial-gradient(circle at top left, rgba(125, 211, 252, 0.22), transparent 48%);
+      }
+
+      .position-host {
+        position: relative;
+        min-height: 320px;
+        padding: 28px;
+        background:
+          linear-gradient(135deg, rgba(254, 249, 195, 0.9), rgba(255, 237, 213, 0.84));
+      }
+
+      .position-label {
+        position: absolute;
+        top: 42px;
+        left: 34px;
+        padding: 12px 16px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.92);
+        color: #f8fafc;
+        font-size: 18px;
+        line-height: 1.2;
+      }
+
+      .protected-shell {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-height: 220px;
+        padding: 24px;
+        background:
+          linear-gradient(180deg, rgba(224, 231, 255, 0.96), rgba(238, 242, 255, 0.84));
+      }
+
+      .protected-shell h2 {
+        margin: 0;
+        font-size: 28px;
+        line-height: 1.1;
+      }
+
+      .protected-shell p {
+        margin: 0;
+        max-width: 38ch;
+        color: #334155;
+        line-height: 1.45;
+      }
+
+      .outside-floating {
+        position: absolute;
+        right: 72px;
+        bottom: 56px;
+        width: 208px;
+        padding: 18px 20px;
+        border-radius: 18px;
+        background: rgba(15, 23, 42, 0.88);
+        color: #f8fafc;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="deck">
+      <section class="slide" data-slide-id="layout-stage6">
+        <div
+          class="layout-grid"
+          id="grid-shell"
+          data-node-id="grid-shell"
+          data-node-type="container"
+          data-editable="false"
+        >
+          <div
+            class="panel dropzone"
+            id="flow-dropzone"
+            aria-label="Flow dropzone"
+            data-node-id="flow-dropzone"
+            data-node-type="container"
+            data-editable="false"
+          ></div>
+
+          <div
+            class="panel position-host"
+            id="position-host"
+            data-node-id="position-host"
+            data-node-type="container"
+            data-editable="false"
+          >
+            <div
+              class="position-label"
+              id="position-label"
+              data-node-id="position-label"
+              data-node-type="text"
+              data-editable="true"
+            >
+              Scoped absolute label
+            </div>
+          </div>
+
+          <div
+            class="panel protected-shell"
+            id="protected-shell"
+            data-node-id="protected-shell"
+            data-node-type="container"
+            data-editable="false"
+            data-editor-policy-kind="protected-container"
+            data-editor-policy-reason="Protected layout shell stays navigable, but destructive geometry operations remain blocked."
+          >
+            <h2
+              id="protected-title"
+              data-node-id="protected-title"
+              data-node-type="text"
+              data-editable="true"
+            >
+              Protected layout shell
+            </h2>
+            <p>
+              Breadcrumbs should still surface this container as the main route to its parent context.
+            </p>
+          </div>
+        </div>
+
+        <div
+          class="outside-floating"
+          id="outside-floating"
+          data-node-id="outside-floating"
+          data-node-type="container"
+          data-editable="false"
+        >
+          Outside floating scope
+        </div>
+      </section>
+    </div>
+  </body>
+</html>

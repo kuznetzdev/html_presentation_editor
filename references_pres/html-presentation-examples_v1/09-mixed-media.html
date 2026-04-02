@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mixed Media Presentation</title>
+  <style>
+    body { margin:0; background:#f3f4f6; font-family:Inter,Arial,sans-serif; }
+    .deck { padding:24px; display:grid; gap:24px; }
+    .slide { width:1280px; height:720px; background:#fff; border-radius:24px; padding:48px; box-sizing:border-box; }
+    .layout { display:grid; grid-template-columns:1fr 1fr; gap:24px; height:100%; }
+    .card { border:1px solid #e5e7eb; border-radius:18px; padding:20px; background:#fafafa; }
+    pre { margin:0; padding:18px; background:#111827; color:#e5e7eb; border-radius:16px; font-size:16px; overflow:auto; }
+    .image-placeholder { height:220px; border-radius:18px; background:linear-gradient(135deg,#dbeafe,#e9d5ff); display:flex; align-items:center; justify-content:center; color:#1f2937; font-size:20px; }
+  </style>
+</head>
+<body>
+  <div class="deck">
+    <section class="slide active">
+      <div class="layout">
+        <div style="display:grid;grid-template-rows:auto auto 1fr;gap:18px;">
+          <div>
+            <div style="font-size:13px;text-transform:uppercase;letter-spacing:.12em;color:#6b7280;">Mixed media</div>
+            <h1 style="font-size:48px;line-height:1.06;margin:10px 0 0;max-width:12ch;">Карточки, код и заглушки под медиа</h1>
+          </div>
+          <div class="card">Этот кейс имитирует презентации, куда вставляют code snippets, screenshots и embed-подобные блоки.</div>
+          <pre>&lt;section class="slide"&gt;
+  &lt;div class="hero"&gt;...&lt;/div&gt;
+&lt;/section&gt;</pre>
+        </div>
+        <div style="display:grid;grid-template-rows:220px 1fr;gap:18px;">
+          <div class="image-placeholder">image / screenshot placeholder</div>
+          <div class="card">
+            <strong>Что тестировать:</strong>
+            <ul>
+              <li>Редактирование monospace блоков.</li>
+              <li>Сохранение переносов строк.</li>
+              <li>Работу с карточками неравной высоты.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

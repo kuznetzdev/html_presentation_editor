@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Attributes Editorish</title>
+  <style>
+    body { margin:0; background:#eef1f6; font-family:Inter,Arial,sans-serif; }
+    .deck { padding:24px; display:grid; gap:24px; }
+    .slide { width:1280px; height:720px; position:relative; overflow:hidden; background:white; border-radius:24px; box-shadow:0 24px 60px rgba(17,24,39,.12); }
+    [data-node-type] { position:absolute; }
+    .text { color:#111827; }
+    .shape { border-radius:24px; }
+    .chip { display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:999px; font-size:14px; background:#eff6ff; color:#1d4ed8; }
+  </style>
+</head>
+<body>
+  <div class="deck" data-doc-type="presentation" data-version="1.0">
+    <section class="slide active" data-slide-id="cover" data-slide-kind="hero">
+      <div class="shape" data-node-id="shape-bg" data-node-type="shape" style="left:48px;top:48px;width:1184px;height:624px;background:linear-gradient(135deg,#f8fafc,#dbeafe);"></div>
+      <div class="text" data-node-id="label-1" data-node-type="text" style="left:92px;top:92px;font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:#64748b;">Editor-like DOM</div>
+      <div class="text" data-node-id="title-1" data-node-type="text" data-editable="true" style="left:92px;top:140px;font-size:76px;font-weight:800;line-height:1;max-width:780px;">DOM с data-атрибутами для проверки bridge-логики</div>
+      <div class="text" data-node-id="body-1" data-node-type="text" data-editable="true" style="left:96px;top:392px;font-size:26px;line-height:1.42;max-width:700px;color:#334155;">Полезно для тестов выделения элементов, поиска editable nodes и синхронизации model ↔ DOM.</div>
+      <div data-node-id="chip-1" data-node-type="group" style="left:96px;top:536px;">
+        <span class="chip">data-slide-id</span>
+        <span class="chip">data-node-id</span>
+        <span class="chip">data-editable</span>
+      </div>
+    </section>
+
+    <section class="slide" data-slide-id="detail" data-slide-kind="content">
+      <div class="text" data-node-id="title-2" data-node-type="text" style="left:80px;top:76px;font-size:54px;font-weight:700;">Что здесь тестировать</div>
+      <div data-node-id="list-group" data-node-type="group" style="left:82px;top:180px;width:680px;display:grid;gap:18px;">
+        <div class="chip">поиск нод по data-node-id</div>
+        <div class="chip">сопоставление DOM и internal model</div>
+        <div class="chip">редактирование grouped elements</div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

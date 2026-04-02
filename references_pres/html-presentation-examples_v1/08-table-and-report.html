@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Table Report Presentation</title>
+  <style>
+    body { margin:0; background:#dde3ea; font-family:Inter,Arial,sans-serif; }
+    .deck { padding:24px; display:grid; gap:24px; }
+    .slide { width:1280px; height:720px; background:#fff; border-radius:24px; padding:48px; box-sizing:border-box; overflow:hidden; }
+    table { width:100%; border-collapse:collapse; margin-top:28px; font-size:18px; }
+    th, td { text-align:left; padding:14px 12px; border-bottom:1px solid #e5e7eb; }
+    th { font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:#6b7280; }
+    .kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+    .kpi { background:#f8fafc; padding:16px; border-radius:16px; border:1px solid #e5e7eb; }
+  </style>
+</head>
+<body>
+  <div class="deck">
+    <section class="slide active">
+      <div style="font-size:13px;text-transform:uppercase;letter-spacing:.12em;color:#6b7280;">Dense report slide</div>
+      <h1 style="font-size:46px;margin:12px 0 18px;">Таблицы, KPI и плотный контент</h1>
+      <div class="kpis">
+        <div class="kpi"><div style="font-size:34px;font-weight:700;">18</div><div>слайдов в пакете</div></div>
+        <div class="kpi"><div style="font-size:34px;font-weight:700;">4</div><div>типа layout</div></div>
+        <div class="kpi"><div style="font-size:34px;font-weight:700;">92%</div><div>editable nodes</div></div>
+        <div class="kpi"><div style="font-size:34px;font-weight:700;">1.4 MB</div><div>объём набора</div></div>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Слайд</th><th>Тип</th><th>Особенность</th><th>Риск</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>01</td><td>Minimal</td><td>Inline styles</td><td>Низкий</td></tr>
+          <tr><td>03</td><td>Absolute</td><td>Overlapping layers</td><td>Средний</td></tr>
+          <tr><td>07</td><td>SVG</td><td>Inline vector graphics</td><td>Средний</td></tr>
+          <tr><td>10</td><td>Stress</td><td>Nested layout complexity</td><td>Высокий</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+</body>
+</html>

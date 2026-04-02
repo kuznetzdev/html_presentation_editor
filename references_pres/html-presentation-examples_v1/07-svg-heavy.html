@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SVG Heavy Presentation</title>
+  <style>
+    body { margin:0; background:#ecf0f6; font-family:Inter,Arial,sans-serif; }
+    .deck { padding:24px; display:grid; gap:24px; }
+    .slide { width:1280px; height:720px; border-radius:24px; overflow:hidden; background:#fff; position:relative; }
+    .content { position:absolute; inset:56px; }
+    .row { display:grid; grid-template-columns:1.1fr .9fr; gap:28px; align-items:center; height:100%; }
+  </style>
+</head>
+<body>
+  <div class="deck">
+    <section class="slide active">
+      <div class="content row">
+        <div>
+          <div style="font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:#64748b;">Inline SVG</div>
+          <h1 style="font-size:62px;line-height:1.03;margin:18px 0;max-width:700px;">Слайд с SVG-графикой и простыми диаграммами</h1>
+          <p style="font-size:24px;color:#475569;max-width:760px;">Нужен для проверки: editor должен корректно выделять контейнеры рядом с inline SVG и не портить содержимое &lt;svg&gt; при экспорте.</p>
+        </div>
+        <svg viewBox="0 0 500 380" width="500" height="380" aria-label="Demo chart">
+          <rect x="0" y="0" width="500" height="380" rx="24" fill="#f8fafc"/>
+          <line x1="60" y1="300" x2="450" y2="300" stroke="#cbd5e1" stroke-width="2"/>
+          <line x1="60" y1="60" x2="60" y2="300" stroke="#cbd5e1" stroke-width="2"/>
+          <polyline points="60,260 150,220 240,190 330,130 420,90" fill="none" stroke="#0f766e" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="150" cy="220" r="8" fill="#0f766e"/>
+          <circle cx="240" cy="190" r="8" fill="#0f766e"/>
+          <circle cx="330" cy="130" r="8" fill="#0f766e"/>
+          <circle cx="420" cy="90" r="8" fill="#0f766e"/>
+        </svg>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>HTML Presentation Examples</title>
+  <style>
+    :root{--bg:#f3f6fb;--panel:#ffffff;--line:#d8e0eb;--text:#132033;--muted:#61748a;--accent:#245dff}
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,Arial,sans-serif;background:linear-gradient(180deg,#eef3fb,#f8fbff);color:var(--text)}
+    .wrap{max-width:1240px;margin:0 auto;padding:32px} h1{margin:0 0 12px;font-size:clamp(2.2rem,4vw,4rem)} p.lead{margin:0 0 28px;max-width:880px;color:var(--muted);font-size:1.1rem;line-height:1.7}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.card{padding:24px;border-radius:26px;border:1px solid var(--line);background:var(--panel)} .card h2{margin:0 0 10px;font-size:1.25rem}
+    .meta{display:grid;gap:8px;color:var(--muted);margin-bottom:16px}.actions{display:flex;gap:12px;flex-wrap:wrap} a.btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 16px;border-radius:14px;border:1px solid var(--line);text-decoration:none;color:var(--text);background:#fff} a.btn.primary{background:#245dff;color:#fff;border-color:#245dff}
+    code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace} @media (max-width:900px){.grid{grid-template-columns:1fr}.wrap{padding:20px}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>Примеры HTML-презентаций разной сложности</h1>
+    <p class="lead">Здесь собран набор демонстрационных deck-файлов для тестов редактора. Они специально сделаны разными по стилю и по способу написания: от простого single-file HTML до data-driven рендера, custom elements и multi-file deck с relative assets.</p>
+    <div class="grid">
+      <article class="card"><h2>01 — Basic static inline</h2><div class="meta"><span>Подход: <strong>обычные section + inline styles</strong></span><span>Сложность: низкая</span><span>Полезно для: базовых regression-тестов</span></div><div class="actions"><a class="btn primary" href="examples/01-basic-static-inline.html">Открыть</a></div></article>
+      <article class="card"><h2>02 — Semantic sections + classes</h2><div class="meta"><span>Подход: <strong>семантическая структура + внутренний CSS</strong></span><span>Сложность: низкая / средняя</span><span>Полезно для: карточек, колонок, типографики</span></div><div class="actions"><a class="btn primary" href="examples/02-semantic-sections-classes.html">Открыть</a></div></article>
+      <article class="card"><h2>03 — CSS Scroll Snap</h2><div class="meta"><span>Подход: <strong>scroll container + full-screen sections</strong></span><span>Сложность: средняя</span><span>Полезно для: нестандартной навигации и overlay при скролле</span></div><div class="actions"><a class="btn primary" href="examples/03-scroll-snap-deck.html">Открыть</a></div></article>
+      <article class="card"><h2>04 — Data-driven rendered</h2><div class="meta"><span>Подход: <strong>JS-модель → рендер DOM</strong></span><span>Сложность: средняя / высокая</span><span>Полезно для: runtime slides и bridge/model sync</span></div><div class="actions"><a class="btn primary" href="examples/04-data-driven-rendered.html">Открыть</a></div></article>
+      <article class="card"><h2>05 — Web Components deck</h2><div class="meta"><span>Подход: <strong>custom elements</strong></span><span>Сложность: высокая</span><span>Полезно для: нестандартных тегов и custom markup</span></div><div class="actions"><a class="btn primary" href="examples/05-web-components-deck.html">Открыть</a></div></article>
+      <article class="card"><h2>06 — Reveal-compatible markup</h2><div class="meta"><span>Подход: <strong>.reveal .slides &gt; section</strong></span><span>Сложность: высокая</span><span>Полезно для: slide model и framework-like structure</span></div><div class="actions"><a class="btn primary" href="examples/06-reveal-compatible-markup.html">Открыть</a></div></article>
+      <article class="card"><h2>07 — Relative assets multi-file</h2><div class="meta"><span>Подход: <strong>внешний CSS + JS + relative SVG assets</strong></span><span>Сложность: высокая</span><span>Полезно для: asset resolver / preview-export parity</span></div><div class="actions"><a class="btn primary" href="examples/07-relative-assets-multi-file.html">Открыть</a></div></article>
+    </div>
+  </main>
+</body>
+</html>

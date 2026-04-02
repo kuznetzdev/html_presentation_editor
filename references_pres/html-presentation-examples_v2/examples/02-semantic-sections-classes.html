@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>02 — Semantic sections with internal CSS</title>
+  <style>
+    :root{
+      --bg:#0b1320;
+      --surface:#101a2d;
+      --surface-soft:#16243b;
+      --text:#eef4ff;
+      --muted:#b5c4da;
+      --line:rgba(255,255,255,.12);
+      --accent:#7ea2ff;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0}
+    body{font-family:Inter,system-ui,Arial,sans-serif;background:linear-gradient(180deg,#09111c,#0f1728);color:var(--text)}
+    .deck{max-width:1320px;margin:0 auto;padding:32px;display:grid;gap:28px}
+    .slide{min-height:calc(100vh - 64px);padding:54px;border-radius:30px;border:1px solid var(--line);background:radial-gradient(circle at top left,rgba(126,162,255,.16),transparent 35%),var(--surface)}
+    .eyebrow{display:inline-flex;padding:8px 14px;border-radius:999px;background:rgba(126,162,255,.14);color:var(--accent);font-weight:700}
+    .hero{display:grid;grid-template-columns:1.2fr .8fr;gap:30px;align-items:center}
+    h1,h2,h3{margin:0}
+    h1{font-size:clamp(2.7rem,5vw,5rem);line-height:1.02}
+    h2{font-size:2.35rem}
+    p.lead{font-size:1.15rem;line-height:1.7;color:var(--muted);max-width:760px}
+    .grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+    .card{padding:24px;border-radius:24px;background:var(--surface-soft);border:1px solid var(--line)}
+    .columns{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+    ul.clean{margin:0;padding-left:20px;display:grid;gap:10px;color:var(--muted);font-size:1.08rem;line-height:1.6}
+    .timeline{display:grid;gap:16px}
+    .step{display:grid;grid-template-columns:72px 1fr;gap:18px;padding:20px;border-radius:22px;background:var(--surface-soft);border:1px solid var(--line)}
+    .step-number{display:grid;place-items:center;width:72px;height:72px;border-radius:18px;background:rgba(126,162,255,.14);font-size:1.65rem;font-weight:800;color:var(--accent)}
+    @media (max-width:900px){
+      .deck{padding:18px}
+      .slide{padding:28px}
+      .hero,.grid-3,.columns{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <main class="deck">
+    <section class="slide hero">
+      <div>
+        <span class="eyebrow">Пример 02 • semantic sections + classes</span>
+        <h1>Внутренний CSS и переиспользуемая структура</h1>
+        <p class="lead">
+          Этот вариант уже ближе к реальному проекту: семантическая разметка, понятные классы и повторяющиеся UI-паттерны.
+          Подходит для редактора как более реалистичный тест структуры контейнеров.
+        </p>
+      </div>
+      <div class="card">
+        <h3>Идея</h3>
+        <p class="lead" style="font-size:1rem;max-width:none">
+          Слайды остаются обычными <code>section.slide</code>, но оформление переносится в stylesheet, а HTML становится заметно чище.
+        </p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <h2 style="margin-bottom:22px">Блоки и карточки</h2>
+      <div class="grid-3">
+        <article class="card"><h3>Читаемость</h3><p class="lead" style="font-size:1rem;max-width:none">Код проще сопровождать, потому что повторяемость уехала в CSS-классы.</p></article>
+        <article class="card"><h3>Системность</h3><p class="lead" style="font-size:1rem;max-width:none">Легче тестировать тему, размеры, отступы и типографику.</p></article>
+        <article class="card"><h3>Редактируемость</h3><p class="lead" style="font-size:1rem;max-width:none">Редактор может менять текст, карточки, порядок и стили без inline-шума.</p></article>
+      </div>
+    </section>
+
+    <section class="slide columns">
+      <div class="card">
+        <h2 style="margin-bottom:18px">Где полезно</h2>
+        <ul class="clean">
+          <li>Корпоративные презентации.</li>
+          <li>Технические демо и проектные отчёты.</li>
+          <li>Деки с единым визуальным паттерном.</li>
+        </ul>
+      </div>
+      <div class="timeline">
+        <div class="step"><div class="step-number">1</div><div><h3>Собрать слайд</h3><p class="lead" style="font-size:1rem;max-width:none">Определить базовый layout и контент.</p></div></div>
+        <div class="step"><div class="step-number">2</div><div><h3>Нормализовать стили</h3><p class="lead" style="font-size:1rem;max-width:none">Вынести повторяющееся в CSS-классы.</p></div></div>
+        <div class="step"><div class="step-number">3</div><div><h3>Редактировать в визуальном режиме</h3><p class="lead" style="font-size:1rem;max-width:none">Править текст, порядок и параметры блоков.</p></div></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Minimal Inline Presentation</title>
+</head>
+<body style="margin:0;background:#111;font-family:Arial,sans-serif;">
+  <div class="presentation" style="display:flex;flex-direction:column;gap:24px;padding:24px;">
+    <section class="slide active" data-slide-id="s1" style="width:1280px;height:720px;background:#ffffff;border-radius:20px;padding:64px;box-sizing:border-box;position:relative;overflow:hidden;">
+      <div style="font-size:14px;letter-spacing:0.12em;text-transform:uppercase;color:#666;">Minimal / Inline CSS</div>
+      <h1 style="font-size:64px;line-height:1.05;margin:24px 0 16px;color:#111;max-width:800px;">Тест минимальной HTML-презентации</h1>
+      <p style="font-size:24px;line-height:1.45;color:#444;max-width:760px;">Самый простой сценарий: два слайда, inline style, без внешних зависимостей и без сложной вложенности.</p>
+      <div style="position:absolute;right:64px;bottom:64px;font-size:18px;color:#888;">1 / 2</div>
+    </section>
+
+    <section class="slide" data-slide-id="s2" style="width:1280px;height:720px;background:linear-gradient(135deg,#f6f7fb,#e9eefc);border-radius:20px;padding:64px;box-sizing:border-box;position:relative;overflow:hidden;">
+      <h2 style="font-size:52px;line-height:1.1;margin:0 0 24px;color:#18212f;">Что проверять</h2>
+      <ul style="font-size:26px;line-height:1.6;color:#233042;padding-left:28px;max-width:860px;">
+        <li>Импорт HTML и поиск слайдов.</li>
+        <li>Редактирование текста внутри простых блоков.</li>
+        <li>Экспорт без потери inline styles.</li>
+      </ul>
+      <div style="position:absolute;left:64px;bottom:64px;background:#18212f;color:#fff;padding:10px 16px;border-radius:999px;font-size:16px;">basic smoke test</div>
+    </section>
+  </div>
+</body>
+</html>

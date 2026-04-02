@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>06 — Reveal compatible markup</title>
+  <style>
+    :root{--bg:#0a101b;--panel:#10192a;--text:#eef4ff;--muted:#b7c7dd;--accent:#7ea2ff;--line:rgba(255,255,255,.12)}
+    *{box-sizing:border-box} html,body{margin:0;height:100%;font-family:Inter,system-ui,Arial,sans-serif;background:#0a101b;color:var(--text)}
+    .reveal{height:100vh;overflow:hidden;display:grid;grid-template-rows:1fr auto}.slides{position:relative;height:100%;width:100%}
+    .slides > section,.slides > section > section{position:absolute;inset:0;padding:54px;display:none;background:radial-gradient(circle at top left,rgba(126,162,255,.16),transparent 28%),linear-gradient(180deg,#0f1727,#0a101b)}
+    .slides section.active{display:grid;align-content:center;gap:18px} h1,h2{margin:0} h1{font-size:clamp(2.8rem,5vw,5rem);line-height:1.02} h2{font-size:2.4rem}
+    p,li{font-size:1.12rem;line-height:1.7;color:var(--muted)} .columns{display:grid;grid-template-columns:1fr 1fr;gap:24px} .card{padding:24px;border-radius:24px;border:1px solid var(--line);background:rgba(255,255,255,.06)}
+    .controls{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:16px 24px;border-top:1px solid var(--line);background:#0c1320}.controls button{padding:12px 16px;border-radius:14px;border:1px solid var(--line);background:#111b2d;color:var(--text)}.progress{height:8px;flex:1;max-width:420px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}.progress > span{display:block;height:100%;background:var(--accent);width:0%}
+    @media (max-width:900px){.columns{grid-template-columns:1fr}.slides>section,.slides>section>section{padding:28px}}
+  </style>
+</head>
+<body>
+  <div class="reveal"><div class="slides" id="slides">
+      <section data-title="Hero"><h1>Reveal-style структура без внешней библиотеки</h1><p>Этот файл специально написан в совместимом стиле: <code>.reveal .slides &gt; section</code>. Так удобно тестировать редактор на deck-структуре, похожей на reveal.js.</p></section>
+      <section data-title="Vertical group"><section data-title="Vertical 1"><h2>Вертикальная вложенность — часть 1</h2><div class="columns"><div class="card"><strong>Зачем</strong><p>Проверка nested slide groups и корректной навигации по секциям.</p></div><div class="card"><strong>Риск</strong><p>Редактору сложнее определять активный слайд и порядок при nested markup.</p></div></div></section><section data-title="Vertical 2"><h2>Вертикальная вложенность — часть 2</h2><ol><li>Определить группу.</li><li>Выделить текущий внутренний слайд.</li><li>Сохранить корректную активацию и экспорт.</li></ol></section></section>
+      <section data-title="Summary"><h2>Что это даёт</h2><ul><li>Похожий на реальный framework deck-маркап.</li><li>Хороший regression-файл для slide model и runtime metadata.</li><li>Проверка поведения при nested sections.</li></ul></section>
+    </div><div class="controls"><div style="display:flex;gap:12px"><button id="prevBtn">← Назад</button><button id="nextBtn">Дальше →</button></div><div class="progress"><span id="progressBar"></span></div></div></div>
+  <script>
+    const roots=[...document.querySelectorAll('.slides > section')]; const flatSlides=[]; roots.forEach(root=>{const children=[...root.children].filter(el=>el.tagName==='SECTION'); if(children.length) flatSlides.push(...children); else flatSlides.push(root);});
+    let index=0; function render(){flatSlides.forEach((slide,i)=>slide.classList.toggle('active',i===index)); document.getElementById('progressBar').style.width=`${((index+1)/flatSlides.length)*100}%`; location.hash=`slide-${index+1}`;}
+    document.getElementById('prevBtn').addEventListener('click',()=>{index=Math.max(0,index-1);render();}); document.getElementById('nextBtn').addEventListener('click',()=>{index=Math.min(flatSlides.length-1,index+1);render();});
+    window.addEventListener('keydown',(event)=>{if(event.key==='ArrowRight'){index=Math.min(flatSlides.length-1,index+1);render();} if(event.key==='ArrowLeft'){index=Math.max(0,index-1);render();}}); render();
+  </script>
+</body>
+</html>
