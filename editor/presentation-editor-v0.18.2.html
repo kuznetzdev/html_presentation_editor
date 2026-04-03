@@ -812,9 +812,9 @@
         width: min(100%, var(--workspace-max));
         margin: 0 auto;
         display: grid;
-        grid-template-columns: minmax(272px, 296px) minmax(0, 1fr) minmax(
-            288px,
-            312px
+        grid-template-columns: minmax(260px, 280px) minmax(0, 1fr) minmax(
+            272px,
+            296px
           );
         align-items: stretch;
         gap: 16px;
@@ -896,6 +896,24 @@
         overflow: hidden;
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 1;
+      }
+
+      /* [v0.18.2] Preview zoom control */
+      .preview-zoom-control {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        flex-shrink: 0;
+      }
+
+      .preview-zoom-label {
+        min-width: 36px;
+        text-align: center;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--shell-text-muted);
+        user-select: none;
+        padding: 0 2px;
       }
 
       .topbar button,
@@ -3561,6 +3579,14 @@
               скрипты и хоткеи.
             </div>
           </div>
+          <div class="panel-header-actions">
+            <div class="preview-zoom-control" role="group" aria-label="Масштаб превью">
+              <button type="button" id="zoomOutBtn" class="icon-btn compact" aria-label="Уменьшить масштаб" title="Уменьшить (Ctrl+−)">−</button>
+              <span id="zoomLevelLabel" class="preview-zoom-label" aria-live="polite" aria-atomic="true">100%</span>
+              <button type="button" id="zoomInBtn" class="icon-btn compact" aria-label="Увеличить масштаб" title="Увеличить (Ctrl+=)">+</button>
+              <button type="button" id="zoomResetBtn" class="ghost-btn compact" aria-label="Сбросить масштаб" title="1:1 (Ctrl+0)" hidden>1:1</button>
+            </div>
+          </div>
         </div>
         <div class="preview-shell">
           <div class="preview-note">
@@ -4881,6 +4907,8 @@
       const UI_COMPLEXITY_STORAGE_KEY = "presentation-editor:ui-complexity:v1";
       // [LAYER-MODEL v2] selection mode persistence
       const SELECTION_MODE_STORAGE_KEY = "presentation-editor:selection-mode:v1";
+      // [v0.18.2] preview zoom persistence
+      const PREVIEW_ZOOM_STORAGE_KEY = "presentation-editor:preview-zoom:v1";
       const MAX_VISIBLE_TOASTS = 4;
       const THEME_PREFERENCES = ["system", "light", "dark"];
       const BRIDGE_MUTATION_TYPES = new Set([
@@ -5253,6 +5281,7 @@
         themePreference: "system",
         complexityMode: "basic",
         selectionMode: "smart", // [LAYER-MODEL v2] 'smart' | 'container'
+        previewZoom: 1.0, // [v0.18.2] preview scale factor
         inspectorSections: {},
         lastSavedAt: 0,
         commandSeq: 0,
@@ -5442,6 +5471,11 @@
         // [LAYER-MODEL v2]
         smartModeBtn: document.getElementById("smartModeBtn"),
         containerModeBtn: document.getElementById("containerModeBtn"),
+        // [v0.18.2] preview zoom
+        zoomOutBtn: document.getElementById("zoomOutBtn"),
+        zoomInBtn: document.getElementById("zoomInBtn"),
+        zoomResetBtn: document.getElementById("zoomResetBtn"),
+        zoomLevelLabel: document.getElementById("zoomLevelLabel"),
         elementTagInput: document.getElementById("elementTagInput"),
         elementIdInput: document.getElementById("elementIdInput"),
         elementClassInput: document.getElementById("elementClassInput"),
@@ -6167,6 +6201,21 @@
           if (isMod && event.shiftKey && event.key.toLowerCase() === "v") {
             event.preventDefault();
             pasteStyleToSelected();
+            return;
+          }
+          if (isMod && (event.key === "=" || event.key === "+")) {
+            event.preventDefault();
+            stepZoom(1);
+            return;
+          }
+          if (isMod && (event.key === "-" || event.key === "_")) {
+            event.preventDefault();
+            stepZoom(-1);
+            return;
+          }
+          if (isMod && event.key === "0") {
+            event.preventDefault();
+            setPreviewZoom(1.0, true);
             return;
           }
           if (
@@ -13658,7 +13707,10 @@ ${exportDoc.documentElement.outerHTML}`;
       }
 
       function hasBlockedDirectManipulationContext() {
-        return Boolean(state.manipulationContext?.directManipulationSafe === false);
+        return Boolean(
+          state.manipulationContext?.directManipulationSafe === false ||
+          state.previewZoom !== 1
+        );
       }
 
       function clearSelectionTooltipTimer() {
@@ -13787,13 +13839,14 @@ ${exportDoc.documentElement.outerHTML}`;
       function toStageRect(frameRect) {
         const rect = cloneRect(frameRect);
         if (!rect) return null;
+        const zoom = state.previewZoom ?? 1;
         const iframeRect = els.previewFrame.getBoundingClientRect();
         const stageRect = els.previewStage.getBoundingClientRect();
         return cloneRect({
-          left: iframeRect.left - stageRect.left + rect.left,
-          top: iframeRect.top - stageRect.top + rect.top,
-          width: rect.width,
-          height: rect.height,
+          left: iframeRect.left - stageRect.left + rect.left * zoom,
+          top: iframeRect.top - stageRect.top + rect.top * zoom,
+          width: rect.width * zoom,
+          height: rect.height * zoom,
         });
       }
 
@@ -13822,11 +13875,12 @@ ${exportDoc.documentElement.outerHTML}`;
       }
 
       function toStageAxisValue(axis, value) {
+        const zoom = state.previewZoom ?? 1;
         const iframeRect = els.previewFrame.getBoundingClientRect();
         const stageRect = els.previewStage.getBoundingClientRect();
         return axis === "x"
-          ? iframeRect.left - stageRect.left + value
-          : iframeRect.top - stageRect.top + value;
+          ? iframeRect.left - stageRect.left + value * zoom
+          : iframeRect.top - stageRect.top + value * zoom;
       }
 
       function clearSelectionGuides() {
@@ -15393,20 +15447,21 @@ ${exportDoc.documentElement.outerHTML}`;
           return;
         }
 
-        const left = iframeRect.left - hostRect.left + activeRect.left;
-        const top = iframeRect.top - hostRect.top + activeRect.top;
+        const zoom = state.previewZoom ?? 1;
+        const left = iframeRect.left - hostRect.left + activeRect.left * zoom;
+        const top = iframeRect.top - hostRect.top + activeRect.top * zoom;
         const toolbarHeight = toolbar.offsetHeight || 44;
         const toolbarWidth = toolbar.offsetWidth || 320;
         let x = left;
         let y = top - toolbarHeight - 8;
         const placeRight =
-          activeRect.width < 140 &&
-          left + activeRect.width + toolbarWidth + 12 < hostRect.width;
+          activeRect.width * zoom < 140 &&
+          left + activeRect.width * zoom + toolbarWidth + 12 < hostRect.width;
         if (placeRight) {
-          x = left + activeRect.width + 8;
+          x = left + activeRect.width * zoom + 8;
           y = top;
         }
-        if (y < 8) y = top + activeRect.height + 8;
+        if (y < 8) y = top + activeRect.height * zoom + 8;
         const pos = clampToolbarPosition(x, y);
         toolbar.style.left = `${pos.x}px`;
         toolbar.style.top = `${pos.y}px`;
@@ -17990,6 +18045,7 @@ ${exportDoc.documentElement.outerHTML}`;
         initInspectorSections();
         initComplexityMode();
         initSelectionMode(); // [LAYER-MODEL v2]
+        initPreviewZoom(); // [v0.18.2]
         initFloatingToolbarState();
         ensureNoviceShellOnboardingUi();
         ensureNoviceSummaryStructure();
@@ -18197,6 +18253,81 @@ ${exportDoc.documentElement.outerHTML}`;
         setToggleButtonState(els.containerModeBtn, isContainer);
       }
 
+      // [v0.18.2] Preview zoom control
+      function initPreviewZoom() {
+        let zoom = 1.0;
+        try {
+          const raw = localStorage.getItem(PREVIEW_ZOOM_STORAGE_KEY);
+          const parsed = parseFloat(raw);
+          if (Number.isFinite(parsed) && parsed >= 0.25 && parsed <= 2.0) {
+            zoom = parsed;
+          }
+        } catch (error) {}
+        setPreviewZoom(zoom, false);
+      }
+
+      function setPreviewZoom(zoom, persist = true) {
+        const clamped = Math.max(0.25, Math.min(2.0, zoom));
+        state.previewZoom = clamped;
+        if (persist) {
+          try {
+            localStorage.setItem(PREVIEW_ZOOM_STORAGE_KEY, String(clamped));
+          } catch (error) {}
+        }
+        applyPreviewZoom();
+      }
+
+      function applyPreviewZoom() {
+        const zoom = state.previewZoom ?? 1.0;
+        if (els.previewFrame) {
+          if (zoom === 1.0) {
+            els.previewFrame.style.transform = "";
+            els.previewFrame.style.transformOrigin = "";
+            els.previewFrame.style.width = "";
+            els.previewFrame.style.height = "";
+          } else {
+            els.previewFrame.style.width = `${100 / zoom}%`;
+            els.previewFrame.style.height = `${100 / zoom}%`;
+            els.previewFrame.style.transform = `scale(${zoom})`;
+            els.previewFrame.style.transformOrigin = "0 0";
+          }
+        }
+        updatePreviewZoomUi();
+        renderSelectionOverlay();
+        positionFloatingToolbar();
+      }
+
+      function updatePreviewZoomUi() {
+        const zoom = state.previewZoom ?? 1.0;
+        const percent = Math.round(zoom * 100);
+        if (els.zoomLevelLabel) {
+          els.zoomLevelLabel.textContent = `${percent}%`;
+        }
+        if (els.zoomResetBtn) {
+          els.zoomResetBtn.hidden = zoom === 1.0;
+        }
+        if (els.zoomOutBtn) {
+          els.zoomOutBtn.disabled = zoom <= 0.25;
+        }
+        if (els.zoomInBtn) {
+          els.zoomInBtn.disabled = zoom >= 2.0;
+        }
+      }
+
+      function stepZoom(direction) {
+        const current = state.previewZoom ?? 1.0;
+        const steps = [0.25, 0.33, 0.5, 0.67, 0.75, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0];
+        let targetIndex = steps.findIndex(s => Math.abs(s - current) < 0.01);
+        if (targetIndex === -1) {
+          targetIndex = steps.findIndex(s => s > current);
+          if (targetIndex === -1) targetIndex = steps.length - 1;
+          if (direction < 0 && targetIndex > 0) targetIndex--;
+        } else {
+          targetIndex = Math.max(0, Math.min(steps.length - 1, targetIndex + direction));
+        }
+        setPreviewZoom(steps[targetIndex], true);
+      }
+
       function setToggleButtonState(button, active) {
         if (!button) return;
         button.classList.toggle("is-active", Boolean(active));
@@ -18279,6 +18410,10 @@ ${exportDoc.documentElement.outerHTML}`;
         els.containerModeBtn?.addEventListener("click", () =>
           setSelectionMode("container"),
         );
+        // [v0.18.2] preview zoom
+        els.zoomOutBtn?.addEventListener("click", () => stepZoom(-1));
+        els.zoomInBtn?.addEventListener("click", () => stepZoom(1));
+        els.zoomResetBtn?.addEventListener("click", () => setPreviewZoom(1.0, true));
         els.exportBtn?.addEventListener("click", exportHtml);
         els.themeToggleBtn?.addEventListener("click", toggleTheme);
         els.undoBtn?.addEventListener("click", undo);

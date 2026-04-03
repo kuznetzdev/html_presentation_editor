@@ -880,4 +880,54 @@ test.describe("Editor shell smoke @harness", () => {
     await assertNoHorizontalOverflow(page);
     await assertShellGeometry(page);
   });
+
+  test("preview zoom controls change scale and persist @stage-f", async ({
+    page,
+  }) => {
+    await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL });
+    await setMode(page, "edit");
+
+    // Verify zoom controls exist
+    await expect(page.locator("#zoomOutBtn")).toBeVisible();
+    await expect(page.locator("#zoomInBtn")).toBeVisible();
+    await expect(page.locator("#zoomLevelLabel")).toHaveText("100%");
+    await expect(page.locator("#zoomResetBtn")).toBeHidden();
+
+    // Zoom in
+    await clickEditorControl(page, "#zoomInBtn");
+    await expect(page.locator("#zoomLevelLabel")).toHaveText("110%");
+    await expect(page.locator("#zoomResetBtn")).toBeVisible();
+
+    // Verify iframe has scale transform
+    const transform = await page.locator("#previewFrame").evaluate((el) => {
+      return window.getComputedStyle(el).transform;
+    });
+    expect(transform).toContain("matrix");
+
+    // Reset with button
+    await clickEditorControl(page, "#zoomResetBtn");
+    await expect(page.locator("#zoomLevelLabel")).toHaveText("100%");
+    await expect(page.locator("#zoomResetBtn")).toBeHidden();
+
+    // Keyboard shortcuts: Ctrl+= for zoom in
+    await page.keyboard.press("Control+=");
+    await expect(page.locator("#zoomLevelLabel")).toHaveText("110%");
+
+    // Keyboard shortcuts: Ctrl+0 for reset
+    await page.keyboard.press("Control+0");
+    await expect(page.locator("#zoomLevelLabel")).toHaveText("100%");
+
+    // Keyboard shortcuts: Ctrl+- for zoom out
+    await page.keyboard.press("Control+-");
+    await expect(page.locator("#zoomLevelLabel")).toHaveText("90%");
+
+    // Verify persistence
+    const storedZoom = await page.evaluate(() => {
+      return localStorage.getItem("presentation-editor:preview-zoom:v1");
+    });
+    expect(parseFloat(storedZoom)).toBeCloseTo(0.9, 2);
+
+    await assertNoHorizontalOverflow(page);
+    await assertShellGeometry(page);
+  });
 });

@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## 0.18.2 - preview zoom control - 2026-04-03
+- added zoom control to the preview/edit panel header with +/− buttons, percent label, and 1:1 reset button
+- keyboard shortcuts: Ctrl+= (zoom in), Ctrl+− (zoom out), Ctrl+0 (reset to 100%)
+- zoom persists to localStorage across sessions (`presentation-editor:preview-zoom:v1`)
+- zoom range: 25% to 200% with fixed steps (25%, 33%, 50%, 67%, 75%, 90%, 100%, 110%, 125%, 150%, 175%, 200%)
+- iframe scales presentation content via `transform: scale(zoom)` + `width: calc(100% / zoom)` to prevent visual overflow
+- coordinate system (toStageRect, toStageAxisValue, positionFloatingToolbar) accounts for zoom factor
+- direct manipulation blocked when zoom ≠ 100% via shell-level check in hasBlockedDirectManipulationContext()
+- widened main preview panel: workspace grid adjusted from `272-296px | 1fr | 288-312px` to `260-280px | 1fr | 272-296px` for 32px more preview width
+- added Playwright smoke test "preview zoom controls change scale and persist @stage-f"
+- all gates passed: shell.smoke (14/14), gate-b (143/143), asset-parity (4/4)
+
 ## 0.18.1 - release metadata, docs, agents, and semver runtime sync - 2026-04-03
 - moved the active runtime artifact to `editor/presentation-editor-v0.18.1.html` and archived `editor/presentation-editor-v0.18.0.html` under `docs/history/`
 - synchronized package version, Playwright harness targets, export-asset parity tooling, and shell smoke navigation with the active semver runtime filename

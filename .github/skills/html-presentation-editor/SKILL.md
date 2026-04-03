@@ -1,22 +1,36 @@
 ---
 name: html-presentation-editor
-description: "Work on the HTML Presentation Editor project. Use when implementing features, fixing bugs, refactoring, or adding tests in this codebase. Covers architecture, entity model, selection engine, bridge protocol, inspector, breadcrumbs, and Playwright testing patterns."
-argument-hint: "Describe the feature or fix e.g. 'implement deep select', 'fix breadcrumb hover', 'add context menu layer picker'"
+description: "Work on the HTML Presentation Editor project. Use when implementing features, fixing bugs, refactoring, reviewing, or testing this codebase. Covers runtime HTML/CSS/JS, DOM manipulation, selection engine, iframe bridge protocol, inspector UI, CSS architecture, accessibility, responsive behavior, performance, release discipline, and Playwright validation patterns."
+argument-hint: "Describe the task e.g. 'implement deep select', 'fix breadcrumb hover', 'review overlap recovery', 'validate layer reorder regression'"
 ---
 
 # HTML Presentation Editor — Project Skill
 
 ## When to Use
 - Implementing new editor features (selection, inspection, navigation, formatting)
-- Fixing bugs in canvas interaction, bridge communication, or inspector UI
+- Fixing bugs in canvas interaction, bridge communication, shell UI, or export wiring
+- Reviewing architecture, accessibility, responsive behavior, or release-surface changes
 - Adding or updating Playwright tests against the editor
 - Understanding architecture before making changes
 
 ---
 
+## Web Development Lens
+
+Use this skill with a full front-end engineering mindset:
+
+- **HTML**: preserve author markup, prefer semantic shell UI, keep editor metadata in `data-editor-*`
+- **CSS**: respect the existing `@layer` structure, reuse token variables, and preserve light/dark parity
+- **JavaScript**: keep logic in the owning layer, use the bridge for cross-frame state, avoid unsafe mass DOM rewrites
+- **Accessibility**: maintain keyboard reachability, focus management, and honest blocked-state feedback
+- **Responsive behavior**: account for the signed-off shell widths and container-query-driven component behavior
+- **Performance**: avoid layout thrash during selection, drag, resize, and shell overlay updates
+
+---
+
 ## Architecture Overview
 
-**Single monolithic file**: `editor/presentation-editor-v0.18.1.html` (~20 000 lines)  
+**Single monolithic file**: `editor/presentation-editor-v0.18.2.html` (~20 000 lines)  
 **Three-layer architecture (non-negotiable)**:
 
 | Layer | What it owns |
