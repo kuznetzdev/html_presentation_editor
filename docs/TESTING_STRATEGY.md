@@ -178,6 +178,7 @@ npx playwright test
 - Click-through layer cycling (v0.16.0)
 - Overlap detection and recovery (v0.17.0)
 - Advanced-mode layers, lock, visibility, grouping, and ungrouping (v0.18.0)
+- Preview/edit panel zoom controls (v0.18.2, Ctrl+=, Ctrl+−, Ctrl+0)
 - Direct manipulation (safe envelope only)
 - Slide structure (create/duplicate/delete/undo/redo)
 - Desktop rail drag-and-drop

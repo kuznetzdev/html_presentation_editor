@@ -148,6 +148,8 @@ Owns:
 - The rail is for navigation and simple structure actions
 - Desktop may use drag-and-drop reorder in the rail
 - Compact widths should prefer explicit menu actions over fragile drag paths
+- Preview/edit panel zoom controls let users scale presentation content for comfortable viewing and editing (25%-200% range)
+- Direct manipulation (drag/resize) is blocked when zoom ≠ 100% to maintain coordinate precision and prevent layout errors
 - Empty state must present a single-path onboarding card with `Open HTML` as
   the primary CTA and `Paste HTML` as a secondary path
 - Before a deck loads, shell chrome must not leak power-user controls through
