@@ -2,7 +2,7 @@
 
 ## Current version
 
-`0.18.2`
+`0.18.3`
 
 ## Product state
 
@@ -58,9 +58,9 @@ The fixed architecture is unchanged:
   shell-owned width metrics say the inline budget is exhausted
 - resolve shell light/dark theme before first paint, so dark mode no longer
   flashes through contradictory light segmented controls
-- zoom preview/edit panel content with shell-level controls (Ctrl+=, Ctrl+−, Ctrl+0)
-  while blocking direct manipulation at non-100% zoom and keeping coordinate
-  transforms synchronized with the active zoom factor
+- zoom preview/edit panel content with quality-preserving CSS zoom property (Ctrl+=, Ctrl+−, Ctrl+0)
+  that re-layouts at target resolution, maintaining text and vector crispness at all zoom levels
+  while blocking direct manipulation at non-100% zoom
 - create, duplicate, delete, undo, redo, autosave, and restore slides
   deterministically
 - reorder slides from the rail on desktop with drag and drop

@@ -13,8 +13,8 @@ need deeper deck surgery.
 
 ## Current state
 
-- Current package version: `0.18.2`
-- Main runtime file: `editor/presentation-editor-v0.18.2.html`
+- Current package version: `0.18.3`
+- Main runtime file: `editor/presentation-editor-v0.18.3.html`
 - Architecture remains fixed: `parent shell + iframe preview + bridge + modelDoc`
 - Focused Stage D-F Playwright shell proof: green
 - Asset parity validation: green
@@ -32,9 +32,9 @@ need deeper deck surgery.
 - Open a unified slide action menu from the rail, with compact-safe kebab access
 - Detect severe overlap conflicts and recover covered elements with a move-to-top action
 - Use the advanced-mode layers panel to inspect stack order, lock elements, toggle visibility, and group related nodes
-- Zoom preview/edit panel content with shell-level controls (Ctrl+=, Ctrl+−, Ctrl+0)
-  while blocking direct manipulation at non-100% zoom and keeping coordinate
-  transforms synchronized with the active zoom factor
+- Zoom preview/edit panel content with quality-preserving CSS zoom property (Ctrl+=, Ctrl+−, Ctrl+0)
+  while blocking direct manipulation at non-100% zoom; CSS zoom maintains text/vector
+  crispness at all scale levels without coordinate multiplication overhead
 - Resolve light and dark shell theme before first paint so segmented controls,
   menus, and inspector chrome do not flash contradictory surfaces
 - Keep transient shell surfaces mutually exclusive instead of stacking floating
@@ -51,7 +51,7 @@ need deeper deck surgery.
 
 ## Repository entry points
 
-- `editor/presentation-editor-v0.18.2.html`
+- `editor/presentation-editor-v0.18.3.html`
   Current editor runtime
 - `docs/SOURCE_OF_TRUTH.md`
   Product and architecture invariants

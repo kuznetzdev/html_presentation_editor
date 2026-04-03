@@ -1,18 +1,18 @@
 # CHANGELOG
 
-## 0.18.3 - preview zoom quality and main canvas expansion - 2026-04-03
-- **Layout optimization**: widened main preview/edit panel by reducing side panel minmax widths
-  - Left panel: 260-280px → 240-260px (20px narrower at min/max)
-  - Right panel: 272-296px → 256-280px (16px narrower at min/max)
-  - Main canvas gains ~36-52px more width in desktop layouts
-  - Normalized responsive breakpoints @1240px and @1280px to consistently prioritize canvas over side panels
-  - Fixes inconsistency where intermediate widths expanded side panels instead of main editing region
-- **Zoom quality improvements**: reduced visual blur on downscale by using cleaner scale factors
-  - Removed fractional steps 0.33 (33%) and 0.67 (67%) that caused excessive blur due to resampling artifacts
-  - New quality-first zoom steps: [0.25, 0.5, 0.75, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0]
-  - Prioritizes whole/half fractions for sharper text and vector rendering
-  - No change to zoom range (25%-200%) or UI controls
-- All gates passed: shell.smoke, zoom persist test, no regression in selection/overlay/export
+## 0.18.3 - zoom quality fix and layout optimization - 2026-04-03
+- **Zoom quality fix**: Switched from `transform: scale()` to CSS `zoom:` property
+  - CSS `zoom:` triggers browser re-layout at target resolution, preserving text and vector crispness
+  - Eliminates blur/degradation artifacts at zoom levels < 100% ("мыльница" issue)
+  - Simplified coordinate math: removed manual zoom multiplications from `toStageRect`, `toStageAxisValue`, `positionFloatingToolbar`
+  - `getBoundingClientRect()` returns already-scaled values with zoom property; no manual scaling needed
+  - Updated Playwright test to validate `zoom` property instead of `transform` matrix
+- **Layout optimization**: Expanded preview panel as primary workspace
+  - Reduced slides panel from `minmax(240px, 260px)` to `minmax(200px, 220px)` (40px narrower at max)
+  - Reduced inspector panel from `minmax(256px, 280px)` to `minmax(220px, 240px)` (40px narrower at max)
+  - Preview/edit panel now dominates screen space with ~80px more width on desktop
+  - Side panels remain functional but visually subordinate to the main editing area
+- All tests passing: shell.smoke zoom test validates quality-preserving scale behavior
 
 ## 0.18.2 - preview zoom control - 2026-04-03
 - added zoom control to the preview/edit panel header with +/− buttons, percent label, and 1:1 reset button
