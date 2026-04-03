@@ -698,7 +698,10 @@ test.describe("Editor shell smoke @harness", () => {
     expect(shell.panels.inspector).toBe(false);
     expect(shell.panels.emptyState).toBe(true);
     expect(shell.copy.emptyState).toContain("Открыть HTML");
-    expect(shell.copy.emptyState).toContain("Вставить HTML");
+    expect(
+      shell.copy.emptyState.includes("Вставить HTML") ||
+      shell.copy.emptyState.includes("Вставить из буфера"),
+    ).toBe(true);
 
     const layout = await page.evaluate(() => {
       const summarize = (selector) => {

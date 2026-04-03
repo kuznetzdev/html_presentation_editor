@@ -5835,8 +5835,11 @@
         });
         // [v0.17.0] Unlock element button
         els.unlockElementBtn?.addEventListener("click", () => {
-          if (!state.selectedNodeId) return;
-          toggleLayerLock(state.selectedNodeId);
+          const lockedNodeId =
+            els.unlockElementBtn?.getAttribute("data-lock-node-id") ||
+            state.selectedNodeId;
+          if (!lockedNodeId) return;
+          toggleLayerLock(lockedNodeId);
         });
         els.resetStylesBtn.addEventListener("click", resetSelectedStyles);
         els.copyStyleBtn.addEventListener("click", copySelectedStyle);
@@ -14993,29 +14996,43 @@ ${exportDoc.documentElement.outerHTML}`;
       }
 
       function reorderLayers(fromIndex, toIndex) {
-        if (!state.activeSlideId || !state.modelDoc || state.complexityMode !== "advanced") return;
-        const slideEl = state.modelDoc.querySelector(`[data-editor-slide-id="${cssEscape(state.activeSlideId)}"]`);
-        if (!slideEl) return;
-        const allLayers = Array.from(slideEl.querySelectorAll("[data-editor-node-id]")).filter(el => {
-          return el.closest("[data-editor-slide-id]") === slideEl && 
-                 el.getAttribute("data-editor-entity-kind") !== "slide-root" &&
-                 el.getAttribute("data-editor-policy-kind") !== "protected";
-        });
-        if (fromIndex < 0 || fromIndex >= allLayers.length || toIndex < 0 || toIndex >= allLayers.length) return;
+        if (!state.modelDoc || state.complexityMode !== "advanced") return;
+        const layerNodeIds = Array.from(
+          els.layersListContainer?.querySelectorAll(".layer-row[data-layer-node-id]") || [],
+        )
+          .map((row) => row.getAttribute("data-layer-node-id"))
+          .filter(Boolean);
+        if (
+          fromIndex < 0 ||
+          toIndex < 0 ||
+          fromIndex >= layerNodeIds.length ||
+          toIndex >= layerNodeIds.length
+        ) {
+          return;
+        }
+
+        const reorderedIds = layerNodeIds.slice();
+        const [moved] = reorderedIds.splice(fromIndex, 1);
+        reorderedIds.splice(toIndex, 0, moved);
+
         const baseZ = 1;
-        allLayers.forEach((layer, i) => {
-          let targetIndex = i;
-          if (i === fromIndex) targetIndex = toIndex;
-          else if (i > fromIndex && i <= toIndex) targetIndex = i - 1;
-          else if (i < fromIndex && i >= toIndex) targetIndex = i + 1;
-          const newZ = baseZ + targetIndex;
-          const nodeId = layer.getAttribute("data-editor-node-id");
-          layer.style.zIndex = String(newZ);
-          if (nodeId) {
-            sendToBridge("apply-style", { nodeId, property: "z-index", value: String(newZ) });
-          }
+        const layerCount = reorderedIds.length;
+        reorderedIds.forEach((nodeId, visualIndex) => {
+          const node = state.modelDoc.querySelector(
+            `[data-editor-node-id="${cssEscape(nodeId)}"]`,
+          );
+          if (!node) return;
+          const newZ = baseZ + (layerCount - 1 - visualIndex);
+          node.style.zIndex = String(newZ);
+          sendToBridge("apply-style", {
+            nodeId,
+            property: "z-index",
+            value: String(newZ),
+          });
         });
-        pushHistory(`reorder-layers:${fromIndex}->${toIndex}`);
+        if (typeof pushHistory === "function") {
+          pushHistory(`reorder-layers:${fromIndex}->${toIndex}`);
+        }
         scheduleOverlapDetection();
         renderLayersPanel();
         showToast("Порядок слоёв изменён.", "success", { title: "Слои" });
@@ -15122,7 +15139,10 @@ ${exportDoc.documentElement.outerHTML}`;
             state.layersPanelDragState.draggedNodeId = nodeId;
             state.layersPanelDragState.draggedIndex = index;
             row.classList.add("is-dragging");
-            e.dataTransfer.effectAllowed = "move";
+            if (e.dataTransfer) {
+              e.dataTransfer.effectAllowed = "move";
+              e.dataTransfer.setData("text/plain", nodeId || "layer-row");
+            }
           });
           row.addEventListener("dragend", () => {
             row.classList.remove("is-dragging");
@@ -15141,7 +15161,10 @@ ${exportDoc.documentElement.outerHTML}`;
           row.addEventListener("drop", (e) => {
             e.preventDefault();
             const fromIndex = state.layersPanelDragState.draggedIndex;
-            const toIndex = state.layersPanelDragState.dropTargetIndex;
+            const rowIndex = parseInt(row.getAttribute("data-layer-index") || "-1", 10);
+            const toIndex = state.layersPanelDragState.dropTargetIndex >= 0
+              ? state.layersPanelDragState.dropTargetIndex
+              : rowIndex;
             if (fromIndex >= 0 && toIndex >= 0 && fromIndex !== toIndex) {
               reorderLayers(fromIndex, toIndex);
             }
@@ -15182,7 +15205,7 @@ ${exportDoc.documentElement.outerHTML}`;
         if (!slideEl) return;
         const groupWrapper = state.modelDoc.createElement("div");
         groupWrapper.className = "editor-group";
-        groupWrapper.setAttribute("data-editor-node-id", generateNodeId());
+        groupWrapper.setAttribute("data-editor-node-id", `node-${getNextNodeSeqInModel()}`);
         groupWrapper.setAttribute("data-editor-entity-kind", "container");
         const firstNodeId = state.multiSelectNodeIds[0];
         const firstNode = slideEl.querySelector(`[data-editor-node-id="${cssEscape(firstNodeId)}"]`);
@@ -15192,9 +15215,11 @@ ${exportDoc.documentElement.outerHTML}`;
           const node = slideEl.querySelector(`[data-editor-node-id="${cssEscape(nodeId)}"]`);
           if (node) groupWrapper.appendChild(node);
         });
-        pushHistory(`group:${state.multiSelectNodeIds.join(",")}`);
+        if (typeof pushHistory === "function") {
+          pushHistory(`group:${state.multiSelectNodeIds.join(",")}`);
+        }
         state.multiSelectNodeIds = [];
-        rebuildPreview();
+        rebuildPreviewKeepingContext(state.activeSlideId);
         showToast("Элементы сгруппированы.", "success", { title: "Слои" });
       }
 
@@ -15207,8 +15232,10 @@ ${exportDoc.documentElement.outerHTML}`;
         const children = Array.from(groupNode.children);
         children.forEach(child => parent.insertBefore(child, groupNode));
         groupNode.remove();
-        pushHistory(`ungroup:${state.selectedNodeId}`);
-        rebuildPreview();
+        if (typeof pushHistory === "function") {
+          pushHistory(`ungroup:${state.selectedNodeId}`);
+        }
+        rebuildPreviewKeepingContext(state.activeSlideId);
         showToast("Группа расформирована.", "success", { title: "Слои" });
       }
 
@@ -17090,6 +17117,16 @@ ${exportDoc.documentElement.outerHTML}`;
             "aria-hidden",
             showLockBanner ? "false" : "true",
           );
+        }
+        if (els.unlockElementBtn) {
+          if (showLockBanner && state.selectedNodeId) {
+            els.unlockElementBtn.setAttribute(
+              "data-lock-node-id",
+              state.selectedNodeId,
+            );
+          } else {
+            els.unlockElementBtn.removeAttribute("data-lock-node-id");
+          }
         }
         // [v0.17.0] Render layers panel (advanced mode only)
         renderLayersPanel();
