@@ -1177,6 +1177,12 @@
         background: color-mix(in srgb, var(--shell-accent-soft) 80%, var(--shell-panel-elevated));
       }
 
+      .slide-tag.is-overlap-warning {
+        border-color: var(--shell-warning-border);
+        background: var(--shell-warning-bg);
+        color: var(--shell-text);
+      }
+
       .slide-actions {
         display: flex;
         align-items: flex-start;
@@ -1983,6 +1989,28 @@
         color: var(--shell-text);
         font-size: 12px;
         line-height: 1.55;
+      }
+
+      .overlap-recovery-banner {
+        display: grid;
+        gap: 8px;
+        margin-top: 10px;
+        padding: 10px 12px;
+        border: 1px solid var(--shell-warning-border);
+        border-radius: 10px;
+        background: var(--shell-warning-bg);
+        color: var(--shell-text);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .overlap-recovery-banner[hidden] {
+        display: none !important;
+      }
+
+      .overlap-recovery-actions {
+        display: flex;
+        justify-content: flex-end;
       }
       }
 
@@ -3860,6 +3888,22 @@
               <span class="mini-badge" id="selectedKindBadge">Тип: —</span>
               <span class="mini-badge" id="selectedNodeBadge" data-ui-level="advanced">node: —</span>
             </div>
+            <div
+              class="overlap-recovery-banner"
+              id="overlapRecoveryBanner"
+              role="status"
+              aria-live="polite"
+              hidden
+            >
+              <div id="overlapRecoveryText">
+                Этот элемент частично перекрыт другим. Можно переместить его наверх.
+              </div>
+              <div class="overlap-recovery-actions">
+                <button type="button" class="ghost-btn" id="overlapMoveTopBtn">
+                  Переместить наверх
+                </button>
+              </div>
+            </div>
             <!-- [LAYER-MODEL v2] selection mode toggle -->
             <div
               class="mode-toggle selection-mode-toggle"
@@ -5012,6 +5056,12 @@
         activeManipulation: null,
         pendingOverlayClickProxy: false,
         activeGuides: { vertical: [], horizontal: [] },
+        overlapDetectionTimer: 0,
+        slideOverlapWarnings: {},
+        overlapConflictsBySlide: {},
+        selectedOverlapWarning: null,
+        overlapHoverNodeId: null,
+        overlapHoverBoundDoc: null,
         selectionTooltip: {
           message: "",
           visibleUntil: 0,
@@ -5191,6 +5241,9 @@
         selectedElementSummaryCard: document.getElementById("selectedElementSummaryCard"),
         selectedElementTitle: document.getElementById("selectedElementTitle"),
         selectedElementSummary: document.getElementById("selectedElementSummary"),
+        overlapRecoveryBanner: document.getElementById("overlapRecoveryBanner"),
+        overlapRecoveryText: document.getElementById("overlapRecoveryText"),
+        overlapMoveTopBtn: document.getElementById("overlapMoveTopBtn"),
         currentSlideMetaBadge: document.getElementById("currentSlideMetaBadge"),
         currentSlideSummaryCard: document.getElementById("currentSlideSummaryCard"),
         currentSlideTitleDisplay: document.getElementById("currentSlideTitleDisplay"),
@@ -5609,6 +5662,13 @@
         els.moveElementDownBtn.addEventListener("click", () =>
           moveSelectedElement(1),
         );
+        els.overlapMoveTopBtn?.addEventListener("click", () => {
+          if (!state.selectedNodeId) return;
+          const nextZ = getTopZIndexForActiveSlide() + 1;
+          applyStyle("zIndex", String(nextZ));
+          showToast("Элемент перемещён наверх", "success");
+          scheduleOverlapDetection("move-to-top");
+        });
         els.resetStylesBtn.addEventListener("click", resetSelectedStyles);
         els.copyStyleBtn.addEventListener("click", copySelectedStyle);
         els.pasteStyleBtn.addEventListener("click", pasteStyleToSelected);
@@ -10655,6 +10715,8 @@
         renderSlidesList();
         dispatchPendingSlideActivation("runtime-metadata");
         schedulePendingSlideActivationRetry("runtime-metadata-retry");
+        syncOverlapHoverBinding();
+        scheduleOverlapDetection("slide-activation");
         flushPendingPreviewSelection();
         refreshUi();
       }
@@ -10685,6 +10747,8 @@
           schedulePendingSlideActivationRetry("slide-activation");
         }
         renderSlidesList();
+        syncOverlapHoverBinding();
+        scheduleOverlapDetection("slide-activation");
         flushPendingPreviewSelection();
         refreshUi();
       }
@@ -10911,6 +10975,7 @@
         renderSelectionOverlay();
         renderSlidesList();
         refreshUi();
+        scheduleOverlapDetection("selection-change");
         if (previousNodeId !== state.selectedNodeId || !state.selectedFlags.isTextEditing) {
           focusSelectionFrameForKeyboard();
         }
@@ -11080,6 +11145,7 @@
           focusSelectionFrameForKeyboard();
         }
         refreshUi();
+        scheduleOverlapDetection("element-update");
       }
 
       function applySlideUpdateFromBridge(payload, seq = 0) {
@@ -11375,6 +11441,10 @@
             `[data-editor-slide-id="${cssEscape(slide.id)}"]`,
           );
           const metaTags = buildSlideMetaTags(slide, slideNode);
+          const hasSevereOverlap =
+            state.complexityMode === "basic" &&
+            Boolean(state.slideOverlapWarnings[slide.id]);
+          if (hasSevereOverlap) metaTags.push("⚠ перекрытие");
           const stateTagClass =
             slide.state === "requested"
               ? "slide-tag slide-state-tag is-pending"
@@ -11389,11 +11459,33 @@
               ? `<div class="slide-meta-row"><span class="${stateTagClass}">${escapeHtml(
                   slide.stateLabel || "ready",
                 )}</span>${metaTags
-                  .map((tag) => `<span class="slide-tag">${escapeHtml(tag)}</span>`)
+                  .map((tag) =>
+                    `<span class="slide-tag${tag.includes("⚠") ? " is-overlap-warning" : ""}"${
+                      tag.includes("⚠") ? ' data-overlap-warning="true" role="button" tabindex="0"' : ""
+                    }>${escapeHtml(tag)}</span>`,
+                  )
                   .join("")}</div>`
               : ""
           }
         `;
+          const overlapWarningTag = main.querySelector('[data-overlap-warning="true"]');
+          if (overlapWarningTag) {
+            const showOverlapHint = (event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              showToast(
+                "Один из элементов перекрыт. Нажмите на него, чтобы выбрать.",
+                "warning",
+                { title: "Перекрытие слоёв", actionLabel: "Понял" },
+              );
+            };
+            overlapWarningTag.addEventListener("click", showOverlapHint);
+            overlapWarningTag.addEventListener("keydown", (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                showOverlapHint(event);
+              }
+            });
+          }
           const actions = document.createElement("div");
           actions.className = "slide-actions";
           const menuBtn = document.createElement("button");
@@ -12282,6 +12374,254 @@ ${exportDoc.documentElement.outerHTML}`;
         updateDiagnostics();
       }
 
+      function getPreviewDocument() {
+        return els.previewFrame?.contentDocument || null;
+      }
+
+      function getPreviewActiveSlideElement(doc = getPreviewDocument()) {
+        if (!doc) return null;
+        return doc.body || doc.documentElement || null;
+      }
+
+      function getActiveOverlapKey() {
+        return (
+          state.activeSlideId || state.runtimeActiveSlideId || state.selectedNodeId || "__global__"
+        );
+      }
+
+      function parseNumericZIndex(el) {
+        if (!el || el.nodeType !== 1) return 0;
+        const view = el.ownerDocument?.defaultView || window;
+        const z = String(view.getComputedStyle(el).zIndex || "").trim();
+        const n = Number.parseFloat(z);
+        return Number.isFinite(n) ? n : 0;
+      }
+
+      function compareVisualStackOrder(a, b) {
+        const za = parseNumericZIndex(a);
+        const zb = parseNumericZIndex(b);
+        if (za !== zb) return za - zb;
+        const pos = a.compareDocumentPosition(b);
+        if (pos & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
+        if (pos & Node.DOCUMENT_POSITION_PRECEDING) return 1;
+        return 0;
+      }
+
+      function computeRectIntersection(a, b) {
+        const left = Math.max(a.left, b.left);
+        const top = Math.max(a.top, b.top);
+        const right = Math.min(a.right, b.right);
+        const bottom = Math.min(a.bottom, b.bottom);
+        const width = Math.max(0, right - left);
+        const height = Math.max(0, bottom - top);
+        return {
+          left,
+          top,
+          right,
+          bottom,
+          width,
+          height,
+          area: width * height,
+        };
+      }
+
+      function detectOverlapConflicts(slideEl) {
+        if (!slideEl || typeof slideEl.querySelectorAll !== "function") return [];
+        const nodes = Array.from(slideEl.querySelectorAll("[data-editor-node-id]"))
+          .filter((el) => el != null && el.nodeType === 1)
+          .filter((el) => !el.hasAttribute("data-editor-slide-id"))
+          .filter((el) => {
+            const rect = el.getBoundingClientRect();
+            const view = el.ownerDocument?.defaultView || window;
+            const style = view.getComputedStyle(el);
+            if (!(rect.width > 0 && rect.height > 0)) return false;
+            if (style.display === "none" || style.visibility === "hidden") return false;
+            return true;
+          });
+        const conflicts = [];
+        for (let i = 0; i < nodes.length; i += 1) {
+          for (let j = i + 1; j < nodes.length; j += 1) {
+            const left = nodes[i];
+            const right = nodes[j];
+            const stackCmp = compareVisualStackOrder(left, right);
+            const topEl = stackCmp >= 0 ? left : right;
+            const bottomEl = stackCmp >= 0 ? right : left;
+            const topRect = topEl.getBoundingClientRect();
+            const bottomRect = bottomEl.getBoundingClientRect();
+            const overlap = computeRectIntersection(topRect, bottomRect);
+            if (!(overlap.width > 10 && overlap.height > 10)) continue;
+            const bottomArea = Math.max(1, bottomRect.width * bottomRect.height);
+            const coveredPercent = Math.min(
+              100,
+              Math.round((overlap.area / bottomArea) * 100),
+            );
+            const topNodeId =
+              String(topEl.getAttribute("data-editor-node-id") || "").trim() || null;
+            const bottomNodeId =
+              String(bottomEl.getAttribute("data-editor-node-id") || "").trim() || null;
+            if (!topNodeId || !bottomNodeId) continue;
+            conflicts.push({
+              topNodeId,
+              bottomNodeId,
+              overlapArea: Math.round(overlap.area),
+              coveredPercent,
+              overlapRect: {
+                left: overlap.left,
+                top: overlap.top,
+                right: overlap.right,
+                bottom: overlap.bottom,
+              },
+            });
+          }
+        }
+        return conflicts.sort((a, b) => b.coveredPercent - a.coveredPercent);
+      }
+
+      function updateSelectedOverlapWarning(conflicts) {
+        const selectedNodeId = state.selectedNodeId;
+        if (!selectedNodeId) {
+          state.selectedOverlapWarning = null;
+          return;
+        }
+        const relevant = conflicts
+          .filter((conflict) => conflict.bottomNodeId === selectedNodeId)
+          .sort((a, b) => b.coveredPercent - a.coveredPercent);
+        state.selectedOverlapWarning = relevant[0] || null;
+      }
+
+      function inferSelectionOverlapConflict(doc) {
+        if (!doc || !state.selectedNodeId) return null;
+        const selectedEl = doc.querySelector(
+          `[data-editor-node-id="${cssEscape(state.selectedNodeId)}"]`,
+        );
+        if (!selectedEl || selectedEl.nodeType !== 1) return null;
+        const rect = selectedEl.getBoundingClientRect();
+        if (!(rect.width > 0 && rect.height > 0)) return null;
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const stack = (doc.elementsFromPoint(cx, cy) || [])
+          .filter((el) => el?.nodeType === 1 && el.hasAttribute("data-editor-node-id"));
+        const unique = [];
+        const seen = new Set();
+        stack.forEach((el) => {
+          const nodeId = String(el.getAttribute("data-editor-node-id") || "").trim();
+          if (!nodeId || seen.has(nodeId)) return;
+          seen.add(nodeId);
+          unique.push({ el, nodeId });
+        });
+        const selectedIndex = unique.findIndex((item) => item.nodeId === state.selectedNodeId);
+        if (!(selectedIndex > 0)) return null;
+        const top = unique[0];
+        const overlapRect = {
+          left: Math.round(rect.left),
+          top: Math.round(rect.top),
+          right: Math.round(rect.right),
+          bottom: Math.round(rect.bottom),
+        };
+        return {
+          topNodeId: top.nodeId,
+          bottomNodeId: state.selectedNodeId,
+          overlapArea: Math.round(rect.width * rect.height),
+          coveredPercent: 80,
+          overlapRect,
+        };
+      }
+
+      function clearOverlapGhostHighlight() {
+        if (state.overlapHoverNodeId) {
+          sendToBridge("highlight-node", { nodeId: null });
+          state.overlapHoverNodeId = null;
+        }
+      }
+
+      function handleOverlapHoverMove(event) {
+        if (state.complexityMode !== "basic") {
+          clearOverlapGhostHighlight();
+          return;
+        }
+        const conflicts = state.overlapConflictsBySlide[getActiveOverlapKey()] || [];
+        const hiddenConflicts = conflicts.filter((conflict) => conflict.coveredPercent >= 30);
+        if (!hiddenConflicts.length) {
+          clearOverlapGhostHighlight();
+          return;
+        }
+        const x = event.clientX;
+        const y = event.clientY;
+        const picked = hiddenConflicts.find((conflict) => {
+          const rect = conflict.overlapRect;
+          return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+        });
+        const nextNodeId = picked?.bottomNodeId || null;
+        if (nextNodeId === state.overlapHoverNodeId) return;
+        state.overlapHoverNodeId = nextNodeId;
+        sendToBridge("highlight-node", { nodeId: nextNodeId });
+      }
+
+      function handleOverlapHoverLeave() {
+        clearOverlapGhostHighlight();
+      }
+
+      function syncOverlapHoverBinding() {
+        const doc = getPreviewDocument();
+        if (state.overlapHoverBoundDoc && state.overlapHoverBoundDoc !== doc) {
+          state.overlapHoverBoundDoc.removeEventListener("mousemove", handleOverlapHoverMove);
+          state.overlapHoverBoundDoc.removeEventListener("mouseleave", handleOverlapHoverLeave);
+          state.overlapHoverBoundDoc = null;
+        }
+        if (!doc || state.overlapHoverBoundDoc === doc) return;
+        doc.addEventListener("mousemove", handleOverlapHoverMove, { passive: true });
+        doc.addEventListener("mouseleave", handleOverlapHoverLeave, { passive: true });
+        state.overlapHoverBoundDoc = doc;
+      }
+
+      function runOverlapDetectionNow(reason = "manual") {
+        if (!state.previewReady) return;
+        const doc = getPreviewDocument();
+        const slideEl = getPreviewActiveSlideElement(doc);
+        if (!slideEl) return;
+        const conflicts = detectOverlapConflicts(slideEl);
+        if (!conflicts.length) {
+          const inferred = inferSelectionOverlapConflict(doc);
+          if (inferred) conflicts.push(inferred);
+        }
+        const overlapKey = getActiveOverlapKey();
+        state.overlapConflictsBySlide[overlapKey] = conflicts;
+        if (state.activeSlideId) {
+          state.overlapConflictsBySlide[state.activeSlideId] = conflicts;
+        }
+        state.slideOverlapWarnings[overlapKey] = conflicts.some(
+          (conflict) => conflict.coveredPercent > 30,
+        );
+        if (state.activeSlideId) {
+          state.slideOverlapWarnings[state.activeSlideId] = state.slideOverlapWarnings[overlapKey];
+        }
+        updateSelectedOverlapWarning(conflicts);
+        if (!conflicts.length) clearOverlapGhostHighlight();
+        if (reason) addDiagnostic(`overlap-detect:${reason}:${conflicts.length}`);
+        renderSlidesList();
+        updateInspectorFromSelection();
+      }
+
+      function scheduleOverlapDetection(reason = "debounced") {
+        if (state.overlapDetectionTimer) {
+          clearTimeout(state.overlapDetectionTimer);
+          state.overlapDetectionTimer = 0;
+        }
+        state.overlapDetectionTimer = window.setTimeout(() => {
+          state.overlapDetectionTimer = 0;
+          runOverlapDetectionNow(reason);
+        }, 200);
+      }
+
+      function getTopZIndexForActiveSlide() {
+        const slideEl = getPreviewActiveSlideElement();
+        if (!slideEl || typeof slideEl.querySelectorAll !== "function") return 0;
+        const values = Array.from(slideEl.querySelectorAll("[data-editor-node-id]"))
+          .map((el) => parseNumericZIndex(el))
+          .filter((v) => Number.isFinite(v));
+        return values.length ? Math.max(...values) : 0;
+      }
+
       function updateDiagnostics() {
         pruneSlideSyncLocks();
         const lockCount = Object.keys(state.slideSyncLocks).length;
@@ -12308,6 +12648,13 @@ ${exportDoc.documentElement.outerHTML}`;
         lines.push(`baseUrlAssets=${state.baseUrlDependentAssets?.length || 0}`);
         lines.push(`syncSeq=${state.lastAppliedSeq}`);
         lines.push(`syncLocks=${lockCount}`);
+        const overlapKey = getActiveOverlapKey();
+        const activeConflicts =
+          (state.overlapConflictsBySlide[overlapKey] || []).length;
+        lines.push(`overlapConflicts=${activeConflicts}`);
+        lines.push(
+          `overlapSevere=${Boolean(state.slideOverlapWarnings[overlapKey])}`,
+        );
         if (state.selectedNodeId) {
           lines.push(
             `directManipSafe=${state.manipulationContext?.directManipulationSafe !== false}`,
@@ -13730,6 +14077,9 @@ ${exportDoc.documentElement.outerHTML}`;
         }
         setInteractionMode("select");
         renderSelectionOverlay();
+        if (!cancel && session.started) {
+          scheduleOverlapDetection("direct-manip-commit");
+        }
       }
 
       function cancelActiveManipulation() {
@@ -16214,6 +16564,28 @@ ${exportDoc.documentElement.outerHTML}`;
         els.selectedSlideBadge.textContent =
           selectedSlideIndex >= 0 ? `Слайд ${selectedSlideIndex + 1}` : "Слайд —";
         els.selectedKindBadge.textContent = `Тип: ${hasSelection ? getEntityKindLabel(entityKind) : "—"}`;
+        const overlapWarning = hasSelection ? state.selectedOverlapWarning : null;
+        const showOverlapBanner = Boolean(
+          hasSelection &&
+            state.complexityMode === "basic" &&
+            overlapWarning &&
+            overlapWarning.coveredPercent > 30,
+        );
+        if (els.overlapRecoveryBanner) {
+          els.overlapRecoveryBanner.hidden = !showOverlapBanner;
+          els.overlapRecoveryBanner.setAttribute(
+            "aria-hidden",
+            showOverlapBanner ? "false" : "true",
+          );
+        }
+        if (els.overlapRecoveryText) {
+          els.overlapRecoveryText.textContent = showOverlapBanner
+            ? `Этот элемент перекрыт примерно на ${overlapWarning.coveredPercent}%. Можно переместить наверх.`
+            : "Этот элемент частично перекрыт другим. Можно переместить его наверх.";
+        }
+        if (els.overlapMoveTopBtn) {
+          els.overlapMoveTopBtn.disabled = !showOverlapBanner;
+        }
         if (els.selectedElementTitle) {
           els.selectedElementTitle.textContent = getSelectedElementTitle(entityKind);
         }
