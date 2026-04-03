@@ -812,9 +812,11 @@
         width: min(100%, var(--workspace-max));
         margin: 0 auto;
         display: grid;
-        grid-template-columns: minmax(240px, 260px) minmax(0, 1fr) minmax(
-            256px,
-            280px
+        /* [v0.18.3] Optimized for preview panel as primary workspace */
+        /* Reduced side panel max widths to allocate more space for editing/preview area */
+        grid-template-columns: minmax(200px, 220px) minmax(0, 1fr) minmax(
+            220px,
+            240px
           );
         align-items: stretch;
         gap: 16px;
