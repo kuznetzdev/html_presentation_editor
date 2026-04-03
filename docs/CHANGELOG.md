@@ -3,10 +3,12 @@
 ## 0.18.3 - zoom quality fix and layout optimization - 2026-04-03
 - **Zoom quality fix**: Switched from `transform: scale()` to CSS `zoom:` property
   - CSS `zoom:` triggers browser re-layout at target resolution, preserving text and vector crispness
+  - CSS `zoom` is on W3C standards track (Working Draft) with 97%+ global browser support
   - Eliminates blur/degradation artifacts at zoom levels < 100% ("мыльница" issue)
   - Simplified coordinate math: removed manual zoom multiplications from `toStageRect`, `toStageAxisValue`, `positionFloatingToolbar`
   - `getBoundingClientRect()` returns already-scaled values with zoom property; no manual scaling needed
   - Updated Playwright test to validate `zoom` property instead of `transform` matrix
+  - **Browser requirements**: Firefox 126+ (May 2024), Chrome 4+, Safari 4+, Edge 12+; graceful degradation on older versions
 - **Layout optimization**: Expanded preview panel as primary workspace
   - Reduced slides panel from `minmax(240px, 260px)` to `minmax(200px, 220px)` (40px narrower at max)
   - Reduced inspector panel from `minmax(256px, 280px)` to `minmax(220px, 240px)` (40px narrower at max)

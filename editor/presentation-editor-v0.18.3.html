@@ -900,7 +900,7 @@
         -webkit-line-clamp: 1;
       }
 
-      /* [v0.18.2] Preview zoom control */
+      /* [v0.18.3] Preview zoom control */
       .preview-zoom-control {
         display: inline-flex;
         align-items: center;
@@ -4909,7 +4909,7 @@
       const UI_COMPLEXITY_STORAGE_KEY = "presentation-editor:ui-complexity:v1";
       // [LAYER-MODEL v2] selection mode persistence
       const SELECTION_MODE_STORAGE_KEY = "presentation-editor:selection-mode:v1";
-      // [v0.18.2] preview zoom persistence
+      // [v0.18.3] preview zoom persistence
       const PREVIEW_ZOOM_STORAGE_KEY = "presentation-editor:preview-zoom:v1";
       const MAX_VISIBLE_TOASTS = 4;
       const THEME_PREFERENCES = ["system", "light", "dark"];
@@ -5283,7 +5283,7 @@
         themePreference: "system",
         complexityMode: "basic",
         selectionMode: "smart", // [LAYER-MODEL v2] 'smart' | 'container'
-        previewZoom: 1.0, // [v0.18.2] preview scale factor
+        previewZoom: 1.0, // [v0.18.3] preview scale factor
         inspectorSections: {},
         lastSavedAt: 0,
         commandSeq: 0,
@@ -5473,7 +5473,7 @@
         // [LAYER-MODEL v2]
         smartModeBtn: document.getElementById("smartModeBtn"),
         containerModeBtn: document.getElementById("containerModeBtn"),
-        // [v0.18.2] preview zoom
+        // [v0.18.3] preview zoom
         zoomOutBtn: document.getElementById("zoomOutBtn"),
         zoomInBtn: document.getElementById("zoomInBtn"),
         zoomResetBtn: document.getElementById("zoomResetBtn"),
@@ -18048,7 +18048,7 @@ ${exportDoc.documentElement.outerHTML}`;
         initInspectorSections();
         initComplexityMode();
         initSelectionMode(); // [LAYER-MODEL v2]
-        initPreviewZoom(); // [v0.18.2]
+        initPreviewZoom(); // [v0.18.3]
         initFloatingToolbarState();
         ensureNoviceShellOnboardingUi();
         ensureNoviceSummaryStructure();
@@ -18256,7 +18256,7 @@ ${exportDoc.documentElement.outerHTML}`;
         setToggleButtonState(els.containerModeBtn, isContainer);
       }
 
-      // [v0.18.2] Preview zoom control
+      // [v0.18.3] Preview zoom control
       function initPreviewZoom() {
         let zoom = 1.0;
         try {
@@ -18284,8 +18284,10 @@ ${exportDoc.documentElement.outerHTML}`;
         const zoom = state.previewZoom ?? 1.0;
         if (els.previewFrame) {
           // Use CSS zoom property for quality-preserving scale (v0.18.3)
-          // Unlike transform:scale(), zoom triggers re-layout at target resolution
-          // This preserves text and vector crispness at all zoom levels
+          // CSS zoom triggers browser re-layout at target resolution (W3C Working Draft)
+          // Unlike transform:scale() which is post-render, zoom preserves text/vector
+          // crispness at all zoom levels while simplifying coordinate math
+          // Requires: Firefox 126+ (May 2024), Chrome 4+, Safari 4+, Edge 12+
           if (zoom === 1.0) {
             els.previewFrame.style.zoom = "";
           } else {
@@ -18412,7 +18414,7 @@ ${exportDoc.documentElement.outerHTML}`;
         els.containerModeBtn?.addEventListener("click", () =>
           setSelectionMode("container"),
         );
-        // [v0.18.2] preview zoom
+        // [v0.18.3] preview zoom
         els.zoomOutBtn?.addEventListener("click", () => stepZoom(-1));
         els.zoomInBtn?.addEventListener("click", () => stepZoom(1));
         els.zoomResetBtn?.addEventListener("click", () => setPreviewZoom(1.0, true));

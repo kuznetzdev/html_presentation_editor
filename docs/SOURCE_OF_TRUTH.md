@@ -196,3 +196,20 @@ If there is a conflict between:
 - making the editor clearer, safer, and more reliable
 
 the second one wins.
+
+## Technical requirements
+
+### Browser compatibility
+
+The editor targets modern evergreen browsers with automatic updates:
+
+- **Chrome**: 4+ (zoom feature), generally latest stable
+- **Firefox**: 126+ (May 2024) required for CSS zoom quality preservation; earlier versions degrade gracefully
+- **Safari**: 4+ (zoom feature), generally latest stable
+- **Edge**: 12+ (zoom feature), generally latest stable
+
+### CSS zoom property
+
+The preview zoom feature (v0.18.3+) uses the CSS `zoom:` property which is on the W3C standards track (Working Draft) with 97%+ global browser support. This property triggers browser re-layout at the target resolution, preserving text and vector rendering quality at all zoom levels.
+
+**Graceful degradation**: On unsupported browsers (Firefox < 126), zoom controls remain functional but quality improvement may not apply. No errors or crashes occur.
