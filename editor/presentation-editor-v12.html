@@ -2012,6 +2012,125 @@
         display: flex;
         justify-content: flex-end;
       }
+
+      /* Lock banner */
+      .lock-banner {
+        display: grid;
+        gap: 8px;
+        margin-top: 10px;
+        padding: 10px 12px;
+        border: 1px solid var(--shell-border);
+        border-radius: 10px;
+        background: var(--shell-bg-secondary);
+        color: var(--shell-text);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .lock-banner[hidden] {
+        display: none !important;
+      }
+
+      .lock-banner-actions {
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      /* Layers panel */
+      .layers-list-container {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        max-height: 320px;
+        overflow-y: auto;
+        padding: 6px;
+        border: 1px solid var(--shell-border);
+        border-radius: 8px;
+        background: var(--shell-bg-secondary);
+      }
+
+      .layer-row {
+        display: grid;
+        grid-template-columns: 24px 1fr auto auto auto auto;
+        gap: 6px;
+        align-items: center;
+        padding: 6px 8px;
+        border: 1px solid transparent;
+        border-radius: 6px;
+        background: var(--shell-bg);
+        cursor: pointer;
+        transition: background var(--motion-quick) ease, border-color var(--motion-quick) ease;
+        user-select: none;
+      }
+
+      .layer-row:hover {
+        background: var(--shell-hover-bg);
+        border-color: var(--shell-border);
+      }
+
+      .layer-row.is-active {
+        background: var(--shell-accent-bg);
+        border-color: var(--shell-accent);
+        font-weight: 500;
+      }
+
+      .layer-row.is-dragging {
+        opacity: 0.5;
+      }
+
+      .layer-row.is-drop-target {
+        border-color: var(--shell-accent);
+        border-style: dashed;
+      }
+
+      .layer-kind-icon {
+        font-size: 16px;
+        text-align: center;
+      }
+
+      .layer-label {
+        font-size: 13px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .layer-z-input {
+        width: 48px;
+        padding: 2px 4px;
+        font-size: 12px;
+        text-align: center;
+        border: 1px solid var(--shell-border);
+        border-radius: 4px;
+        background: var(--shell-bg);
+        color: var(--shell-text);
+      }
+
+      .layer-action-btn {
+        padding: 2px 6px;
+        border: none;
+        background: transparent;
+        font-size: 16px;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: background var(--motion-quick) ease;
+      }
+
+      .layer-action-btn:hover {
+        background: var(--shell-hover-bg);
+      }
+
+      .layer-action-btn:active {
+        transform: scale(0.95);
+      }
+
+      .layer-action-btn.is-locked {
+        color: var(--shell-danger);
+      }
+
+      .layer-action-btn.is-hidden {
+        opacity: 0.5;
+      }
       }
 
       @layer overlay {
@@ -3581,9 +3700,9 @@
 
           <div class="preview-stage" id="previewStage">
             <div class="empty-state" id="emptyState">
-              <strong>Загрузите HTML‑презентацию</strong>
-              Через кнопку «Открыть HTML» можно выбрать локальный
-              <code>presentation.html</code> или вставить HTML‑код вручную.
+              <strong>Откройте презентацию в HTML</strong>
+              Выберите файл <code>presentation.html</code> или вставьте HTML из
+              буфера обмена.
               <div class="empty-state-actions">
                 <button type="button" id="emptyOpenBtn" class="primary-btn">
                   Открыть HTML
@@ -3901,6 +4020,24 @@
               <div class="overlap-recovery-actions">
                 <button type="button" class="ghost-btn" id="overlapMoveTopBtn">
                   Переместить наверх
+                </button>
+              </div>
+            </div>
+            <!-- Lock banner (v0.17.0 - advanced mode) -->
+            <div
+              class="lock-banner"
+              id="lockBanner"
+              role="status"
+              aria-live="polite"
+              hidden
+              data-ui-level="advanced"
+            >
+              <div id="lockBannerText">
+                🔒 Элемент заблокирован
+              </div>
+              <div class="lock-banner-actions">
+                <button type="button" class="ghost-btn" id="unlockElementBtn">
+                  Разблокировать
                 </button>
               </div>
             </div>
@@ -4320,6 +4457,18 @@
               </button>
               <button type="button" id="rotateImageBtn">Повернуть 90°</button>
               <button type="button" id="flipImageBtn">Отразить</button>
+            </div>
+          </div>
+
+          <div
+            class="inspector-section"
+            id="layersInspectorSection"
+            data-ui-level="advanced"
+            hidden
+          >
+            <h3>Слои и порядок</h3>
+            <div class="layers-list-container" id="layersListContainer">
+              <!-- Layers list rendered dynamically -->
             </div>
           </div>
 
@@ -5062,6 +5211,14 @@
         selectedOverlapWarning: null,
         overlapHoverNodeId: null,
         overlapHoverBoundDoc: null,
+        // [v0.17.0] Multi-select & grouping
+        multiSelectNodeIds: [],
+        // [v0.17.0] Layers panel drag state
+        layersPanelDragState: {
+          draggedNodeId: null,
+          draggedIndex: -1,
+          dropTargetIndex: -1,
+        },
         selectionTooltip: {
           message: "",
           visibleUntil: 0,
@@ -5244,6 +5401,13 @@
         overlapRecoveryBanner: document.getElementById("overlapRecoveryBanner"),
         overlapRecoveryText: document.getElementById("overlapRecoveryText"),
         overlapMoveTopBtn: document.getElementById("overlapMoveTopBtn"),
+        // [v0.17.0] Lock banner
+        lockBanner: document.getElementById("lockBanner"),
+        lockBannerText: document.getElementById("lockBannerText"),
+        unlockElementBtn: document.getElementById("unlockElementBtn"),
+        // [v0.17.0] Layers panel
+        layersInspectorSection: document.getElementById("layersInspectorSection"),
+        layersListContainer: document.getElementById("layersListContainer"),
         currentSlideMetaBadge: document.getElementById("currentSlideMetaBadge"),
         currentSlideSummaryCard: document.getElementById("currentSlideSummaryCard"),
         currentSlideTitleDisplay: document.getElementById("currentSlideTitleDisplay"),
@@ -5385,16 +5549,16 @@
         }
         if (els.emptyState) {
           const lead = els.emptyState.querySelector("strong");
-          if (lead) lead.textContent = "Откройте HTML, чтобы начать";
+          if (lead) lead.textContent = "Откройте презентацию в HTML";
           const code = els.emptyState.querySelector("code");
           const textNodes = Array.from(els.emptyState.childNodes).filter(
             (node) => node.nodeType === Node.TEXT_NODE,
           );
           if (code && textNodes.length) {
             const summaryText =
-              " Загрузите готовый ";
+              " Выберите файл ";
             const tailText =
-              " из файла или вставьте HTML-код вручную, если он уже у вас в буфере.";
+              " или вставьте HTML из буфера обмена.";
             textNodes[0].textContent = summaryText;
             if (textNodes[1]) {
               textNodes[1].textContent = tailText;
@@ -5415,10 +5579,10 @@
             emptyPasteBtn.type = "button";
             emptyPasteBtn.id = "emptyPasteBtn";
             emptyPasteBtn.className = "ghost-btn";
-            emptyPasteBtn.textContent = "Вставить HTML";
+            emptyPasteBtn.textContent = "Вставить из буфера";
             actions.appendChild(emptyPasteBtn);
           } else {
-            emptyPasteBtn.textContent = "Вставить HTML";
+            emptyPasteBtn.textContent = "Вставить из буфера";
           }
           if (els.emptyOpenBtn) {
             els.emptyOpenBtn.textContent = "Открыть HTML";
@@ -5669,6 +5833,11 @@
           showToast("Элемент перемещён наверх", "success");
           scheduleOverlapDetection("move-to-top");
         });
+        // [v0.17.0] Unlock element button
+        els.unlockElementBtn?.addEventListener("click", () => {
+          if (!state.selectedNodeId) return;
+          toggleLayerLock(state.selectedNodeId);
+        });
         els.resetStylesBtn.addEventListener("click", resetSelectedStyles);
         els.copyStyleBtn.addEventListener("click", copySelectedStyle);
         els.pasteStyleBtn.addEventListener("click", pasteStyleToSelected);
@@ -5902,6 +6071,16 @@
                 break;
               case "document-sync":
                 applyDocumentSyncFromBridge(data.payload || {}, bridgeSeq);
+                break;
+              // [v0.17.0] Multi-select support
+              case "multi-select-add":
+                if (state.complexityMode === "advanced" && data.payload?.nodeId) {
+                  const nodeId = data.payload.nodeId;
+                  if (!state.multiSelectNodeIds.includes(nodeId)) {
+                    state.multiSelectNodeIds.push(nodeId);
+                    showToast(`Добавлено в выделение: ${nodeId}`, "info", { duration: 1500 });
+                  }
+                }
                 break;
             }
           } catch (error) {
@@ -9005,7 +9184,10 @@
             if (current === slide) break;
             current = getNextSelectionAncestor(current, slide);
           }
-          return Array.from(candidatesById.values());
+          // [v0.17.0] Filter out locked elements
+          return Array.from(candidatesById.values()).filter(candidate => {
+            return !(candidate.el instanceof Element && candidate.el.getAttribute('data-editor-locked') === 'true');
+          });
         }
 
         function resetClickThroughState() {
@@ -10116,6 +10298,25 @@
           if (!STATE.editMode) return;
           const _isMod = event.ctrlKey || event.metaKey;
 
+          // [v0.17.0] Shift+Click for multi-select
+          if (event.shiftKey && !event.altKey && !_isMod) {
+            const selection = resolveSelectionFromTarget(event.target, {
+              clientX: event.clientX,
+              clientY: event.clientY,
+              cycleAncestors: false,
+              deepSelect: false,
+              containerMode: STATE.containerMode,
+            });
+            if (selection?.selectedEl) {
+              const nodeId = String(selection.selectedEl.getAttribute(EDITOR_MARKER) || '');
+              if (nodeId) {
+                event.preventDefault();
+                post('multi-select-add', { nodeId });
+                return;
+              }
+            }
+          }
+
           // [CLICK-THROUGH] cycle through overlapping candidates on repeated plain clicks
           if (!event.altKey && !_isMod && trySelectFromClickThroughState(event.clientX, event.clientY)) {
             if (event.target.closest('a[href]')) event.preventDefault();
@@ -10558,6 +10759,15 @@
                 current.replaceWith(replacement);
                 STATE.slides = collectSlides();
                 emitRuntimeMetadata();
+                break;
+              }
+              // [v0.17.0] Toggle element visibility (session-only, not synced to parent)
+              case 'toggle-visibility': {
+                const el = findNodeById(payload.nodeId);
+                if (!el) return;
+                const currentVisibility = el.style.visibility || 'visible';
+                el.style.visibility = currentVisibility === 'hidden' ? 'visible' : 'hidden';
+                // Do NOT call notifyElementUpdated - visibility is session-only
                 break;
               }
             }
@@ -14751,6 +14961,257 @@ ${exportDoc.documentElement.outerHTML}`;
         sendToBridge("flash-node", { nodeId: state.selectedNodeId });
       }
 
+      // ====================================================================
+      // [v0.17.0] Lock, Visibility, Layers Panel, Grouping (Advanced Mode)
+      // ====================================================================
+      function toggleLayerLock(nodeId) {
+        if (!nodeId || !state.modelDoc || state.complexityMode !== "advanced") return;
+        const node = state.modelDoc.querySelector(`[data-editor-node-id="${cssEscape(nodeId)}"]`);
+        if (!node) return;
+        const isLocked = node.getAttribute("data-editor-locked") === "true";
+        if (isLocked) {
+          node.removeAttribute("data-editor-locked");
+          showToast("Элемент разблокирован.", "success", { title: "Слои" });
+        } else {
+          node.setAttribute("data-editor-locked", "true");
+          showToast("Элемент заблокирован.", "success", { title: "Слои" });
+        }
+        pushHistory(`toggle-lock:${nodeId}`);
+        sendToBridge("update-attributes", {
+          nodeId,
+          attrs: isLocked ? { "data-editor-locked": null } : { "data-editor-locked": "true" },
+        });
+        renderLayersPanel();
+        updateInspectorFromSelection();
+      }
+
+      function toggleLayerVisibility(nodeId) {
+        if (!nodeId || state.complexityMode !== "advanced") return;
+        sendToBridge("toggle-visibility", { nodeId });
+        showToast("Видимость переключена (только в сессии).", "info", { title: "Слои", duration: 1500 });
+        renderLayersPanel();
+      }
+
+      function reorderLayers(fromIndex, toIndex) {
+        if (!state.activeSlideId || !state.modelDoc || state.complexityMode !== "advanced") return;
+        const slideEl = state.modelDoc.querySelector(`[data-editor-slide-id="${cssEscape(state.activeSlideId)}"]`);
+        if (!slideEl) return;
+        const allLayers = Array.from(slideEl.querySelectorAll("[data-editor-node-id]")).filter(el => {
+          return el.closest("[data-editor-slide-id]") === slideEl && 
+                 el.getAttribute("data-editor-entity-kind") !== "slide-root" &&
+                 el.getAttribute("data-editor-policy-kind") !== "protected";
+        });
+        if (fromIndex < 0 || fromIndex >= allLayers.length || toIndex < 0 || toIndex >= allLayers.length) return;
+        const baseZ = 1;
+        allLayers.forEach((layer, i) => {
+          let targetIndex = i;
+          if (i === fromIndex) targetIndex = toIndex;
+          else if (i > fromIndex && i <= toIndex) targetIndex = i - 1;
+          else if (i < fromIndex && i >= toIndex) targetIndex = i + 1;
+          const newZ = baseZ + targetIndex;
+          const nodeId = layer.getAttribute("data-editor-node-id");
+          layer.style.zIndex = String(newZ);
+          if (nodeId) {
+            sendToBridge("apply-style", { nodeId, property: "z-index", value: String(newZ) });
+          }
+        });
+        pushHistory(`reorder-layers:${fromIndex}->${toIndex}`);
+        scheduleOverlapDetection();
+        renderLayersPanel();
+        showToast("Порядок слоёв изменён.", "success", { title: "Слои" });
+      }
+
+      function getEntityKindIcon(entityKind) {
+        const icons = {
+          text: "🅣",
+          image: "🖼",
+          video: "🎞",
+          container: "▣",
+          table: "⊞",
+          "table-cell": "⋯",
+          "code-block": "⌨",
+          svg: "⬡",
+          fragment: "⚡",
+          element: "▢",
+          "slide-root": "⊞",
+          protected: "🔒",
+        };
+        return icons[entityKind] || "▢";
+      }
+
+      function getLayerLabel(el) {
+        const nodeId = el.getAttribute("data-editor-node-id") || "?";
+        const entityKind = el.getAttribute("data-editor-entity-kind") || "element";
+        const authorId = el.getAttribute("data-node-id") || "";
+        const tagName = el.tagName.toLowerCase();
+        if (authorId) return `${tagName} #${authorId}`;
+        const textPreview = (el.textContent || "").trim().slice(0, 30);
+        if (textPreview && entityKind === "text") return `"${textPreview}"`;
+        if (el.id) return `${tagName}#${el.id}`;
+        const className = (el.className || "").toString().split(/\s+/).filter(c => c && !c.startsWith("editor-"))[0];
+        if (className) return `${tagName}.${className}`;
+        return `${tagName} [${nodeId.slice(0, 6)}]`;
+      }
+
+      function renderLayersPanel() {
+        if (!els.layersListContainer || !els.layersInspectorSection) return;
+        if (state.complexityMode !== "advanced" || !state.activeSlideId || !state.modelDoc) {
+          els.layersInspectorSection.hidden = true;
+          return;
+        }
+        const slideEl = state.modelDoc.querySelector(`[data-editor-slide-id="${cssEscape(state.activeSlideId)}"]`);
+        if (!slideEl) {
+          els.layersInspectorSection.hidden = true;
+          return;
+        }
+        const allLayers = Array.from(slideEl.querySelectorAll("[data-editor-node-id]")).filter(el => {
+          return el.closest("[data-editor-slide-id]") === slideEl && 
+                 el.getAttribute("data-editor-entity-kind") !== "slide-root" &&
+                 el.getAttribute("data-editor-policy-kind") !== "protected";
+        });
+        if (!allLayers.length) {
+          els.layersInspectorSection.hidden = true;
+          return;
+        }
+        els.layersInspectorSection.hidden = false;
+        const sortedLayers = allLayers.sort((a, b) => {
+          const zA = parseInt(a.style.zIndex || "0", 10);
+          const zB = parseInt(b.style.zIndex || "0", 10);
+          return zB - zA;
+        });
+        const html = sortedLayers.map((layer, index) => {
+          const nodeId = layer.getAttribute("data-editor-node-id") || "";
+          const entityKind = layer.getAttribute("data-editor-entity-kind") || "element";
+          const isLocked = layer.getAttribute("data-editor-locked") === "true";
+          const zIndex = layer.style.zIndex || "auto";
+          const label = escapeHtml(getLayerLabel(layer));
+          const icon = getEntityKindIcon(entityKind);
+          const isActive = nodeId === state.selectedNodeId;
+          return `
+            <div class="layer-row ${isActive ? "is-active" : ""}" 
+                 draggable="true" 
+                 data-layer-node-id="${escapeHtml(nodeId)}" 
+                 data-layer-index="${index}">
+              <span class="layer-kind-icon">${icon}</span>
+              <span class="layer-label">${label}</span>
+              <input type="text" class="layer-z-input" value="${escapeHtml(zIndex)}" data-layer-node-id="${escapeHtml(nodeId)}" />
+              <button type="button" class="layer-action-btn layer-visibility-btn" data-layer-node-id="${escapeHtml(nodeId)}" title="Переключить видимость">👁</button>
+              <button type="button" class="layer-action-btn layer-lock-btn ${isLocked ? "is-locked" : ""}" data-layer-node-id="${escapeHtml(nodeId)}" title="${isLocked ? "Разблокировать" : "Заблокировать"}">
+                ${isLocked ? "🔒" : "🔓"}
+              </button>
+            </div>
+          `;
+        }).join("");
+        els.layersListContainer.innerHTML = html;
+        bindLayersPanelActions();
+      }
+
+      function bindLayersPanelActions() {
+        if (!els.layersListContainer) return;
+        els.layersListContainer.querySelectorAll(".layer-row").forEach(row => {
+          row.addEventListener("click", (e) => {
+            if (e.target.closest(".layer-action-btn") || e.target.closest(".layer-z-input")) return;
+            const nodeId = row.getAttribute("data-layer-node-id");
+            if (nodeId) {
+              sendToBridge("select-element", { nodeId });
+            }
+          });
+          row.addEventListener("dragstart", (e) => {
+            const nodeId = row.getAttribute("data-layer-node-id");
+            const index = parseInt(row.getAttribute("data-layer-index") || "-1", 10);
+            state.layersPanelDragState.draggedNodeId = nodeId;
+            state.layersPanelDragState.draggedIndex = index;
+            row.classList.add("is-dragging");
+            e.dataTransfer.effectAllowed = "move";
+          });
+          row.addEventListener("dragend", () => {
+            row.classList.remove("is-dragging");
+            els.layersListContainer.querySelectorAll(".layer-row").forEach(r => r.classList.remove("is-drop-target"));
+            state.layersPanelDragState = { draggedNodeId: null, draggedIndex: -1, dropTargetIndex: -1 };
+          });
+          row.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            const index = parseInt(row.getAttribute("data-layer-index") || "-1", 10);
+            if (index >= 0 && index !== state.layersPanelDragState.draggedIndex) {
+              els.layersListContainer.querySelectorAll(".layer-row").forEach(r => r.classList.remove("is-drop-target"));
+              row.classList.add("is-drop-target");
+              state.layersPanelDragState.dropTargetIndex = index;
+            }
+          });
+          row.addEventListener("drop", (e) => {
+            e.preventDefault();
+            const fromIndex = state.layersPanelDragState.draggedIndex;
+            const toIndex = state.layersPanelDragState.dropTargetIndex;
+            if (fromIndex >= 0 && toIndex >= 0 && fromIndex !== toIndex) {
+              reorderLayers(fromIndex, toIndex);
+            }
+          });
+        });
+        els.layersListContainer.querySelectorAll(".layer-lock-btn").forEach(btn => {
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const nodeId = btn.getAttribute("data-layer-node-id");
+            if (nodeId) toggleLayerLock(nodeId);
+          });
+        });
+        els.layersListContainer.querySelectorAll(".layer-visibility-btn").forEach(btn => {
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const nodeId = btn.getAttribute("data-layer-node-id");
+            if (nodeId) toggleLayerVisibility(nodeId);
+          });
+        });
+        els.layersListContainer.querySelectorAll(".layer-z-input").forEach(input => {
+          input.addEventListener("change", (e) => {
+            e.stopPropagation();
+            const nodeId = input.getAttribute("data-layer-node-id");
+            const newZ = input.value.trim();
+            if (nodeId && newZ) {
+              sendToBridge("apply-style", { nodeId, property: "z-index", value: newZ });
+              pushHistory(`set-z-index:${nodeId}:${newZ}`);
+              scheduleOverlapDetection();
+            }
+          });
+          input.addEventListener("click", (e) => e.stopPropagation());
+        });
+      }
+
+      function groupSelectedElements() {
+        if (!state.multiSelectNodeIds.length || state.complexityMode !== "advanced" || !state.modelDoc || !state.activeSlideId) return;
+        const slideEl = state.modelDoc.querySelector(`[data-editor-slide-id="${cssEscape(state.activeSlideId)}"]`);
+        if (!slideEl) return;
+        const groupWrapper = state.modelDoc.createElement("div");
+        groupWrapper.className = "editor-group";
+        groupWrapper.setAttribute("data-editor-node-id", generateNodeId());
+        groupWrapper.setAttribute("data-editor-entity-kind", "container");
+        const firstNodeId = state.multiSelectNodeIds[0];
+        const firstNode = slideEl.querySelector(`[data-editor-node-id="${cssEscape(firstNodeId)}"]`);
+        if (!firstNode) return;
+        firstNode.parentElement.insertBefore(groupWrapper, firstNode);
+        state.multiSelectNodeIds.forEach(nodeId => {
+          const node = slideEl.querySelector(`[data-editor-node-id="${cssEscape(nodeId)}"]`);
+          if (node) groupWrapper.appendChild(node);
+        });
+        pushHistory(`group:${state.multiSelectNodeIds.join(",")}`);
+        state.multiSelectNodeIds = [];
+        rebuildPreview();
+        showToast("Элементы сгруппированы.", "success", { title: "Слои" });
+      }
+
+      function ungroupSelectedElement() {
+        if (!state.selectedNodeId || state.complexityMode !== "advanced" || !state.modelDoc) return;
+        const groupNode = state.modelDoc.querySelector(`[data-editor-node-id="${cssEscape(state.selectedNodeId)}"]`);
+        if (!groupNode || !groupNode.classList.contains("editor-group")) return;
+        const parent = groupNode.parentElement;
+        if (!parent) return;
+        const children = Array.from(groupNode.children);
+        children.forEach(child => parent.insertBefore(child, groupNode));
+        groupNode.remove();
+        pushHistory(`ungroup:${state.selectedNodeId}`);
+        rebuildPreview();
+        showToast("Группа расформирована.", "success", { title: "Слои" });
+      }
+
       function toggleFloatingToolbarCollapsed(force) {
         state.toolbarCollapsed =
           typeof force === "boolean" ? force : !state.toolbarCollapsed;
@@ -15409,6 +15870,28 @@ ${exportDoc.documentElement.outerHTML}`;
             hint: "Delete",
             danger: true,
           });
+        // [v0.17.0] Group/Ungroup (advanced mode)
+        if (isAdvanced && state.multiSelectNodeIds.length >= 2) {
+          items.push({
+            section: "structure",
+            action: "group-elements",
+            icon: "▣+",
+            label: "Сгруппировать",
+            hint: "",
+          });
+        }
+        if (isAdvanced && state.selectedNodeId && state.modelDoc) {
+          const node = state.modelDoc.querySelector(`[data-editor-node-id="${cssEscape(state.selectedNodeId)}"]`);
+          if (node?.classList.contains("editor-group")) {
+            items.push({
+              section: "structure",
+              action: "ungroup-element",
+              icon: "▣-",
+              label: "Разгруппировать",
+              hint: "",
+            });
+          }
+        }
         const _cStack = Array.isArray(payload?.candidateStack)
           ? payload.candidateStack
           : [];
@@ -15682,6 +16165,12 @@ ${exportDoc.documentElement.outerHTML}`;
             break;
           case "paste-style":
             pasteStyleToSelected();
+            break;
+          case "group-elements":
+            groupSelectedElements();
+            break;
+          case "ungroup-element":
+            ungroupSelectedElement();
             break;
           default:
             if (action.startsWith("select-layer-item:")) {
@@ -16586,6 +17075,24 @@ ${exportDoc.documentElement.outerHTML}`;
         if (els.overlapMoveTopBtn) {
           els.overlapMoveTopBtn.disabled = !showOverlapBanner;
         }
+        // [v0.17.0] Lock banner (advanced mode only)
+        const isLocked = hasSelection && state.modelDoc
+          ? Boolean(state.modelDoc.querySelector(`[data-editor-node-id="${cssEscape(state.selectedNodeId)}"]`)?.getAttribute("data-editor-locked") === "true")
+          : false;
+        const showLockBanner = Boolean(
+          hasSelection &&
+            state.complexityMode === "advanced" &&
+            isLocked,
+        );
+        if (els.lockBanner) {
+          els.lockBanner.hidden = !showLockBanner;
+          els.lockBanner.setAttribute(
+            "aria-hidden",
+            showLockBanner ? "false" : "true",
+          );
+        }
+        // [v0.17.0] Render layers panel (advanced mode only)
+        renderLayersPanel();
         if (els.selectedElementTitle) {
           els.selectedElementTitle.textContent = getSelectedElementTitle(entityKind);
         }
