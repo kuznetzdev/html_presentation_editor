@@ -5010,6 +5010,7 @@
         rightPanelUserOpen: false,
         liveSelectionRect: null,
         activeManipulation: null,
+        pendingOverlayClickProxy: false,
         activeGuides: { vertical: [], horizontal: [] },
         selectionTooltip: {
           message: "",
@@ -7338,6 +7339,8 @@
           cachedCandidateStack: [],
           cachedCandidateStackPos: { x: 0, y: 0, timestamp: 0 },
           containerMode: false, // [LAYER-MODEL v2] synced from shell
+          // [CLICK-THROUGH] repeated-click cycling state
+          clickThroughState: { x: 0, y: 0, timestamp: 0, index: -1, candidates: [] },
         };
 
         function post(type, payload, options) {
@@ -8945,6 +8948,73 @@
           return Array.from(candidatesById.values());
         }
 
+        function resetClickThroughState() {
+          STATE.clickThroughState = { x: 0, y: 0, timestamp: 0, index: -1, candidates: [] };
+        }
+
+        function updateClickThroughState(target, clientX, clientY) {
+          const allCandidates = getOrCollectCandidates(target, clientX, clientY);
+          const sorted = allCandidates
+            .filter((candidate) => candidate.selectionNodeId || candidate.nodeId)
+            .map((candidate) => ({ ...candidate, _score: scoreSelectionCandidate(candidate) }))
+            .sort((left, right) => right._score - left._score);
+          STATE.clickThroughState = {
+            x: clientX,
+            y: clientY,
+            timestamp: Date.now(),
+            index: 0,
+            candidates: sorted,
+          };
+          return STATE.clickThroughState;
+        }
+
+        function trySelectFromClickThroughState(clientX, clientY) {
+          const cts = STATE.clickThroughState;
+          const dx = clientX - cts.x;
+          const dy = clientY - cts.y;
+          if (!(cts.candidates.length > 1 && Math.hypot(dx, dy) < 6)) {
+            return false;
+          }
+          cts.index = (cts.index + 1) % cts.candidates.length;
+          cts.timestamp = Date.now();
+          const picked = cts.candidates[cts.index];
+          if (!(picked?.el && picked.el.isConnected)) return false;
+          const pathEntries = buildSelectionPathEntries(picked.el, {
+            selectionLeafEl: picked.el,
+          });
+          if (!pathEntries.length) return false;
+          selectElement(picked.el, {
+            focusText: false,
+            selectionLeafEl: picked.el,
+            selectionPathEntries: pathEntries,
+          });
+          return true;
+        }
+
+        function resetClickThroughSelection() {
+          const cts = STATE.clickThroughState;
+          if (cts.index > 0 && cts.candidates.length > 1) {
+            cts.index = 0;
+            cts.timestamp = 0;
+            const top = cts.candidates[0];
+            if (top?.el && top.el.isConnected) {
+              const pathEntries = buildSelectionPathEntries(top.el, {
+                selectionLeafEl: top.el,
+              });
+              if (pathEntries.length) {
+                selectElement(top.el, {
+                  focusText: false,
+                  selectionLeafEl: top.el,
+                  selectionPathEntries: pathEntries,
+                });
+                return true;
+              }
+            }
+          }
+          resetClickThroughState();
+          return false;
+        }
+
         function resolveSelectionFromTarget(target, options) {
           const clientX = Number(options?.clientX);
           const clientY = Number(options?.clientY);
@@ -9985,6 +10055,13 @@
         document.addEventListener('click', (event) => {
           if (!STATE.editMode) return;
           const _isMod = event.ctrlKey || event.metaKey;
+
+          // [CLICK-THROUGH] cycle through overlapping candidates on repeated plain clicks
+          if (!event.altKey && !_isMod && trySelectFromClickThroughState(event.clientX, event.clientY)) {
+            if (event.target.closest('a[href]')) event.preventDefault();
+            return;
+          }
+
           const selection = resolveSelectionFromTarget(event.target, {
             clientX: event.clientX,
             clientY: event.clientY,
@@ -10001,6 +10078,11 @@
             selectionLeafEl: selection.selectionLeafEl,
             selectionPathEntries: selection.pathEntries,
           });
+
+          // [CLICK-THROUGH] populate candidate stack for future cycling
+          if (!event.altKey && !_isMod) {
+            updateClickThroughState(event.target, event.clientX, event.clientY);
+          }
         }, true);
 
         document.addEventListener('dblclick', (event) => {
@@ -10132,6 +10214,11 @@
             }
           }
           if (event.key === 'Escape' && STATE.selectedEl) {
+            // [CLICK-THROUGH] reset to topmost candidate if cycling is active
+            if (resetClickThroughSelection()) {
+              event.preventDefault();
+              return;
+            }
             STATE.selectedEl.blur();
             STATE.selectedEl.removeAttribute('contenteditable');
             selectElement(STATE.selectedEl, { focusText: false });
@@ -10243,13 +10330,19 @@
                 const clientX = Number(payload.clientX);
                 const clientY = Number(payload.clientY);
                 if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) break;
+                const cycleAncestors = Boolean(payload.cycleAncestors);
+                const deepSelect = Boolean(payload.deepSelect);
+                const containerMode = Boolean(payload.containerMode);
+                if (!cycleAncestors && !deepSelect && trySelectFromClickThroughState(clientX, clientY)) {
+                  break;
+                }
                 const rawTarget = document.elementFromPoint(clientX, clientY);
                 const selection = resolveSelectionFromTarget(rawTarget, {
                   clientX,
                   clientY,
-                  cycleAncestors: Boolean(payload.cycleAncestors),
-                  deepSelect: Boolean(payload.deepSelect),
-                  containerMode: Boolean(payload.containerMode), // [LAYER-MODEL v2]
+                  cycleAncestors,
+                  deepSelect,
+                  containerMode, // [LAYER-MODEL v2]
                 });
                 if (!selection?.selectedEl) break;
                 selectElement(selection.selectedEl, {
@@ -10257,6 +10350,13 @@
                   selectionLeafEl: selection.selectionLeafEl,
                   selectionPathEntries: selection.pathEntries,
                 });
+                if (!cycleAncestors && !deepSelect) {
+                  updateClickThroughState(rawTarget, clientX, clientY);
+                }
+                break;
+              }
+              case 'reset-click-through': {
+                resetClickThroughSelection();
                 break;
               }
               case 'apply-style': {
@@ -10354,6 +10454,7 @@
               // [LAYER-MODEL v2] sync selection mode to iframe
               case 'set-selection-mode': {
                 STATE.containerMode = Boolean(payload.containerMode);
+                resetClickThroughState();
                 break;
               }
               case 'select-best-child-of': {
@@ -10904,6 +11005,17 @@
           if (!replacement.getAttribute("data-editor-node-id")) {
             replacement.setAttribute("data-editor-node-id", nodeId);
           }
+          // Strip transient iframe attributes before importing into modelDoc
+          replacement.querySelectorAll("*").forEach((_el) => {
+            _el.removeAttribute("data-editor-selected");
+            _el.removeAttribute("data-editor-hover");
+            _el.removeAttribute("data-editor-highlight");
+            _el.removeAttribute("data-editor-flash");
+          });
+          replacement.removeAttribute("data-editor-selected");
+          replacement.removeAttribute("data-editor-hover");
+          replacement.removeAttribute("data-editor-highlight");
+          replacement.removeAttribute("data-editor-flash");
           node.replaceWith(state.modelDoc.importNode(replacement, true));
         } catch (error) {
           addDiagnostic(`element-update-error: ${error.message}`);
@@ -13609,6 +13721,9 @@ ${exportDoc.documentElement.outerHTML}`;
           state.liveSelectionRect = null;
         }
         state.activeManipulation = null;
+        if (cancel || session.started) {
+          state.pendingOverlayClickProxy = false;
+        }
         clearSelectionGuides();
         if (!cancel) {
           hideSelectionFrameTooltip({ clearMessage: true });
@@ -13645,10 +13760,12 @@ ${exportDoc.documentElement.outerHTML}`;
         if (!session) return;
         if (event.pointerId !== session.pointerId) return;
         event.preventDefault();
+        state.pendingOverlayClickProxy = !session.started;
         finishActiveManipulation();
       }
 
       function startActiveManipulation(kind, event, handle = null) {
+        state.pendingOverlayClickProxy = false;
         const action = kind === "resize" ? "resize" : "move";
         if (
           !guardSelectionAction(
@@ -13743,6 +13860,7 @@ ${exportDoc.documentElement.outerHTML}`;
         if (!els.selectionFrame || !els.selectionFrameHitArea) return;
         els.selectionFrameHitArea.addEventListener("pointerdown", (event) => {
           if (event.altKey) {
+            state.pendingOverlayClickProxy = false;
             event.preventDefault();
             event.stopPropagation();
             proxySelectionAtPreviewPoint(event.clientX, event.clientY, {
@@ -13761,11 +13879,28 @@ ${exportDoc.documentElement.outerHTML}`;
           setInteractionMode("text-edit");
           renderSelectionOverlay();
         });
+        els.selectionFrameHitArea.addEventListener("click", (event) => {
+          if (event.altKey || event.ctrlKey || event.metaKey) {
+            state.pendingOverlayClickProxy = false;
+            return;
+          }
+          if (!state.pendingOverlayClickProxy) return;
+          state.pendingOverlayClickProxy = false;
+          if (!proxySelectionAtPreviewPoint(event.clientX, event.clientY)) return;
+          event.preventDefault();
+          event.stopPropagation();
+          els.selectionFrame.focus({ preventScroll: true });
+        });
         els.selectionFrameHitArea.addEventListener("contextmenu", (event) => {
           event.preventDefault();
           openContextMenuForCurrentSelection(event.clientX, event.clientY);
         });
         els.selectionFrame.addEventListener("keydown", (event) => {
+          if (event.key === "Escape" && !state.selectedFlags.isTextEditing) {
+            event.preventDefault();
+            sendToBridge("reset-click-through", {});
+            return;
+          }
           if (
             event.key === "Tab" &&
             !state.selectedFlags.isTextEditing &&
@@ -14934,12 +15069,12 @@ ${exportDoc.documentElement.outerHTML}`;
             svg: "⬡", fragment: "◈", "slide-root": "◻",
             protected: "🔒", element: "◇",
           };
-          _cStack.forEach((candidate) => {
+          _cStack.forEach((candidate, idx) => {
             items.push({
               section: "layers",
               action: "select-layer-item:" + candidate.nodeId,
               icon: _layerKindIcons[candidate.entityKind] || "◇",
-              label: candidate.label || candidate.nodeId,
+              label: (idx + 1) + ". " + (candidate.label || candidate.nodeId),
               hint: getEntityKindLabel(candidate.entityKind),
               nodeId: candidate.nodeId,
               isCurrent: candidate.nodeId === state.selectedNodeId,
