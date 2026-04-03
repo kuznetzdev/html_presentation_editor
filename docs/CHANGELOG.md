@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## 0.16.0 - click-through layer selection signed off - 2026-04-03
+- added repeated plain-click layer cycling for overlapping elements so the
+  selected overlay no longer blocks access to lower layers after the first
+  selection
+- routed shell overlay clicks and `Escape` through the bridge, keeping
+  click-through, reset-to-topmost behavior, and selection focus consistent
+  between iframe and shell-owned interaction paths
+- added focused Playwright coverage for repeated click cycling, reset on a new
+  point, `Escape` recovery, numbered layer context-menu items, layer pick from
+  context menu, and export cleanliness
+- fixed container mode state leak: switching selection modes now resets
+  click-through cache to prevent stale candidate lists from interfering with
+  fresh selections
+- fixed modelDoc artifact leak: element-update bridge messages now strip
+  transient iframe selection attributes before importing into modelDoc,
+  preventing `data-editor-selected` from entering export output
+
 ## 0.13.14 - novice shell summary cards and CTA polish signed off - 2026-04-01
 - promoted loaded preview into a clearer novice decision point with a visible
   primary `Начать редактирование` CTA instead of forcing the user to infer the

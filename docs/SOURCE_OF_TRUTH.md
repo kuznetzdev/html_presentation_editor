@@ -174,6 +174,8 @@ Owns:
 - load deck into isolated iframe preview
 - switch Preview and Edit without changing architecture
 - runtime-confirmed slide activation
+- repeated click-through layer cycling for overlapping selections, with shell
+  overlay parity and `Escape` reset to the topmost candidate
 - slide create, duplicate, delete, undo, redo, autosave, and restore
 - safe direct manipulation for the signed-off geometry envelope
 - truthful blocking for unsafe manipulation contexts
