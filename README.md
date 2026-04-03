@@ -56,14 +56,34 @@ need deeper deck surgery.
   Release-level engineering history
 - `docs/ROADMAP_NEXT.md`
   Next priorities
-- `.codex/skills/html-presentation-editor/SKILL.md`
-  Project-local operating rules for Codex
+- `docs/TESTING_STRATEGY.md`
+  Multi-gate Playwright test plan
+- `.github/skills/html-presentation-editor/SKILL.md`
+  Project-local operating rules for Copilot
 
 ## Development commands
 
 ```bash
+# Full test suite (all projects)
 npm test
+
+# Fast PR gate (chromium-desktop only)
+npm run test:gate-a
+
+# Release-core gate (desktop + intermediate)
+npm run test:gate-b
+
+# Export integrity check
 npm run test:asset-parity
+
+# Cross-browser stability
+npm run test:gate-c
+
+# Compact/responsive verification
+npm run test:gate-d
+
+# Nightly full confidence gate (all specs, all projects)
+npm run test:gate-f
 ```
 
 ## Recent milestone tags
