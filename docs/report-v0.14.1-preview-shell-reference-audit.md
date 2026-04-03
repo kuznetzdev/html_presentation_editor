@@ -21,7 +21,7 @@
 
 ### Runtime shell pass
 
-- Updated [`editor/presentation-editor-v12.html`](C:\Users\Kuznetz\Desktop\proga\html_presentation_editor\editor\presentation-editor-v12.html) to:
+- Updated [`editor/presentation-editor-v0.18.1.html`](C:\Users\Kuznetz\Desktop\proga\html_presentation_editor\editor\presentation-editor-v0.18.1.html) to:
 - tighten `preview-note` copy and line-length contract
 - promote status summary and active slide context above shell actions
 - keep `preview-shell` and `preview-stage` geometry stable across desktop and intermediate shell widths
@@ -115,7 +115,7 @@ Legend:
 
 | step-id | target | intent | action attempted | result | evidence |
 | --- | --- | --- | --- | --- | --- |
-| `ps-01` | `preview-note` / `preview-shell` | shift shell toward editorial-summary hierarchy | updated loaded-preview copy, layout weight, and button emphasis in [`editor/presentation-editor-v12.html`](C:\Users\Kuznetz\Desktop\proga\html_presentation_editor\editor\presentation-editor-v12.html) | accepted | runtime shell path only; no new shell branch |
+| `ps-01` | `preview-note` / `preview-shell` | shift shell toward editorial-summary hierarchy | updated loaded-preview copy, layout weight, and button emphasis in [`editor/presentation-editor-v0.18.1.html`](C:\Users\Kuznetz\Desktop\proga\html_presentation_editor\editor\presentation-editor-v0.18.1.html) | accepted | runtime shell path only; no new shell branch |
 | `ps-02` | reference deck loading | remove broken hardcoded `references_pres` paths | introduced registry + `loadReferenceDeck(page, caseId, options)` helper | accepted | [`tests/playwright/helpers/referenceDeckRegistry.js`](C:\Users\Kuznetz\Desktop\proga\html_presentation_editor\tests\playwright\helpers\referenceDeckRegistry.js) |
 | `ps-03` | shell visual contract | prove hierarchy and button-weight assertions | added shell hierarchy assertions and editorial-summary snapshots | accepted | [`tests/playwright/specs/shell.smoke.spec.js`](C:\Users\Kuznetz\Desktop\proga\html_presentation_editor\tests\playwright\specs\shell.smoke.spec.js) |
 | `ps-04` | full reference coverage | separate exhaustive sweep from shell smoke | added dedicated `reference-decks.deep.spec.js` suite | accepted | `66` reference runs across three target chromium projects |
@@ -124,7 +124,7 @@ Legend:
 | `ps-07` | compact touch shell | stabilize mobile inspector, slide-root, breadcrumb paths | hardened helper/test routes for touch-only flows | accepted | mobile regression paths green |
 | `ps-08` | `chromium-mobile-640` stage-l | inspect residual full-suite failure | reran full suite and captured failing trace/screenshot for table-cell undo | failed | `artifacts/playwright/test-results/specs-editor.regression-Ed-c1932--reimport-roundtrip-stage-l-chromium-mobile-640/trace.zip` |
 | `ps-09` | `chromium-mobile-640` stage-l | confirm whether failure is reproducible | ran targeted `--repeat-each=5` | failed reproducibly | `2/5` failures on pre-fix repeat run |
-| `ps-10` | bridge history contract | remove duplicate commit snapshot on table-cell commit | patched `applyElementUpdateFromBridge` to skip immediate snapshot for `table-cell` commit and rely on slide-sync snapshot | accepted | [`editor/presentation-editor-v12.html`](C:\Users\Kuznetz\Desktop\proga\html_presentation_editor\editor\presentation-editor-v12.html) |
+| `ps-10` | bridge history contract | remove duplicate commit snapshot on table-cell commit | patched `applyElementUpdateFromBridge` to skip immediate snapshot for `table-cell` commit and rely on slide-sync snapshot | accepted | [`editor/presentation-editor-v0.18.1.html`](C:\Users\Kuznetz\Desktop\proga\html_presentation_editor\editor\presentation-editor-v0.18.1.html) |
 | `ps-11` | `chromium-mobile-640` stage-l | verify race is removed | reran targeted `--repeat-each=5` | accepted | `5 passed (15.2s)` |
 | `ps-12` | full repo validation | close plan with current evidence | reran `reference-decks.deep`, `test:asset-parity`, and full `npx playwright test` | accepted | final results in command ledger below |
 

@@ -176,6 +176,9 @@ Owns:
 - runtime-confirmed slide activation
 - repeated click-through layer cycling for overlapping selections, with shell
   overlay parity and `Escape` reset to the topmost candidate
+- overlap detection, warning surfacing, hover ghosting, and move-to-top recovery
+- advanced-mode layers panel with direct selection sync, reorder, lock, visibility,
+  group, and ungroup controls
 - slide create, duplicate, delete, undo, redo, autosave, and restore
 - safe direct manipulation for the signed-off geometry envelope
 - truthful blocking for unsafe manipulation contexts

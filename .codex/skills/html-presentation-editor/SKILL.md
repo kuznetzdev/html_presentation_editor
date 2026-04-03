@@ -1,6 +1,6 @@
 ---
 name: html-presentation-editor
-description: Project-local skill for kuznetzdev/html_presentation_editor. Use before any work on the editor runtime, shell UI, theme system, transient surface routing, bridge/modelDoc synchronization, slide model, direct manipulation, export/assets, and Playwright regression coverage around `editor/presentation-editor-v12.html`.
+description: Project-local skill for kuznetzdev/html_presentation_editor. Use before any work on the editor runtime, shell UI, theme system, transient surface routing, bridge/modelDoc synchronization, slide model, direct manipulation, export/assets, and Playwright regression coverage around `editor/presentation-editor-v0.18.1.html`.
 risk: medium
 source: project
 version: "1.3"
@@ -14,7 +14,7 @@ Project-local operating rules for `kuznetzdev/html_presentation_editor`.
 
 Primary runtime file:
 
-- `editor/presentation-editor-v12.html`
+- `editor/presentation-editor-v0.18.1.html`
 
 Primary documents:
 
@@ -112,6 +112,12 @@ The bridge owns synchronization.
 - blocked actions fail honestly with feedback
 - undo, redo, and autosave remain deterministic
 - reliability beats feature count when they conflict
+
+## Release discipline
+
+- the active runtime filename follows the current semver release tag
+- when the version changes, archive the previous runtime in `docs/history/`
+- sync `package.json`, active runtime path references, and `docs/CHANGELOG.md` in the same release pass
 
 ## Current signed-off behavior
 

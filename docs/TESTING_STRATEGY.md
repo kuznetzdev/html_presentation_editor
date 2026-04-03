@@ -37,6 +37,8 @@ npx playwright test tests/playwright/specs/shell.smoke.spec.js tests/playwright/
 - `click-through.spec.js`
 - `selection-engine-v2.spec.js`
 - `layer-navigation.spec.js`
+- `overlap-recovery.spec.js`
+- `stage-o-layers-lock-group.spec.js`
 - `editor.regression.spec.js`
 - `asset-parity.spec.js`
 
@@ -51,7 +53,7 @@ npx playwright test tests/playwright/specs/shell.smoke.spec.js tests/playwright/
 
 **Command**:
 ```bash
-npx playwright test tests/playwright/specs/shell.smoke.spec.js tests/playwright/specs/click-through.spec.js tests/playwright/specs/selection-engine-v2.spec.js tests/playwright/specs/layer-navigation.spec.js tests/playwright/specs/editor.regression.spec.js tests/playwright/specs/asset-parity.spec.js --project=chromium-desktop
+npx playwright test tests/playwright/specs/shell.smoke.spec.js tests/playwright/specs/click-through.spec.js tests/playwright/specs/selection-engine-v2.spec.js tests/playwright/specs/layer-navigation.spec.js tests/playwright/specs/overlap-recovery.spec.js tests/playwright/specs/stage-o-layers-lock-group.spec.js tests/playwright/specs/editor.regression.spec.js tests/playwright/specs/asset-parity.spec.js --project=chromium-desktop
 npx playwright test tests/playwright/specs/shell.smoke.spec.js tests/playwright/specs/editor.regression.spec.js tests/playwright/specs/asset-parity.spec.js --project=chromium-shell-1100
 ```
 
@@ -174,6 +176,8 @@ npx playwright test
 ### Signed-Off Capabilities (must stay green)
 - Workflow contract (empty → loaded-preview → loaded-edit)
 - Click-through layer cycling (v0.16.0)
+- Overlap detection and recovery (v0.17.0)
+- Advanced-mode layers, lock, visibility, grouping, and ungrouping (v0.18.0)
 - Direct manipulation (safe envelope only)
 - Slide structure (create/duplicate/delete/undo/redo)
 - Desktop rail drag-and-drop
@@ -211,10 +215,10 @@ After each release cycle, update:
 
 ## Open Questions (as of 2026-04-03)
 
-1. **Version source of truth**: `package.json` shows `0.13.9`, but `CHANGELOG.md` references `0.16.0`. Need to sync before next release.
-2. **Skipped test policy for release**: Should any skipped tests block a release, or only failures?
-3. **Shell overlay context menu**: Should right-click on selected overlay show full candidate stack (like iframe-origin menu), or is current-selection-only acceptable?
-4. **Cross-browser gate frequency**: Should Gate C run on every PR, or only before release?
+1. **Skipped test policy for release**: Should any skipped tests block a release, or only failures?
+2. **Shell overlay context menu**: Should right-click on selected overlay show full candidate stack (like iframe-origin menu), or is current-selection-only acceptable?
+3. **Cross-browser gate frequency**: Should Gate C run on every PR, or only before release?
+4. **Gate B scope creep**: At what point should overlap/layers regressions get their own semi-fast gate instead of extending the release-core gate further?
 
 ---
 

@@ -13,8 +13,8 @@ need deeper deck surgery.
 
 ## Current state
 
-- Current package version: `0.13.11`
-- Main runtime file: `editor/presentation-editor-v12.html`
+- Current package version: `0.18.1`
+- Main runtime file: `editor/presentation-editor-v0.18.1.html`
 - Architecture remains fixed: `parent shell + iframe preview + bridge + modelDoc`
 - Focused Stage D-F Playwright shell proof: green
 - Asset parity validation: green
@@ -30,6 +30,8 @@ need deeper deck surgery.
 - Duplicate, delete, undo, redo, autosave, and restore deterministically
 - Reorder slides from the rail on desktop with drag and drop
 - Open a unified slide action menu from the rail, with compact-safe kebab access
+- Detect severe overlap conflicts and recover covered elements with a move-to-top action
+- Use the advanced-mode layers panel to inspect stack order, lock elements, toggle visibility, and group related nodes
 - Resolve light and dark shell theme before first paint so segmented controls,
   menus, and inspector chrome do not flash contradictory surfaces
 - Keep transient shell surfaces mutually exclusive instead of stacking floating
@@ -46,7 +48,7 @@ need deeper deck surgery.
 
 ## Repository entry points
 
-- `editor/presentation-editor-v12.html`
+- `editor/presentation-editor-v0.18.1.html`
   Current editor runtime
 - `docs/SOURCE_OF_TRUTH.md`
   Product and architecture invariants
@@ -88,6 +90,9 @@ npm run test:gate-f
 
 ## Recent milestone tags
 
+- `v0.17.0`
+- `v0.18.0`
+- `v0.18.1`
 - `ux-regression-baseline-v1`
 - `ux-direct-manipulation-v1`
 - `ux-slide-structure-v1`

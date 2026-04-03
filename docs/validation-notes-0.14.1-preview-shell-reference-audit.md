@@ -3,7 +3,7 @@
 ## Environment used
 
 - repo-local Playwright harness via `npx playwright test`
-- editor runtime served at `http://127.0.0.1:4173/editor/presentation-editor-v12.html`
+- editor runtime served at `http://127.0.0.1:4173/editor/presentation-editor-v0.18.1.html`
 - exhaustive reference fixtures loaded from `references_pres`
 - primary reports and traces written under:
 - `artifacts/playwright/html-report`
@@ -22,7 +22,7 @@
 
 | step-id | target | intent | action attempted | result | evidence |
 | --- | --- | --- | --- | --- | --- |
-| `va-01` | `editor/presentation-editor-v12.html` | apply editorial-summary hierarchy without architecture drift | reworked `preview-note` / `preview-shell` copy density, hierarchy, and button emphasis | passed | runtime shell remained `parent shell + iframe + bridge + modelDoc` |
+| `va-01` | `editor/presentation-editor-v0.18.1.html` | apply editorial-summary hierarchy without architecture drift | reworked `preview-note` / `preview-shell` copy density, hierarchy, and button emphasis | passed | runtime shell remained `parent shell + iframe + bridge + modelDoc` |
 | `va-02` | reference deck path contract | replace broken root constants with explicit registry | added registry entries with `id`, `family`, `relativePath`, `fixturePath`, `manualBaseUrl`, `capabilities` | passed | [`tests/playwright/helpers/referenceDeckRegistry.js`](C:\Users\Kuznetz\Desktop\proga\html_presentation_editor\tests\playwright\helpers\referenceDeckRegistry.js) |
 | `va-03` | regression import path | stop using nonexistent root-level `references_pres` constants | migrated regression/spec helper loading to registry IDs | passed | previous `ENOENT` path regression removed |
 | `va-04` | shell contract | assert summary/actions separation and button-weight hierarchy | updated shell smoke assertions and refreshed editorial-summary snapshots | passed | [`tests/playwright/specs/shell.smoke.spec.js`](C:\Users\Kuznetz\Desktop\proga\html_presentation_editor\tests\playwright\specs\shell.smoke.spec.js) and snapshot files under `tests/playwright/specs/shell.smoke.spec.js-snapshots/` |
@@ -30,7 +30,7 @@
 | `va-06` | asset parity | verify shell/reference work did not drift export/preview asset rules | `npm run test:asset-parity` | passed | `ok: true`; `asset-directory` case resolved `9/9` assets in both preview and validation |
 | `va-07` | full repository suite | check for regressions after shell + registry work | `npx playwright test` | failed | `369 passed / 278 skipped / 1 failed`; failing path: `chromium-mobile-640 @stage-l`; trace at `artifacts/playwright/test-results/specs-editor.regression-Ed-c1932--reimport-roundtrip-stage-l-chromium-mobile-640/trace.zip` |
 | `va-08` | `chromium-mobile-640 @stage-l` | distinguish flake from real race | `npx playwright test tests/playwright/specs/editor.regression.spec.js --project=chromium-mobile-640 --grep "table cell edits survive undo redo and export reimport roundtrip" --repeat-each=5` | failed | `2 failed / 3 passed`; failure retained at `...stage-l-chromium-mobile-640-repeat2/trace.zip` |
-| `va-09` | table-cell history path | remove duplicate edited snapshot before undo | patched `applyElementUpdateFromBridge` to skip immediate snapshot for `table-cell` `editLifecycle=commit` and let `document-sync(text-edit-commit)` own the authoritative snapshot | passed | [`editor/presentation-editor-v12.html`](C:\Users\Kuznetz\Desktop\proga\html_presentation_editor\editor\presentation-editor-v12.html) |
+| `va-09` | table-cell history path | remove duplicate edited snapshot before undo | patched `applyElementUpdateFromBridge` to skip immediate snapshot for `table-cell` `editLifecycle=commit` and let `document-sync(text-edit-commit)` own the authoritative snapshot | passed | [`editor/presentation-editor-v0.18.1.html`](C:\Users\Kuznetz\Desktop\proga\html_presentation_editor\editor\presentation-editor-v0.18.1.html) |
 | `va-10` | `chromium-mobile-640 @stage-l` | prove race is gone | reran `--repeat-each=5` targeted stage-l repro | passed | `5 passed (15.2s)` |
 | `va-11` | final repository suite | validate after runtime fix | reran `npx playwright test` | passed | `370 passed / 278 skipped / 0 failed (17.8m)` |
 | `va-12` | audit deliverables | persist final evidence in repo-visible docs | authored report and validation notes | passed | this file + `docs/report-v0.14.1-preview-shell-reference-audit.md` |

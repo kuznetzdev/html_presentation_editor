@@ -2,7 +2,7 @@
 
 ## Current version
 
-`0.13.14`
+`0.18.1`
 
 ## Product state
 
@@ -62,6 +62,8 @@ The fixed architecture is unchanged:
   deterministically
 - reorder slides from the rail on desktop with drag and drop
 - use a unified slide action menu from the rail on desktop and compact widths
+- detect severe overlap conflicts and recover covered elements with hover ghosting and move-to-top repair
+- expose an advanced-mode layers panel with reorder, lock, visibility, group, and ungroup flows
 - keep export clean without bridge script, editor markers, or preview-only
   chrome
 - keep manual-base and connected asset-directory validation green
@@ -87,5 +89,6 @@ The fixed architecture is unchanged:
 
 ## Verification snapshot
 
-- focused Stage D-F Playwright shell/editor matrix: green
+- Gate B desktop + shell-1100 release matrix: green at `91 passed / 5 skipped` and `50 passed / 5 skipped`
+- focused shell smoke after semver runtime rename: green at `13 passed / 3 skipped`
 - `npm run test:asset-parity`: green

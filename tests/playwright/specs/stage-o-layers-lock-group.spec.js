@@ -1,6 +1,6 @@
 /**
  * @file stage-o-layers-lock-group.spec.js
- * @stage O — v0.17.0 Layers Panel, Lock System & Element Grouping (Advanced Mode)
+ * @stage O — v0.18.0 Layers Panel, Lock System & Element Grouping (Advanced Mode)
  * @author GitHub Copilot & Codex-based workflow
  * @created 2026-04-03
  *

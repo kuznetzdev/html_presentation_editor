@@ -16,7 +16,7 @@ argument-hint: "Describe the feature or fix e.g. 'implement deep select', 'fix b
 
 ## Architecture Overview
 
-**Single monolithic file**: `editor/presentation-editor-v12.html` (~18 000 lines)  
+**Single monolithic file**: `editor/presentation-editor-v0.18.1.html` (~20 000 lines)  
 **Three-layer architecture (non-negotiable)**:
 
 | Layer | What it owns |
@@ -220,20 +220,10 @@ Use existing Playwright test infrastructure at `tests/playwright/`.
 
 ---
 
-## Key Line Number Map (v12)
+## Release Discipline
 
-| Symbol | Line |
-|--------|------|
-| Entity kind constants | ~4569 |
-| State shape init | ~4943 |
-| `resolveImportedEntityKind()` | ~6485 |
-| `createBridgeToken()` | ~6937 |
-| `sendToBridge()` | ~10309 |
-| Canvas click handler | ~9848 |
-| Context menu handler | ~9885 |
-| `applyElementSelection()` | ~10576 |
-| `renderSelectionBreadcrumbs()` | ~15749 |
-| Inspector section CSS | ~3799 |
-| Context menu CSS | ~2333 |
+- Active runtime filename must follow the current semver release tag.
+- When the release version changes, archive the previous runtime under `docs/history/` and update live references in config, tests, docs, and agent instructions.
+- Treat `package.json`, the active runtime filename, and the top entry in `docs/CHANGELOG.md` as one synchronized release surface.
 
-> Line numbers are approximate for v12; always grep/search before editing.
+Do not rely on stale line numbers. Search by symbol name before editing.

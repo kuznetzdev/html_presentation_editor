@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## 0.18.1 - release metadata, docs, agents, and semver runtime sync - 2026-04-03
+- moved the active runtime artifact to `editor/presentation-editor-v0.18.1.html` and archived `editor/presentation-editor-v0.18.0.html` under `docs/history/`
+- synchronized package version, Playwright harness targets, export-asset parity tooling, and shell smoke navigation with the active semver runtime filename
+- updated source-of-truth docs, roadmap, testing strategy, release notes, and remaining-issues pointers to reflect the shipped `0.17.0` and `0.18.0` work
+- refreshed local Copilot agents and skills so they read the current runtime path, release discipline, and validation expectations from the live repository state
+
+## 0.18.0 - layers panel, lock system, visibility toggle, and grouping signed off - 2026-04-03
+- added an advanced-mode layers panel for stack inspection, row-based reordering, lock state, visibility state, and direct selection sync
+- added lock and unlock flows with deterministic lock-banner targeting to prevent accidental direct manipulation of protected elements
+- added session-only visibility toggling so users can temporarily hide elements without polluting export output or authored markup
+- added group and ungroup actions for advanced-mode multi-selection flows while preserving history safety and preview rebuild context
+- added focused `stage-o-layers-lock-group.spec.js` coverage for selection sync, drag reorder, lock, visibility, grouping, and ungroup flows
+
+## 0.17.0 - overlap recovery system signed off - 2026-04-03
+- added overlap detection for severely covered elements using cross-frame-safe geometry and visual stack comparison
+- surfaced overlap warnings in the shell so covered content can be discovered without raw DOM inspection
+- added hover ghost highlighting and move-to-top recovery so hidden elements can be identified and raised safely
+- added focused `overlap-recovery.spec.js` coverage for warning detection, hover feedback, and recovery action behavior
+
 ## 0.16.0 - click-through layer selection signed off - 2026-04-03
 - added repeated plain-click layer cycling for overlapping elements so the
   selected overlay no longer blocks access to lower layers after the first
