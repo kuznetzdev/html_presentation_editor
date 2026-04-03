@@ -36,7 +36,6 @@ need deeper deck surgery.
   while blocking direct manipulation at non-100% zoom; CSS zoom maintains text/vector
   crispness at all scale levels without coordinate multiplication overhead
   (requires Firefox 126+ from May 2024, Chrome 4+, Safari 4+, Edge 12+)
-  (requires Firefox 126+ from May 2024, Chrome 4+, Safari 4+, Edge 12+)
 - Resolve light and dark shell theme before first paint so segmented controls,
   menus, and inspector chrome do not flash contradictory surfaces
 - Keep transient shell surfaces mutually exclusive instead of stacking floating
