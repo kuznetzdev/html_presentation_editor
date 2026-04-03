@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## 0.18.3 - preview zoom quality and main canvas expansion - 2026-04-03
+- **Layout optimization**: widened main preview/edit panel by reducing side panel minmax widths
+  - Left panel: 260-280px → 240-260px (20px narrower at min/max)
+  - Right panel: 272-296px → 256-280px (16px narrower at min/max)
+  - Main canvas gains ~36-52px more width in desktop layouts
+  - Normalized responsive breakpoints @1240px and @1280px to consistently prioritize canvas over side panels
+  - Fixes inconsistency where intermediate widths expanded side panels instead of main editing region
+- **Zoom quality improvements**: reduced visual blur on downscale by using cleaner scale factors
+  - Removed fractional steps 0.33 (33%) and 0.67 (67%) that caused excessive blur due to resampling artifacts
+  - New quality-first zoom steps: [0.25, 0.5, 0.75, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0]
+  - Prioritizes whole/half fractions for sharper text and vector rendering
+  - No change to zoom range (25%-200%) or UI controls
+- All gates passed: shell.smoke, zoom persist test, no regression in selection/overlay/export
+
 ## 0.18.2 - preview zoom control - 2026-04-03
 - added zoom control to the preview/edit panel header with +/− buttons, percent label, and 1:1 reset button
 - keyboard shortcuts: Ctrl+= (zoom in), Ctrl+− (zoom out), Ctrl+0 (reset to 100%)

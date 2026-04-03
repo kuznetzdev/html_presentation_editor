@@ -898,11 +898,11 @@ test.describe("Editor shell smoke @harness", () => {
     await expect(page.locator("#zoomLevelLabel")).toHaveText("110%");
     await expect(page.locator("#zoomResetBtn")).toBeVisible();
 
-    // Verify iframe has scale transform
-    const transform = await page.locator("#previewFrame").evaluate((el) => {
-      return window.getComputedStyle(el).transform;
+    // Verify iframe has zoom property applied (v0.18.3)
+    const zoom = await page.locator("#previewFrame").evaluate((el) => {
+      return window.getComputedStyle(el).zoom;
     });
-    expect(transform).toContain("matrix");
+    expect(zoom).toBe("1.1");
 
     // Reset with button
     await clickEditorControl(page, "#zoomResetBtn");

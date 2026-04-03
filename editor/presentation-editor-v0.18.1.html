@@ -812,9 +812,9 @@
         width: min(100%, var(--workspace-max));
         margin: 0 auto;
         display: grid;
-        grid-template-columns: minmax(240px, 260px) minmax(0, 1fr) minmax(
-            256px,
-            280px
+        grid-template-columns: minmax(260px, 280px) minmax(0, 1fr) minmax(
+            272px,
+            296px
           );
         align-items: stretch;
         gap: 16px;
@@ -2990,9 +2990,9 @@
         }
 
         .workspace {
-          grid-template-columns: minmax(240px, 260px) minmax(0, 1fr) minmax(
-              256px,
-              280px
+          grid-template-columns: minmax(272px, 296px) minmax(0, 1fr) minmax(
+              288px,
+              312px
             );
         }
 
@@ -3003,9 +3003,9 @@
 
       @media (max-width: 1280px) {
         .workspace {
-          grid-template-columns: minmax(240px, 260px) minmax(0, 1fr) minmax(
-              256px,
-              280px
+          grid-template-columns: minmax(272px, 296px) minmax(0, 1fr) minmax(
+              288px,
+              312px
             );
           gap: 12px;
           padding: 12px;
@@ -13839,15 +13839,14 @@ ${exportDoc.documentElement.outerHTML}`;
       function toStageRect(frameRect) {
         const rect = cloneRect(frameRect);
         if (!rect) return null;
-        // CSS zoom property handles coordinate scaling natively (v0.18.3)
-        // getBoundingClientRect() returns already-scaled values
+        const zoom = state.previewZoom ?? 1;
         const iframeRect = els.previewFrame.getBoundingClientRect();
         const stageRect = els.previewStage.getBoundingClientRect();
         return cloneRect({
-          left: iframeRect.left - stageRect.left + rect.left,
-          top: iframeRect.top - stageRect.top + rect.top,
-          width: rect.width,
-          height: rect.height,
+          left: iframeRect.left - stageRect.left + rect.left * zoom,
+          top: iframeRect.top - stageRect.top + rect.top * zoom,
+          width: rect.width * zoom,
+          height: rect.height * zoom,
         });
       }
 
@@ -13876,12 +13875,12 @@ ${exportDoc.documentElement.outerHTML}`;
       }
 
       function toStageAxisValue(axis, value) {
-        // CSS zoom property handles coordinate scaling natively (v0.18.3)
+        const zoom = state.previewZoom ?? 1;
         const iframeRect = els.previewFrame.getBoundingClientRect();
         const stageRect = els.previewStage.getBoundingClientRect();
         return axis === "x"
-          ? iframeRect.left - stageRect.left + value
-          : iframeRect.top - stageRect.top + value;
+          ? iframeRect.left - stageRect.left + value * zoom
+          : iframeRect.top - stageRect.top + value * zoom;
       }
 
       function clearSelectionGuides() {
@@ -15448,21 +15447,21 @@ ${exportDoc.documentElement.outerHTML}`;
           return;
         }
 
-        // CSS zoom property handles coordinate scaling natively (v0.18.3)
-        const left = iframeRect.left - hostRect.left + activeRect.left;
-        const top = iframeRect.top - hostRect.top + activeRect.top;
+        const zoom = state.previewZoom ?? 1;
+        const left = iframeRect.left - hostRect.left + activeRect.left * zoom;
+        const top = iframeRect.top - hostRect.top + activeRect.top * zoom;
         const toolbarHeight = toolbar.offsetHeight || 44;
         const toolbarWidth = toolbar.offsetWidth || 320;
         let x = left;
         let y = top - toolbarHeight - 8;
         const placeRight =
-          activeRect.width < 140 &&
-          left + activeRect.width + toolbarWidth + 12 < hostRect.width;
+          activeRect.width * zoom < 140 &&
+          left + activeRect.width * zoom + toolbarWidth + 12 < hostRect.width;
         if (placeRight) {
-          x = left + activeRect.width + 8;
+          x = left + activeRect.width * zoom + 8;
           y = top;
         }
-        if (y < 8) y = top + activeRect.height + 8;
+        if (y < 8) y = top + activeRect.height * zoom + 8;
         const pos = clampToolbarPosition(x, y);
         toolbar.style.left = `${pos.x}px`;
         toolbar.style.top = `${pos.y}px`;
@@ -18281,13 +18280,16 @@ ${exportDoc.documentElement.outerHTML}`;
       function applyPreviewZoom() {
         const zoom = state.previewZoom ?? 1.0;
         if (els.previewFrame) {
-          // Use CSS zoom property for quality-preserving scale (v0.18.3)
-          // Unlike transform:scale(), zoom triggers re-layout at target resolution
-          // This preserves text and vector crispness at all zoom levels
           if (zoom === 1.0) {
-            els.previewFrame.style.zoom = "";
+            els.previewFrame.style.transform = "";
+            els.previewFrame.style.transformOrigin = "";
+            els.previewFrame.style.width = "";
+            els.previewFrame.style.height = "";
           } else {
-            els.previewFrame.style.zoom = String(zoom);
+            els.previewFrame.style.width = `${100 / zoom}%`;
+            els.previewFrame.style.height = `${100 / zoom}%`;
+            els.previewFrame.style.transform = `scale(${zoom})`;
+            els.previewFrame.style.transformOrigin = "0 0";
           }
         }
         updatePreviewZoomUi();
@@ -18314,9 +18316,7 @@ ${exportDoc.documentElement.outerHTML}`;
 
       function stepZoom(direction) {
         const current = state.previewZoom ?? 1.0;
-        // Quality-first zoom steps: prefer whole/half fractions for sharper rendering
-        // Avoid fractional scales like 0.33, 0.67 that cause excessive blur on downscale
-        const steps = [0.25, 0.5, 0.75, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0];
+        const steps = [0.25, 0.33, 0.5, 0.67, 0.75, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0];
         let targetIndex = steps.findIndex(s => Math.abs(s - current) < 0.01);
         if (targetIndex === -1) {
           targetIndex = steps.findIndex(s => s > current);
