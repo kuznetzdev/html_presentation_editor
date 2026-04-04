@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## 0.19.0 - honest feedback: block reason banners, stack depth badge, action hints - 2026-04-04
+- **Block reason protocol (ADR-001)**: replaced boolean `hasBlockedDirectManipulationContext()` with `getBlockReason()` enum returning specific reason: `zoom`, `locked`, `own-transform`, `parent-transform`, `slide-transform`, `hidden`, or `none`
+- **Block reason banner**: inline banner below selection overlay shows human-readable block reason with one-click resolution action:
+  - "Масштаб ≠ 100%" → button "Сбросить масштаб" (resets zoom to 100%)
+  - "🔒 Элемент заблокирован" → button "Разблокировать"
+  - "Используется transform" → informational (use inspector)
+  - "Элемент скрыт" → button "Показать"
+  - Lock banner in advanced mode takes priority over block reason banner
+- **Stack depth badge (ADR-002)**: `1/N` counter badge appears next to breadcrumbs when multiple candidates exist under cursor point, showing current position in click-through stack
+- **Action-oriented summary copy**: `getSelectedElementSummary()` updated for all entity kinds to show actionable guidance ("Дважды кликните, чтобы начать печатать", "Можно перемещать и масштабировать мышкой") and surfaces block reason as primary feedback when manipulation is blocked
+- **Playwright coverage**: new `honest-feedback.spec.js` (9 tests) covering block banner per reason, action resolution, lock priority, summary copy, stack badge, banner lifecycle, and export cleanliness
+- All gates passed: Gate A (40/40), Gate B chromium-desktop (101/101), Gate B chromium-shell-1100 (51/51)
+
 ## 0.18.3 - zoom quality fix and layout optimization - 2026-04-03
 - **Zoom quality fix**: Switched from `transform: scale()` to CSS `zoom:` property
   - CSS `zoom:` triggers browser re-layout at target resolution, preserving text and vector crispness

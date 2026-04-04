@@ -2056,6 +2056,49 @@
         justify-content: flex-end;
       }
 
+      /* [v0.19.0] Block reason banner */
+      .block-reason-banner {
+        display: grid;
+        gap: 6px;
+        margin-top: 10px;
+        padding: 10px 12px;
+        border: 1px solid var(--shell-warning-border);
+        border-radius: 10px;
+        background: var(--shell-warning-bg);
+        color: var(--shell-text);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .block-reason-banner[hidden] {
+        display: none !important;
+      }
+
+      .block-reason-actions {
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      /* Stack depth badge */
+      .stack-depth-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        padding: 1px 6px;
+        border-radius: 10px;
+        background: var(--shell-accent);
+        color: #fff;
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 1.4;
+        vertical-align: middle;
+        margin-left: 6px;
+      }
+
+      .stack-depth-badge[hidden] {
+        display: none !important;
+      }
+
       /* Layers panel */
       .layers-list-container {
         display: flex;
@@ -4069,6 +4112,19 @@
                 </button>
               </div>
             </div>
+            <!-- [v0.19.0] Block reason banner -->
+            <div
+              class="block-reason-banner"
+              id="blockReasonBanner"
+              role="status"
+              aria-live="polite"
+              hidden
+            >
+              <div class="block-reason-text" id="blockReasonText"></div>
+              <div class="block-reason-actions">
+                <button type="button" class="ghost-btn" id="blockReasonActionBtn" hidden></button>
+              </div>
+            </div>
             <!-- [LAYER-MODEL v2] selection mode toggle -->
             <div
               class="mode-toggle selection-mode-toggle"
@@ -4089,6 +4145,12 @@
               aria-live="polite"
               hidden
             ></div>
+            <span
+              class="stack-depth-badge"
+              id="stackDepthBadge"
+              aria-label="Количество элементов под курсором"
+              hidden
+            ></span>
             <div class="field-grid-2">
               <div class="field-group compact" data-ui-level="advanced">
                 <label for="elementTagInput">Тег</label>
@@ -5436,6 +5498,12 @@
         lockBanner: document.getElementById("lockBanner"),
         lockBannerText: document.getElementById("lockBannerText"),
         unlockElementBtn: document.getElementById("unlockElementBtn"),
+        // [v0.19.0] Block reason banner
+        blockReasonBanner: document.getElementById("blockReasonBanner"),
+        blockReasonText: document.getElementById("blockReasonText"),
+        blockReasonActionBtn: document.getElementById("blockReasonActionBtn"),
+        // [v0.19.0] Stack depth badge
+        stackDepthBadge: document.getElementById("stackDepthBadge"),
         // [v0.18.0] Layers panel
         layersInspectorSection: document.getElementById("layersInspectorSection"),
         layersListContainer: document.getElementById("layersListContainer"),
@@ -5883,6 +5951,19 @@
             state.selectedNodeId;
           if (!lockedNodeId) return;
           toggleLayerLock(lockedNodeId);
+        });
+        // [v0.19.0] Block reason action button
+        els.blockReasonActionBtn?.addEventListener("click", () => {
+          const action = els.blockReasonActionBtn?.dataset.blockAction;
+          if (action === "reset-zoom") {
+            setPreviewZoom(1.0, true);
+          } else if (action === "unlock") {
+            const nodeId = state.selectedNodeId;
+            if (nodeId) toggleLayerLock(nodeId);
+          } else if (action === "show") {
+            const nodeId = state.selectedNodeId;
+            if (nodeId) toggleLayerVisibility(nodeId);
+          }
         });
         els.resetStylesBtn.addEventListener("click", resetSelectedStyles);
         els.copyStyleBtn.addEventListener("click", copySelectedStyle);
@@ -13730,11 +13811,48 @@ ${exportDoc.documentElement.outerHTML}`;
         };
       }
 
+      // [v0.19.0 ADR-001] Block reason protocol
+      function getBlockReason() {
+        if (state.previewZoom !== 1) return "zoom";
+        if (!state.manipulationContext) return "none";
+        if (state.manipulationContext.directManipulationSafe === false) {
+          const reason = String(state.manipulationContext.directManipulationReason || "").toLowerCase();
+          if (reason.includes("собствен") || reason.includes("own transform")) return "own-transform";
+          if (reason.includes("внутри transformed") || reason.includes("transformed-контейнера") ||
+              reason.includes("inside transformed") || reason.includes("parent uses transform")) return "parent-transform";
+          if (reason.includes("корневой контейнер слайда") || reason.includes("slide uses transform")) return "slide-transform";
+          if (reason.includes("zoom")) return "zoom";
+          return "transform";
+        }
+        const entityKind = state.selectedEntityKind || "none";
+        if (entityKind === "container" || entityKind === "slide-root") return "none";
+        return "none";
+      }
+
+      function getBlockReasonLabel(reason) {
+        switch (reason) {
+          case "zoom": return "Масштаб ≠ 100% — перемещение на холсте отключено";
+          case "locked": return "🔒 Элемент заблокирован";
+          case "own-transform": return "Используется transform — перемещение через инспектор";
+          case "parent-transform": return "Родитель использует transform — перемещение через инспектор";
+          case "slide-transform": return "Слайд использует transform — перемещение через инспектор";
+          case "transform": return "Используется transform — перемещение через инспектор";
+          case "hidden": return "Элемент скрыт (невидим в этой сессии)";
+          default: return "";
+        }
+      }
+
+      function getBlockReasonAction(reason) {
+        switch (reason) {
+          case "zoom": return { label: "Сбросить масштаб", action: "reset-zoom" };
+          case "locked": return { label: "Разблокировать", action: "unlock" };
+          case "hidden": return { label: "Показать", action: "show" };
+          default: return null;
+        }
+      }
+
       function hasBlockedDirectManipulationContext() {
-        return Boolean(
-          state.manipulationContext?.directManipulationSafe === false ||
-          state.previewZoom !== 1
-        );
+        return getBlockReason() !== "none";
       }
 
       function clearSelectionTooltipTimer() {
@@ -17127,6 +17245,18 @@ ${exportDoc.documentElement.outerHTML}`;
           }
         });
         els.selectionBreadcrumbs.appendChild(fragment);
+        // [v0.19.0 ADR-002] Stack depth badge
+        if (els.stackDepthBadge) {
+          const cts = state.clickThroughState;
+          const candidateCount = cts?.candidates?.length || 0;
+          const currentIndex = candidateCount > 1 ? (cts.index + 1) : 0;
+          const showBadge = visible && candidateCount > 1;
+          els.stackDepthBadge.hidden = !showBadge;
+          els.stackDepthBadge.setAttribute("aria-hidden", showBadge ? "false" : "true");
+          els.stackDepthBadge.textContent = showBadge
+            ? `${currentIndex}/${candidateCount}`
+            : "";
+        }
       }
 
       function updateInspectorFromSelection() {
@@ -17212,6 +17342,35 @@ ${exportDoc.documentElement.outerHTML}`;
         }
         // [v0.18.0] Render layers panel (advanced mode only)
         renderLayersPanel();
+        // [v0.19.0] Block reason banner
+        const blockReason = hasSelection ? getBlockReason() : "none";
+        const effectiveBlockReason = isLocked ? "locked" : blockReason;
+        const showBlockBanner = Boolean(
+          hasSelection &&
+            effectiveBlockReason !== "none" &&
+            !showLockBanner &&
+            entityKind !== "slide-root" &&
+            entityKind !== "protected",
+        );
+        if (els.blockReasonBanner) {
+          els.blockReasonBanner.hidden = !showBlockBanner;
+          els.blockReasonBanner.setAttribute("aria-hidden", showBlockBanner ? "false" : "true");
+        }
+        if (els.blockReasonText) {
+          els.blockReasonText.textContent = showBlockBanner
+            ? getBlockReasonLabel(effectiveBlockReason) : "";
+        }
+        if (els.blockReasonActionBtn) {
+          const actionDef = showBlockBanner ? getBlockReasonAction(effectiveBlockReason) : null;
+          if (actionDef) {
+            els.blockReasonActionBtn.hidden = false;
+            els.blockReasonActionBtn.textContent = actionDef.label;
+            els.blockReasonActionBtn.dataset.blockAction = actionDef.action;
+          } else {
+            els.blockReasonActionBtn.hidden = true;
+            els.blockReasonActionBtn.removeAttribute("data-block-action");
+          }
+        }
         if (els.selectedElementTitle) {
           els.selectedElementTitle.textContent = getSelectedElementTitle(entityKind);
         }
@@ -20192,11 +20351,17 @@ ${exportDoc.documentElement.outerHTML}`;
         if (!state.selectedNodeId || entityKind === "none") {
           return "Кликните по объекту на слайде. Для текста можно сделать двойной клик и сразу печатать.";
         }
+        // [v0.19.0] Show block reason as primary feedback when manipulation is blocked
+        const blockReason = getBlockReason();
+        if (blockReason !== "none" && entityKind !== "slide-root" && entityKind !== "protected") {
+          const reasonLabel = getBlockReasonLabel(blockReason);
+          if (reasonLabel) return reasonLabel + ". Используйте поля инспектора для точного позиционирования.";
+        }
         if (entityKind === "text") {
-          return "Можно сразу править текст, менять размер шрифта, цвет и базовое форматирование без погружения в HTML.";
+          return "Дважды кликните, чтобы начать печатать. Можно менять шрифт, цвет, размер и перемещать блок.";
         }
         if (entityKind === "image") {
-          return "Можно заменить файл, поправить alt и подогнать размер без ручной правки атрибутов.";
+          return "Можно заменить файл, поправить alt и перемещать/масштабировать мышкой на холсте.";
         }
         if (entityKind === "video") {
           return "Проверьте источник и размер блока. Точные HTML-правки остаются только в Advanced.";
@@ -20207,10 +20372,8 @@ ${exportDoc.documentElement.outerHTML}`;
         if (entityKind === "protected") {
           return "Это системный контейнер. Доступны только безопасные правки, а опасные structural-операции скрыты.";
         }
-        if (hasBlockedDirectManipulationContext()) {
-          return state.complexityMode === "advanced"
-            ? "Свободное перемещение на холсте здесь заблокировано. Используйте точные поля справа."
-            : "Свободное перемещение на холсте здесь недоступно. Для точного позиционирования можно перейти в Advanced.";
+        if (entityKind === "container" || entityKind === "element") {
+          return "Можно перемещать и масштабировать мышкой. Кликните внутрь, чтобы выбрать дочерний элемент.";
         }
         return "Доступны частые действия, базовые стили и безопасные правки содержимого без ручного редактирования HTML.";
       }

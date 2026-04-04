@@ -140,6 +140,31 @@ none / protected     → 0
 
 ---
 
+## Feedback Layer (planned v0.19.0)
+
+### Block Reason Protocol (ADR-001)
+`hasBlockedDirectManipulationContext()` wraps a richer `getBlockReason()` enum:
+`"none" | "zoom" | "locked" | "container" | "own-transform" | "parent-transform" | "slide-transform" | "hidden"`
+
+Shell renders reason as inline banner below selection overlay with one-click
+resolution action (reset zoom, unlock, show element, etc.).
+
+### Stack Depth Indicator (ADR-002)
+`STATE.clickThroughState.candidates.length` drives a `1/N` badge in breadcrumb
+bar. Zero bridge changes — candidate list is shell-side state.
+
+### Layer Picker (planned v0.19.1, ADR-003)
+Second click on same point with 2+ candidates opens floating popup listing
+candidates with entity kind + human label. Hover row → ghost highlight in
+preview. Follows transient-surface mutual exclusion.
+
+### Precision Editing (planned v0.19.2, ADR-004)
+- Arrow nudge: 1px per press, 10px with Shift, blocked via `getBlockReason()`
+- Snap-to-siblings: 5px threshold, sibling edge/center alignment during drag
+- Smart guide lines: shell overlay divs (`data-editor-ui="true"`), stripped on export
+
+---
+
 ## Bridge Protocol — Key Commands
 
 ### Parent → Iframe

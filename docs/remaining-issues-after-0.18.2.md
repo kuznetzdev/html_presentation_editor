@@ -68,12 +68,17 @@ The `1:1` reset button appearing only when zoomed ≠ 100% is correct — it red
 
 ## Roadmap impact
 
-Zoom feature does **not** change the v0.19.0 roadmap priorities:
-1. Smart layer resolution / magic select
-2. Internal zoning (responsibility-based cleanup)
-3. System polish
+User research (April 2026) triggered a full replan. See [ROADMAP_NEXT.md](ROADMAP_NEXT.md).
 
-Zoom is a **shell control**, not a selection/layer feature, so it integrates cleanly without affecting upcoming work on layer ergonomics or selection intelligence.
+New priority order:
+1. **v0.19.0** — Honest feedback (block reason banners, stack badge, action hints)
+2. **v0.19.1** — Visual layer picker (candidate popup, hover preview, keyboard nav)
+3. **v0.19.2** — Precision editing (arrow nudge, snap-to-siblings, smart guides)
+4. **v0.20.0** — Internal zoning (responsibility zones, no architecture change)
+5. **v0.20.x** — System polish (visual consistency, light/dark parity)
+
+Zoom UX polish items listed above are deferred — not impactful for the
+primary desktop + mouse user base.
 
 ## Next validation priorities (post-0.18.2)
 

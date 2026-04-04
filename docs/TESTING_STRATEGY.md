@@ -169,6 +169,9 @@ npx playwright test
 | Shell UI | `editor.regression`, `visual` | panels, drawers, overflow, theme |
 | Selection engine | `selection-engine-v2`, `layer-navigation` | candidate scoring, ancestor cycling |
 | Click-through | `click-through` | repeated click, Escape reset, context menu |
+| Feedback layer | `honest-feedback` (planned) | block reason banners, stack badge, action hints |
+| Layer picker | `layer-picker` (planned) | visual candidate popup, hover preview, keyboard nav |
+| Precision editing | `precision`, `editor.regression` (planned) | nudge, snap, smart guides |
 | Bridge protocol | `editor.regression`, `reference-decks.deep` | postMessage sync, command dispatch |
 | Export | `asset-parity` | clean HTML, no editor chrome |
 | Reference decks | `reference-decks.deep` | real-world deck compatibility |
@@ -186,6 +189,15 @@ npx playwright test
 - Shell theme prepaint (no flash)
 - Transient surface mutual exclusion
 - Export cleanliness
+
+### Planned Specs (v0.19.0–v0.19.2)
+
+| Spec file | Phase | Gate | Coverage |
+|-----------|-------|------|----------|
+| `honest-feedback.spec.js` | v0.19.0 | A+B | Block reason banners, stack badge, action hints |
+| `layer-picker.spec.js` | v0.19.1 | A+B | Visual candidate popup, hover preview, keyboard nav |
+| `precision.spec.js` | v0.19.2 | B | Snap-to-siblings, smart guide lines |
+| (extend `editor.regression`) | v0.19.2 | A | Arrow nudge 1px/10px, nudge blocked states |
 
 ---
 

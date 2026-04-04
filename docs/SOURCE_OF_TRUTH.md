@@ -162,14 +162,15 @@ Owns:
   element path instead of a full inspector dump
 - Intermediate desktop widths may route secondary topbar commands through a
   transient overflow surface, but `Open` and `Export` stay inline
-- Blocked actions must fail honestly with feedback, not silently
+- Blocked actions must fail honestly with feedback, not silently — every block
+  must explain the reason and offer a resolution path where one exists
 - One shell control should own one visible surface state; do not stack nested
   fake layers to hide timing or spacing bugs
 - Topbar overflow participates in the same mutual-exclusion routing as context
-  menu, insert palette, and slide template surfaces
+  menu, insert palette, slide template surfaces, and layer picker
   visual layers to fake active/inactive behavior
-- Floating toolbar, context menu, and compact shell drawers remain mutually
-  exclusive transient surfaces
+- Floating toolbar, context menu, layer picker, and compact shell drawers
+  remain mutually exclusive transient surfaces
 
 ## Current signed-off capabilities
 
