@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>02 Cards Columns Comparison</title>
+<style>
+
+:root{
+  --bg:#f5f3fb;
+  --paper:#ffffff;
+  --ink:#171a3a;
+  --muted:#5e6486;
+  --line:#dde0f0;
+  --blue:#4f64ff;
+  --cyan:#20afea;
+  --pink:#e45bc9;
+  --violet:#cfd5ff;
+  --green:#22b07d;
+  --amber:#f4b740;
+  --red:#e36b6b;
+  --shadow:0 18px 40px rgba(27,32,74,.10);
+  --radius:24px;
+  --slide-w:1280px;
+  --slide-h:720px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:#ebe9f4;color:var(--ink);font-family:Inter,"Segoe UI",Arial,sans-serif}
+body{padding:24px}
+.deck{display:grid;gap:28px;justify-content:center}
+.slide{
+  width:var(--slide-w);
+  min-height:var(--slide-h);
+  position:relative;
+  overflow:hidden;
+  border-radius:20px;
+  padding:46px 54px;
+  background:
+    radial-gradient(circle at 88% 12%, rgba(255,198,221,.18), transparent 15%),
+    radial-gradient(circle at 77% 85%, rgba(140,219,255,.14), transparent 14%),
+    var(--bg);
+  box-shadow:var(--shadow);
+}
+.slide::after{
+  content:attr(data-slide);
+  position:absolute;right:18px;top:14px;
+  font-size:13px;color:#8f95b2;letter-spacing:.08em
+}
+h1,h2,h3,h4,p,ul,ol{margin:0}
+h1{font-size:58px;line-height:1.05;font-weight:600;letter-spacing:-.035em}
+h2{font-size:36px;line-height:1.1;font-weight:600;letter-spacing:-.03em}
+h3{font-size:24px;line-height:1.2;font-weight:600}
+p{font-size:20px;line-height:1.5}
+.small{font-size:18px;line-height:1.45;color:var(--muted)}
+.xs{font-size:15px;line-height:1.4;color:var(--muted)}
+.muted{color:var(--muted)}
+.grid{display:grid}
+.row{display:flex}
+.col{display:flex;flex-direction:column}
+.gap-12{gap:12px}.gap-16{gap:16px}.gap-20{gap:20px}.gap-24{gap:24px}.gap-28{gap:28px}.gap-32{gap:32px}.gap-40{gap:40px}
+.card{
+  background:rgba(255,255,255,.72);
+  border:1px solid var(--line);
+  border-radius:22px;
+  padding:20px 22px;
+}
+.note{
+  position:absolute;left:54px;right:54px;bottom:34px;
+  padding:14px 20px;border-radius:20px;
+  background:linear-gradient(180deg, rgba(204,210,255,.96), rgba(188,195,248,.96));
+  color:#2d3159;font-style:italic;font-size:18px
+}
+.kpi{
+  background:rgba(255,255,255,.72);
+  border:1px solid var(--line);
+  border-radius:24px;
+  padding:22px;
+  text-align:center;
+}
+.kpi .value{font-size:68px;line-height:1;font-weight:700;letter-spacing:-.04em}
+.kpi .label{font-size:18px;color:var(--muted);margin-top:8px}
+table.clean{
+  width:100%;border-collapse:separate;border-spacing:0;
+  border:1px solid var(--line);border-radius:22px;overflow:hidden;
+  background:rgba(255,255,255,.72)
+}
+table.clean th,table.clean td{
+  padding:14px 16px;text-align:left;vertical-align:top;
+  font-size:17px;line-height:1.4;border-bottom:1px solid var(--line);border-right:1px solid var(--line)
+}
+table.clean th:last-child,table.clean td:last-child{border-right:none}
+table.clean tr:last-child td{border-bottom:none}
+table.clean thead th{background:#f5f6ff;font-weight:700}
+.badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:8px 12px;border-radius:999px;
+  background:rgba(79,100,255,.10);color:#3347dd;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.05em
+}
+.pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#eef1ff;font-size:14px;color:#4251b7}
+.timeline{display:grid;gap:18px}
+.timeline-item{display:grid;grid-template-columns:86px 1fr;gap:18px;align-items:start}
+.timeline-item .num{
+  width:70px;height:70px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--blue);color:#fff;font-weight:700;font-size:28px
+}
+.quote{
+  border-left:4px solid var(--blue);
+  padding:14px 0 14px 16px;
+  font-size:24px;line-height:1.4;color:#2d3159
+}
+.hero{
+  display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:center;height:100%
+}
+.hero-illustration,.illustration{
+  width:100%;height:100%
+}
+.hero-illustration svg,.illustration svg{width:100%;height:100%}
+.footer-row{
+  position:absolute;left:54px;right:54px;bottom:34px;
+  display:flex;justify-content:space-between;align-items:center
+}
+.legend{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.legend .item{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:16px}
+.legend .dot{width:10px;height:10px;border-radius:50%}
+hr.sep{border:none;border-top:1px solid var(--line);margin:18px 0}
+
+
+@media (max-width: 1320px) {
+  body{padding:10px}
+  .slide{width:min(calc(100vw - 20px), var(--slide-w));min-height:auto}
+}
+@media print {
+  body{background:#fff;padding:0}
+  .deck{gap:0}
+  .slide{border-radius:0;box-shadow:none;break-after:page;page-break-after:always}
+}
+</style>
+</head>
+<body>
+<main class="deck">
+
+<section class="slide" data-slide="01">
+  <div class="hero">
+    <div class="col gap-20">
+      <div class="badge">medium · cards & columns</div>
+      <h1>Example with cards, columns and comparison blocks</h1>
+      <p>Этот дек нужен для теста редактирования составных layout-структур: карточки, 2- и 3-колоночные секции, callout-блоки.</p>
+    </div>
+    <div class="hero-illustration">
+      <svg viewBox="0 0 520 420" fill="none">
+        <rect x="18" y="40" width="180" height="120" rx="24" fill="#fff" stroke="#dde0f0"/>
+        <rect x="220" y="10" width="260" height="150" rx="24" fill="#fff" stroke="#dde0f0"/>
+        <rect x="60" y="190" width="190" height="160" rx="24" fill="#fff" stroke="#dde0f0"/>
+        <rect x="280" y="194" width="180" height="140" rx="24" fill="#fff" stroke="#dde0f0"/>
+        <circle cx="102" cy="96" r="20" fill="#4f64ff"/>
+        <circle cx="304" cy="74" r="20" fill="#20afea"/>
+        <circle cx="140" cy="248" r="20" fill="#e45bc9"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-slide="02">
+  <h2>Три карточки</h2>
+  <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:18px;margin-top:24px">
+    <div class="card">
+      <div class="pill">segment A</div>
+      <h3 style="margin-top:14px">Starter</h3>
+      <p class="small" style="margin-top:10px">Минимальный пакет. Хорошо подходит для проверки редактирования короткого контента.</p>
+    </div>
+    <div class="card">
+      <div class="pill">segment B</div>
+      <h3 style="margin-top:14px">Growth</h3>
+      <p class="small" style="margin-top:10px">Больше текста и длиннее подписи. Тестирует переносы и авторазмеры.</p>
+    </div>
+    <div class="card">
+      <div class="pill">segment C</div>
+      <h3 style="margin-top:14px">Scale</h3>
+      <p class="small" style="margin-top:10px">Комбинация нескольких абзацев и индикаторов внутри одной карточки.</p>
+    </div>
+  </div>
+  <div class="note">Цель: проверить удобство выбора отдельных карточек и правки текста внутри них.</div>
+</section>
+
+<section class="slide" data-slide="03">
+  <h2>Сравнение двух сценариев</h2>
+  <div class="grid" style="grid-template-columns:1fr 1fr;gap:20px;margin-top:24px">
+    <div class="card">
+      <h3>До внедрения</h3>
+      <ul style="margin-top:12px;padding-left:22px">
+        <li><p>Много ручной рутины</p></li>
+        <li><p>Долгое согласование</p></li>
+        <li><p>Нет единой структуры</p></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>После внедрения</h3>
+      <ul style="margin-top:12px;padding-left:22px">
+        <li><p>Процессы стандартизированы</p></li>
+        <li><p>Данные доступны быстрее</p></li>
+        <li><p>Команда редактирует точечно</p></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-slide="04">
+  <h2>Пошаговый процесс</h2>
+  <div class="timeline" style="margin-top:24px">
+    <div class="timeline-item">
+      <div class="num">1</div>
+      <div class="card"><h3>Open</h3><p class="small" style="margin-top:8px">Открываем существующий HTML-дек.</p></div>
+    </div>
+    <div class="timeline-item">
+      <div class="num" style="background:var(--cyan)">2</div>
+      <div class="card"><h3>Edit</h3><p class="small" style="margin-top:8px">Выбираем блок, меняем текст, карточки и подписи.</p></div>
+    </div>
+    <div class="timeline-item">
+      <div class="num" style="background:var(--pink)">3</div>
+      <div class="card"><h3>Save</h3><p class="small" style="margin-top:8px">Проверяем, что экспорт остаётся чистым и предсказуемым.</p></div>
+    </div>
+  </div>
+</section>
+
+</main>
+</body>
+</html>
