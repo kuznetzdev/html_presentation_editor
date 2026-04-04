@@ -4,7 +4,7 @@
  * Covers issue #1:
  *  N1 overlap detection map appears for covered elements
  *  N2 severe overlap warning badge appears in slide rail (basic mode)
- *  N3 ghost outline appears on hover over fully covered area
+ *  N3 overlap hover does not draw a ghost outline over hidden elements
  *  N4 move-to-top action raises z-index and hides recovery banner
  */
 
@@ -13,6 +13,7 @@
 const { test, expect } = require("@playwright/test");
 const {
   closeCompactShellPanels,
+  ensureShellPanelVisible,
   evaluateEditor,
   isChromiumOnlyProject,
   loadReferenceDeck,
@@ -145,6 +146,7 @@ test.describe("N2 — Warning badge", () => {
     await triggerAndWaitForOverlapDetection(page);
 
     // slideOverlapWarnings threshold is now > 30%, deck has ~41% → badge appears
+    await ensureShellPanelVisible(page, "slides");
     const warningTag = page.locator("#slidesList .slide-tag.is-overlap-warning").first();
     await expect(warningTag).toBeVisible({ timeout: 6000 });
     await expect(warningTag).toContainText("перекрытие");
@@ -152,19 +154,19 @@ test.describe("N2 — Warning badge", () => {
 });
 
 // ---------------------------------------------------------------------------
-// N3 — Ghost outline on hover
+// N3 — No ghost outline on overlap hover
 // ---------------------------------------------------------------------------
 
-test.describe("N3 — Ghost outline", () => {
-  test("hovering overlap area highlights hidden element @stage-n", async ({ page }, testInfo) => {
+test.describe("N3 — No overlap ghost outline", () => {
+  test("hovering overlap area does not highlight hidden element @stage-n", async ({ page }, testInfo) => {
     test.skip(!isChromiumOnlyProject(testInfo.project.name));
 
     await loadOverlapDeck(page);
     await triggerAndWaitForOverlapDetection(page);
 
     // Dispatch a mousemove event at the centre of the first conflict's overlapRect.
-    // handleOverlapHoverMove is registered on the iframe doc from the parent shell,
-    // so dispatching on iframeDoc triggers it with the correct clientX/clientY.
+    // Overlap recovery must stay discoverable via banner/warning only, without
+    // rendering a translucent ghost element in the canvas on plain hover.
     const dispatched = await evaluateEditor(
       page,
       `(() => {
@@ -189,20 +191,16 @@ test.describe("N3 — Ghost outline", () => {
 
     expect(dispatched).toBe(true);
 
-    await expect
-      .poll(
-        () =>
-          evaluateEditor(
-            page,
-            `(() => {
-              const doc = document.getElementById("previewFrame")?.contentDocument;
-              return doc?.querySelector('[data-editor-highlight="ghost"]')
-                ?.getAttribute("data-editor-highlight") || "";
-            })()`,
-          ),
-        { timeout: 6000 },
-      )
-      .toBe("ghost");
+    await page.waitForTimeout(250);
+
+    const ghostExists = await evaluateEditor(
+      page,
+      `(() => {
+        const doc = document.getElementById("previewFrame")?.contentDocument;
+        return !!doc?.querySelector('[data-editor-highlight="ghost"]');
+      })()`,
+    );
+    expect(ghostExists).toBe(false);
   });
 });
 
@@ -219,6 +217,7 @@ test.describe("N4 — Move to top", () => {
     await triggerAndWaitForOverlapDetection(page);
 
     // Banner must be visible before the test makes sense
+    await ensureShellPanelVisible(page, "inspector");
     const banner = page.locator("#overlapRecoveryBanner");
     await expect(banner).toBeVisible({ timeout: 6000 });
 

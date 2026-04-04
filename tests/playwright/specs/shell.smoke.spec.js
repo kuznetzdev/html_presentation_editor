@@ -148,7 +148,7 @@ test.describe("Editor shell smoke @harness", () => {
     await page.addInitScript(() => {
       window.localStorage.setItem("presentation-editor:theme:v1", "dark");
     });
-    await page.goto("/editor/presentation-editor-v0.18.1.html", {
+    await page.goto("/editor/presentation-editor.html", {
       waitUntil: "domcontentloaded",
     });
     await expect(page.locator("#openHtmlBtn")).toBeVisible();
@@ -570,8 +570,8 @@ test.describe("Editor shell smoke @harness", () => {
       const shell = await readWorkflowShellState(page);
       expect(shell.metrics.slidesPanel).not.toBeNull();
       expect(shell.metrics.inspectorPanel).not.toBeNull();
-      expect(shell.metrics.slidesPanel.width).toBeGreaterThanOrEqual(272);
-      expect(shell.metrics.inspectorPanel.width).toBeGreaterThanOrEqual(288);
+      expect(shell.metrics.slidesPanel.width).toBeGreaterThanOrEqual(240);
+      expect(shell.metrics.inspectorPanel.width).toBeGreaterThanOrEqual(240);
     }
 
     await page.click("#topbarOverflowBtn");

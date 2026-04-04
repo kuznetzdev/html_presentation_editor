@@ -5772,6 +5772,13 @@
             if (!selectionPayload) return;
             sendToBridge("select-element", selectionPayload);
           });
+          els.selectionBreadcrumbs.addEventListener("pointerleave", () => {
+            sendToBridge("highlight-node", { nodeId: null });
+          });
+          els.selectionBreadcrumbs.addEventListener("focusout", (event) => {
+            if (els.selectionBreadcrumbs.contains(event.relatedTarget)) return;
+            sendToBridge("highlight-node", { nodeId: null });
+          });
         }
 
         // Для полей инспектора используем input/change в зависимости от частоты
@@ -10249,12 +10256,16 @@
 
         function syncSlideToParent(slide, options = {}) {
           if (!slide) return;
+          var syncClone = slide.cloneNode(true);
+          ['data-editor-selected', 'data-editor-hover', 'data-editor-highlight', 'data-editor-flash'].forEach(function(a) {
+            syncClone.querySelectorAll('[' + a + ']').forEach(function(el) { el.removeAttribute(a); });
+          });
           post('document-sync', {
             slideId: slide.getAttribute(SLIDE_MARKER),
             activeSlideId: currentSlideId(),
             index: STATE.slides.findIndex((entry) => entry === slide),
             source: options.source || 'runtime',
-            html: slide.outerHTML,
+            html: syncClone.outerHTML,
           });
         }
 
@@ -11214,6 +11225,7 @@
         state.selectedAttrs = payload.attrs || {};
         state.manipulationContext = payload.manipulationContext || null;
         state.selectedEntityKind = getEntityKindFromPayload(payload);
+        clearOverlapGhostHighlight();
         const nextFlags = deriveSelectedFlagsFromPayload(payload);
         state.selectedFlags = nextFlags;
         state.selectedPolicy = normalizeSelectionPolicy(
@@ -12840,10 +12852,12 @@ ${exportDoc.documentElement.outerHTML}`;
           state.overlapHoverBoundDoc.removeEventListener("mouseleave", handleOverlapHoverLeave);
           state.overlapHoverBoundDoc = null;
         }
-        if (!doc || state.overlapHoverBoundDoc === doc) return;
-        doc.addEventListener("mousemove", handleOverlapHoverMove, { passive: true });
-        doc.addEventListener("mouseleave", handleOverlapHoverLeave, { passive: true });
-        state.overlapHoverBoundDoc = doc;
+        if (state.overlapHoverBoundDoc) {
+          state.overlapHoverBoundDoc.removeEventListener("mousemove", handleOverlapHoverMove);
+          state.overlapHoverBoundDoc.removeEventListener("mouseleave", handleOverlapHoverLeave);
+          state.overlapHoverBoundDoc = null;
+        }
+        clearOverlapGhostHighlight();
       }
 
       function runOverlapDetectionNow(reason = "manual") {

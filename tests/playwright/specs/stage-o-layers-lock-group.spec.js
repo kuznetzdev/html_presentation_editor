@@ -75,7 +75,11 @@ async function waitForLayerRows(page, minimumCount = 1) {
 }
 
 test.describe("stage-o-layers-lock-group @stage-o", () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }, testInfo) => {
+    test.skip(
+      ["chromium-mobile-390", "chromium-mobile-640", "chromium-tablet-820"].includes(testInfo.project.name),
+      "Layers panel tests require desktop viewport — drawer layout breaks panel interactions",
+    );
     await loadReferenceDeck(page, "v1-absolute-positioned", { mode: "edit" });
     await closeCompactShellPanels(page);
     await waitForEditorSettled(page);

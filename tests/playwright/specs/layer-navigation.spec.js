@@ -229,35 +229,44 @@ test.describe("LN4 — Breadcrumb hover ghost highlight", () => {
       const count = await crumbs.count();
       test.skip(count < 2, "Not enough breadcrumbs to test hover");
 
-      // Hover on the second crumb (an ancestor, not the leaf)
+      // Trigger the hover contract directly on the second crumb (an ancestor,
+      // not the leaf). This keeps the assertion stable even when nearby
+      // inspector affordances overlap the same screen area.
       const ancestorCrumb = crumbs.nth(1);
-      await ancestorCrumb.hover();
-      await page.waitForTimeout(300);
+      await ancestorCrumb.dispatchEvent("pointerenter");
 
       // Verify ghost highlight appeared inside iframe
-      const ghostExists = await evaluateEditor(
-        page,
-        `(() => {
-          const frame = document.getElementById("previewFrame");
-          const doc = frame?.contentDocument || null;
-          return !!doc?.querySelector('[data-editor-highlight="ghost"]');
-        })()`,
-      );
-      expect(ghostExists).toBe(true);
+      await expect
+        .poll(
+          () =>
+            evaluateEditor(
+              page,
+              `(() => {
+                const frame = document.getElementById("previewFrame");
+                const doc = frame?.contentDocument || null;
+                return !!doc?.querySelector('[data-editor-highlight="ghost"]');
+              })()`,
+            ),
+          { timeout: 3000 },
+        )
+        .toBe(true);
 
-      // Mouse leave — ghost should disappear
-      await page.mouse.move(0, 0);
-      await page.waitForTimeout(300);
+      await ancestorCrumb.dispatchEvent("pointerleave");
 
-      const ghostGone = await evaluateEditor(
-        page,
-        `(() => {
-          const frame = document.getElementById("previewFrame");
-          const doc = frame?.contentDocument || null;
-          return !!doc?.querySelector('[data-editor-highlight="ghost"]');
-        })()`,
-      );
-      expect(ghostGone).toBe(false);
+      await expect
+        .poll(
+          () =>
+            evaluateEditor(
+              page,
+              `(() => {
+                const frame = document.getElementById("previewFrame");
+                const doc = frame?.contentDocument || null;
+                return !!doc?.querySelector('[data-editor-highlight="ghost"]');
+              })()`,
+            ),
+          { timeout: 3000 },
+        )
+        .toBe(false);
     },
   );
 });
@@ -276,13 +285,16 @@ test.describe("LN5 — Export has no ghost/selection artifacts", () => {
       await previewClick(page, '[data-node-id="hero-title"]');
       await waitForNodeId(page, "hero-title");
 
-      // Trigger breadcrumb hover to also produce ghost highlight
+      // Trigger breadcrumb pointerenter to also produce ghost highlight.
+      // dispatchEvent is used instead of .hover() so this works regardless of
+      // whether the inspector panel is rendered as a drawer (compact viewports).
       const crumbs = page.locator(
         "#selectionBreadcrumbs button[data-selection-path-node-id]",
       );
       if ((await crumbs.count()) > 1) {
-        await crumbs.nth(1).hover();
-        await page.waitForTimeout(200);
+        await crumbs.nth(1).dispatchEvent("pointerenter");
+        await page.waitForTimeout(100);
+        await crumbs.nth(1).dispatchEvent("pointerleave");
       }
 
       // Read export from modelDoc
