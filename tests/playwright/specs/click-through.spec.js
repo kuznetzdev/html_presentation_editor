@@ -1,3 +1,6 @@
+
+
+
 /**
  * Click-Through Layer Selection — e2e tests (v0.16.0)
  *
@@ -22,6 +25,7 @@ const {
   loadReferenceDeck,
   openExportValidationPopup,
   previewLocator,
+  ensureShellPanelVisible,
 } = require("../helpers/editorApp");
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -74,6 +78,44 @@ function overlapCard(page) {
 function isolatedCard(page) {
   return previewLocator(page, ".slide:nth-child(2) .card:nth-child(1)");
 }
+
+// --- Inserted: Stack depth badge update test ---
+test(
+  "badge shows correct count when cycling candidates @stage-m",
+  async ({ page }, testInfo) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name));
+
+    await loadOverlapDeck(page);
+
+    // First click on the middle overlapping card
+    await overlapCard(page).click({ force: true });
+    await waitForAnySelection(page);
+
+    // Read candidate count from the editor state and assert badge accordingly
+    const candidateCount = await evaluateEditor(page, `state.clickThroughState?.candidates?.length || 0`);
+    const badge = page.locator("#stackDepthBadge");
+    if (candidateCount > 1) {
+      await ensureShellPanelVisible(page, "inspector");
+      await expect(badge).toBeVisible();
+      const badgeText1 = await badge.textContent();
+      expect(badgeText1).toMatch(/^1\s*\/\s*\d+/);
+
+      // Second click cycles to next candidate
+      await overlapCard(page).click({ force: true });
+      await waitForAnySelection(page);
+      const badgeText2 = await badge.textContent();
+      expect(badgeText2).toMatch(/^2\s*\/\s*\d+/);
+
+      // Click elsewhere to reset
+      await isolatedCard(page).click({ force: true, position: { x: 10, y: 10 } });
+      await waitForAnySelection(page);
+      // Badge should be hidden (single candidate)
+      await expect(badge).toBeHidden();
+    } else {
+      await expect(badge).toBeHidden();
+    }
+  },
+);
 
 // ─── CT1: Repeated click cycles through candidates ────────────────────────────
 
