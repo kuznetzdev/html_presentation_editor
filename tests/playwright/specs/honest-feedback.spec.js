@@ -1,3 +1,4 @@
+
 const { test, expect } = require("@playwright/test");
 const {
   BASIC_DECK_PATH,
@@ -12,6 +13,92 @@ const {
 } = require("../helpers/editorApp");
 
 test.describe("Honest feedback — block reason banners and stack depth @v0.19.0", () => {
+
+    // --- Inserted: transform/hidden/aria-live block reason tests ---
+    test("block banner shows transform reason for transform-blocked element @stage-f", async ({ page }) => {
+      await closeCompactShellPanels(page);
+      // Activate Slide 2 (positioning) so the transform-root element is visible
+      await evaluateEditor(page, `requestSlideActivation(state.slides[1]?.id, { reason: 'test' })`);
+      // Select the transform-blocked element in the basic deck
+      await clickPreview(page, "#unsafe-box");
+      await ensureShellPanelVisible(page, "inspector");
+
+      const banner = page.locator("#blockReasonBanner");
+      await expect(banner).toBeVisible();
+      const text = page.locator("#blockReasonText");
+      await expect(text).toContainText("transform");
+      // No action button for transform block
+      const actionBtn = page.locator("#blockReasonActionBtn");
+      await expect(actionBtn).toBeHidden();
+    });
+
+    test("block banner shows hidden reason for hidden element @stage-f", async ({ page }) => {
+      await closeCompactShellPanels(page);
+      // Simulate hiding an element and select it
+      await clickPreview(page, "#hero-title");
+      await ensureShellPanelVisible(page, "inspector");
+      // Hide the element via modelDoc
+      await evaluateEditor(page, `
+        const node = state.modelDoc.querySelector('[data-editor-node-id="' + state.selectedNodeId + '"]');
+        if (node) node.setAttribute('hidden', '');
+        updateInspectorFromSelection();
+      `);
+      const banner = page.locator("#blockReasonBanner");
+      await expect(banner).toBeVisible();
+      const text = page.locator("#blockReasonText");
+      await expect(text).toContainText("скрыт");
+      // Action button for hidden block
+      const actionBtn = page.locator("#blockReasonActionBtn");
+      await expect(actionBtn).toBeVisible();
+      await expect(actionBtn).toContainText("Показать");
+    });
+
+    test("block banner disappears when hidden block is resolved @stage-f", async ({ page }) => {
+      await closeCompactShellPanels(page);
+      await clickPreview(page, "#hero-title");
+      await ensureShellPanelVisible(page, "inspector");
+      // Hide the element
+      await evaluateEditor(page, `
+        const node = state.modelDoc.querySelector('[data-editor-node-id="' + state.selectedNodeId + '"]');
+        if (node) node.setAttribute('hidden', '');
+        updateInspectorFromSelection();
+      `);
+      const banner = page.locator("#blockReasonBanner");
+      await expect(banner).toBeVisible();
+      // Show the element again
+      await evaluateEditor(page, `
+        const node = state.modelDoc.querySelector('[data-editor-node-id="' + state.selectedNodeId + '"]');
+        if (node) node.removeAttribute('hidden');
+        updateInspectorFromSelection();
+      `);
+      await expect(banner).toBeHidden();
+    });
+
+    test("block reason banner updates aria-live region for screen readers @stage-f", async ({ page }) => {
+      await closeCompactShellPanels(page);
+      await clickPreview(page, "#hero-title");
+      await ensureShellPanelVisible(page, "inspector");
+
+      // Set zoom to trigger block reason
+      await evaluateEditor(page, `setPreviewZoom(1.25, true)`);
+      await evaluateEditor(page, `updateInspectorFromSelection()`);
+
+      const banner = page.locator("#blockReasonBanner");
+      await expect(banner).toBeVisible();
+      await expect(banner).toHaveAttribute("aria-live", "polite");
+      // Change block reason to hidden
+      await evaluateEditor(page, `
+        setPreviewZoom(1.0, true);
+        const node = state.modelDoc.querySelector('[data-editor-node-id="' + state.selectedNodeId + '"]');
+        if (node) node.setAttribute('hidden', '');
+        updateInspectorFromSelection();
+      `);
+      // Wait for banner text to update
+      const text = page.locator("#blockReasonText");
+      await expect(text).toContainText("скрыт");
+      // Banner should still have aria-live=polite
+      await expect(banner).toHaveAttribute("aria-live", "polite");
+    });
   test.beforeEach(async ({ page }) => {
     await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
   });
