@@ -2,7 +2,7 @@
 
 ## Current version
 
-`0.18.3`
+See `package.json` for current release version.
 
 ## Product state
 

@@ -13,8 +13,8 @@ need deeper deck surgery.
 
 ## Current state
 
-- Current package version: `0.18.3`
-- Main runtime file: `editor/presentation-editor-v0.18.3.html`
+- Current version: see `package.json`
+- Main runtime file: `editor/presentation-editor.html`
 - Architecture remains fixed: `parent shell + iframe preview + bridge + modelDoc`
 - Focused Stage D-F Playwright shell proof: green
 - Asset parity validation: green
@@ -52,7 +52,7 @@ need deeper deck surgery.
 
 ## Repository entry points
 
-- `editor/presentation-editor-v0.18.3.html`
+- `editor/presentation-editor.html`
   Current editor runtime
 - `docs/SOURCE_OF_TRUTH.md`
   Product and architecture invariants

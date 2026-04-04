@@ -1498,7 +1498,7 @@
         flex: 1;
         min-width: 0;
         min-height: 0;
-        overflow: hidden;
+        overflow: auto; /* [v0.18.4] Enable scroll when zoom > 100% */
         border: 1px solid var(--canvas-stage-border);
         border-radius: 16px;
         background: var(--canvas-stage-bg);
@@ -9065,8 +9065,9 @@
           if (policy.kind !== 'free' && !isSlideRoot(el)) {
             score -= entityKind === 'svg' || entityKind === 'fragment' ? 16 : 160;
           }
-          if ((computed.position === 'absolute' || computed.position === 'fixed') && !canEditText(el) && explicitEditable !== 'true') {
-            score -= 36;
+          // [v0.18.4] Reduced penalty for absolutely positioned elements to improve selectability
+          if (computed.position === 'fixed' && !canEditText(el) && explicitEditable !== 'true') {
+            score -= 12;
           }
           if (!el.children.length) score += 12;
           else score -= Math.min(28, el.children.length * 4);
@@ -10905,10 +10906,15 @@
         clearSlideSyncLock(slideId, normalizedSeq);
       }
 
+      // [v0.18.4] Seq drift tolerance to reduce false positive desync warnings
+      const SEQ_DRIFT_TOLERANCE = 2;
+
       function isStaleInboundSeq(slideId, seq) {
         const normalizedSeq = Number(seq || 0);
+        const lastApplied = Number(state.lastAppliedSeqBySlide[slideId] || 0);
         if (!slideId || !normalizedSeq) return false;
-        return normalizedSeq < Number(state.lastAppliedSeqBySlide[slideId] || 0);
+        const drift = Math.abs(normalizedSeq - lastApplied);
+        return drift > SEQ_DRIFT_TOLERANCE && normalizedSeq < lastApplied;
       }
 
       function shouldIgnoreLockedDocumentSync(slideId, seq) {
@@ -11417,7 +11423,9 @@
         const html = payload.html;
         if (!slideId || !html || !state.modelDoc) return;
         if (isStaleInboundSeq(slideId, seq)) {
-          addDiagnostic(`slide-update-stale:${slideId}:${seq}`);
+          const localSeq = Number(state.lastAppliedSeqBySlide[slideId] || 0);
+          const drift = Math.abs(localSeq - seq);
+          addDiagnostic(`slide-update-stale:${slideId}:${seq} (drift=${drift}, tolerance=${SEQ_DRIFT_TOLERANCE})`);
           markPreviewDesync(`slide-update-stale:${slideId}:${seq}`, { toast: false });
           return;
         }
@@ -16378,7 +16386,9 @@ ${exportDoc.documentElement.outerHTML}`;
           return;
         }
         if (isStaleInboundSeq(slideId, seq)) {
-          addDiagnostic(`document-sync-stale:${slideId}:${seq}`);
+          const localSeq = Number(state.lastAppliedSeqBySlide[slideId] || 0);
+          const drift = Math.abs(localSeq - seq);
+          addDiagnostic(`document-sync-stale:${slideId}:${seq} (drift=${drift}, tolerance=${SEQ_DRIFT_TOLERANCE})`);
           markPreviewDesync(`document-sync-stale:${slideId}:${seq}`, { toast: false });
           return;
         }

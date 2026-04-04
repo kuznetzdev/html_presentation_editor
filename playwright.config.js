@@ -32,7 +32,7 @@ module.exports = defineConfig({
   },
   webServer: {
     command: "node scripts/static-server.js . 4173 127.0.0.1",
-    url: "http://127.0.0.1:4173/editor/presentation-editor-v0.18.3.html",
+    url: "http://127.0.0.1:4173/editor/presentation-editor.html",
     reuseExistingServer: !process.env.CI,
     timeout: 30_000,
   },
