@@ -13814,6 +13814,20 @@ ${exportDoc.documentElement.outerHTML}`;
       // [v0.19.0 ADR-001] Block reason protocol
       function getBlockReason() {
         if (state.previewZoom !== 1) return "zoom";
+        // [v0.19.1] Detect hidden elements as a block reason
+        try {
+          const selId = state.selectedNodeId;
+          if (selId && state.modelDoc) {
+            const selNode = state.modelDoc.querySelector('[data-editor-node-id="' + selId + '"]');
+            if (selNode) {
+              if (selNode.hasAttribute('hidden') || selNode.getAttribute('aria-hidden') === 'true') return 'hidden';
+              const styleAttr = selNode.getAttribute('style') || '';
+              if (styleAttr.includes('display:none') || styleAttr.includes('visibility:hidden')) return 'hidden';
+            }
+          }
+        } catch (err) {
+          /* ignore inspection errors */
+        }
         if (!state.manipulationContext) return "none";
         if (state.manipulationContext.directManipulationSafe === false) {
           const reason = String(state.manipulationContext.directManipulationReason || "").toLowerCase();
