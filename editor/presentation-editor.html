@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
@@ -5992,7 +5992,7 @@
           els.ftBoldBtn,
           els.ftItalicBtn,
         ].forEach((btn) => {
-          btn.addEventListener("mouseenter", flashSelectedElement);
+          // mouseenter flash removed — avoids ghost glow when toolbar appears under cursor
         });
 
         els.replaceImageInput.addEventListener("change", async () => {
@@ -17943,14 +17943,7 @@ ${exportDoc.documentElement.outerHTML}`;
           handleContextMenuAction(action);
         });
 
-        els.contextMenu.addEventListener(
-          "mouseenter",
-          (event) => {
-            if (event.target?.closest?.("[data-menu-action]"))
-              flashSelectedElement();
-          },
-          true,
-        );
+        // mouseenter flash on context menu removed — avoids ghost glow on hover
 
         els.contextMenu.addEventListener("pointerover", (event) => {
           const _lBtn = event.target?.closest?.("[data-layer-node-id]");
