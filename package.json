@@ -4,11 +4,14 @@
   "description": "Local HTML presentation editor with Playwright regression coverage.",
   "private": true,
   "scripts": {
-    "start": "node scripts/static-server.js . 4173 127.0.0.1",
-    "start:host": "node scripts/static-server.js . 4173 0.0.0.0",
+    "start": "node scripts/run-local-editor.js",
     "start:open": "node scripts/run-local-editor.js",
+    "serve": "node scripts/static-server.js . 4173 127.0.0.1",
+    "serve:host": "node scripts/static-server.js . 4173 0.0.0.0",
     "docker:build": "docker build -t html-presentation-editor:local .",
     "docker:run": "docker run --rm -p 4173:4173 html-presentation-editor:local",
+    "smoke": "npm run test:gate-a",
+    "test:install-browsers": "playwright install",
     "test": "playwright test",
     "test:pw": "playwright test",
     "test:pw:headed": "playwright test --headed",
@@ -34,6 +37,9 @@
   "author": "Codex hardening workflow",
   "license": "ISC",
   "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
   "bugs": {
     "url": "https://github.com/kuznetzdev/html_presentation_editor/issues"
   },

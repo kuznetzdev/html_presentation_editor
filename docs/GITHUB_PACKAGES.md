@@ -24,6 +24,17 @@ Recommended package surface:
 - `.dockerignore` to keep the image lean
 - `.github/workflows/publish-ghcr.yml` to publish on version tags or manual dispatch
 
+## Important GitHub-side note
+
+Based on the current GitHub Packages behavior for personal-account packages:
+
+- the first published GHCR package usually starts private
+- after the first publish, set package visibility to `Public` once in GitHub UI
+- public GHCR container images can then be pulled anonymously
+
+That makes GHCR a good adoption path for this repository: reviewers can pull a
+known-good image without cloning or authenticating.
+
 ## Anti-recommendations
 
 Do not publish this repo as:

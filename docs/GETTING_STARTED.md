@@ -14,7 +14,7 @@ Prerequisite:
 Command:
 
 ```bash
-npm run start
+npm start
 ```
 
 Then open:
@@ -27,15 +27,15 @@ From there:
 
 - `Open Editor` goes to the active runtime
 - `Open Compatibility Entry` goes through the legacy shim
+- `Open Sample Gallery` gives you ready-made HTML decks from `references_pres/`
 
-## Fastest launch with automatic browser open
+## Headless local serving
 
 ```bash
-npm run start:open
+npm run serve
 ```
 
-This starts the local static server and opens the launchpad in your default
-browser.
+This starts the local static server without opening the browser automatically.
 
 ## Direct runtime URL
 
@@ -43,13 +43,23 @@ If you already know what you are doing, open the runtime directly:
 
 - `http://127.0.0.1:4173/editor/presentation-editor-v0.19.1.html`
 
+## Starter sample deck
+
+If you want a zero-prep file to load into the editor first, use:
+
+- `references_pres/html-presentation-examples_v3/01_basic_minimal.html`
+
+Or browse the local sample gallery:
+
+- `http://127.0.0.1:4173/references_pres/html-presentation-examples_v3/00_examples_index.html`
+
 ## Run the test gate
 
 For Playwright-based verification, install dependencies first:
 
 ```bash
 npm install
-npx playwright install
+npm run test:install-browsers
 npm run test:gate-a
 ```
 

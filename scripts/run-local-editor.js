@@ -6,6 +6,7 @@ const serverScript = path.join(__dirname, "static-server.js");
 const serverHost = process.env.EDITOR_HOST || "127.0.0.1";
 const serverPort = process.env.EDITOR_PORT || "4173";
 const launchUrl = process.env.EDITOR_ENTRY_URL || `http://${serverHost}:${serverPort}/`;
+const autoOpenEnabled = process.env.EDITOR_NO_OPEN !== "1";
 
 function openBrowser(url) {
   const platform = process.platform;
@@ -42,6 +43,10 @@ let opened = false;
 function tryOpenBrowser() {
   if (opened) return;
   opened = true;
+  if (!autoOpenEnabled) {
+    console.log(`local launchpad available at ${launchUrl}`);
+    return;
+  }
   try {
     const opener = openBrowser(launchUrl);
     opener.unref();

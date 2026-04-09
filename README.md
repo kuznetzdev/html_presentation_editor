@@ -16,23 +16,26 @@ need deeper deck surgery.
 Fastest local path:
 
 ```bash
-# serve the repo locally on http://127.0.0.1:4173
-npm run start
+# start the local launchpad and open it in your browser
+npm start
 
-# optional: start the server and open the browser automatically
-npm run start:open
+# headless local serving if you do not want auto-open
+npm run serve
 ```
 
 Then open:
 
 - `http://127.0.0.1:4173/` for the local launchpad
 - `http://127.0.0.1:4173/editor/presentation-editor-v0.19.1.html` for the active runtime directly
+- `http://127.0.0.1:4173/references_pres/html-presentation-examples_v3/00_examples_index.html`
+  for a ready-made sample gallery
 
 Important:
 
-- You do not need `npm install` just to launch the local editor
+- You do not need `npm install` just to launch the local editor locally
 - You do need `npm install` for Playwright-based tests
 - The repo root now acts as the default first-stop entrypoint for humans
+- Sample HTML decks already ship in `references_pres/` if you want a no-prep first run
 
 ## Current state
 
@@ -104,14 +107,17 @@ Important:
 ## Development commands
 
 ```bash
-# Start the local editor
-npm run start
+# Start the local editor and open the launchpad
+npm start
 
-# Start and open the browser automatically
-npm run start:open
+# Serve locally without auto-opening the browser
+npm run serve
 
 # Serve on all interfaces (useful for LAN / VM testing)
-npm run start:host
+npm run serve:host
+
+# Install Playwright browsers once before UI test runs
+npm run test:install-browsers
 
 # Full test suite (all projects)
 npm test
@@ -134,6 +140,9 @@ npm run test:gate-d
 # Nightly full confidence gate (all specs, all projects)
 npm run test:gate-f
 
+# Fast smoke alias
+npm run smoke
+
 # Build and run the local container entrypoint
 npm run docker:build
 npm run docker:run
@@ -143,12 +152,13 @@ npm run docker:run
 
 ### Just open the editor
 
-Use `npm run start` and go to `http://127.0.0.1:4173/`.
+Use `npm start` and go to `http://127.0.0.1:4173/`.
 
 That launchpad gives you:
 
 - the primary `Open Editor` path
 - a direct link to the compatibility shim
+- a direct link to the sample gallery under `references_pres/`
 - the current release/runtime identity
 - the quickest docs for first use
 
@@ -156,7 +166,7 @@ That launchpad gives you:
 
 ```bash
 npm install
-npx playwright install
+npm run test:install-browsers
 npm run test:gate-a
 ```
 
@@ -185,6 +195,12 @@ Prepared in-repo:
 - `Dockerfile`
 - `.dockerignore`
 - `.github/workflows/publish-ghcr.yml`
+
+Operational note:
+
+- for personal-account packages, the first GHCR publish usually lands as private
+- after first publish, set the package visibility to `Public` once in GitHub UI
+- public GHCR images can then be pulled anonymously
 
 See `docs/GITHUB_PACKAGES.md` for the exact recommendation and tradeoffs.
 
