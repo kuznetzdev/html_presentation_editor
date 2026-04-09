@@ -1,4 +1,4 @@
-# v0.19.0 p2 hardening report
+# v0.19.1 release hardening report
 
 ## Scope
 
@@ -10,7 +10,7 @@
 
 This pass was limited to three repository-level goals:
 
-1. restore semver runtime discipline around the active `0.19.0` artifact
+1. restore semver runtime discipline around the active `0.19.1` artifact
 2. remove shell-owned silent fallback behavior in targeted storage/export paths
 3. reduce blast radius inside the monolithic runtime by re-zoning the touched logic
 
@@ -18,7 +18,7 @@ This pass was limited to three repository-level goals:
 
 ### 1. Semver runtime discipline
 
-- canonical runtime now ships as `editor/presentation-editor-v0.19.0.html`
+- canonical runtime now ships as `editor/presentation-editor-v0.19.1.html`
 - `editor/presentation-editor.html` is now a compatibility-only redirect shim
 - Playwright harness and export tooling now target the versioned runtime directly
 - package metadata, changelog, project skills, and repository docs now point to one canonical runtime artifact
@@ -82,7 +82,7 @@ Added or extended coverage for:
 
 After this batch:
 
-- the repository has one canonical `0.19.0` runtime target
+- the repository has one canonical `0.19.1` runtime target
 - the old unversioned entrypoint no longer acts as a second editable source
 - shell-owned persistence and cleanup failures in the touched zones fail honestly
 - export remains clean even after interaction-heavy shell flows
@@ -122,4 +122,4 @@ After this batch:
 
 ## Release-ready summary
 
-`v0.19.0-p2-hardening` restores semver runtime discipline, converts the legacy unversioned editor entrypoint into a compatibility shim, removes targeted silent shell-storage/export fallbacks, and adds regression coverage to prove export cleanliness after interaction-heavy shell flows. The shipping architecture remains unchanged, autosave stays on schema v3, and the novice workflow contract remains intact. All targeted proofs plus gates A, B, asset parity, and D passed on the final batch. 
+`v0.19.1` restores semver runtime discipline, keeps the legacy unversioned editor entrypoint as a compatibility shim, preserves the targeted silent-fallback hardening from the p2 batch, and ships the same export-cleanliness guarantees under a normal patch-release tag. The architecture remains unchanged, autosave stays on schema v3, and the novice workflow contract remains intact. All targeted proofs plus gates A, B, asset parity, and D passed on the final batch.

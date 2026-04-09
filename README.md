@@ -14,7 +14,7 @@ need deeper deck surgery.
 ## Current state
 
 - Current version: see `package.json`
-- Main runtime file: `editor/presentation-editor-v0.19.0.html`
+- Main runtime file: `editor/presentation-editor-v0.19.1.html`
 - Compatibility entrypoint: `editor/presentation-editor.html` redirect shim only
 - Architecture remains fixed: `parent shell + iframe preview + bridge + modelDoc`
 - Targeted proof set: green
@@ -55,7 +55,7 @@ need deeper deck surgery.
 
 ## Repository entry points
 
-- `editor/presentation-editor-v0.19.0.html`
+- `editor/presentation-editor-v0.19.1.html`
   Current editor runtime
 - `editor/presentation-editor.html`
   Compatibility shim that forwards to the active semver runtime

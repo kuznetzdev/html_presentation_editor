@@ -5,7 +5,7 @@ This reference exists to keep the skill grounded in the real repository instead 
 ## Product Definition
 
 - Main repo root: `C:\Users\Kuznetz\Desktop\proga\html_presentation_editor`
-- Live editor runtime: `editor/presentation-editor-v0.19.0.html`
+- Live editor runtime: `editor/presentation-editor-v0.19.1.html`
 - Package entrypoint: `package.json`
 
 The product is a local visual editor for existing HTML slide decks.
@@ -68,7 +68,7 @@ When sources disagree, resolve them in this order:
 2. `docs/PROJECT_SUMMARY.md`
 3. `docs/ROADMAP_NEXT.md`
 4. targeted existing tests
-5. current implementation in `editor/presentation-editor-v0.19.0.html`
+5. current implementation in `editor/presentation-editor-v0.19.1.html`
 
 This matters because the implementation is still a large single file and may contain temporary structure debt. Code reflects current behavior; docs define intended truth.
 
@@ -192,7 +192,7 @@ Helpers and fixtures:
 
 ## Editing Heuristics
 
-When touching `presentation-editor-v0.19.0.html`:
+When touching `presentation-editor-v0.19.1.html`:
 
 - locate the responsible zone first
 - keep refactors contiguous

@@ -149,7 +149,7 @@ test.describe("Editor shell smoke @harness", () => {
     await page.addInitScript(() => {
       window.localStorage.setItem("presentation-editor:theme:v1", "dark");
     });
-    await page.goto("/editor/presentation-editor-v0.19.0.html", {
+    await page.goto("/editor/presentation-editor-v0.19.1.html", {
       waitUntil: "domcontentloaded",
     });
     await expect(page.locator("#openHtmlBtn")).toBeVisible();

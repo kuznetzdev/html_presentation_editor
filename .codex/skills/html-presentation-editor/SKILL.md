@@ -1,6 +1,6 @@
 ---
 name: html-presentation-editor
-description: Project-local skill for kuznetzdev/html_presentation_editor. Use before any work on the editor runtime, shell UI, theme system, transient surface routing, bridge/modelDoc synchronization, slide model, direct manipulation, export/assets, and Playwright regression coverage around `editor/presentation-editor-v0.19.0.html`.
+description: Project-local skill for kuznetzdev/html_presentation_editor. Use before any work on the editor runtime, shell UI, theme system, transient surface routing, bridge/modelDoc synchronization, slide model, direct manipulation, export/assets, and Playwright regression coverage around `editor/presentation-editor-v0.19.1.html`.
 risk: medium
 source: project
 version: "1.3"
@@ -14,7 +14,7 @@ Project-local operating rules for `kuznetzdev/html_presentation_editor`.
 
 Primary runtime file:
 
-- `editor/presentation-editor-v0.19.0.html`
+- `editor/presentation-editor-v0.19.1.html`
 
 Primary documents:
 

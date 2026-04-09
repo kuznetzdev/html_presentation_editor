@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.19.1 - release hardening sync and proper semver patch tag - 2026-04-10
+- promoted the active runtime artifact to `editor/presentation-editor-v0.19.1.html` so the shipped tag, package metadata, docs, harness, and compatibility shim all point at one normal semver release
+- archived the previous `0.19.0` runtime to `docs/history/presentation-editor-v0.19.0.html` and removed the root-level `editor/presentation-editor-v0.19.0.html` runtime from active use
+- refreshed project docs, local skills, and GitHub release artifacts to describe the proper `v0.19.1` patch release instead of the temporary non-semver hardening tag
+- retained the `0.19.0` behavior contract: no bridge protocol changes, autosave stays on schema `v3`, export remains clean, and novice workflow remains `empty -> loaded-preview -> loaded-edit`
+
 ## 0.19.0 - honest feedback: block reason banners, stack depth badge, action hints - 2026-04-04
 - **Block reason protocol (ADR-001)**: replaced boolean `hasBlockedDirectManipulationContext()` with `getBlockReason()` enum returning specific reason: `zoom`, `locked`, `own-transform`, `parent-transform`, `slide-transform`, `hidden`, or `none`
 - **Block reason banner**: inline banner below selection overlay shows human-readable block reason with one-click resolution action:
@@ -11,7 +17,7 @@
 - **Stack depth badge (ADR-002)**: `1/N` counter badge appears next to breadcrumbs when multiple candidates exist under cursor point, showing current position in click-through stack
 - **Action-oriented summary copy**: `getSelectedElementSummary()` updated for all entity kinds to show actionable guidance ("Дважды кликните, чтобы начать печатать", "Можно перемещать и масштабировать мышкой") and surfaces block reason as primary feedback when manipulation is blocked
 - **Playwright coverage**: new `honest-feedback.spec.js` (9 tests) covering block banner per reason, action resolution, lock priority, summary copy, stack badge, banner lifecycle, and export cleanliness
-- **Semver runtime sync restored**: canonical runtime now ships as `editor/presentation-editor-v0.19.0.html`, while `editor/presentation-editor.html` is reduced to a compatibility shim so package metadata, docs, and Playwright harness point at one release artifact again
+- **Semver runtime sync restored**: canonical runtime now ships as `editor/presentation-editor-v0.19.1.html`, while `editor/presentation-editor.html` is reduced to a compatibility shim so package metadata, docs, and Playwright harness point at one release artifact again
 - **P2 zoning pass**: removed the late “v3 UX EXTENSIONS” override framing and re-labeled the runtime into explicit ownership bands for shell routing, selection/direct-manip feedback, history/autosave/export, and shell storage persistence
 - **Honest storage/export cleanup**: replaced remaining silent shell-owned storage/export catches with diagnostics via `reportShellWarning(...)` for export URL cleanup, autosave clear/restore, copied-style persistence, selection-mode persistence, preview-zoom persistence, and theme preference loading
 - **Clean export invariant**: export stripping now removes `data-editor-ui="true"` nodes before serialization and records any lingering editor-only residue in diagnostics instead of silently continuing

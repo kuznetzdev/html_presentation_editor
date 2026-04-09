@@ -1,22 +1,22 @@
-# GitHub Release Body: v0.19.0-p2-hardening
+# GitHub Release Body: v0.19.1
 
 ## Title
 
-`v0.19.0-p2-hardening`
+`v0.19.1`
 
 ## Tag
 
-`v0.19.0-p2-hardening`
+`v0.19.1`
 
 ## Suggested release subtitle
 
-Semver runtime sync, honest shell persistence/export failures, and export-cleanliness hardening
+Patch release for semver runtime sync and hardened shell persistence/export behavior
 
 ## Release body
 
 ### Highlights
 
-- restored semver runtime discipline around the active `0.19.0` editor artifact
+- restored semver runtime discipline around the active `0.19.1` editor artifact
 - converted `editor/presentation-editor.html` into a compatibility-only shim
 - removed targeted silent fallback behavior in shell-owned storage/export paths
 - added regression coverage for interaction-heavy export-cleanliness scenarios
@@ -26,7 +26,7 @@ Semver runtime sync, honest shell persistence/export failures, and export-cleanl
 
 #### Semver runtime sync
 
-- the canonical editor runtime is now `editor/presentation-editor-v0.19.0.html`
+- the canonical editor runtime is now `editor/presentation-editor-v0.19.1.html`
 - the legacy unversioned entrypoint `editor/presentation-editor.html` no longer acts as a second editable runtime source
 - Playwright harness, asset-parity tooling, package metadata, and project docs now point to one canonical runtime artifact
 
@@ -116,16 +116,17 @@ Added or extended coverage for:
 - `0751d11` `test(editor): Cover export hygiene and storage diagnostics`
 - `3d6f708` `docs(editor): Refresh runtime and verification status`
 - `1c0d9ae` `docs(release): Add v0.19.0 p2 hardening report`
+- `b18f111` `docs(github): Add release body for v0.19.0 p2 hardening`
 
 ### Links
 
 - Release engineering report:
-  - `docs/report-v0.19.0-p2-hardening.md`
+  - `docs/report-v0.19.1-release-hardening.md`
 - Compare:
-  - [v0.19.0...v0.19.0-p2-hardening](https://github.com/kuznetzdev/html_presentation_editor/compare/v0.19.0...v0.19.0-p2-hardening)
+  - [v0.19.0...v0.19.1](https://github.com/kuznetzdev/html_presentation_editor/compare/v0.19.0...v0.19.1)
 - Tag:
-  - [v0.19.0-p2-hardening](https://github.com/kuznetzdev/html_presentation_editor/releases/tag/v0.19.0-p2-hardening)
+  - [v0.19.1](https://github.com/kuznetzdev/html_presentation_editor/releases/tag/v0.19.1)
 
 ## Short GitHub release summary
 
-`v0.19.0-p2-hardening` restores semver runtime discipline, converts the legacy unversioned editor entrypoint into a compatibility shim, removes targeted silent shell-storage/export fallbacks, and adds regression coverage to prove export cleanliness after interaction-heavy shell flows. The shipping architecture remains unchanged, autosave stays on schema v3, and the novice workflow contract remains intact. All targeted proofs plus gates A, B, asset parity, and D passed on the final batch.
+`v0.19.1` promotes the hardened `0.19.x` editor state under a normal semver patch tag, keeps the legacy unversioned editor entrypoint as a compatibility shim, preserves the targeted shell-storage/export honesty improvements, and ships the same export-cleanliness guarantees with synchronized package, docs, harness, and release metadata.

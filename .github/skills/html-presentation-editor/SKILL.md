@@ -30,7 +30,7 @@ Use this skill with a full front-end engineering mindset:
 
 ## Architecture Overview
 
-**Single monolithic file**: `editor/presentation-editor-v0.19.0.html` (~20 000 lines)  
+**Single monolithic file**: `editor/presentation-editor-v0.19.1.html` (~20 000 lines)  
 **Three-layer architecture (non-negotiable)**:
 
 | Layer | What it owns |
