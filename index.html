@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HTML Presentation Editor</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f5f2e8;
+        --card: rgba(255, 252, 244, 0.9);
+        --ink: #1e2430;
+        --muted: #5f6776;
+        --line: rgba(30, 36, 48, 0.12);
+        --accent: #0f766e;
+        --accent-strong: #115e59;
+        --accent-soft: rgba(15, 118, 110, 0.12);
+        --shadow: 0 24px 64px rgba(36, 41, 49, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "Inter", "Helvetica Neue", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 26rem),
+          radial-gradient(circle at bottom right, rgba(180, 83, 9, 0.08), transparent 22rem),
+          var(--bg);
+      }
+
+      main {
+        width: min(1080px, calc(100vw - 2rem));
+        margin: 0 auto;
+        padding: 2rem 0 3rem;
+      }
+
+      .hero,
+      .panel {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(12px);
+      }
+
+      .hero {
+        padding: 2rem;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.35rem 0.7rem;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent-strong);
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 1rem 0 0.75rem;
+        font-size: clamp(2.3rem, 5vw, 4.4rem);
+        line-height: 0.96;
+        letter-spacing: -0.04em;
+      }
+
+      .lead {
+        max-width: 48rem;
+        margin: 0 0 1.5rem;
+        color: var(--muted);
+        font-size: 1.06rem;
+        line-height: 1.6;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.85rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 3rem;
+        padding: 0.8rem 1.2rem;
+        border-radius: 14px;
+        text-decoration: none;
+        font-weight: 700;
+        transition:
+          transform 120ms ease,
+          box-shadow 120ms ease,
+          background-color 120ms ease;
+      }
+
+      .button:hover {
+        transform: translateY(-1px);
+      }
+
+      .button.primary {
+        color: #ffffff;
+        background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+        box-shadow: 0 18px 36px rgba(15, 118, 110, 0.22);
+      }
+
+      .button.secondary {
+        color: var(--ink);
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid var(--line);
+      }
+
+      .meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 0.9rem;
+      }
+
+      .meta-card {
+        padding: 1rem;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.66);
+        border: 1px solid var(--line);
+      }
+
+      .meta-card strong,
+      .meta-card code {
+        display: block;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .panel {
+        padding: 1.4rem;
+      }
+
+      .panel h2 {
+        margin: 0 0 0.9rem;
+        font-size: 1.15rem;
+      }
+
+      .panel p,
+      .panel li {
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .panel ol,
+      .panel ul {
+        margin: 0;
+        padding-left: 1.2rem;
+      }
+
+      pre {
+        margin: 1rem 0 0;
+        padding: 1rem;
+        border-radius: 16px;
+        overflow-x: auto;
+        background: #18202a;
+        color: #eff6ff;
+      }
+
+      .link-list {
+        display: grid;
+        gap: 0.7rem;
+      }
+
+      .doc-link {
+        display: block;
+        padding: 0.95rem 1rem;
+        border-radius: 16px;
+        color: inherit;
+        text-decoration: none;
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid var(--line);
+      }
+
+      .doc-link strong {
+        display: block;
+        margin-bottom: 0.25rem;
+      }
+
+      .doc-link span {
+        color: var(--muted);
+      }
+
+      @media (max-width: 860px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
+        main {
+          width: min(100vw - 1rem, 1080px);
+        }
+
+        .hero,
+        .panel {
+          border-radius: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="hero">
+        <div class="eyebrow">Local launchpad</div>
+        <h1>HTML Presentation Editor</h1>
+        <p class="lead">
+          This repository already contains the application. Start a local static server,
+          open the root URL, and jump straight into the active editor runtime without
+          guessing paths or reading the codebase first.
+        </p>
+        <div class="actions">
+          <a class="button primary" href="/editor/presentation-editor-v0.19.1.html">Open Editor</a>
+          <a class="button secondary" href="/editor/presentation-editor.html">Open Compatibility Entry</a>
+          <a class="button secondary" href="/docs/GETTING_STARTED.md">Read Getting Started</a>
+        </div>
+        <div class="meta">
+          <div class="meta-card">
+            <strong>Active runtime</strong>
+            <code>editor/presentation-editor-v0.19.1.html</code>
+          </div>
+          <div class="meta-card">
+            <strong>Default local URL</strong>
+            <code>http://127.0.0.1:4173/</code>
+          </div>
+          <div class="meta-card">
+            <strong>Fastest command</strong>
+            <code>npm run start</code>
+          </div>
+        </div>
+      </section>
+
+      <section class="layout">
+        <article class="panel">
+          <h2>1-minute local start</h2>
+          <ol>
+            <li>Make sure Node.js 18+ is available.</li>
+            <li>Run <code>npm run start</code> in the repo root.</li>
+            <li>Open <code>http://127.0.0.1:4173/</code>.</li>
+            <li>Click <strong>Open Editor</strong>.</li>
+          </ol>
+          <pre><code>npm run start
+
+# optional convenience mode
+npm run start:open</code></pre>
+        </article>
+
+        <aside class="panel">
+          <h2>What to open next</h2>
+          <div class="link-list">
+            <a class="doc-link" href="/docs/GETTING_STARTED.md">
+              <strong>Getting started</strong>
+              <span>Fast local run, tests, Docker, and first actions.</span>
+            </a>
+            <a class="doc-link" href="/docs/PROJECT_SUMMARY.md">
+              <strong>Project summary</strong>
+              <span>Current runtime, constraints, and signed-off behavior.</span>
+            </a>
+            <a class="doc-link" href="/docs/GITHUB_PACKAGES.md">
+              <strong>GitHub Packages plan</strong>
+              <span>Why GHCR is useful here and npm packages are not.</span>
+            </a>
+            <a class="doc-link" href="/docs/CHANGELOG.md">
+              <strong>Changelog</strong>
+              <span>Release-level engineering history and runtime sync.</span>
+            </a>
+          </div>
+        </aside>
+      </section>
+    </main>
+  </body>
+</html>

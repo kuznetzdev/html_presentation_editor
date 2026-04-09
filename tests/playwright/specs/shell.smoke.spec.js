@@ -31,6 +31,22 @@ async function readViewportWidth(page) {
 }
 
 test.describe("Editor shell smoke @harness", () => {
+  test("root launchpad routes first-time user to the active editor runtime @harness", async ({
+    page,
+  }) => {
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+
+    await expect(
+      page.getByRole("heading", { name: "HTML Presentation Editor" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Open Editor" }),
+    ).toHaveAttribute("href", "/editor/presentation-editor-v0.19.1.html");
+
+    await page.getByRole("link", { name: "Open Editor" }).click();
+    await expect(page.locator("#openHtmlBtn")).toBeVisible();
+  });
+
   test("open html modal keeps shell stable @harness", async ({ page }) => {
     await gotoFreshEditor(page);
 

@@ -4,6 +4,11 @@
   "description": "Local HTML presentation editor with Playwright regression coverage.",
   "private": true,
   "scripts": {
+    "start": "node scripts/static-server.js . 4173 127.0.0.1",
+    "start:host": "node scripts/static-server.js . 4173 0.0.0.0",
+    "start:open": "node scripts/run-local-editor.js",
+    "docker:build": "docker build -t html-presentation-editor:local .",
+    "docker:run": "docker run --rm -p 4173:4173 html-presentation-editor:local",
     "test": "playwright test",
     "test:pw": "playwright test",
     "test:pw:headed": "playwright test --headed",

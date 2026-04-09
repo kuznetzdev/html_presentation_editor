@@ -3,7 +3,12 @@
 ## editor/
 Актуальный файл редактора.
 
+# Repository structure
+
+- `index.html` — локальная стартовая страница и человеко-понятная точка входа
 - `presentation-editor-v0.19.1.html` — текущий активный runtime редактора
+- `GETTING_STARTED.md` — быстрый запуск, тесты и Docker/GHCR путь
+- `GITHUB_PACKAGES.md` — зафиксированная стратегия по GitHub Packages
 - `presentation-editor.html` — compatibility shim, перенаправляет на активный semver runtime
 
 ## docs/

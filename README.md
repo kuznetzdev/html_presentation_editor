@@ -11,6 +11,29 @@ must feel closer to a standard presentation tool than to DevTools. Advanced
 mode is allowed to expose structure, HTML, and low-level controls for users who
 need deeper deck surgery.
 
+## Start here
+
+Fastest local path:
+
+```bash
+# serve the repo locally on http://127.0.0.1:4173
+npm run start
+
+# optional: start the server and open the browser automatically
+npm run start:open
+```
+
+Then open:
+
+- `http://127.0.0.1:4173/` for the local launchpad
+- `http://127.0.0.1:4173/editor/presentation-editor-v0.19.1.html` for the active runtime directly
+
+Important:
+
+- You do not need `npm install` just to launch the local editor
+- You do need `npm install` for Playwright-based tests
+- The repo root now acts as the default first-stop entrypoint for humans
+
 ## Current state
 
 - Current version: see `package.json`
@@ -55,10 +78,16 @@ need deeper deck surgery.
 
 ## Repository entry points
 
+- `index.html`
+  Human-friendly local launchpad for first-time users
 - `editor/presentation-editor-v0.19.1.html`
   Current editor runtime
 - `editor/presentation-editor.html`
   Compatibility shim that forwards to the active semver runtime
+- `docs/GETTING_STARTED.md`
+  Quick runbook for first local launch, tests, and Docker
+- `docs/GITHUB_PACKAGES.md`
+  Recommended GitHub Packages strategy for this repo
 - `docs/SOURCE_OF_TRUTH.md`
   Product and architecture invariants
 - `docs/PROJECT_SUMMARY.md`
@@ -75,6 +104,15 @@ need deeper deck surgery.
 ## Development commands
 
 ```bash
+# Start the local editor
+npm run start
+
+# Start and open the browser automatically
+npm run start:open
+
+# Serve on all interfaces (useful for LAN / VM testing)
+npm run start:host
+
 # Full test suite (all projects)
 npm test
 
@@ -95,7 +133,60 @@ npm run test:gate-d
 
 # Nightly full confidence gate (all specs, all projects)
 npm run test:gate-f
+
+# Build and run the local container entrypoint
+npm run docker:build
+npm run docker:run
 ```
+
+## Local run modes
+
+### Just open the editor
+
+Use `npm run start` and go to `http://127.0.0.1:4173/`.
+
+That launchpad gives you:
+
+- the primary `Open Editor` path
+- a direct link to the compatibility shim
+- the current release/runtime identity
+- the quickest docs for first use
+
+### Run tests
+
+```bash
+npm install
+npx playwright install
+npm run test:gate-a
+```
+
+### Run via Docker
+
+```bash
+npm run docker:build
+npm run docker:run
+```
+
+Then open `http://127.0.0.1:4173/`.
+
+## GitHub Packages recommendation
+
+The useful package surface for this repo is a GHCR container image, not an npm
+package.
+
+Why:
+
+- this project is an application, not a reusable JavaScript library
+- the editor is static and containerizes cleanly
+- GHCR gives a predictable `docker run` entrypoint for reviewers and adopters
+
+Prepared in-repo:
+
+- `Dockerfile`
+- `.dockerignore`
+- `.github/workflows/publish-ghcr.yml`
+
+See `docs/GITHUB_PACKAGES.md` for the exact recommendation and tradeoffs.
 
 ## Recent milestone tags
 

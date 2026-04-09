@@ -8,6 +8,10 @@ Active runtime entrypoint:
 
 - `editor/presentation-editor-v0.19.1.html`
 
+Human-friendly local repo entrypoint:
+
+- `index.html`
+
 Compatibility-only entrypoint:
 
 - `editor/presentation-editor.html` -> redirect shim to the active semver runtime
@@ -78,6 +82,9 @@ The fixed architecture is unchanged:
 - keep export clean without bridge script, editor markers, or preview-only
   chrome
 - keep manual-base and connected asset-directory validation green
+- expose a repo-root launchpad so first-time users can start the editor from `/`
+  instead of guessing the semver runtime path
+- prepare a GHCR container packaging path for one-command Docker launch
 
 ## Important constraints
 

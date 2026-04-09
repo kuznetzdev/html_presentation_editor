@@ -1,0 +1,7 @@
+.git
+.github
+.codex
+artifacts
+node_modules
+references_pres
+tests
