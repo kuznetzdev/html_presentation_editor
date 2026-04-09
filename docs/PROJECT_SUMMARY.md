@@ -4,6 +4,14 @@
 
 See `package.json` for current release version.
 
+Active runtime entrypoint:
+
+- `editor/presentation-editor-v0.19.0.html`
+
+Compatibility-only entrypoint:
+
+- `editor/presentation-editor.html` -> redirect shim to the active semver runtime
+
 ## Product state
 
 HTML Presentation Editor remains a shell-driven editor for existing HTML slide
@@ -85,13 +93,23 @@ The fixed architecture is unchanged:
   zoom-heavy geometry outside the signed-off safe envelope
 - the editor still lives in one large HTML file and needs structural cleanup
   without changing the runtime architecture
-- stage-driven polish for shell consistency, visual cleanup, and internal code
-  zoning still remains after correctness sign-off
 - compact widths are regression-covered for the novice path, but the main
   redesign target for this pass remains desktop and intermediate shell UX
 
 ## Verification snapshot
 
-- Gate B desktop + shell-1100 release matrix: green at `91 passed / 5 skipped` and `50 passed / 5 skipped`
-- focused shell smoke after semver runtime rename: green at `13 passed / 3 skipped`
+- targeted proof set: green
+  - `asset-parity.spec.js --grep "@stage-a|@stage-d"`
+  - `honest-feedback.spec.js`
+  - `shell.smoke.spec.js --grep "@stage-f|@harness"`
+- `npm run test:gate-a`: green at `48 passed / 5 skipped`
+- `npm run test:gate-b`: green at `105 passed / 7 skipped` and `56 passed / 6 skipped`
+- `npm run test:gate-d`: green at `128 passed / 37 skipped`
 - `npm run test:asset-parity`: green
+
+## Latest hardening batch
+
+- semver runtime discipline restored around `editor/presentation-editor-v0.19.0.html`
+- `editor/presentation-editor.html` reduced to a compatibility shim instead of a second editable runtime source
+- shell-owned storage, export cleanup, and persistence paths no longer fail silently in the touched zones
+- export validation now explicitly checks for editor-artifact residue after interaction-heavy shell flows

@@ -14,9 +14,11 @@ need deeper deck surgery.
 ## Current state
 
 - Current version: see `package.json`
-- Main runtime file: `editor/presentation-editor.html`
+- Main runtime file: `editor/presentation-editor-v0.19.0.html`
+- Compatibility entrypoint: `editor/presentation-editor.html` redirect shim only
 - Architecture remains fixed: `parent shell + iframe preview + bridge + modelDoc`
-- Focused Stage D-F Playwright shell proof: green
+- Targeted proof set: green
+- Release-core gates `test:gate-a`, `test:gate-b`, `test:gate-d`: green
 - Asset parity validation: green
 
 ## What is working
@@ -41,6 +43,7 @@ need deeper deck surgery.
 - Keep transient shell surfaces mutually exclusive instead of stacking floating
   toolbar, context menu, and compact drawers into competing layers
 - Export clean HTML without editor-only chrome or bridge residue
+- Keep semver runtime references synchronized across docs, harness, and package metadata
 
 ## Product rules
 
@@ -52,8 +55,10 @@ need deeper deck surgery.
 
 ## Repository entry points
 
-- `editor/presentation-editor.html`
+- `editor/presentation-editor-v0.19.0.html`
   Current editor runtime
+- `editor/presentation-editor.html`
+  Compatibility shim that forwards to the active semver runtime
 - `docs/SOURCE_OF_TRUTH.md`
   Product and architecture invariants
 - `docs/PROJECT_SUMMARY.md`
