@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 0.19.2 - onboarding entrypoint, ghcr path, security policy, and semver sync - 2026-04-10
+- promoted the active runtime artifact to `editor/presentation-editor-v0.19.2.html` so the current tagged release, package metadata, docs, launchpad, and harness all resolve to one semver runtime again
+- archived the previous `0.19.1` runtime to `docs/history/presentation-editor-v0.19.1.html` and removed the root-level `editor/presentation-editor-v0.19.1.html` runtime from active use
+- added a human-first local repo entrypoint at `/` with `npm start`, sample-gallery links, and quick-start docs so a new user can run the application without discovering internal paths first
+- documented GHCR as the supported GitHub Packages surface for this application and clarified the first-publish visibility step for public container pulls
+- replaced the template `SECURITY.md` with a real security policy covering supported release lines, disclosure path, response targets, and supported reporting scope
+
 ## 0.19.1 - release hardening sync and proper semver patch tag - 2026-04-10
 - promoted the active runtime artifact to `editor/presentation-editor-v0.19.1.html` so the shipped tag, package metadata, docs, harness, and compatibility shim all point at one normal semver release
 - archived the previous `0.19.0` runtime to `docs/history/presentation-editor-v0.19.0.html` and removed the root-level `editor/presentation-editor-v0.19.0.html` runtime from active use

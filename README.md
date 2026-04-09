@@ -26,7 +26,7 @@ npm run serve
 Then open:
 
 - `http://127.0.0.1:4173/` for the local launchpad
-- `http://127.0.0.1:4173/editor/presentation-editor-v0.19.1.html` for the active runtime directly
+- `http://127.0.0.1:4173/editor/presentation-editor-v0.19.2.html` for the active runtime directly
 - `http://127.0.0.1:4173/references_pres/html-presentation-examples_v3/00_examples_index.html`
   for a ready-made sample gallery
 
@@ -40,7 +40,7 @@ Important:
 ## Current state
 
 - Current version: see `package.json`
-- Main runtime file: `editor/presentation-editor-v0.19.1.html`
+- Main runtime file: `editor/presentation-editor-v0.19.2.html`
 - Compatibility entrypoint: `editor/presentation-editor.html` redirect shim only
 - Architecture remains fixed: `parent shell + iframe preview + bridge + modelDoc`
 - Targeted proof set: green
@@ -83,7 +83,7 @@ Important:
 
 - `index.html`
   Human-friendly local launchpad for first-time users
-- `editor/presentation-editor-v0.19.1.html`
+- `editor/presentation-editor-v0.19.2.html`
   Current editor runtime
 - `editor/presentation-editor.html`
   Compatibility shim that forwards to the active semver runtime

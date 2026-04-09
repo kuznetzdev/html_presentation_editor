@@ -55,7 +55,7 @@ Why not:
 If GitHub Packages is used, keep it limited to:
 
 1. GHCR image publishing on release tags
-2. clear tags such as `v0.19.1` and `latest`
+2. clear tags such as `v0.19.2` and `latest`
 3. README instructions that point people to `docker run`
 
 Anything beyond that should be justified by an actual distribution need, not by

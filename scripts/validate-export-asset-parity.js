@@ -13,7 +13,7 @@ const SERVER_HOST = process.env.STATIC_SERVER_HOST || "127.0.0.1";
 const SERVER_PORT = Number(process.env.STATIC_SERVER_PORT || 4173);
 const TARGET_URL =
   process.env.TARGET_URL ||
-  `http://${SERVER_HOST}:${SERVER_PORT}/editor/presentation-editor-v0.19.1.html`;
+`http://${SERVER_HOST}:${SERVER_PORT}/editor/presentation-editor-v0.19.2.html`;
 
 const FIXTURE_ROOT = path.resolve(
   WORKSPACE_ROOT,

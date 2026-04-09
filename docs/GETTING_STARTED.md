@@ -41,7 +41,7 @@ This starts the local static server without opening the browser automatically.
 
 If you already know what you are doing, open the runtime directly:
 
-- `http://127.0.0.1:4173/editor/presentation-editor-v0.19.1.html`
+- `http://127.0.0.1:4173/editor/presentation-editor-v0.19.2.html`
 
 ## Starter sample deck
 
@@ -94,7 +94,7 @@ This repo is prepared for GitHub Container Registry publishing.
 Once a version tag is published through GitHub Actions, the intended pull path is:
 
 ```bash
-docker run --rm -p 4173:4173 ghcr.io/kuznetzdev/html_presentation_editor:v0.19.1
+docker run --rm -p 4173:4173 ghcr.io/kuznetzdev/html_presentation_editor:v0.19.2
 ```
 
 See `docs/GITHUB_PACKAGES.md` for the exact strategy and why GHCR is the right

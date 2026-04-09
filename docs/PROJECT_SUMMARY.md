@@ -6,7 +6,7 @@ See `package.json` for current release version.
 
 Active runtime entrypoint:
 
-- `editor/presentation-editor-v0.19.1.html`
+- `editor/presentation-editor-v0.19.2.html`
 
 Human-friendly local repo entrypoint:
 
@@ -116,7 +116,7 @@ The fixed architecture is unchanged:
 
 ## Latest hardening batch
 
-- semver runtime discipline restored around `editor/presentation-editor-v0.19.1.html`
+- semver runtime discipline restored around `editor/presentation-editor-v0.19.2.html`
 - `editor/presentation-editor.html` reduced to a compatibility shim instead of a second editable runtime source
 - shell-owned storage, export cleanup, and persistence paths no longer fail silently in the touched zones
 - export validation now explicitly checks for editor-artifact residue after interaction-heavy shell flows

@@ -41,7 +41,7 @@ test.describe("Editor shell smoke @harness", () => {
     ).toBeVisible();
     await expect(
       page.getByRole("link", { name: "Open Editor" }),
-    ).toHaveAttribute("href", "/editor/presentation-editor-v0.19.1.html");
+    ).toHaveAttribute("href", "/editor/presentation-editor-v0.19.2.html");
 
     await page.getByRole("link", { name: "Open Editor" }).click();
     await expect(page.locator("#openHtmlBtn")).toBeVisible();
@@ -165,7 +165,7 @@ test.describe("Editor shell smoke @harness", () => {
     await page.addInitScript(() => {
       window.localStorage.setItem("presentation-editor:theme:v1", "dark");
     });
-    await page.goto("/editor/presentation-editor-v0.19.1.html", {
+    await page.goto("/editor/presentation-editor-v0.19.2.html", {
       waitUntil: "domcontentloaded",
     });
     await expect(page.locator("#openHtmlBtn")).toBeVisible();
