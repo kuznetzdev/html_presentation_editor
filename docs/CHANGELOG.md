@@ -11,6 +11,10 @@
 - **Stack depth badge (ADR-002)**: `1/N` counter badge appears next to breadcrumbs when multiple candidates exist under cursor point, showing current position in click-through stack
 - **Action-oriented summary copy**: `getSelectedElementSummary()` updated for all entity kinds to show actionable guidance ("Дважды кликните, чтобы начать печатать", "Можно перемещать и масштабировать мышкой") and surfaces block reason as primary feedback when manipulation is blocked
 - **Playwright coverage**: new `honest-feedback.spec.js` (9 tests) covering block banner per reason, action resolution, lock priority, summary copy, stack badge, banner lifecycle, and export cleanliness
+- **Semver runtime sync restored**: canonical runtime now ships as `editor/presentation-editor-v0.19.0.html`, while `editor/presentation-editor.html` is reduced to a compatibility shim so package metadata, docs, and Playwright harness point at one release artifact again
+- **P2 zoning pass**: removed the late “v3 UX EXTENSIONS” override framing and re-labeled the runtime into explicit ownership bands for shell routing, selection/direct-manip feedback, history/autosave/export, and shell storage persistence
+- **Honest storage/export cleanup**: replaced remaining silent shell-owned storage/export catches with diagnostics via `reportShellWarning(...)` for export URL cleanup, autosave clear/restore, copied-style persistence, selection-mode persistence, preview-zoom persistence, and theme preference loading
+- **Clean export invariant**: export stripping now removes `data-editor-ui="true"` nodes before serialization and records any lingering editor-only residue in diagnostics instead of silently continuing
 - All gates passed: Gate A (40/40), Gate B chromium-desktop (101/101), Gate B chromium-shell-1100 (51/51)
 
 ## 0.18.3 - zoom quality fix and layout optimization - 2026-04-03

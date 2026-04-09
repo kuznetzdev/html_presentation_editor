@@ -3,7 +3,8 @@
 ## editor/
 Актуальный файл редактора.
 
-- `presentation-editor-v0.18.1.html` — текущая рабочая сборка (v0.18.1)
+- `presentation-editor-v0.19.0.html` — текущий активный runtime редактора
+- `presentation-editor.html` — compatibility shim, перенаправляет на активный semver runtime
 
 ## docs/
 Основная проектная документация.

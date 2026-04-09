@@ -42,7 +42,7 @@
 1. Найди следующий реальный UX/product bug или structural cleanup target
 2. Не лечи проблемы override-пластырями
 3. Сначала добавь/обнови targeted regression
-4. Потом меняй contiguous zone в `editor/presentation-editor-v0.18.1.html`
+4. Потом меняй contiguous zone в `editor/presentation-editor-v0.19.0.html`
 5. После правки обнови docs, если меняется shell contract или signed-off behavior
 
 ---
