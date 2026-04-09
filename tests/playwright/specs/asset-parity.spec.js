@@ -3,10 +3,13 @@ const {
   ASSET_MANUAL_BASE_URL,
   ASSET_PARITY_CASE_PATH,
   BASIC_MANUAL_BASE_URL,
+  clickPreview,
+  closeCompactShellPanels,
   connectAssetDirectory,
   evaluateEditor,
   gotoFreshEditor,
   isChromiumOnlyProject,
+  loadBasicDeck,
   openExportValidationPopup,
   openHtmlFixture,
 } = require("../helpers/editorApp");
@@ -84,6 +87,47 @@ async function collectParitySnapshot(page) {
   });
 }
 
+async function collectExportArtifactSnapshot(page) {
+  return page.evaluate(() => {
+    const pack = globalThis.eval("buildExportValidationPackage()");
+    if (!pack?.serialized) {
+      throw new Error("Failed to build export validation package.");
+    }
+
+    const parser = new DOMParser();
+    const validationDoc = parser.parseFromString(pack.serialized, "text/html");
+    const residue = [];
+
+    validationDoc.querySelectorAll("[data-editor-ui='true']").forEach((element) => {
+      residue.push(`ui:${element.tagName.toLowerCase()}`);
+    });
+
+    validationDoc.querySelectorAll("*").forEach((element) => {
+      Array.from(element.attributes || []).forEach((attribute) => {
+        if (/^data-editor-/.test(attribute.name)) {
+          residue.push(`attr:${attribute.name}`);
+        }
+      });
+    });
+
+    validationDoc
+      .querySelectorAll(
+        "#__presentation_editor_bridge__, #__presentation_editor_helper_styles__, base[data-editor-preview-base], [contenteditable], [spellcheck]",
+      )
+      .forEach((element) => {
+        residue.push(`node:${element.tagName.toLowerCase()}`);
+      });
+
+    residue.sort();
+
+    return {
+      diagnostics: (globalThis.eval("state.diagnostics || []") || []).join("\n"),
+      residue,
+      validationAudit: pack.assetAudit,
+    };
+  });
+}
+
 test.describe("Asset parity regression", () => {
   test("manual base url keeps preview and export validation aligned @stage-a", async (
     { page },
@@ -127,5 +171,62 @@ test.describe("Asset parity regression", () => {
     );
     expect(diagnostics).toMatch(/baseUrlDependent|resolved|unresolved/);
     expect(diagnostics).not.toContain("unresolved=0 baseUrlDependent=0 resolved=0");
+  });
+
+  test("interaction-heavy shell states stay out of export validation output @stage-a", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only export integrity assertion.");
+
+    await loadBasicDeck(page, {
+      manualBaseUrl: BASIC_MANUAL_BASE_URL,
+      mode: "edit",
+    });
+
+    await closeCompactShellPanels(page);
+    await clickPreview(page, "#hero-title");
+    await expect(page.locator("#floatingToolbar")).toBeVisible();
+
+    await page.locator("#selectionFrameHitArea").click({ button: "right" });
+    await expect(page.locator("#contextMenu")).toBeVisible();
+    await expect(page.locator("#floatingToolbar")).toBeHidden();
+
+    await page.mouse.click(12, 12);
+    await expect(page.locator("#contextMenu")).toBeHidden();
+    await expect(page.locator("#floatingToolbar")).toBeVisible();
+
+    await evaluateEditor(
+      page,
+      `(() => {
+        const node = getSelectedModelNode();
+        if (!(node instanceof HTMLElement)) throw new Error("selection-missing");
+        node.setAttribute("hidden", "");
+        updateInspectorFromSelection();
+      })()`,
+    );
+    await expect(page.locator("#blockReasonBanner")).toBeVisible();
+    await page.locator("#blockReasonActionBtn").click();
+    await expect(page.locator("#blockReasonBanner")).toBeHidden();
+
+    await evaluateEditor(
+      page,
+      `(() => {
+        const node = getSelectedModelNode();
+        if (!(node instanceof HTMLElement)) throw new Error("selection-missing");
+        node.setAttribute("data-editor-locked", "true");
+        updateInspectorFromSelection();
+      })()`,
+    );
+    await expect(page.locator("#blockReasonBanner")).toBeVisible();
+
+    const popup = await openExportValidationPopup(page);
+    await expect(popup.locator("body")).toContainText("Stable editing baseline");
+    await popup.close();
+
+    const snapshot = await collectExportArtifactSnapshot(page);
+    expect(snapshot.residue).toEqual([]);
+    expect(snapshot.validationAudit?.counts?.unresolved || 0).toBe(0);
+    expect(snapshot.diagnostics).not.toContain("export-cleanup-residue:");
   });
 });

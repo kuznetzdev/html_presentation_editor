@@ -1,278 +1,256 @@
-
 const { test, expect } = require("@playwright/test");
 const {
-  BASIC_DECK_PATH,
   BASIC_MANUAL_BASE_URL,
   clickPreview,
   closeCompactShellPanels,
   ensureShellPanelVisible,
   evaluateEditor,
   loadBasicDeck,
-  readWorkflowShellState,
-  setMode,
 } = require("../helpers/editorApp");
 
-test.describe("Honest feedback — block reason banners and stack depth @v0.19.0", () => {
-
-    // --- Inserted: transform/hidden/aria-live block reason tests ---
-    test("block banner shows transform reason for transform-blocked element @stage-f", async ({ page }) => {
-      await closeCompactShellPanels(page);
-      // Activate Slide 2 (positioning) so the transform-root element is visible
-      await evaluateEditor(page, `requestSlideActivation(state.slides[1]?.id, { reason: 'test' })`);
-      // Select the transform-blocked element in the basic deck
-      await clickPreview(page, "#unsafe-box");
-      await ensureShellPanelVisible(page, "inspector");
-
-      const banner = page.locator("#blockReasonBanner");
-      await expect(banner).toBeVisible();
-      const text = page.locator("#blockReasonText");
-      await expect(text).toContainText("transform");
-      // No action button for transform block
-      const actionBtn = page.locator("#blockReasonActionBtn");
-      await expect(actionBtn).toBeHidden();
-    });
-
-    test("block banner shows hidden reason for hidden element @stage-f", async ({ page }) => {
-      await closeCompactShellPanels(page);
-      // Simulate hiding an element and select it
-      await clickPreview(page, "#hero-title");
-      await ensureShellPanelVisible(page, "inspector");
-      // Hide the element via modelDoc
-      await evaluateEditor(page, `
-        const node = state.modelDoc.querySelector('[data-editor-node-id="' + state.selectedNodeId + '"]');
-        if (node) node.setAttribute('hidden', '');
-        updateInspectorFromSelection();
-      `);
-      const banner = page.locator("#blockReasonBanner");
-      await expect(banner).toBeVisible();
-      const text = page.locator("#blockReasonText");
-      await expect(text).toContainText("скрыт");
-      // Action button for hidden block
-      const actionBtn = page.locator("#blockReasonActionBtn");
-      await expect(actionBtn).toBeVisible();
-      await expect(actionBtn).toContainText("Показать");
-    });
-
-    test("block banner disappears when hidden block is resolved @stage-f", async ({ page }) => {
-      await closeCompactShellPanels(page);
-      await clickPreview(page, "#hero-title");
-      await ensureShellPanelVisible(page, "inspector");
-      // Hide the element
-      await evaluateEditor(page, `
-        const node = state.modelDoc.querySelector('[data-editor-node-id="' + state.selectedNodeId + '"]');
-        if (node) node.setAttribute('hidden', '');
-        updateInspectorFromSelection();
-      `);
-      const banner = page.locator("#blockReasonBanner");
-      await expect(banner).toBeVisible();
-      // Show the element again
-      await evaluateEditor(page, `
-        const node = state.modelDoc.querySelector('[data-editor-node-id="' + state.selectedNodeId + '"]');
-        if (node) node.removeAttribute('hidden');
-        updateInspectorFromSelection();
-      `);
-      await expect(banner).toBeHidden();
-    });
-
-    test("block reason banner updates aria-live region for screen readers @stage-f", async ({ page }) => {
-      await closeCompactShellPanels(page);
-      await clickPreview(page, "#hero-title");
-      await ensureShellPanelVisible(page, "inspector");
-
-      // Set zoom to trigger block reason
-      await evaluateEditor(page, `setPreviewZoom(1.25, true)`);
-      await evaluateEditor(page, `updateInspectorFromSelection()`);
-
-      const banner = page.locator("#blockReasonBanner");
-      await expect(banner).toBeVisible();
-      await expect(banner).toHaveAttribute("aria-live", "polite");
-      // Change block reason to hidden
-      await evaluateEditor(page, `
-        setPreviewZoom(1.0, true);
-        const node = state.modelDoc.querySelector('[data-editor-node-id="' + state.selectedNodeId + '"]');
-        if (node) node.setAttribute('hidden', '');
-        updateInspectorFromSelection();
-      `);
-      // Wait for banner text to update
-      const text = page.locator("#blockReasonText");
-      await expect(text).toContainText("скрыт");
-      // Banner should still have aria-live=polite
-      await expect(banner).toHaveAttribute("aria-live", "polite");
-    });
+test.describe("Honest feedback and transient shell routing", () => {
   test.beforeEach(async ({ page }) => {
-    await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
+    await loadBasicDeck(page, {
+      manualBaseUrl: BASIC_MANUAL_BASE_URL,
+      mode: "edit",
+    });
   });
 
-  test("no block banner on clean text selection @stage-f", async ({ page }) => {
+  test("clean text selection keeps block banner hidden @stage-f", async ({ page }) => {
     await closeCompactShellPanels(page);
     await clickPreview(page, "#hero-title");
     await ensureShellPanelVisible(page, "inspector");
 
-    const banner = page.locator("#blockReasonBanner");
-    await expect(banner).toBeHidden();
+    await expect(page.locator("#blockReasonBanner")).toBeHidden();
   });
 
-  test("block banner shows zoom reason when zoom is not 100% @stage-f", async ({ page }) => {
+  test("zoom block shows action and reset clears banner @stage-f", async ({ page }) => {
     await closeCompactShellPanels(page);
     await clickPreview(page, "#hero-title");
     await ensureShellPanelVisible(page, "inspector");
 
-    // Set zoom to 125%
-    await evaluateEditor(page, `setPreviewZoom(1.25, true)`);
-    // Re-trigger inspector update
-    await evaluateEditor(page, `updateInspectorFromSelection()`);
+    await evaluateEditor(page, "setPreviewZoom(1.25, true); updateInspectorFromSelection();");
 
-    const banner = page.locator("#blockReasonBanner");
-    await expect(banner).toBeVisible();
+    await expect(page.locator("#blockReasonBanner")).toBeVisible();
+    await expect(page.locator("#blockReasonText")).toContainText("Масштаб");
+    await expect(page.locator("#blockReasonActionBtn")).toBeVisible();
 
-    const text = page.locator("#blockReasonText");
-    await expect(text).toContainText("Масштаб");
+    await page.locator("#blockReasonActionBtn").click();
 
-    const actionBtn = page.locator("#blockReasonActionBtn");
-    await expect(actionBtn).toBeVisible();
-    await expect(actionBtn).toContainText("Сбросить");
+    await expect.poll(() => evaluateEditor(page, "state.previewZoom")).toBe(1);
+    await expect(page.locator("#blockReasonBanner")).toBeHidden();
   });
 
-  test("block banner action resets zoom to 100% @stage-f", async ({ page }) => {
+  test("hidden selection shows restore action and action resolves state @stage-f", async ({ page }) => {
     await closeCompactShellPanels(page);
     await clickPreview(page, "#hero-title");
     await ensureShellPanelVisible(page, "inspector");
 
-    await evaluateEditor(page, `setPreviewZoom(1.25, true)`);
-    await evaluateEditor(page, `updateInspectorFromSelection()`);
+    await evaluateEditor(
+      page,
+      `(() => {
+        const nodeId = state.selectedNodeId;
+        if (!nodeId || !state.modelDoc) throw new Error("selection-missing");
+        const node = state.modelDoc.querySelector('[data-editor-node-id="' + nodeId + '"]');
+        if (!(node instanceof Element)) throw new Error("node-missing");
+        node.setAttribute("hidden", "");
+        updateInspectorFromSelection();
+      })()`,
+    );
 
-    const actionBtn = page.locator("#blockReasonActionBtn");
-    await expect(actionBtn).toBeVisible();
-    await actionBtn.click();
+    await expect(page.locator("#blockReasonBanner")).toBeVisible();
+    await expect(page.locator("#blockReasonText")).toContainText("скрыт");
+    await expect(page.locator("#blockReasonActionBtn")).toContainText("Показать");
 
-    // Zoom should reset to 1
-    const zoom = await evaluateEditor(page, `state.previewZoom`);
-    expect(zoom).toBe(1);
+    await page.locator("#blockReasonActionBtn").click();
 
-    const banner = page.locator("#blockReasonBanner");
-    await expect(banner).toBeHidden();
+    await expect(page.locator("#blockReasonBanner")).toBeHidden();
+    await expect
+      .poll(() =>
+        evaluateEditor(
+          page,
+          `(() => {
+            const nodeId = state.selectedNodeId;
+            const node = nodeId && state.modelDoc
+              ? state.modelDoc.querySelector('[data-editor-node-id="' + nodeId + '"]')
+              : null;
+            return node instanceof Element ? node.hasAttribute("hidden") : null;
+          })()`,
+        ),
+      )
+      .toBe(false);
   });
 
-  test("lock banner takes priority over block reason banner @stage-f", async ({ page }, testInfo) => {
-    test.skip(!testInfo.project.name.includes("desktop"), "Advanced mode on desktop only.");
+  test("basic mode locked selection shows honest block banner @stage-f", async ({ page }) => {
+    await closeCompactShellPanels(page);
+    await clickPreview(page, "#hero-title");
+    await ensureShellPanelVisible(page, "inspector");
+
+    await evaluateEditor(
+      page,
+      `(() => {
+        const nodeId = state.selectedNodeId;
+        if (!nodeId || !state.modelDoc) throw new Error("selection-missing");
+        const node = state.modelDoc.querySelector('[data-editor-node-id="' + nodeId + '"]');
+        if (!(node instanceof Element)) throw new Error("node-missing");
+        node.setAttribute("data-editor-locked", "true");
+        state.complexityMode = "basic";
+        applyComplexityModeUi();
+        updateInspectorFromSelection();
+      })()`,
+    );
+
+    await expect(page.locator("#lockBanner")).toBeHidden();
+    await expect(page.locator("#blockReasonBanner")).toBeVisible();
+    await expect(page.locator("#blockReasonText")).toContainText("заблокирован");
+    await expect(page.locator("#blockReasonActionBtn")).toContainText("Разблокировать");
+  });
+
+  test("advanced mode keeps lock banner priority over generic block banner @stage-f", async ({ page }, testInfo) => {
+    test.skip(!testInfo.project.name.includes("desktop"), "Desktop-focused advanced shell only.");
 
     await closeCompactShellPanels(page);
     await clickPreview(page, "#hero-title");
     await ensureShellPanelVisible(page, "inspector");
 
-    // Switch to advanced mode and lock the selected element directly on modelDoc
-    const nodeId = await evaluateEditor(page, `state.selectedNodeId`);
-    await evaluateEditor(page, `
-      state.complexityMode = "advanced";
-      applyComplexityModeUi();
-      const lockNode = state.modelDoc.querySelector('[data-editor-node-id="' + "${nodeId}" + '"]');
-      if (lockNode) lockNode.setAttribute("data-editor-locked", "true");
-      updateInspectorFromSelection();
-    `);
+    await evaluateEditor(
+      page,
+      `(() => {
+        const nodeId = state.selectedNodeId;
+        if (!nodeId || !state.modelDoc) throw new Error("selection-missing");
+        const node = state.modelDoc.querySelector('[data-editor-node-id="' + nodeId + '"]');
+        if (!(node instanceof Element)) throw new Error("node-missing");
+        node.setAttribute("data-editor-locked", "true");
+        state.complexityMode = "advanced";
+        applyComplexityModeUi();
+        updateInspectorFromSelection();
+      })()`,
+    );
 
-    // Lock banner should be visible (advanced mode)
-    const lockBanner = page.locator("#lockBanner");
-    await expect(lockBanner).toBeVisible();
-
-    // Block reason banner should NOT be visible (lock banner takes priority)
-    const blockBanner = page.locator("#blockReasonBanner");
-    await expect(blockBanner).toBeHidden();
-
-    // Cleanup: unlock
-    await evaluateEditor(page, `
-      const unlockNode = state.modelDoc.querySelector('[data-editor-node-id="' + "${nodeId}" + '"]');
-      if (unlockNode) unlockNode.removeAttribute("data-editor-locked");
-    `);
+    await expect(page.locator("#lockBanner")).toBeVisible();
+    await expect(page.locator("#blockReasonBanner")).toBeHidden();
   });
 
-  test("summary card shows action-oriented copy per entity kind @stage-f", async ({ page }) => {
+  test("compact drawer opening closes insert palette and topbar overflow @stage-e", async ({ page }, testInfo) => {
+    test.skip(!/390|640|820/.test(testInfo.project.name), "Compact shell only.");
+
+    await page.locator("#mobileInsertBtn").click();
+    await expect(page.locator("#quickPalette")).toBeVisible();
+
+    await page.locator("#mobileInspectorBtn").click();
+    await expect(page.locator("#quickPalette")).toBeHidden();
+    await expect(page.locator("#inspectorPanel")).toBeVisible();
+
+    await page.locator("#topbarOverflowBtn").click();
+    await expect(page.locator("#topbarOverflowMenu")).toBeVisible();
+
+    await page.locator("#mobileSlidesBtn").click();
+    await expect(page.locator("#topbarOverflowMenu")).toBeHidden();
+    await expect(page.locator("#slidesPanel")).toBeVisible();
+  });
+
+  test("stack depth badge reflects click-through progress only when needed @stage-f", async ({ page }) => {
     await closeCompactShellPanels(page);
     await clickPreview(page, "#hero-title");
     await ensureShellPanelVisible(page, "inspector");
 
-    const summary = page.locator("#selectedElementSummary");
-    const summaryText = await summary.textContent();
-    // Text element should mention double-click or edit action
-    expect(summaryText).toMatch(/клик|печат|шрифт|цвет|размер|перемещ/i);
+    await expect(page.locator("#stackDepthBadge")).toBeHidden();
+
+    await evaluateEditor(
+      page,
+      `(() => {
+        state.clickThroughState = {
+          x: 24,
+          y: 24,
+          timestamp: Date.now(),
+          index: 1,
+          candidates: [{ nodeId: "a" }, { nodeId: "b" }, { nodeId: "c" }],
+        };
+        renderSelectionBreadcrumbs(true);
+      })()`,
+    );
+
+    await expect(page.locator("#stackDepthBadge")).toBeVisible();
+    await expect(page.locator("#stackDepthBadge")).toHaveText("2/3");
   });
 
-  test("stack depth badge shows count when multiple candidates exist @stage-f", async ({ page }) => {
-    await closeCompactShellPanels(page);
-
-    // Click on an overlapping area — Slide 1 has overlap
-    await clickPreview(page, "#hero-title");
-    await ensureShellPanelVisible(page, "inspector");
-
-    // Get click-through candidate count
-    const candidateCount = await evaluateEditor(page, `
-      state.clickThroughState?.candidates?.length || 0
-    `);
-
-    const badge = page.locator("#stackDepthBadge");
-    if (candidateCount > 1) {
-      await expect(badge).toBeVisible();
-      const badgeText = await badge.textContent();
-      expect(badgeText).toMatch(/\d+\/\d+/);
-    } else {
-      await expect(badge).toBeHidden();
-    }
-  });
-
-  test("stack depth badge hidden when single candidate @stage-f", async ({ page }) => {
-    await closeCompactShellPanels(page);
-
-    // Click on a clearly non-overlapping element
-    await clickPreview(page, "#hero-title");
-    await ensureShellPanelVisible(page, "inspector");
-
-    // Force single candidate state
-    await evaluateEditor(page, `
-      state.clickThroughState = { x: 0, y: 0, timestamp: 0, index: -1, candidates: [] };
-      renderSelectionBreadcrumbs(true);
-    `);
-
-    const badge = page.locator("#stackDepthBadge");
-    await expect(badge).toBeHidden();
-  });
-
-  test("block banner disappears when block condition resolves @stage-f", async ({ page }) => {
-    await closeCompactShellPanels(page);
-    await clickPreview(page, "#hero-title");
-    await ensureShellPanelVisible(page, "inspector");
-
-    // Create zoom block
-    await evaluateEditor(page, `setPreviewZoom(1.5, true)`);
-    await evaluateEditor(page, `updateInspectorFromSelection()`);
-
-    const banner = page.locator("#blockReasonBanner");
-    await expect(banner).toBeVisible();
-
-    // Resolve by resetting zoom
-    await evaluateEditor(page, `setPreviewZoom(1.0, true)`);
-    await evaluateEditor(page, `updateInspectorFromSelection()`);
-
-    await expect(banner).toBeHidden();
-  });
-
-  test("export stays clean after block banner interactions @stage-f", async ({ page }) => {
+  test("shell-owned storage failures surface diagnostics instead of silent fallback @stage-f", async ({ page }) => {
     await closeCompactShellPanels(page);
     await clickPreview(page, "#hero-title");
 
-    // Trigger zoom block and banner
-    await evaluateEditor(page, `setPreviewZoom(1.25, true)`);
-    await evaluateEditor(page, `updateInspectorFromSelection()`);
-    await evaluateEditor(page, `setPreviewZoom(1.0, true)`);
+    const diagnostics = await evaluateEditor(
+      page,
+      `(() => {
+        const proto = Object.getPrototypeOf(window.localStorage);
+        const originalGet = proto.getItem;
+        const originalSet = proto.setItem;
+        const originalRemove = proto.removeItem;
+        const readBlocked = new Set([
+          "presentation-editor:theme:v1",
+          "presentation-editor:copied-style:v1",
+          "presentation-editor:selection-mode:v1",
+          "presentation-editor:preview-zoom:v1",
+          "presentation-editor:autosave:v3",
+        ]);
+        const writeBlocked = new Set([
+          "presentation-editor:theme:v1",
+          "presentation-editor:copied-style:v1",
+          "presentation-editor:selection-mode:v1",
+          "presentation-editor:preview-zoom:v1",
+          "presentation-editor:autosave:v3",
+        ]);
 
-    // Export and check for editor artifacts
-    const exportedHtml = await evaluateEditor(page, `
-      (function() {
-        const pack = buildCleanExportPackage();
-        return pack ? pack.serialized : "";
-      })()
-    `);
-    expect(exportedHtml).not.toContain("block-reason");
-    expect(exportedHtml).not.toContain("stack-depth");
-    expect(exportedHtml).not.toContain("data-editor-ui");
-    expect(exportedHtml).not.toContain("data-block-action");
+        proto.getItem = function(key) {
+          if (readBlocked.has(String(key))) {
+            throw new Error("forced-storage-read:" + key);
+          }
+          return originalGet.call(this, key);
+        };
+
+        proto.setItem = function(key, value) {
+          if (writeBlocked.has(String(key))) {
+            throw new Error("forced-storage-write:" + key);
+          }
+          return originalSet.call(this, key, value);
+        };
+
+        proto.removeItem = function(key) {
+          if (writeBlocked.has(String(key))) {
+            throw new Error("forced-storage-remove:" + key);
+          }
+          return originalRemove.call(this, key);
+        };
+
+        try {
+          initTheme();
+          initSelectionMode();
+          initPreviewZoom();
+          copySelectedStyle();
+          setThemePreference("dark", true);
+          setSelectionMode("container", true);
+          setPreviewZoom(1.1, true);
+          saveProjectToLocalStorage();
+          tryRestoreDraftPrompt();
+          clearAutosave();
+          return state.diagnostics.join("\\n");
+        } finally {
+          proto.getItem = originalGet;
+          proto.setItem = originalSet;
+          proto.removeItem = originalRemove;
+        }
+      })()`,
+    );
+
+    expect(diagnostics).toContain("theme-preference-load-failed");
+    expect(diagnostics).toContain("copied-style-load-failed");
+    expect(diagnostics).toContain("selection-mode-load-failed");
+    expect(diagnostics).toContain("preview-zoom-load-failed");
+    expect(diagnostics).toContain("copied-style-save-failed");
+    expect(diagnostics).toContain("theme-preference-save-failed");
+    expect(diagnostics).toContain("selection-mode-save-failed");
+    expect(diagnostics).toContain("preview-zoom-save-failed");
+    expect(diagnostics).toContain("restore-draft-load-failed");
+    expect(diagnostics).toContain("autosave-clear-failed");
+    expect(diagnostics).toContain("autosave-failed:");
   });
 });

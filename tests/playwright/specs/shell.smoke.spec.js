@@ -12,6 +12,7 @@ const {
   evaluateEditor,
   gotoFreshEditor,
   loadBasicDeck,
+  openExportValidationPopup,
   openHtmlFixture,
   previewLocator,
   readTopbarChromeState,
@@ -148,7 +149,7 @@ test.describe("Editor shell smoke @harness", () => {
     await page.addInitScript(() => {
       window.localStorage.setItem("presentation-editor:theme:v1", "dark");
     });
-    await page.goto("/editor/presentation-editor.html", {
+    await page.goto("/editor/presentation-editor-v0.19.0.html", {
       waitUntil: "domcontentloaded",
     });
     await expect(page.locator("#openHtmlBtn")).toBeVisible();
@@ -929,5 +930,50 @@ test.describe("Editor shell smoke @harness", () => {
 
     await assertNoHorizontalOverflow(page);
     await assertShellGeometry(page);
+  });
+
+  test("compact drawer routing does not leak shell residue into export validation @stage-e", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!/(390|640|820)/.test(testInfo.project.name), "Narrow viewport only.");
+
+    await loadBasicDeck(page, {
+      manualBaseUrl: BASIC_MANUAL_BASE_URL,
+      mode: "edit",
+    });
+
+    await page.click("#mobileInsertBtn");
+    await expect(page.locator("#quickPalette")).toBeVisible();
+    await page.click("#mobileInspectorBtn");
+    await expect(page.locator("#inspectorPanel")).toBeVisible();
+    await page.click("#mobileSlidesBtn");
+    await expect(page.locator("#slidesPanel")).toBeVisible();
+    await closeCompactShellPanels(page);
+
+    const popup = await openExportValidationPopup(page);
+    await popup.close();
+
+    const residue = await evaluateEditor(
+      page,
+      `(() => {
+        const pack = buildExportValidationPackage();
+        const doc = new DOMParser().parseFromString(pack.serialized, "text/html");
+        const found = [];
+        doc.querySelectorAll("[data-editor-ui='true']").forEach((node) => {
+          found.push("ui:" + node.tagName.toLowerCase());
+        });
+        doc.querySelectorAll("*").forEach((node) => {
+          Array.from(node.attributes || []).forEach((attribute) => {
+            if (/^data-editor-/.test(attribute.name)) {
+              found.push("attr:" + attribute.name);
+            }
+          });
+        });
+        return found.sort();
+      })()`,
+    );
+
+    expect(residue).toEqual([]);
   });
 });
