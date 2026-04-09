@@ -1,4 +1,11 @@
-# CHANGELOG
+﻿# CHANGELOG
+
+## 0.19.3 - entrypoint simplification, support policy cleanup, and semver resync - 2026-04-10
+- promoted the active runtime artifact to `editor/presentation-editor-v0.19.3.html` so the latest `main` state, package metadata, launchpad, shim, Playwright harness, and asset-parity tooling resolve to one semver runtime again
+- archived the previous `0.19.2` runtime to `docs/history/presentation-editor-v0.19.2.html` and removed the root-level `editor/presentation-editor-v0.19.2.html` runtime from active use
+- simplified the first-run repo entrypoint by removing the redundant `start:open` alias and keeping the root launchpad on a single obvious happy path
+- demoted the compatibility redirect from a top-level launchpad CTA to low-noise metadata so first-time users are not asked to choose between equivalent-looking entrypoints
+- corrected `SECURITY.md` support-line wording so the limited-support row no longer references a pre-release `0.19.2` adoption state that already happened
 
 ## 0.19.2 - onboarding entrypoint, ghcr path, security policy, and semver sync - 2026-04-10
 - promoted the active runtime artifact to `editor/presentation-editor-v0.19.2.html` so the current tagged release, package metadata, docs, launchpad, and harness all resolve to one semver runtime again
@@ -16,16 +23,15 @@
 ## 0.19.0 - honest feedback: block reason banners, stack depth badge, action hints - 2026-04-04
 - **Block reason protocol (ADR-001)**: replaced boolean `hasBlockedDirectManipulationContext()` with `getBlockReason()` enum returning specific reason: `zoom`, `locked`, `own-transform`, `parent-transform`, `slide-transform`, `hidden`, or `none`
 - **Block reason banner**: inline banner below selection overlay shows human-readable block reason with one-click resolution action:
-  - "Масштаб ≠ 100%" → button "Сбросить масштаб" (resets zoom to 100%)
-  - "🔒 Элемент заблокирован" → button "Разблокировать"
-  - "Используется transform" → informational (use inspector)
-  - "Элемент скрыт" → button "Показать"
+  - "РњР°СЃС€С‚Р°Р± в‰  100%" в†’ button "РЎР±СЂРѕСЃРёС‚СЊ РјР°СЃС€С‚Р°Р±" (resets zoom to 100%)
+  - "рџ”’ Р­Р»РµРјРµРЅС‚ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ" в†’ button "Р Р°Р·Р±Р»РѕРєРёСЂРѕРІР°С‚СЊ"
+  - "РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ transform" в†’ informational (use inspector)
+  - "Р­Р»РµРјРµРЅС‚ СЃРєСЂС‹С‚" в†’ button "РџРѕРєР°Р·Р°С‚СЊ"
   - Lock banner in advanced mode takes priority over block reason banner
 - **Stack depth badge (ADR-002)**: `1/N` counter badge appears next to breadcrumbs when multiple candidates exist under cursor point, showing current position in click-through stack
-- **Action-oriented summary copy**: `getSelectedElementSummary()` updated for all entity kinds to show actionable guidance ("Дважды кликните, чтобы начать печатать", "Можно перемещать и масштабировать мышкой") and surfaces block reason as primary feedback when manipulation is blocked
+- **Action-oriented summary copy**: `getSelectedElementSummary()` updated for all entity kinds to show actionable guidance ("Р”РІР°Р¶РґС‹ РєР»РёРєРЅРёС‚Рµ, С‡С‚РѕР±С‹ РЅР°С‡Р°С‚СЊ РїРµС‡Р°С‚Р°С‚СЊ", "РњРѕР¶РЅРѕ РїРµСЂРµРјРµС‰Р°С‚СЊ Рё РјР°СЃС€С‚Р°Р±РёСЂРѕРІР°С‚СЊ РјС‹С€РєРѕР№") and surfaces block reason as primary feedback when manipulation is blocked
 - **Playwright coverage**: new `honest-feedback.spec.js` (9 tests) covering block banner per reason, action resolution, lock priority, summary copy, stack badge, banner lifecycle, and export cleanliness
-- **Semver runtime sync restored**: canonical runtime now ships as `editor/presentation-editor-v0.19.1.html`, while `editor/presentation-editor.html` is reduced to a compatibility shim so package metadata, docs, and Playwright harness point at one release artifact again
-- **P2 zoning pass**: removed the late “v3 UX EXTENSIONS” override framing and re-labeled the runtime into explicit ownership bands for shell routing, selection/direct-manip feedback, history/autosave/export, and shell storage persistence
+- **P2 zoning pass**: removed the late вЂњv3 UX EXTENSIONSвЂќ override framing and re-labeled the runtime into explicit ownership bands for shell routing, selection/direct-manip feedback, history/autosave/export, and shell storage persistence
 - **Honest storage/export cleanup**: replaced remaining silent shell-owned storage/export catches with diagnostics via `reportShellWarning(...)` for export URL cleanup, autosave clear/restore, copied-style persistence, selection-mode persistence, preview-zoom persistence, and theme preference loading
 - **Clean export invariant**: export stripping now removes `data-editor-ui="true"` nodes before serialization and records any lingering editor-only residue in diagnostics instead of silently continuing
 - All gates passed: Gate A (40/40), Gate B chromium-desktop (101/101), Gate B chromium-shell-1100 (51/51)
@@ -34,7 +40,7 @@
 - **Zoom quality fix**: Switched from `transform: scale()` to CSS `zoom:` property
   - CSS `zoom:` triggers browser re-layout at target resolution, preserving text and vector crispness
   - CSS `zoom` is on W3C standards track (Working Draft) with 97%+ global browser support
-  - Eliminates blur/degradation artifacts at zoom levels < 100% ("мыльница" issue)
+  - Eliminates blur/degradation artifacts at zoom levels < 100% ("РјС‹Р»СЊРЅРёС†Р°" issue)
   - Simplified coordinate math: removed manual zoom multiplications from `toStageRect`, `toStageAxisValue`, `positionFloatingToolbar`
   - `getBoundingClientRect()` returns already-scaled values with zoom property; no manual scaling needed
   - Updated Playwright test to validate `zoom` property instead of `transform` matrix
@@ -47,13 +53,13 @@
 - All tests passing: shell.smoke zoom test validates quality-preserving scale behavior
 
 ## 0.18.2 - preview zoom control - 2026-04-03
-- added zoom control to the preview/edit panel header with +/− buttons, percent label, and 1:1 reset button
-- keyboard shortcuts: Ctrl+= (zoom in), Ctrl+− (zoom out), Ctrl+0 (reset to 100%)
+- added zoom control to the preview/edit panel header with +/в€’ buttons, percent label, and 1:1 reset button
+- keyboard shortcuts: Ctrl+= (zoom in), Ctrl+в€’ (zoom out), Ctrl+0 (reset to 100%)
 - zoom persists to localStorage across sessions (`presentation-editor:preview-zoom:v1`)
 - zoom range: 25% to 200% with fixed steps (25%, 33%, 50%, 67%, 75%, 90%, 100%, 110%, 125%, 150%, 175%, 200%)
 - iframe scales presentation content via `transform: scale(zoom)` + `width: calc(100% / zoom)` to prevent visual overflow
 - coordinate system (toStageRect, toStageAxisValue, positionFloatingToolbar) accounts for zoom factor
-- direct manipulation blocked when zoom ≠ 100% via shell-level check in hasBlockedDirectManipulationContext()
+- direct manipulation blocked when zoom в‰  100% via shell-level check in hasBlockedDirectManipulationContext()
 - widened main preview panel: workspace grid adjusted from `272-296px | 1fr | 288-312px` to `260-280px | 1fr | 272-296px` for 32px more preview width
 - added Playwright smoke test "preview zoom controls change scale and persist @stage-f"
 - all gates passed: shell.smoke (14/14), gate-b (143/143), asset-parity (4/4)
@@ -96,13 +102,13 @@
 
 ## 0.13.14 - novice shell summary cards and CTA polish signed off - 2026-04-01
 - promoted loaded preview into a clearer novice decision point with a visible
-  primary `Начать редактирование` CTA instead of forcing the user to infer the
+  primary `РќР°С‡Р°С‚СЊ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ` CTA instead of forcing the user to infer the
   next step from mode toggles alone
 - turned the basic preview inspector into a real compact slide-summary path by
   showing summary context while hiding the full slide editor controls until the
   user explicitly enters edit mode
 - turned the basic selected-element path into a friendlier summary-led card
-  with human-readable type copy, while keeping raw node metadata and the `Тег`
+  with human-readable type copy, while keeping raw node metadata and the `РўРµРі`
   field advanced-only
 - upgraded the onboarding and summary surfaces visually so the empty state,
   preview CTA, and novice inspector cards feel intentional rather than like
@@ -245,3 +251,5 @@
 - hardened cold-start Playwright navigation for the signed-off mobile width set
   so the Stage B gate does not fail on harness-only `page.goto` timeouts
 - kept the full active Playwright suite green after enabling Stage B coverage
+
+

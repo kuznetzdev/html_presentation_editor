@@ -26,7 +26,7 @@ npm run serve
 Then open:
 
 - `http://127.0.0.1:4173/` for the local launchpad
-- `http://127.0.0.1:4173/editor/presentation-editor-v0.19.2.html` for the active runtime directly
+- `http://127.0.0.1:4173/editor/presentation-editor-v0.19.3.html` for the active runtime directly
 - `http://127.0.0.1:4173/references_pres/html-presentation-examples_v3/00_examples_index.html`
   for a ready-made sample gallery
 
@@ -35,12 +35,13 @@ Important:
 - You do not need `npm install` just to launch the local editor locally
 - You do need `npm install` for Playwright-based tests
 - The repo root now acts as the default first-stop entrypoint for humans
+- The stable human-facing URL to bookmark locally is `/`, not the semver runtime path
 - Sample HTML decks already ship in `references_pres/` if you want a no-prep first run
 
 ## Current state
 
 - Current version: see `package.json`
-- Main runtime file: `editor/presentation-editor-v0.19.2.html`
+- Main runtime file: `editor/presentation-editor-v0.19.3.html`
 - Compatibility entrypoint: `editor/presentation-editor.html` redirect shim only
 - Architecture remains fixed: `parent shell + iframe preview + bridge + modelDoc`
 - Targeted proof set: green
@@ -83,7 +84,7 @@ Important:
 
 - `index.html`
   Human-friendly local launchpad for first-time users
-- `editor/presentation-editor-v0.19.2.html`
+- `editor/presentation-editor-v0.19.3.html`
   Current editor runtime
 - `editor/presentation-editor.html`
   Compatibility shim that forwards to the active semver runtime
@@ -156,11 +157,10 @@ Use `npm start` and go to `http://127.0.0.1:4173/`.
 
 That launchpad gives you:
 
-- the primary `Open Editor` path
-- a direct link to the compatibility shim
+- one primary `Open Editor` path
 - a direct link to the sample gallery under `references_pres/`
 - the current release/runtime identity
-- the quickest docs for first use
+- a low-noise hint for the legacy compatibility redirect
 
 ### Run tests
 
@@ -199,6 +199,8 @@ Prepared in-repo:
 Operational note:
 
 - for personal-account packages, the first GHCR publish usually lands as private
+- version tags publish both the semver tag and `latest`
+- manual workflow dispatch is best used for `latest` refreshes, not for inventing semver tags
 - after first publish, set the package visibility to `Public` once in GitHub UI
 - public GHCR images can then be pulled anonymously
 
@@ -210,6 +212,11 @@ See `docs/GITHUB_PACKAGES.md` for the exact recommendation and tradeoffs.
 - `v0.18.0`
 - `v0.18.1`
 - `v0.18.2`
+- `v0.18.3`
+- `v0.19.0`
+- `v0.19.1`
+- `v0.19.2`
+- `v0.19.3`
 - `ux-regression-baseline-v1`
 - `ux-direct-manipulation-v1`
 - `ux-slide-structure-v1`

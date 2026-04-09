@@ -30,7 +30,7 @@ Use this skill with a full front-end engineering mindset:
 
 ## Architecture Overview
 
-**Single monolithic file**: `editor/presentation-editor-v0.19.2.html` (~20 000 lines)
+**Single monolithic file**: `editor/presentation-editor-v0.19.3.html` (~20 000 lines)
 **Three-layer architecture (non-negotiable)**:
 
 | Layer | What it owns |
@@ -153,12 +153,12 @@ resolution action (reset zoom, unlock, show element, etc.).
 `STATE.clickThroughState.candidates.length` drives a `1/N` badge in breadcrumb
 bar. Zero bridge changes — candidate list is shell-side state.
 
-### Layer Picker (planned v0.19.1, ADR-003)
+### Layer Picker (planned v0.20.1, ADR-003)
 Second click on same point with 2+ candidates opens floating popup listing
 candidates with entity kind + human label. Hover row → ghost highlight in
 preview. Follows transient-surface mutual exclusion.
 
-### Precision Editing (planned v0.19.2, ADR-004)
+### Precision Editing (planned v0.20.2, ADR-004)
 - Arrow nudge: 1px per press, 10px with Shift, blocked via `getBlockReason()`
 - Snap-to-siblings: 5px threshold, sibling edge/center alignment during drag
 - Smart guide lines: shell overlay divs (`data-editor-ui="true"`), stripped on export

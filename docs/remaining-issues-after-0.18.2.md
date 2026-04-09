@@ -1,4 +1,4 @@
-# Remaining Issues After v0.18.2
+﻿# Remaining Issues After v0.18.2
 
 ## Status
 
@@ -15,7 +15,7 @@
 - Add visual feedback when direct manipulation is attempted at non-100% zoom (currently shows tooltip, could add transient banner)
 - Consider auto-reset to 100% when switching from edit to preview (or persist across mode changes)
 
-**Priority**: Low — current behavior is correct and usable, polish can wait for broader UX review
+**Priority**: Low вЂ” current behavior is correct and usable, polish can wait for broader UX review
 
 ### 2. Zoom + floating toolbar interaction
 
@@ -25,7 +25,7 @@
 
 **Mitigation**: `clampToolbarPosition()` already handles viewport bounds clamping.
 
-**Priority**: Very Low — works correctly in normal scenarios, extreme zoom edge cases are rare
+**Priority**: Very Low вЂ” works correctly in normal scenarios, extreme zoom edge cases are rare
 
 ### 3. Selection overlay rendering at extreme zoom levels
 
@@ -33,7 +33,7 @@
 
 **Potential issue**: At very low zoom (25%), selection handles may become visually tiny and harder to see/grab.
 
-**Priority**: Low — 25% zoom is an outlier use case, typically users zoom in (not out) for detailed editing
+**Priority**: Low вЂ” 25% zoom is an outlier use case, typically users zoom in (not out) for detailed editing
 
 ### 4. Zoom persistence across different HTML files
 
@@ -43,7 +43,7 @@
 
 **Trade-off**: Global zoom is simpler and may match user intent (e.g., "I prefer 125% zoom on my high-DPI monitor for all decks").
 
-**Priority**: Very Low — current global persistence is a reasonable default
+**Priority**: Very Low вЂ” current global persistence is a reasonable default
 
 ### 5. Mobile/tablet zoom behavior
 
@@ -53,31 +53,31 @@
 
 **Mitigation**: Could hide zoom controls on compact shell widths (`data-shell-layout="compact"`) or add `touch-action: none` on preview stage.
 
-**Priority**: Low — not tested on physical mobile devices yet, may be fine as-is
+**Priority**: Low вЂ” not tested on physical mobile devices yet, may be fine as-is
 
 ## Not issues (working as designed)
 
-### Direct manipulation blocked at zoom ≠ 100%
+### Direct manipulation blocked at zoom в‰  100%
 This is **intentional** to maintain coordinate precision. Inspector controls remain fully functional at all zoom levels.
 
 ### Zoom step granularity
 The 12 fixed zoom steps (25%, 33%, 50%, ..., 200%) provide good coverage without overwhelming users. Step-based zoom is better UX than continuous zoom for presentation editing.
 
 ### Reset button visibility
-The `1:1` reset button appearing only when zoomed ≠ 100% is correct — it reduces visual noise when reset is not needed.
+The `1:1` reset button appearing only when zoomed в‰  100% is correct вЂ” it reduces visual noise when reset is not needed.
 
 ## Roadmap impact
 
 User research (April 2026) triggered a full replan. See [ROADMAP_NEXT.md](ROADMAP_NEXT.md).
 
 New priority order:
-1. **v0.19.0** — Honest feedback (block reason banners, stack badge, action hints)
-2. **v0.19.1** — Visual layer picker (candidate popup, hover preview, keyboard nav)
-3. **v0.19.2** — Precision editing (arrow nudge, snap-to-siblings, smart guides)
-4. **v0.20.0** — Internal zoning (responsibility zones, no architecture change)
-5. **v0.20.x** — System polish (visual consistency, light/dark parity)
+1. **v0.19.0** вЂ” Honest feedback (block reason banners, stack badge, action hints)
+2. **v0.19.1** вЂ” Visual layer picker (candidate popup, hover preview, keyboard nav)
+3. **v0.19.2** вЂ” Precision editing (arrow nudge, snap-to-siblings, smart guides)
+4. **v0.20.0** вЂ” Internal zoning (responsibility zones, no architecture change)
+5. **v0.20.x** вЂ” System polish (visual consistency, light/dark parity)
 
-Zoom UX polish items listed above are deferred — not impactful for the
+Zoom UX polish items listed above are deferred вЂ” not impactful for the
 primary desktop + mouse user base.
 
 ## Next validation priorities (post-0.18.2)
@@ -103,3 +103,4 @@ primary desktop + mouse user base.
 **v0.18.2 is stable and complete.** The remaining items above are **polish opportunities** and **future validation scope expansion**, not bugs or blockers.
 
 No critical issues found. No urgent follow-up work required.
+

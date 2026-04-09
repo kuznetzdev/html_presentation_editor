@@ -22,7 +22,7 @@ Recommended package surface:
 
 - `Dockerfile` for a static editor image
 - `.dockerignore` to keep the image lean
-- `.github/workflows/publish-ghcr.yml` to publish on version tags or manual dispatch
+- `.github/workflows/publish-ghcr.yml` to publish on version tags and keep `latest` refreshed
 
 ## Important GitHub-side note
 
@@ -55,8 +55,9 @@ Why not:
 If GitHub Packages is used, keep it limited to:
 
 1. GHCR image publishing on release tags
-2. clear tags such as `v0.19.2` and `latest`
-3. README instructions that point people to `docker run`
+2. clear tags such as `v0.19.3` and `latest`
+3. treat manual workflow dispatch as a `latest` refresh path, not as a substitute for release tags
+4. README instructions that point people to `docker run`
 
 Anything beyond that should be justified by an actual distribution need, not by
 package registry availability alone.

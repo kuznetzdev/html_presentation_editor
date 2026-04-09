@@ -6,7 +6,7 @@ const {
 } = require("./referenceDeckRegistry");
 
 const WORKSPACE_ROOT = path.resolve(__dirname, "..", "..", "..");
-const TARGET_URL = "/editor/presentation-editor-v0.19.2.html";
+const TARGET_URL = "/editor/presentation-editor-v0.19.3.html";
 const PLAYWRIGHT_FIXTURE_ROOT = path.join(
   WORKSPACE_ROOT,
   "tests",

@@ -1,11 +1,10 @@
 {
   "name": "html-presentation-editor",
-  "version": "0.19.2",
+  "version": "0.19.3",
   "description": "Local HTML presentation editor with Playwright regression coverage.",
   "private": true,
   "scripts": {
     "start": "node scripts/run-local-editor.js",
-    "start:open": "node scripts/run-local-editor.js",
     "serve": "node scripts/static-server.js . 4173 127.0.0.1",
     "serve:host": "node scripts/static-server.js . 4173 0.0.0.0",
     "docker:build": "docker build -t html-presentation-editor:local .",

@@ -1,4 +1,4 @@
-# Testing Strategy
+﻿# Testing Strategy
 
 ## Overview
 
@@ -13,9 +13,9 @@ The HTML Presentation Editor uses a multi-gate Playwright testing strategy to ba
 **Projects**: `chromium-desktop` only
 
 **Specs**:
-- `shell.smoke.spec.js` — workflow contract (empty/loaded-preview/loaded-edit)
-- `click-through.spec.js` — repeated click cycling, Escape reset, context menu layers
-- `selection-engine-v2.spec.js` — core selection scenarios (subset)
+- `shell.smoke.spec.js` вЂ” workflow contract (empty/loaded-preview/loaded-edit)
+- `click-through.spec.js` вЂ” repeated click cycling, Escape reset, context menu layers
+- `selection-engine-v2.spec.js` вЂ” core selection scenarios (subset)
 
 **Command**:
 ```bash
@@ -147,11 +147,11 @@ npx playwright test
 - Use `expect.poll()` for evaluating dynamic state from `evaluateEditor()`.
 
 ### Flaky Test Protocol
-1. Test fails intermittently → mark as flaky candidate
+1. Test fails intermittently в†’ mark as flaky candidate
 2. Run 3 consecutive times in isolation
-3. If all 3 fail → fixed failure, debug immediately
-4. If mix of pass/fail → quarantine with `.skip()` and file issue
-5. After fix → remove `.skip()`, verify 5 consecutive passes, return to gate
+3. If all 3 fail в†’ fixed failure, debug immediately
+4. If mix of pass/fail в†’ quarantine with `.skip()` and file issue
+5. After fix в†’ remove `.skip()`, verify 5 consecutive passes, return to gate
 
 ### Skipped Test Policy
 - Skipped tests in Gate A: allowed (mark with reason)
@@ -177,11 +177,11 @@ npx playwright test
 | Reference decks | `reference-decks.deep` | real-world deck compatibility |
 
 ### Signed-Off Capabilities (must stay green)
-- Workflow contract (empty → loaded-preview → loaded-edit)
+- Workflow contract (empty в†’ loaded-preview в†’ loaded-edit)
 - Click-through layer cycling (v0.16.0)
 - Overlap detection and recovery (v0.17.0)
 - Advanced-mode layers, lock, visibility, grouping, and ungrouping (v0.18.0)
-- Preview/edit panel zoom controls (v0.18.2, Ctrl+=, Ctrl+−, Ctrl+0)
+- Preview/edit panel zoom controls (v0.18.2, Ctrl+=, Ctrl+в€’, Ctrl+0)
 - Direct manipulation (safe envelope only)
 - Slide structure (create/duplicate/delete/undo/redo)
 - Desktop rail drag-and-drop
@@ -190,14 +190,14 @@ npx playwright test
 - Transient surface mutual exclusion
 - Export cleanliness
 
-### Planned Specs (v0.19.0–v0.19.2)
+### Planned Specs (v0.20.0вЂ“v0.20.2)
 
 | Spec file | Phase | Gate | Coverage |
 |-----------|-------|------|----------|
-| `honest-feedback.spec.js` | v0.19.0 | A+B | Block reason banners, stack badge, action hints |
-| `layer-picker.spec.js` | v0.19.1 | A+B | Visual candidate popup, hover preview, keyboard nav |
-| `precision.spec.js` | v0.19.2 | B | Snap-to-siblings, smart guide lines |
-| (extend `editor.regression`) | v0.19.2 | A | Arrow nudge 1px/10px, nudge blocked states |
+| `honest-feedback.spec.js` | v0.20.0 | A+B | Block reason banners, stack badge, action hints |
+| `layer-picker.spec.js` | v0.20.1 | A+B | Visual candidate popup, hover preview, keyboard nav |
+| `precision.spec.js` | v0.20.2 | B | Snap-to-siblings, smart guide lines |
+| (extend `editor.regression`) | v0.20.2 | A | Arrow nudge 1px/10px, nudge blocked states |
 
 ---
 
@@ -219,10 +219,10 @@ npx playwright test
 ## Validation Artifacts
 
 After each release cycle, update:
-- `docs/CHANGELOG.md` — release-level changes
-- `docs/validation-notes-{version}.md` — gate results, flaky tests, skipped scenarios
-- `artifacts/playwright/results.json` — test run summary (generated automatically)
-- `artifacts/playwright/html-report/` — visual test report (generated automatically)
+- `docs/CHANGELOG.md` вЂ” release-level changes
+- `docs/validation-notes-{version}.md` вЂ” gate results, flaky tests, skipped scenarios
+- `artifacts/playwright/results.json` вЂ” test run summary (generated automatically)
+- `artifacts/playwright/html-report/` вЂ” visual test report (generated automatically)
 
 ---
 
@@ -242,3 +242,5 @@ After each release cycle, update:
 - Runtime per gate (for CI budget planning)
 - Flaky test incidence rate
 - Coverage delta per release (new scenarios added vs removed)
+
+

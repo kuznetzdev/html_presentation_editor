@@ -26,8 +26,8 @@ The root URL is the human-friendly launchpad.
 From there:
 
 - `Open Editor` goes to the active runtime
-- `Open Compatibility Entry` goes through the legacy shim
 - `Open Sample Gallery` gives you ready-made HTML decks from `references_pres/`
+- the root launchpad itself is the stable human-facing URL to bookmark locally
 
 ## Headless local serving
 
@@ -41,7 +41,7 @@ This starts the local static server without opening the browser automatically.
 
 If you already know what you are doing, open the runtime directly:
 
-- `http://127.0.0.1:4173/editor/presentation-editor-v0.19.2.html`
+- `http://127.0.0.1:4173/editor/presentation-editor-v0.19.3.html`
 
 ## Starter sample deck
 
@@ -94,8 +94,11 @@ This repo is prepared for GitHub Container Registry publishing.
 Once a version tag is published through GitHub Actions, the intended pull path is:
 
 ```bash
-docker run --rm -p 4173:4173 ghcr.io/kuznetzdev/html_presentation_editor:v0.19.2
+docker run --rm -p 4173:4173 ghcr.io/kuznetzdev/html_presentation_editor:v0.19.3
 ```
+
+Manual workflow dispatch is useful for refreshing `latest`; semver image tags come
+from actual Git tags.
 
 See `docs/GITHUB_PACKAGES.md` for the exact strategy and why GHCR is the right
 package surface here.
