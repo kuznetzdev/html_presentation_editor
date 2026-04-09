@@ -7,7 +7,7 @@ are only guaranteed for the latest tagged release on `main`.
 
 | Release line | Supported | Notes |
 | --- | --- | --- |
-| `0.19.2` | Yes | Current supported release line after the next tag is published |
+| `0.19.2` | Yes | Current supported release line |
 | `0.19.1` | Limited | Best-effort only until `0.19.2` is tagged and adopted |
 | `< 0.19.1` | No | Historical tags are not maintained for security updates |
 
