@@ -12684,6 +12684,21 @@ ${doc.documentElement.outerHTML}`;
         schedulePersistence(reason, options);
       }
 
+      function recordHistoryChange(reason, options = {}) {
+        if (typeof pushHistory === "function") {
+          pushHistory(reason);
+          return true;
+        }
+        if (typeof commitChange === "function") {
+          commitChange(reason, {
+            ...options,
+            snapshotMode: options.snapshotMode || "immediate",
+          });
+          return true;
+        }
+        return false;
+      }
+
       function clearPendingPersistenceTimers() {
         window.clearTimeout(state.saveTimer);
         window.clearTimeout(state.snapshotTimer);
@@ -13937,7 +13952,7 @@ ${exportDoc.documentElement.outerHTML}`;
 
         if (changedAuthorState) {
           sendToBridge("update-attributes", { nodeId, attrs });
-          pushHistory(`restore-visibility:${nodeId}`);
+          recordHistoryChange(`restore-visibility:${nodeId}`);
           refreshUi();
           showToast("Скрытый элемент снова показан.", "success", {
             title: "Видимость",
@@ -15369,7 +15384,7 @@ ${exportDoc.documentElement.outerHTML}`;
           node.setAttribute("data-editor-locked", "true");
           showToast("Элемент заблокирован.", "success", { title: "Слои" });
         }
-        pushHistory(`toggle-lock:${nodeId}`);
+        recordHistoryChange(`toggle-lock:${nodeId}`);
         sendToBridge("update-attributes", {
           nodeId,
           attrs: isLocked ? { "data-editor-locked": null } : { "data-editor-locked": "true" },
@@ -15420,9 +15435,7 @@ ${exportDoc.documentElement.outerHTML}`;
             value: String(newZ),
           });
         });
-        if (typeof pushHistory === "function") {
-          pushHistory(`reorder-layers:${fromIndex}->${toIndex}`);
-        }
+        recordHistoryChange(`reorder-layers:${fromIndex}->${toIndex}`);
         scheduleOverlapDetection();
         renderLayersPanel();
         showToast("Порядок слоёв изменён.", "success", { title: "Слои" });
@@ -15581,7 +15594,7 @@ ${exportDoc.documentElement.outerHTML}`;
             const newZ = input.value.trim();
             if (nodeId && newZ) {
               sendToBridge("apply-style", { nodeId, property: "z-index", value: newZ });
-              pushHistory(`set-z-index:${nodeId}:${newZ}`);
+              recordHistoryChange(`set-z-index:${nodeId}:${newZ}`);
               scheduleOverlapDetection();
             }
           });
@@ -15605,9 +15618,7 @@ ${exportDoc.documentElement.outerHTML}`;
           const node = slideEl.querySelector(`[data-editor-node-id="${cssEscape(nodeId)}"]`);
           if (node) groupWrapper.appendChild(node);
         });
-        if (typeof pushHistory === "function") {
-          pushHistory(`group:${state.multiSelectNodeIds.join(",")}`);
-        }
+        recordHistoryChange(`group:${state.multiSelectNodeIds.join(",")}`);
         state.multiSelectNodeIds = [];
         rebuildPreviewKeepingContext(state.activeSlideId);
         showToast("Элементы сгруппированы.", "success", { title: "Слои" });
@@ -15622,9 +15633,7 @@ ${exportDoc.documentElement.outerHTML}`;
         const children = Array.from(groupNode.children);
         children.forEach(child => parent.insertBefore(child, groupNode));
         groupNode.remove();
-        if (typeof pushHistory === "function") {
-          pushHistory(`ungroup:${state.selectedNodeId}`);
-        }
+        recordHistoryChange(`ungroup:${state.selectedNodeId}`);
         rebuildPreviewKeepingContext(state.activeSlideId);
         showToast("Группа расформирована.", "success", { title: "Слои" });
       }

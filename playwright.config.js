@@ -1,12 +1,23 @@
 const path = require("path");
+const os = require("os");
 const { defineConfig } = require("@playwright/test");
 
 const ARTIFACTS_DIR = path.join("artifacts", "playwright");
+const DEFAULT_WINDOWS_WORKERS = Math.max(
+  1,
+  Math.min(4, Math.ceil(os.cpus().length / 2)),
+);
+const PLAYWRIGHT_WORKERS = process.env.PLAYWRIGHT_WORKERS
+  ? Number(process.env.PLAYWRIGHT_WORKERS)
+  : process.platform === "win32"
+    ? DEFAULT_WINDOWS_WORKERS
+    : undefined;
 
 module.exports = defineConfig({
   testDir: path.join(__dirname, "tests", "playwright"),
   timeout: 45_000,
   fullyParallel: false,
+  workers: PLAYWRIGHT_WORKERS,
   forbidOnly: Boolean(process.env.CI),
   expect: {
     timeout: 10_000,
