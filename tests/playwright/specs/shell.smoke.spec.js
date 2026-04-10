@@ -37,11 +37,17 @@ test.describe("Editor shell smoke @harness", () => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
 
     await expect(
-      page.getByRole("heading", { name: "HTML Presentation Editor" }),
+      page.getByRole("heading", { name: "Open HTML Presentation Editor" }),
     ).toBeVisible();
     await expect(
       page.getByRole("link", { name: "Open Editor" }),
     ).toHaveAttribute("href", "/editor/presentation-editor.html");
+    await expect(
+      page.getByRole("link", { name: "Browse Example Decks" }),
+    ).toHaveAttribute(
+      "href",
+      "/references_pres/html-presentation-examples_v3/00_examples_index.html",
+    );
     await expect(
       page.getByRole("link", { name: "Open Compatibility Entry" }),
     ).toHaveCount(0);
@@ -49,7 +55,10 @@ test.describe("Editor shell smoke @harness", () => {
       page.getByRole("link", { name: "Read Getting Started" }),
     ).toHaveCount(0);
     await expect(
-      page.locator("code").filter({ hasText: "editor/presentation-editor.html" }).first(),
+      page.getByText("Run npm start or double-click start-editor.cmd").first(),
+    ).toBeVisible();
+    await expect(
+      page.locator("code").filter({ hasText: "http://127.0.0.1:4173/" }).first(),
     ).toBeVisible();
 
     await page.getByRole("link", { name: "Open Editor" }).click();

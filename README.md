@@ -23,9 +23,15 @@ npm start
 npm run serve
 ```
 
+Windows shortcut:
+
+```bat
+start-editor.cmd
+```
+
 Then open:
 
-- `http://127.0.0.1:4173/` for the local launchpad
+- `http://127.0.0.1:4173/` for the simple local entrypoint
 - `http://127.0.0.1:4173/editor/presentation-editor.html` for the editor runtime directly
 - `http://127.0.0.1:4173/references_pres/html-presentation-examples_v3/00_examples_index.html`
   for a ready-made sample gallery
@@ -83,7 +89,7 @@ Important:
 ## Repository entry points
 
 - `index.html`
-  Human-friendly local launchpad for first-time users
+  Simple local entrypoint for first-time users
 - `editor/presentation-editor.html`
   Current editor runtime
 - `docs/GETTING_STARTED.md`

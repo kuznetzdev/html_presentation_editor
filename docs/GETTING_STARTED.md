@@ -17,17 +17,23 @@ Command:
 npm start
 ```
 
+Windows shortcut:
+
+```bat
+start-editor.cmd
+```
+
 Then open:
 
 - `http://127.0.0.1:4173/`
 
-The root URL is the human-friendly launchpad.
+The root URL is the simple human-facing entrypoint.
 
 From there:
 
 - `Open Editor` goes to the active runtime
-- `Open Sample Gallery` gives you ready-made HTML decks from `references_pres/`
-- the root launchpad itself is the stable human-facing URL to bookmark locally
+- `Browse Example Decks` gives you ready-made HTML decks from `references_pres/`
+- the root page itself is the stable local URL to bookmark
 
 ## Headless local serving
 

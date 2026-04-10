@@ -7,15 +7,14 @@
     <style>
       :root {
         color-scheme: light;
-        --bg: #f5f2e8;
-        --card: rgba(255, 252, 244, 0.9);
-        --ink: #1e2430;
-        --muted: #5f6776;
-        --line: rgba(30, 36, 48, 0.12);
+        --bg: #f5f4ef;
+        --card: rgba(255, 255, 255, 0.92);
+        --ink: #17202a;
+        --muted: #5d6773;
+        --line: rgba(23, 32, 42, 0.12);
         --accent: #0f766e;
         --accent-strong: #115e59;
-        --accent-soft: rgba(15, 118, 110, 0.12);
-        --shadow: 0 24px 64px rgba(36, 41, 49, 0.12);
+        --shadow: 0 28px 80px rgba(23, 32, 42, 0.14);
       }
 
       * {
@@ -27,63 +26,61 @@
         font-family: "Segoe UI", "Inter", "Helvetica Neue", sans-serif;
         color: var(--ink);
         background:
-          radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 26rem),
+          radial-gradient(circle at top left, rgba(15, 118, 110, 0.14), transparent 26rem),
           radial-gradient(circle at bottom right, rgba(180, 83, 9, 0.08), transparent 22rem),
           var(--bg);
       }
 
       main {
-        width: min(1080px, calc(100vw - 2rem));
+        width: min(760px, calc(100vw - 1.25rem));
         margin: 0 auto;
-        padding: 2rem 0 3rem;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 1rem 0;
       }
 
-      .hero,
-      .panel {
+      .card {
+        width: 100%;
+        padding: 2rem;
+        border-radius: 28px;
         background: var(--card);
         border: 1px solid var(--line);
-        border-radius: 24px;
         box-shadow: var(--shadow);
-        backdrop-filter: blur(12px);
-      }
-
-      .hero {
-        padding: 2rem;
+        backdrop-filter: blur(14px);
       }
 
       .eyebrow {
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
         padding: 0.35rem 0.7rem;
         border-radius: 999px;
-        background: var(--accent-soft);
+        background: rgba(15, 118, 110, 0.12);
         color: var(--accent-strong);
-        font-size: 0.85rem;
+        font-size: 0.82rem;
         font-weight: 700;
         letter-spacing: 0.04em;
         text-transform: uppercase;
       }
 
       h1 {
-        margin: 1rem 0 0.75rem;
-        font-size: clamp(2.3rem, 5vw, 4.4rem);
-        line-height: 0.96;
-        letter-spacing: -0.04em;
+        margin: 1rem 0 0.8rem;
+        font-size: clamp(2.1rem, 5vw, 4rem);
+        line-height: 0.98;
+        letter-spacing: -0.05em;
       }
 
       .lead {
-        max-width: 48rem;
-        margin: 0 0 1.5rem;
+        margin: 0 0 1.4rem;
         color: var(--muted);
-        font-size: 1.06rem;
+        font-size: 1.04rem;
         line-height: 1.6;
       }
 
       .actions {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.85rem;
+        gap: 0.8rem;
         margin-bottom: 1.5rem;
       }
 
@@ -92,7 +89,7 @@
         align-items: center;
         justify-content: center;
         min-height: 3rem;
-        padding: 0.8rem 1.2rem;
+        padding: 0.82rem 1.2rem;
         border-radius: 14px;
         text-decoration: none;
         font-weight: 700;
@@ -107,53 +104,38 @@
       }
 
       .button.primary {
-        color: #ffffff;
+        color: #fff;
         background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-        box-shadow: 0 18px 36px rgba(15, 118, 110, 0.22);
+        box-shadow: 0 18px 40px rgba(15, 118, 110, 0.22);
       }
 
       .button.secondary {
         color: var(--ink);
-        background: rgba(255, 255, 255, 0.7);
+        background: rgba(255, 255, 255, 0.78);
         border: 1px solid var(--line);
       }
 
-      .meta {
+      .grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
         gap: 0.9rem;
       }
 
-      .meta-card {
-        padding: 1rem;
-        border-radius: 16px;
-        background: rgba(255, 255, 255, 0.66);
+      .panel {
+        padding: 1rem 1.05rem;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.72);
         border: 1px solid var(--line);
       }
 
-      .meta-card strong,
-      .meta-card code {
-        display: block;
-      }
-
-      .layout {
-        display: grid;
-        grid-template-columns: 1.15fr 0.85fr;
-        gap: 1rem;
-        margin-top: 1rem;
-      }
-
-      .panel {
-        padding: 1.4rem;
-      }
-
       .panel h2 {
-        margin: 0 0 0.9rem;
-        font-size: 1.15rem;
+        margin: 0 0 0.65rem;
+        font-size: 1rem;
       }
 
       .panel p,
       .panel li {
+        margin: 0;
         color: var(--muted);
         line-height: 1.6;
       }
@@ -161,122 +143,85 @@
       .panel ol,
       .panel ul {
         margin: 0;
-        padding-left: 1.2rem;
+        padding-left: 1.15rem;
       }
 
-      pre {
-        margin: 1rem 0 0;
-        padding: 1rem;
-        border-radius: 16px;
-        overflow-x: auto;
-        background: #18202a;
-        color: #eff6ff;
+      code {
+        font-family: Consolas, "SFMono-Regular", monospace;
+        font-size: 0.92em;
       }
 
-      .link-list {
-        display: grid;
-        gap: 0.7rem;
-      }
-
-      .doc-link {
-        display: block;
-        padding: 0.95rem 1rem;
-        border-radius: 16px;
-        color: inherit;
-        text-decoration: none;
-        background: rgba(255, 255, 255, 0.72);
-        border: 1px solid var(--line);
-      }
-
-      .doc-link strong {
-        display: block;
-        margin-bottom: 0.25rem;
-      }
-
-      .doc-link span {
+      .hint {
+        margin-top: 1rem;
         color: var(--muted);
+        font-size: 0.95rem;
       }
 
-      @media (max-width: 860px) {
-        .layout {
-          grid-template-columns: 1fr;
+      @media (max-width: 640px) {
+        .card {
+          padding: 1.35rem;
+          border-radius: 22px;
         }
 
-        main {
-          width: min(100vw - 1rem, 1080px);
+        .actions {
+          flex-direction: column;
         }
 
-        .hero,
-        .panel {
-          border-radius: 20px;
+        .button {
+          width: 100%;
         }
       }
     </style>
   </head>
   <body>
     <main>
-      <section class="hero">
-        <div class="eyebrow">Local launchpad</div>
-        <h1>HTML Presentation Editor</h1>
+      <section class="card" aria-labelledby="entry-title">
+        <div class="eyebrow">Simple start</div>
+        <h1 id="entry-title">Open HTML Presentation Editor</h1>
         <p class="lead">
-          This repository already contains the application. Start a local static server,
-          open the root URL, and jump straight into the active editor runtime without
-          guessing paths or reading the codebase first.
+          This repository already contains the app. Start the local server, open the editor,
+          load an HTML deck, and edit it visually. You do not need to inspect the repo first.
         </p>
+
         <div class="actions">
           <a class="button primary" href="/editor/presentation-editor.html">Open Editor</a>
-          <a class="button secondary" href="/references_pres/html-presentation-examples_v3/00_examples_index.html">Open Sample Gallery</a>
+          <a
+            class="button secondary"
+            href="/references_pres/html-presentation-examples_v3/00_examples_index.html"
+          >
+            Browse Example Decks
+          </a>
         </div>
-        <div class="meta">
-          <div class="meta-card">
-            <strong>Editor entrypoint</strong>
-            <code>editor/presentation-editor.html</code>
-          </div>
-          <div class="meta-card">
-            <strong>Stable human URL</strong>
-            <code>http://127.0.0.1:4173/</code>
-          </div>
-          <div class="meta-card">
-            <strong>Fastest command</strong>
-            <code>npm start</code>
-          </div>
-          <div class="meta-card">
-            <strong>Runtime history</strong>
-            <code>docs/history/</code>
-          </div>
-          <div class="meta-card">
-            <strong>Starter sample deck</strong>
-            <code>references_pres/html-presentation-examples_v3/01_basic_minimal.html</code>
-          </div>
+
+        <div class="grid">
+          <article class="panel">
+            <h2>How to start</h2>
+            <ol>
+              <li>Run <code>npm start</code> or double-click <code>start-editor.cmd</code>.</li>
+              <li>Open <code>http://127.0.0.1:4173/</code>.</li>
+              <li>Click <strong>Open Editor</strong> and load your HTML deck.</li>
+            </ol>
+          </article>
+
+          <article class="panel">
+            <h2>What to open first</h2>
+            <ul>
+              <li><strong>Open Editor</strong> opens the active runtime.</li>
+              <li><strong>Browse Example Decks</strong> gives you ready-made sample files.</li>
+              <li>The stable local URL is <code>/</code>.</li>
+            </ul>
+          </article>
+
+          <article class="panel">
+            <h2>Runtime path</h2>
+            <p><code>editor/presentation-editor.html</code></p>
+          </article>
         </div>
-      </section>
 
-      <section class="layout">
-        <article class="panel">
-          <h2>1-minute local start</h2>
-          <ol>
-            <li>Make sure Node.js 18+ is available.</li>
-            <li>Run <code>npm start</code> in the repo root.</li>
-            <li>Open <code>http://127.0.0.1:4173/</code>.</li>
-            <li>Click <strong>Open Editor</strong>.</li>
-            <li>Use the sample gallery if you want a ready-made deck to upload first.</li>
-          </ol>
-          <pre><code>npm start
-
-# headless local serving
-npm run serve</code></pre>
-        </article>
-
-        <aside class="panel">
-          <h2>What matters first</h2>
-          <ul>
-            <li><strong>Open Editor</strong> is the only primary entrypoint for people.</li>
-            <li>Bookmark <code>/</code> if you want a stable human-facing URL.</li>
-            <li>The sample gallery is the fastest zero-prep way to get a deck into the editor.</li>
-            <li><code>editor/presentation-editor.html</code> is the stable runtime file for local work and tests.</li>
-            <li>Repo docs and release notes stay available for maintainers, but you do not need them to start the app.</li>
-          </ul>
-        </aside>
+        <p class="hint">
+          Run <code>npm start or double-click start-editor.cmd</code> if you just want the app
+          to open locally without thinking about repo internals.
+        </p>
       </section>
     </main>
   </body>
