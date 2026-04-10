@@ -13,7 +13,7 @@ are only guaranteed for the latest tagged release on `main`.
 
 Operational rules:
 
-- the active runtime is the current semver runtime file in `editor/`
+- the active runtime is `editor/presentation-editor.html`
 - security fixes land on `main` first and are then cut into the next semver tag
 - old runtime files under `docs/history/` are archival only and must not be
   treated as supported deployment targets

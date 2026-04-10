@@ -30,7 +30,7 @@ Use this skill with a full front-end engineering mindset:
 
 ## Architecture Overview
 
-**Single monolithic file**: `editor/presentation-editor-v0.19.3.html` (~20 000 lines)
+**Single monolithic file**: `editor/presentation-editor.html` (~20 000 lines)
 **Three-layer architecture (non-negotiable)**:
 
 | Layer | What it owns |
@@ -261,8 +261,8 @@ Use existing Playwright test infrastructure at `tests/playwright/`.
 
 ## Release Discipline
 
-- Active runtime filename must follow the current semver release tag.
-- When the release version changes, archive the previous runtime under `docs/history/` and update live references in config, tests, docs, and agent instructions.
-- Treat `package.json`, the active runtime filename, and the top entry in `docs/CHANGELOG.md` as one synchronized release surface.
+- Active runtime file stays `editor/presentation-editor.html`.
+- When a release needs a preserved runtime snapshot, archive it under `docs/history/` and update only active references that still point at the stable entrypoint.
+- Treat `package.json`, the active runtime path references, and the top entry in `docs/CHANGELOG.md` as one synchronized release surface.
 
 Do not rely on stale line numbers. Search by symbol name before editing.

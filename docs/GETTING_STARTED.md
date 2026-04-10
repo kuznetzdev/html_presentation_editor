@@ -41,7 +41,7 @@ This starts the local static server without opening the browser automatically.
 
 If you already know what you are doing, open the runtime directly:
 
-- `http://127.0.0.1:4173/editor/presentation-editor-v0.19.3.html`
+- `http://127.0.0.1:4173/editor/presentation-editor.html`
 
 ## Starter sample deck
 

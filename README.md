@@ -26,7 +26,7 @@ npm run serve
 Then open:
 
 - `http://127.0.0.1:4173/` for the local launchpad
-- `http://127.0.0.1:4173/editor/presentation-editor-v0.19.3.html` for the active runtime directly
+- `http://127.0.0.1:4173/editor/presentation-editor.html` for the editor runtime directly
 - `http://127.0.0.1:4173/references_pres/html-presentation-examples_v3/00_examples_index.html`
   for a ready-made sample gallery
 
@@ -35,14 +35,14 @@ Important:
 - You do not need `npm install` just to launch the local editor locally
 - You do need `npm install` for Playwright-based tests
 - The repo root now acts as the default first-stop entrypoint for humans
-- The stable human-facing URL to bookmark locally is `/`, not the semver runtime path
+- The stable human-facing URL to bookmark locally is `/`
 - Sample HTML decks already ship in `references_pres/` if you want a no-prep first run
 
 ## Current state
 
 - Current version: see `package.json`
-- Main runtime file: `editor/presentation-editor-v0.19.3.html`
-- Compatibility entrypoint: `editor/presentation-editor.html` redirect shim only
+- Main runtime file: `editor/presentation-editor.html`
+- Historical runtime snapshots live under `docs/history/`
 - Architecture remains fixed: `parent shell + iframe preview + bridge + modelDoc`
 - Targeted proof set: green
 - Release-core gates `test:gate-a`, `test:gate-b`, `test:gate-d`: green
@@ -70,7 +70,7 @@ Important:
 - Keep transient shell surfaces mutually exclusive instead of stacking floating
   toolbar, context menu, and compact drawers into competing layers
 - Export clean HTML without editor-only chrome or bridge residue
-- Keep semver runtime references synchronized across docs, harness, and package metadata
+- Keep the stable editor entrypoint synchronized across docs, harness, and tooling
 
 ## Product rules
 
@@ -84,10 +84,8 @@ Important:
 
 - `index.html`
   Human-friendly local launchpad for first-time users
-- `editor/presentation-editor-v0.19.3.html`
-  Current editor runtime
 - `editor/presentation-editor.html`
-  Compatibility shim that forwards to the active semver runtime
+  Current editor runtime
 - `docs/GETTING_STARTED.md`
   Quick runbook for first local launch, tests, and Docker
 - `docs/GITHUB_PACKAGES.md`

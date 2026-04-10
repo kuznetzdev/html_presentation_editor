@@ -6,15 +6,15 @@ See `package.json` for current release version.
 
 Active runtime entrypoint:
 
-- `editor/presentation-editor-v0.19.3.html`
+- `editor/presentation-editor.html`
 
 Human-friendly local repo entrypoint:
 
 - `index.html`
 
-Compatibility-only entrypoint:
+Historical runtime snapshots:
 
-- `editor/presentation-editor.html` -> redirect shim to the active semver runtime
+- `docs/history/*.html`
 
 ## Product state
 
@@ -83,7 +83,7 @@ The fixed architecture is unchanged:
   chrome
 - keep manual-base and connected asset-directory validation green
 - expose a repo-root launchpad so first-time users can start the editor from `/`
-  instead of guessing the semver runtime path
+  instead of guessing internal file paths
 - prepare a GHCR container packaging path for one-command Docker launch
 
 ## Important constraints
@@ -116,7 +116,7 @@ The fixed architecture is unchanged:
 
 ## Latest hardening batch
 
-- semver runtime discipline restored around `editor/presentation-editor-v0.19.3.html`
-- `editor/presentation-editor.html` reduced to a compatibility shim instead of a second editable runtime source
+- stable runtime entrypoint simplified around `editor/presentation-editor.html`
+- versioned runtime copies moved out of the active `editor/` surface and kept in `docs/history/`
 - shell-owned storage, export cleanup, and persistence paths no longer fail silently in the touched zones
 - export validation now explicitly checks for editor-artifact residue after interaction-heavy shell flows
