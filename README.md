@@ -88,6 +88,8 @@ Important:
   Current editor runtime
 - `docs/GETTING_STARTED.md`
   Quick runbook for first local launch, tests, and Docker
+- `docs/HTML_PRESENTATION_GUIDELINES.md`
+  Authoring contract for developers and AI agents creating HTML decks for this editor
 - `docs/GITHUB_PACKAGES.md`
   Recommended GitHub Packages strategy for this repo
 - `docs/SOURCE_OF_TRUTH.md`

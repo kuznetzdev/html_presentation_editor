@@ -4,6 +4,7 @@
 - promoted the active editor runtime back to the stable `editor/presentation-editor.html` entrypoint
 - removed the root-level semver runtime file from active use while keeping archived runtime history under `docs/history/`
 - synchronized the launchpad, local skills, Playwright harness, and asset-parity tooling to the stable runtime path
+- added a dedicated authoring guideline for developers and AI agents describing the preferred slide, node, and prompt contract for editor-friendly HTML decks
 
 ## 0.19.3 - entrypoint simplification, support policy cleanup, and semver resync - 2026-04-10
 - promoted the active runtime artifact to `editor/presentation-editor-v0.19.3.html` so the latest `main` state, package metadata, launchpad, shim, Playwright harness, and asset-parity tooling resolve to one semver runtime again
