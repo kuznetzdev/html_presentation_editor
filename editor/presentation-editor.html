@@ -328,6 +328,7 @@
       textarea:focus-visible,
       .section-toggle:focus-visible,
       .context-menu button:focus-visible,
+      .layer-picker button:focus-visible,
       .quick-palette button:focus-visible {
         outline: none;
         border-color: var(--shell-accent);
@@ -2035,7 +2036,24 @@
 
       .overlap-recovery-actions {
         display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
         justify-content: flex-end;
+      }
+
+      .inspector-section-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .inspector-section-heading h3 {
+        margin: 0;
+      }
+
+      .inspector-section-action {
+        flex: 0 0 auto;
       }
 
       /* Lock banner */
@@ -2115,6 +2133,12 @@
         border: 1px solid var(--shell-border);
         border-radius: 8px;
         background: var(--shell-bg-secondary);
+      }
+
+      .layers-panel-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 8px;
       }
 
       .layer-row {
@@ -2199,6 +2223,92 @@
       .layer-action-btn.is-hidden {
         opacity: 0.5;
       }
+
+      .layer-picker {
+        position: fixed;
+        z-index: var(--z-context-menu);
+        display: none;
+        min-width: 260px;
+        max-width: min(360px, calc(100vw - 24px));
+        border: 1px solid rgba(29, 29, 31, 0.12);
+        border-radius: 14px;
+        background: var(--shell-panel-elevated);
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+        transform-origin: top center;
+      }
+
+      .layer-picker.is-open {
+        display: block;
+        animation: contextMenuIn var(--motion-medium) var(--motion-ease);
+      }
+
+      .layer-picker-header {
+        display: grid;
+        gap: 2px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--menu-divider);
+      }
+
+      .layer-picker-title {
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .layer-picker-subtitle {
+        font-size: 11px;
+        color: var(--shell-text-muted);
+      }
+
+      .layer-picker-list {
+        display: flex;
+        flex-direction: column;
+        max-height: min(62vh, 360px);
+        overflow: auto;
+      }
+
+      .layer-picker button {
+        width: 100%;
+        min-height: 40px;
+        min-width: 0;
+        border: 0;
+        border-radius: 0;
+        display: grid;
+        grid-template-columns: 18px 1fr;
+        gap: 10px;
+        align-items: center;
+        padding: 10px 12px;
+        text-align: left;
+        background: transparent;
+      }
+
+      .layer-picker button:hover:not(:disabled),
+      .layer-picker button.is-active {
+        background: var(--shell-field-muted);
+      }
+
+      .layer-picker button.is-current-layer {
+        font-weight: 700;
+        background: color-mix(in srgb, var(--shell-accent-soft) 26%, transparent);
+      }
+
+      .layer-picker-row-copy {
+        display: grid;
+        gap: 2px;
+        min-width: 0;
+      }
+
+      .layer-picker-row-title,
+      .layer-picker-row-hint {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .layer-picker-row-hint {
+        font-size: 11px;
+        color: var(--shell-text-muted);
       }
 
       @layer overlay {
@@ -2621,6 +2731,18 @@
             100dvh - var(--shell-top-offset) - var(--mobile-rail-offset) - 40px
           )
         );
+      }
+
+      body[data-context-menu-layout="sheet"] .layer-picker {
+        min-width: 240px;
+        width: auto;
+        max-width: min(
+          360px,
+          calc(
+            100vw - var(--shell-popover-inset) - var(--shell-popover-inset)
+          )
+        );
+        border-radius: 18px;
       }
 
       .context-menu-section-title {
@@ -4094,6 +4216,14 @@
                 Этот элемент частично перекрыт другим. Можно переместить его наверх.
               </div>
               <div class="overlap-recovery-actions">
+                <button
+                  type="button"
+                  class="ghost-btn"
+                  id="overlapSelectLayerBtn"
+                  data-ui-level="advanced"
+                >
+                  Magic Select
+                </button>
                 <button type="button" class="ghost-btn" id="overlapMoveTopBtn">
                   Переместить наверх
                 </button>
@@ -4561,7 +4691,16 @@
             data-ui-level="advanced"
             hidden
           >
-            <h3>Слои и порядок</h3>
+            <div class="inspector-section-heading">
+              <h3>Слои и порядок</h3>
+              <button
+                type="button"
+                class="ghost-btn inspector-section-action"
+                id="normalizeLayersBtn"
+              >
+                Normalize layers
+              </button>
+            </div>
             <div class="layers-list-container" id="layersListContainer">
               <!-- Layers list rendered dynamically -->
             </div>
@@ -4835,6 +4974,22 @@
        не использует системное browser-menu внутри iframe в edit-режиме. -->
     <div id="contextMenu" class="context-menu" role="menu" aria-hidden="true">
       <div id="contextMenuInner" class="context-menu-inner"></div>
+    </div>
+
+    <div
+      id="layerPicker"
+      class="layer-picker"
+      role="dialog"
+      aria-hidden="true"
+      aria-label="Выбор слоя"
+    >
+      <div class="layer-picker-header">
+        <strong id="layerPickerTitle" class="layer-picker-title">Magic Select</strong>
+        <div id="layerPickerSubtitle" class="layer-picker-subtitle">
+          Выберите слой под курсором.
+        </div>
+      </div>
+      <div id="layerPickerList" class="layer-picker-list"></div>
     </div>
 
     <input
@@ -5309,6 +5464,9 @@
         selectedOverlapWarning: null,
         overlapHoverNodeId: null,
         overlapHoverBoundDoc: null,
+        layerPickerPayload: null,
+        layerPickerHighlightNodeId: null,
+        layerPickerActiveIndex: -1,
         // [v0.18.0] Multi-select & grouping
         multiSelectNodeIds: [],
         // [v0.18.0] Layers panel drag state
@@ -5499,6 +5657,7 @@
         selectedElementSummary: document.getElementById("selectedElementSummary"),
         overlapRecoveryBanner: document.getElementById("overlapRecoveryBanner"),
         overlapRecoveryText: document.getElementById("overlapRecoveryText"),
+        overlapSelectLayerBtn: document.getElementById("overlapSelectLayerBtn"),
         overlapMoveTopBtn: document.getElementById("overlapMoveTopBtn"),
         // [v0.18.0] Lock banner
         lockBanner: document.getElementById("lockBanner"),
@@ -5513,6 +5672,7 @@
         // [v0.18.0] Layers panel
         layersInspectorSection: document.getElementById("layersInspectorSection"),
         layersListContainer: document.getElementById("layersListContainer"),
+        normalizeLayersBtn: document.getElementById("normalizeLayersBtn"),
         currentSlideMetaBadge: document.getElementById("currentSlideMetaBadge"),
         currentSlideSummaryCard: document.getElementById("currentSlideSummaryCard"),
         currentSlideTitleDisplay: document.getElementById("currentSlideTitleDisplay"),
@@ -5628,6 +5788,10 @@
         insertVideoUrlBtn: document.getElementById("insertVideoUrlBtn"),
         contextMenu: document.getElementById("contextMenu"),
         contextMenuInner: document.getElementById("contextMenuInner"),
+        layerPicker: document.getElementById("layerPicker"),
+        layerPickerTitle: document.getElementById("layerPickerTitle"),
+        layerPickerSubtitle: document.getElementById("layerPickerSubtitle"),
+        layerPickerList: document.getElementById("layerPickerList"),
         replaceImageInput: document.getElementById("replaceImageInput"),
         insertImageInput: document.getElementById("insertImageInput"),
         restoreBanner: document.getElementById("restoreBanner"),
@@ -5944,12 +6108,14 @@
           moveSelectedElement(1),
         );
         els.overlapMoveTopBtn?.addEventListener("click", () => {
-          if (!state.selectedNodeId) return;
-          const nextZ = getTopZIndexForActiveSlide() + 1;
-          applyStyle("zIndex", String(nextZ));
-          showToast("Элемент перемещён наверх", "success");
-          scheduleOverlapDetection("move-to-top");
+          moveSelectedLayerByOrder("layer-front");
         });
+        els.overlapSelectLayerBtn?.addEventListener("click", () =>
+          openLayerPickerForSelectedOverlap(),
+        );
+        els.normalizeLayersBtn?.addEventListener("click", () =>
+          normalizeLayersForCurrentScope(),
+        );
         // [v0.18.0] Unlock element button
         els.unlockElementBtn?.addEventListener("click", () => {
           const lockedNodeId =
@@ -6356,16 +6522,24 @@
         });
 
         document.addEventListener("pointerdown", (event) => {
-          if (!event.target.closest("#contextMenu")) closeContextMenu();
+          if (
+            !event.target.closest("#contextMenu") &&
+            !event.target.closest("#layerPicker")
+          ) {
+            closeContextMenu();
+            closeLayerPicker();
+          }
         });
         window.addEventListener("blur", () => {
           setSelectionPointerPassthrough(false);
           closeContextMenu();
+          closeLayerPicker();
         });
         document.addEventListener("visibilitychange", () => {
           if (!document.hidden) return;
           setSelectionPointerPassthrough(false);
           closeContextMenu();
+          closeLayerPicker();
         });
 
         window.addEventListener("resize", () => {
@@ -6379,6 +6553,9 @@
             state.contextMenuPayload
           ) {
             reopenContextMenuFromState();
+          }
+          if (isLayerPickerOpen() && state.layerPickerPayload) {
+            reopenLayerPickerFromState();
           }
         });
         window.addEventListener("scroll", positionFloatingToolbar, true);
@@ -9924,9 +10101,13 @@
           queueMetadataRefresh();
         }
 
-        function notifySlideUpdated(slide) {
+        function notifySlideUpdated(slide, reason = 'slide-updated') {
           if (!slide) return;
-          post('slide-updated', { slideId: slide.getAttribute(SLIDE_MARKER), html: slide.outerHTML });
+          post('slide-updated', {
+            slideId: slide.getAttribute(SLIDE_MARKER),
+            html: slide.outerHTML,
+            reason,
+          });
           queueMetadataRefresh();
         }
 
@@ -10410,6 +10591,78 @@
           notifyElementUpdated(el);
         }
 
+        function parseElementZIndex(el) {
+          if (!el || el.nodeType !== 1) return 0;
+          const z = String(window.getComputedStyle(el).zIndex || '').trim();
+          const parsed = Number.parseFloat(z);
+          return Number.isFinite(parsed) ? parsed : 0;
+        }
+
+        function compareElementStackOrder(a, b) {
+          const za = parseElementZIndex(a);
+          const zb = parseElementZIndex(b);
+          if (za !== zb) return za - zb;
+          const pos = a.compareDocumentPosition(b);
+          if (pos & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
+          if (pos & Node.DOCUMENT_POSITION_PRECEDING) return 1;
+          return 0;
+        }
+
+        function getRectIntersectionArea(a, b) {
+          const left = Math.max(a.left, b.left);
+          const top = Math.max(a.top, b.top);
+          const right = Math.min(a.right, b.right);
+          const bottom = Math.min(a.bottom, b.bottom);
+          const width = Math.max(0, right - left);
+          const height = Math.max(0, bottom - top);
+          return width * height;
+        }
+
+        function autoPromoteInsertedElementIfNeeded(el) {
+          if (!el || el.nodeType !== 1 || !el.parentElement) return false;
+          if (el.getAttribute('data-editor-locked') === 'true') return false;
+          const rect = el.getBoundingClientRect();
+          if (!(rect.width > 0 && rect.height > 0)) return false;
+          const parent = el.parentElement;
+          const siblings = Array.from(parent.children).filter((candidate) => {
+            return (
+              candidate !== el &&
+              candidate.nodeType === 1 &&
+              candidate.hasAttribute(EDITOR_MARKER)
+            );
+          });
+          if (!siblings.length) return false;
+          let coveredArea = 0;
+          let maxSiblingZ = 0;
+          let blockedByLockedOverlap = false;
+          siblings.forEach((sibling) => {
+            const siblingRect = sibling.getBoundingClientRect();
+            const style = window.getComputedStyle(sibling);
+            if (!(siblingRect.width > 0 && siblingRect.height > 0)) return;
+            if (style.display === 'none' || style.visibility === 'hidden') return;
+            const overlapArea = getRectIntersectionArea(rect, siblingRect);
+            if (!(overlapArea > 0)) return;
+            if (sibling.getAttribute('data-editor-locked') === 'true') {
+              blockedByLockedOverlap = true;
+            }
+            if (compareElementStackOrder(sibling, el) > 0) {
+              coveredArea += overlapArea;
+            }
+            maxSiblingZ = Math.max(maxSiblingZ, parseElementZIndex(sibling));
+          });
+          if (blockedByLockedOverlap) return false;
+          const coveredPercent = Math.min(
+            100,
+            Math.round((coveredArea / Math.max(1, rect.width * rect.height)) * 100),
+          );
+          const alreadyTopmost = siblings.every(
+            (sibling) => compareElementStackOrder(el, sibling) >= 0,
+          );
+          if (alreadyTopmost || coveredPercent < 80) return false;
+          el.style.zIndex = String(maxSiblingZ + 1);
+          return true;
+        }
+
         function insertElement(payload) {
           const html = payload.html || '';
           const insertion = parseSingleRoot(html);
@@ -10431,8 +10684,12 @@
           } else {
             slide.appendChild(insertion);
           }
+          const autoPromoted = autoPromoteInsertedElementIfNeeded(insertion);
           selectElement(insertion, { focusText: Boolean(payload.focusText) });
-          notifySlideUpdated(slide);
+          notifySlideUpdated(
+            slide,
+            autoPromoted ? 'insert-element:auto-promote' : 'insert-element',
+          );
         }
 
         
@@ -10656,6 +10913,18 @@
           if ((isMod && event.key.toLowerCase() === 'y') || (isMod && event.shiftKey && event.key.toLowerCase() === 'z')) {
             event.preventDefault();
             post('shortcut', { action: 'redo' });
+            return;
+          }
+          if (!isMod && !event.altKey && (event.key === '[' || event.key === ']')) {
+            event.preventDefault();
+            const action = event.shiftKey
+              ? event.key === ']'
+                ? 'layer-front'
+                : 'layer-back'
+              : event.key === ']'
+                ? 'layer-forward'
+                : 'layer-backward';
+            post('shortcut', { action });
             return;
           }
           if ((event.key === 'Delete' || event.key === 'Backspace') && STATE.selectedEl && !STATE.selectedEl.isContentEditable) {
@@ -11330,6 +11599,14 @@
         ) {
           closeContextMenu();
         }
+        if (
+          isLayerPickerOpen() &&
+          Boolean(payload.isTextEditing || !state.layerPickerPayload?.items?.some(
+            (item) => item.nodeId === state.selectedNodeId,
+          ))
+        ) {
+          closeLayerPicker();
+        }
         syncSlideRegistry({
           currentActiveId: payload.slideId || state.activeSlideId,
           runtimeActiveSlideId: state.runtimeActiveSlideId,
@@ -11523,6 +11800,7 @@
       function applySlideUpdateFromBridge(payload, seq = 0) {
         const slideId = payload.slideId;
         const html = payload.html;
+        const reason = payload.reason || "slide-updated";
         if (!slideId || !html || !state.modelDoc) return;
         if (isStaleInboundSeq(slideId, seq)) {
           const localSeq = Number(state.lastAppliedSeqBySlide[slideId] || 0);
@@ -11547,7 +11825,7 @@
           state.liveSelectionRect = null;
           state.activeGuides = { vertical: [], horizontal: [] };
           noteAppliedSeq(slideId, seq);
-          commitChange("slide-updated");
+          commitChange(reason);
           syncSlideRegistry();
           renderSlidesList();
           refreshUi();
@@ -11594,6 +11872,12 @@
             break;
           case "delete":
             deleteSelectedElement();
+            break;
+          case "layer-forward":
+          case "layer-backward":
+          case "layer-front":
+          case "layer-back":
+            moveSelectedLayerByOrder(action);
             break;
         }
       }
@@ -12856,6 +13140,8 @@ ${exportDoc.documentElement.outerHTML}`;
 
       function parseNumericZIndex(el) {
         if (!el || el.nodeType !== 1) return 0;
+        const authoredZ = Number.parseFloat(String(el.style?.zIndex || "").trim());
+        if (Number.isFinite(authoredZ)) return authoredZ;
         const view = el.ownerDocument?.defaultView || window;
         const z = String(view.getComputedStyle(el).zIndex || "").trim();
         const n = Number.parseFloat(z);
@@ -13349,6 +13635,171 @@ ${exportDoc.documentElement.outerHTML}`;
         });
       }
 
+      function isLayerManagedNode(node) {
+        return Boolean(
+          node instanceof Element &&
+            node.hasAttribute("data-editor-node-id") &&
+            !node.hasAttribute("data-editor-slide-id") &&
+            node.getAttribute("data-editor-policy-kind") !== "protected",
+        );
+      }
+
+      function getActiveSlideModelElement() {
+        if (!state.modelDoc || !state.activeSlideId) return null;
+        return state.modelDoc.querySelector(
+          `[data-editor-slide-id="${cssEscape(state.activeSlideId)}"]`,
+        );
+      }
+
+      function getLayerScopeInfo() {
+        const slideEl = getActiveSlideModelElement();
+        if (!slideEl) return null;
+        const selectedNode = getSelectedModelNode();
+        let scopeRoot = slideEl;
+        if (
+          selectedNode instanceof Element &&
+          selectedNode.parentElement &&
+          selectedNode.closest(`[data-editor-slide-id="${cssEscape(state.activeSlideId)}"]`) ===
+            slideEl
+        ) {
+          const siblingNodes = Array.from(selectedNode.parentElement.children).filter(
+            (node) => isLayerManagedNode(node),
+          );
+          if (siblingNodes.includes(selectedNode)) {
+            scopeRoot = selectedNode.parentElement;
+          }
+        }
+        const nodes = Array.from(scopeRoot.children).filter((node) =>
+          isLayerManagedNode(node),
+        );
+        return {
+          slideEl,
+          scopeRoot,
+          nodes,
+          selectedNode,
+        };
+      }
+
+      function buildLayerVisualOrder(nodes) {
+        return nodes.slice().sort(compareVisualStackOrder);
+      }
+
+      function applyLayerVisualOrder(orderedNodes, reason, options = {}) {
+        if (!orderedNodes.length) return false;
+        orderedNodes.forEach((node, index) => {
+          const nodeId = String(node.getAttribute("data-editor-node-id") || "").trim();
+          if (!nodeId) return;
+          const nextZ = String((index + 1) * 10);
+          node.style.zIndex = nextZ;
+          sendToBridge("apply-style", {
+            nodeId,
+            property: "z-index",
+            value: nextZ,
+          });
+        });
+        recordHistoryChange(reason);
+        if (state.selectedNodeId) {
+          stagePreviewSelectionRestore(state.selectedNodeId, {
+            slideId: state.activeSlideId,
+            selectionLeafNodeId: state.selectionLeafNodeId,
+            selectionPathNodeIds: Array.isArray(state.selectionPath)
+              ? state.selectionPath.map((entry) => entry?.nodeId)
+              : [],
+          });
+        }
+        rebuildPreviewKeepingContext(state.activeSlideId);
+        scheduleOverlapDetection(reason);
+        renderLayersPanel();
+        updateInspectorFromSelection();
+        if (options.toastMessage) {
+          showToast(options.toastMessage, options.toastType || "success", {
+            title: options.toastTitle || "Слои",
+          });
+        }
+        return true;
+      }
+
+      function normalizeLayersForCurrentScope() {
+        if (state.complexityMode !== "advanced") return false;
+        if (
+          state.selectedNodeId &&
+          !guardSelectionAction("reorder", "Normalize layers")
+        ) {
+          return false;
+        }
+        if (
+          state.selectedNodeId &&
+          !guardProtectedSelection("Normalize layers", { action: "reorder" })
+        ) {
+          return false;
+        }
+        const scope = getLayerScopeInfo();
+        if (!scope || scope.nodes.length < 2) {
+          showToast("Нормализовывать нечего: в текущем scope меньше двух слоёв.", "info", {
+            title: "Слои",
+          });
+          return false;
+        }
+        return applyLayerVisualOrder(buildLayerVisualOrder(scope.nodes), "normalize-layers", {
+          toastMessage: "Authored z-index переписан в последовательность 10, 20, 30… без изменения визуального порядка.",
+        });
+      }
+
+      function moveSelectedLayerByOrder(action) {
+        if (!state.selectedNodeId) return false;
+        if (!guardSelectionAction("reorder", "Порядок слоёв")) return false;
+        if (!guardProtectedSelection("Порядок слоёв", { action: "reorder" })) {
+          return false;
+        }
+        const scope = getLayerScopeInfo();
+        if (!scope || scope.nodes.length < 2) {
+          showToast("Для выбранного scope нет соседних слоёв.", "info", {
+            title: "Слои",
+          });
+          return false;
+        }
+        const ordered = buildLayerVisualOrder(scope.nodes);
+        const currentIndex = ordered.findIndex(
+          (node) =>
+            node.getAttribute("data-editor-node-id") === state.selectedNodeId,
+        );
+        if (currentIndex < 0) return false;
+        let targetIndex = currentIndex;
+        let blockedMessage = "Перемещение недоступно.";
+        let successMessage = "Порядок слоёв обновлён.";
+        if (action === "layer-forward") {
+          targetIndex = Math.min(ordered.length - 1, currentIndex + 1);
+          blockedMessage = "Элемент уже находится ближе всех к переднему плану.";
+          successMessage = "Элемент поднят на один слой вперёд.";
+        } else if (action === "layer-backward") {
+          targetIndex = Math.max(0, currentIndex - 1);
+          blockedMessage = "Элемент уже находится ближе всех к заднему плану.";
+          successMessage = "Элемент опущен на один слой назад.";
+        } else if (action === "layer-front") {
+          targetIndex = ordered.length - 1;
+          blockedMessage = "Элемент уже находится на переднем плане.";
+          successMessage = "Элемент перемещён на передний план.";
+        } else if (action === "layer-back") {
+          targetIndex = 0;
+          blockedMessage = "Элемент уже находится на заднем плане.";
+          successMessage = "Элемент перемещён на задний план.";
+        } else {
+          return false;
+        }
+        if (targetIndex === currentIndex) {
+          showToast(blockedMessage, "info", { title: "Слои" });
+          return false;
+        }
+        const nextOrder = ordered.slice();
+        const [movedNode] = nextOrder.splice(currentIndex, 1);
+        nextOrder.splice(targetIndex, 0, movedNode);
+        return applyLayerVisualOrder(
+          nextOrder,
+          `layer-order:${action}:${state.selectedNodeId}`,
+          { toastMessage: successMessage },
+        );
+      }
+
       function extractImageFromClipboardEvent(event) {
         const items = Array.from(event.clipboardData?.items || []);
         const imageItem = items.find(
@@ -13437,6 +13888,7 @@ ${exportDoc.documentElement.outerHTML}`;
       function closeTransientShellUi(options = {}) {
         const keep = normalizeShellSurfaceKeep(options.keep);
         if (!keep.has("context-menu")) closeContextMenu();
+        if (!keep.has("layer-picker")) closeLayerPicker();
         if (!keep.has("insert-palette") && isInsertPaletteOpen()) {
           closeInsertPalette();
         }
@@ -15419,26 +15871,18 @@ ${exportDoc.documentElement.outerHTML}`;
         const reorderedIds = layerNodeIds.slice();
         const [moved] = reorderedIds.splice(fromIndex, 1);
         reorderedIds.splice(toIndex, 0, moved);
-
-        const baseZ = 1;
-        const layerCount = reorderedIds.length;
-        reorderedIds.forEach((nodeId, visualIndex) => {
-          const node = state.modelDoc.querySelector(
-            `[data-editor-node-id="${cssEscape(nodeId)}"]`,
-          );
-          if (!node) return;
-          const newZ = baseZ + (layerCount - 1 - visualIndex);
-          node.style.zIndex = String(newZ);
-          sendToBridge("apply-style", {
-            nodeId,
-            property: "z-index",
-            value: String(newZ),
-          });
-        });
-        recordHistoryChange(`reorder-layers:${fromIndex}->${toIndex}`);
-        scheduleOverlapDetection();
-        renderLayersPanel();
-        showToast("Порядок слоёв изменён.", "success", { title: "Слои" });
+        const orderedNodes = reorderedIds
+          .map((nodeId) =>
+            state.modelDoc.querySelector(
+              `[data-editor-node-id="${cssEscape(nodeId)}"]`,
+            ),
+          )
+          .filter((node) => node instanceof Element);
+        applyLayerVisualOrder(
+          orderedNodes.slice().reverse(),
+          `reorder-layers:${fromIndex}->${toIndex}`,
+          { toastMessage: "Порядок слоёв изменён." },
+        );
       }
 
       function getEntityKindIcon(entityKind) {
@@ -15477,11 +15921,13 @@ ${exportDoc.documentElement.outerHTML}`;
         if (!els.layersListContainer || !els.layersInspectorSection) return;
         if (state.complexityMode !== "advanced" || !state.activeSlideId || !state.modelDoc) {
           els.layersInspectorSection.hidden = true;
+          if (els.normalizeLayersBtn) els.normalizeLayersBtn.disabled = true;
           return;
         }
         const slideEl = state.modelDoc.querySelector(`[data-editor-slide-id="${cssEscape(state.activeSlideId)}"]`);
         if (!slideEl) {
           els.layersInspectorSection.hidden = true;
+          if (els.normalizeLayersBtn) els.normalizeLayersBtn.disabled = true;
           return;
         }
         const allLayers = Array.from(slideEl.querySelectorAll("[data-editor-node-id]")).filter(el => {
@@ -15491,14 +15937,15 @@ ${exportDoc.documentElement.outerHTML}`;
         });
         if (!allLayers.length) {
           els.layersInspectorSection.hidden = true;
+          if (els.normalizeLayersBtn) els.normalizeLayersBtn.disabled = true;
           return;
         }
         els.layersInspectorSection.hidden = false;
-        const sortedLayers = allLayers.sort((a, b) => {
-          const zA = parseInt(a.style.zIndex || "0", 10);
-          const zB = parseInt(b.style.zIndex || "0", 10);
-          return zB - zA;
-        });
+        const sortedLayers = allLayers.sort((a, b) => compareVisualStackOrder(b, a));
+        const currentScope = getLayerScopeInfo();
+        if (els.normalizeLayersBtn) {
+          els.normalizeLayersBtn.disabled = !currentScope || currentScope.nodes.length < 2;
+        }
         const html = sortedLayers.map((layer, index) => {
           const nodeId = layer.getAttribute("data-editor-node-id") || "";
           const entityKind = layer.getAttribute("data-editor-entity-kind") || "element";
@@ -16479,6 +16926,7 @@ ${exportDoc.documentElement.outerHTML}`;
         els.contextMenu.style.width = "";
         state.contextMenuNodeId = null;
         state.contextMenuPayload = null;
+        sendToBridge("highlight-node", { nodeId: null });
         if (state.mode === "edit" && state.selectedNodeId) {
           window.requestAnimationFrame(() => positionFloatingToolbar());
         }
@@ -17520,9 +17968,13 @@ ${exportDoc.documentElement.outerHTML}`;
         const overlapWarning = hasSelection ? state.selectedOverlapWarning : null;
         const showOverlapBanner = Boolean(
           hasSelection &&
-            state.complexityMode === "basic" &&
             overlapWarning &&
             overlapWarning.coveredPercent > 30,
+        );
+        const canOpenLayerPicker = Boolean(
+          showOverlapBanner &&
+            state.complexityMode === "advanced" &&
+            buildSelectedOverlapLayerPickerPayload(),
         );
         if (els.overlapRecoveryBanner) {
           els.overlapRecoveryBanner.hidden = !showOverlapBanner;
@@ -17533,11 +17985,19 @@ ${exportDoc.documentElement.outerHTML}`;
         }
         if (els.overlapRecoveryText) {
           els.overlapRecoveryText.textContent = showOverlapBanner
-            ? `Этот элемент перекрыт примерно на ${overlapWarning.coveredPercent}%. Можно переместить наверх.`
+            ? state.complexityMode === "advanced"
+              ? `Этот элемент перекрыт примерно на ${overlapWarning.coveredPercent}%. Можно открыть Magic Select или поднять его выше по стеку.`
+              : `Этот элемент перекрыт примерно на ${overlapWarning.coveredPercent}%. Можно переместить наверх.`
             : "Этот элемент частично перекрыт другим. Можно переместить его наверх.";
         }
         if (els.overlapMoveTopBtn) {
           els.overlapMoveTopBtn.disabled = !showOverlapBanner;
+        }
+        if (els.overlapSelectLayerBtn) {
+          els.overlapSelectLayerBtn.hidden = !(
+            state.complexityMode === "advanced" && showOverlapBanner
+          );
+          els.overlapSelectLayerBtn.disabled = !canOpenLayerPicker;
         }
         // [v0.18.0] Lock banner (advanced mode only)
         const isLocked = hasSelection && state.modelDoc
@@ -18334,6 +18794,262 @@ ${exportDoc.documentElement.outerHTML}`;
         );
       }
 
+      function isLayerPickerOpen() {
+        return Boolean(
+          els.layerPicker?.classList.contains("is-open") && state.layerPickerPayload,
+        );
+      }
+
+      function getLayerPickerButtons() {
+        return Array.from(
+          els.layerPickerList?.querySelectorAll("button[data-layer-picker-node-id]") ||
+            [],
+        );
+      }
+
+      function syncLayerPickerActiveButton() {
+        const items = getLayerPickerButtons();
+        items.forEach((button, index) => {
+          button.classList.toggle("is-active", index === state.layerPickerActiveIndex);
+        });
+      }
+
+      function focusLayerPickerButton(index) {
+        const items = getLayerPickerButtons();
+        if (!items.length) return;
+        const nextIndex = Math.max(0, Math.min(items.length - 1, index));
+        state.layerPickerActiveIndex = nextIndex;
+        syncLayerPickerActiveButton();
+        items[nextIndex].focus({ preventScroll: true });
+      }
+
+      function setLayerPickerHighlight(nodeId) {
+        const normalizedNodeId = nodeId || null;
+        if (state.layerPickerHighlightNodeId === normalizedNodeId) return;
+        state.layerPickerHighlightNodeId = normalizedNodeId;
+        sendToBridge("highlight-node", { nodeId: normalizedNodeId });
+      }
+
+      function collectLayerPickerItemsFromOverlap() {
+        const conflict = state.selectedOverlapWarning;
+        const doc = getPreviewDocument();
+        if (!conflict || !doc) return [];
+        const rect = conflict.overlapRect || state.selectedRect;
+        if (!rect) return [];
+        const docView = doc.defaultView || window;
+        const cx = Math.round((rect.left + rect.right) / 2);
+        const cy = Math.round((rect.top + rect.bottom) / 2);
+        const selectedNode = getSelectedModelNode();
+        const uniqueItems = [];
+        const seen = new Set();
+        const collect = (node) => {
+          if (!(node instanceof Element)) return;
+          const nodeId = String(node.getAttribute("data-editor-node-id") || "").trim();
+          if (!nodeId || seen.has(nodeId) || !isLayerManagedNode(node)) return;
+          seen.add(nodeId);
+          const entityKind = node.getAttribute("data-editor-entity-kind") || "element";
+          const isLocked = node.getAttribute("data-editor-locked") === "true";
+          const isHidden =
+            node.hasAttribute("hidden") ||
+            node.style.visibility === "hidden" ||
+            node.style.display === "none";
+          const hintParts = [
+            getEntityKindLabel(entityKind),
+            `stack ${uniqueItems.length + 1}`,
+          ];
+          if (isLocked) hintParts.push("locked");
+          if (isHidden) hintParts.push("hidden");
+          if (nodeId === state.selectedNodeId) hintParts.push("текущий");
+          uniqueItems.push({
+            nodeId,
+            entityKind,
+            label: getLayerLabel(node),
+            hint: hintParts.join(" • "),
+            isCurrent: nodeId === state.selectedNodeId,
+          });
+        };
+        const canUseViewportPoint =
+          cx >= 0 &&
+          cy >= 0 &&
+          cx <= Math.max(0, Math.round((docView.innerWidth || 0) - 1)) &&
+          cy <= Math.max(0, Math.round((docView.innerHeight || 0) - 1));
+        if (canUseViewportPoint) {
+          (doc.elementsFromPoint(cx, cy) || []).forEach(collect);
+        }
+        if (uniqueItems.length < 2) {
+          const relatedConflicts = Array.from(
+            state.overlapConflictsBySlide[state.activeSlideId] || [],
+          ).filter((entry) => {
+            if (!entry) return false;
+            if (
+              entry.bottomNodeId === state.selectedNodeId ||
+              entry.topNodeId === state.selectedNodeId
+            ) {
+              return true;
+            }
+            if (!entry.overlapRect) return false;
+            return computeRectIntersection(rect, entry.overlapRect).area > 0;
+          });
+          relatedConflicts.forEach((entry) => {
+            [entry.bottomNodeId, entry.topNodeId].forEach((nodeId) => {
+              if (!nodeId || !state.modelDoc) return;
+              collect(
+                state.modelDoc.querySelector(
+                  `[data-editor-node-id="${cssEscape(nodeId)}"]`,
+                ),
+              );
+            });
+          });
+        }
+        if (selectedNode instanceof Element) collect(selectedNode);
+        return uniqueItems;
+      }
+
+      function buildSelectedOverlapLayerPickerPayload() {
+        const items = collectLayerPickerItemsFromOverlap();
+        if (items.length < 2 || !state.selectedOverlapWarning) return null;
+        const rect = state.selectedOverlapWarning.overlapRect || state.selectedRect;
+        return {
+          title: "Magic Select",
+          subtitle: `Перекрытие около ${state.selectedOverlapWarning.coveredPercent}% — выберите authored-слой под курсором.`,
+          items,
+          shellClientX: rect ? Math.round(rect.right + 12) : 0,
+          shellClientY: rect ? Math.round((rect.top + rect.bottom) / 2) : 0,
+          source: "selected-overlap",
+        };
+      }
+
+      function renderLayerPicker(payload) {
+        const items = Array.isArray(payload?.items) ? payload.items : [];
+        if (!els.layerPickerList) return;
+        els.layerPickerTitle.textContent = payload?.title || "Magic Select";
+        els.layerPickerSubtitle.textContent =
+          payload?.subtitle || "Выберите слой под курсором.";
+        els.layerPickerList.innerHTML = "";
+        items.forEach((item, index) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.dataset.layerPickerNodeId = item.nodeId;
+          if (item.isCurrent) button.classList.add("is-current-layer");
+          button.innerHTML = `
+            <span class="menu-icon">${escapeHtml(getEntityKindIcon(item.entityKind))}</span>
+            <span class="layer-picker-row-copy">
+              <span class="layer-picker-row-title">${escapeHtml(item.label)}</span>
+              <span class="layer-picker-row-hint">${escapeHtml(item.hint || "")}</span>
+            </span>
+          `;
+          button.addEventListener("pointerenter", () => {
+            state.layerPickerActiveIndex = index;
+            syncLayerPickerActiveButton();
+            setLayerPickerHighlight(item.nodeId);
+          });
+          button.addEventListener("focus", () => {
+            state.layerPickerActiveIndex = index;
+            syncLayerPickerActiveButton();
+            setLayerPickerHighlight(item.nodeId);
+          });
+          button.addEventListener("click", () => {
+            sendToBridge("select-element", { nodeId: item.nodeId });
+            closeLayerPicker();
+          });
+          els.layerPickerList.appendChild(button);
+        });
+        state.layerPickerActiveIndex = Math.max(
+          0,
+          items.findIndex((item) => item.isCurrent),
+        );
+        if (state.layerPickerActiveIndex < 0) state.layerPickerActiveIndex = 0;
+        syncLayerPickerActiveButton();
+      }
+
+      function positionLayerPicker(clientX, clientY) {
+        if (!els.layerPicker) return;
+        const insets = getShellViewportInsets();
+        if (prefersContextMenuSheetMode()) {
+          const availableWidth =
+            window.innerWidth - insets.left - insets.right;
+          const sheetWidth = Math.min(360, Math.max(240, availableWidth));
+          const centeredLeft =
+            insets.left + Math.max(0, Math.round((availableWidth - sheetWidth) / 2));
+          els.layerPicker.style.width = `${sheetWidth}px`;
+          els.layerPicker.style.left = `${centeredLeft}px`;
+          els.layerPicker.style.top = `${Math.round(
+            Math.max(
+              insets.top,
+              window.innerHeight - insets.bottom - (els.layerPicker.offsetHeight || 280),
+            ),
+          )}px`;
+          els.layerPicker.style.right = "auto";
+          clampPopoverPosition(els.layerPicker, insets);
+          return;
+        }
+        els.layerPicker.style.width = "";
+        els.layerPicker.style.left = `${clientX || 0}px`;
+        els.layerPicker.style.top = `${clientY || 0}px`;
+        els.layerPicker.style.right = "auto";
+        els.layerPicker.style.bottom = "auto";
+        clampPopoverPosition(els.layerPicker, insets);
+      }
+
+      function reopenLayerPickerFromState() {
+        if (!state.layerPickerPayload) return;
+        renderLayerPicker(state.layerPickerPayload);
+        positionLayerPicker(
+          Number(state.layerPickerPayload.shellClientX || 0),
+          Number(state.layerPickerPayload.shellClientY || 0),
+        );
+        els.layerPicker.classList.add("is-open");
+        els.layerPicker.setAttribute("aria-hidden", "false");
+      }
+
+      function closeLayerPicker(options = {}) {
+        if (!els.layerPicker) return;
+        els.layerPicker.classList.remove("is-open");
+        els.layerPicker.setAttribute("aria-hidden", "true");
+        els.layerPicker.style.left = "0px";
+        els.layerPicker.style.top = "0px";
+        els.layerPicker.style.right = "auto";
+        els.layerPicker.style.bottom = "auto";
+        els.layerPicker.style.width = "";
+        state.layerPickerActiveIndex = -1;
+        state.layerPickerPayload = null;
+        setLayerPickerHighlight(null);
+        if (options.restoreFocus && els.overlapSelectLayerBtn && !els.overlapSelectLayerBtn.hidden) {
+          window.requestAnimationFrame(() =>
+            els.overlapSelectLayerBtn.focus({ preventScroll: true }),
+          );
+        }
+      }
+
+      function openLayerPicker(payload) {
+        if (!payload?.items?.length) return false;
+        closeShellPanels({ keep: "layer-picker" });
+        closeTransientShellUi({ keep: "layer-picker" });
+        hideFloatingToolbar();
+        state.layerPickerPayload = payload;
+        renderLayerPicker(payload);
+        positionLayerPicker(
+          Number(payload.shellClientX || 0),
+          Number(payload.shellClientY || 0),
+        );
+        els.layerPicker.classList.add("is-open");
+        els.layerPicker.setAttribute("aria-hidden", "false");
+        window.requestAnimationFrame(() => focusLayerPickerButton(state.layerPickerActiveIndex || 0));
+        return true;
+      }
+
+      function openLayerPickerForSelectedOverlap() {
+        if (state.complexityMode !== "advanced") return false;
+        const payload = buildSelectedOverlapLayerPickerPayload();
+        if (!payload) {
+          showToast("Для Magic Select нужен реальный overlap с несколькими authored-кандидатами.", "info", {
+            title: "Слои",
+          });
+          return false;
+        }
+        return openLayerPicker(payload);
+      }
+
       function bindContextMenu() {
         els.contextMenu.addEventListener("click", (event) => {
           const action =
@@ -18392,6 +19108,45 @@ ${exportDoc.documentElement.outerHTML}`;
         });
       }
 
+      function bindLayerPicker() {
+        els.layerPicker?.addEventListener("keydown", (event) => {
+          const items = getLayerPickerButtons();
+          if (!items.length) return;
+          const currentIndex = items.indexOf(document.activeElement);
+          if (event.key === "Escape") {
+            event.preventDefault();
+            closeLayerPicker({ restoreFocus: true });
+            return;
+          }
+          if (["ArrowDown", "ArrowRight"].includes(event.key)) {
+            event.preventDefault();
+            focusLayerPickerButton((currentIndex + 1 + items.length) % items.length);
+            return;
+          }
+          if (["ArrowUp", "ArrowLeft"].includes(event.key)) {
+            event.preventDefault();
+            focusLayerPickerButton((currentIndex - 1 + items.length) % items.length);
+            return;
+          }
+          if (event.key === "Home") {
+            event.preventDefault();
+            focusLayerPickerButton(0);
+            return;
+          }
+          if (event.key === "End") {
+            event.preventDefault();
+            focusLayerPickerButton(items.length - 1);
+            return;
+          }
+          if (event.key === "Enter" || event.key === " ") {
+            const activeButton = items[currentIndex >= 0 ? currentIndex : 0];
+            if (!activeButton) return;
+            event.preventDefault();
+            activeButton.click();
+          }
+        });
+      }
+
       function openContextMenuFromBridge(payload) {
         if (state.mode !== "edit") return;
         closeShellPanels({ keep: "context-menu" });
@@ -18430,6 +19185,7 @@ ${exportDoc.documentElement.outerHTML}`;
         state.mode = mode;
         setInteractionMode(mode === "preview" ? "preview" : "select");
         closeContextMenu();
+        closeLayerPicker();
         if (mode === "preview") {
           closeInsertPalette();
           clearSelectedElementState();
@@ -18467,6 +19223,7 @@ ${exportDoc.documentElement.outerHTML}`;
         bindGlobalShortcuts();
         bindClipboardAndDnD();
         bindContextMenu();
+        bindLayerPicker();
         bindRestoreBanner();
         bindPaletteActions();
         addInspectorHelpBadges();
@@ -20919,6 +21676,7 @@ ${exportDoc.documentElement.outerHTML}`;
 
       function refreshUi() {
         applyComplexityModeUi();
+        updateInspectorFromSelection();
         const hasPresentation = Boolean(state.modelDoc);
         const hasSelection = Boolean(
           state.selectedNodeId && state.mode === "edit",

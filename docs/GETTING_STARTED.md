@@ -100,7 +100,7 @@ This repo is prepared for GitHub Container Registry publishing.
 Once a version tag is published through GitHub Actions, the intended pull path is:
 
 ```bash
-docker run --rm -p 4173:4173 ghcr.io/kuznetzdev/html_presentation_editor:v0.19.3
+docker run --rm -p 4173:4173 ghcr.io/kuznetzdev/html_presentation_editor:v0.19.4
 ```
 
 Manual workflow dispatch is useful for refreshing `latest`; semver image tags come

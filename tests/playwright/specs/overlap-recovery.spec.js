@@ -133,6 +133,145 @@ test.describe("N1 — Overlap detection", () => {
   });
 });
 
+test.describe("N5 вЂ” Magic Select", () => {
+  test("advanced overlap banner opens layer picker and keyboard selection works @stage-n", async ({ page }, testInfo) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name));
+
+    await loadOverlapDeck(page);
+    const initialNodeId = await selectFirstCoveredCard(page);
+    await triggerAndWaitForOverlapDetection(page);
+
+    await ensureShellPanelVisible(page, "inspector");
+    await evaluateEditor(
+      page,
+      `typeof setComplexityMode === "function" && setComplexityMode("advanced")`,
+    );
+
+    const magicSelectBtn = page.locator("#overlapSelectLayerBtn");
+    await expect(magicSelectBtn).toBeVisible({ timeout: 6000 });
+    await expect
+      .poll(
+        () =>
+          evaluateEditor(
+            page,
+            `Boolean(typeof buildSelectedOverlapLayerPickerPayload === "function" && buildSelectedOverlapLayerPickerPayload())`,
+          ),
+        { timeout: 6000 },
+      )
+      .toBe(true);
+    await expect(magicSelectBtn).toBeEnabled();
+
+    await magicSelectBtn.click();
+
+    const picker = page.locator("#layerPicker");
+    await expect(picker).toBeVisible({ timeout: 6000 });
+    await expect
+      .poll(
+        () => page.locator("#layerPickerList button").count(),
+        { timeout: 6000 },
+      )
+      .toBeGreaterThanOrEqual(2);
+
+    const nextButton = page.locator("#layerPickerList button").nth(1);
+    const nextNodeId = await nextButton.getAttribute("data-layer-picker-node-id");
+    expect(nextNodeId).toBeTruthy();
+    await nextButton.focus();
+    await page.keyboard.press("Enter");
+
+    await expect
+      .poll(() => evaluateEditor(page, "state.selectedNodeId || ''"), { timeout: 6000 })
+      .toBe(nextNodeId);
+
+    await magicSelectBtn.click();
+    await expect(picker).toBeVisible({ timeout: 6000 });
+    await picker.press("Escape");
+    await expect(picker).toBeHidden({ timeout: 6000 });
+  });
+});
+
+test.describe("N6 вЂ” Insert auto-promotion", () => {
+  test("inserted element auto-promotes when it lands heavily covered @stage-n", async ({ page }, testInfo) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name));
+
+    await loadOverlapDeck(page);
+    await triggerAndWaitForOverlapDetection(page);
+
+    const inserted = await evaluateEditor(
+      page,
+      `(() => {
+        const conflict = (state.overlapConflictsBySlide[state.activeSlideId] || [])
+          .find((item) => item.coveredPercent >= 30);
+        if (!conflict) return false;
+        const left = Math.round(conflict.overlapRect.left + 8);
+        const top = Math.round(conflict.overlapRect.top + 8);
+        const html = '<div style="position:absolute;left:' + left + 'px;top:' + top + 'px;width:160px;height:96px;background:#ff6b6b;border:2px solid #1d1d1f;z-index:0;">auto-promote</div>';
+        sendToBridge("insert-element", {
+          slideId: state.activeSlideId,
+          html,
+          focusText: false,
+        });
+        return true;
+      })()`,
+    );
+    expect(inserted).toBe(true);
+
+    await expect
+      .poll(
+        () =>
+          evaluateEditor(
+            page,
+            `(() => {
+              const node = Array.from(state.modelDoc?.querySelectorAll("[data-editor-node-id]") || [])
+                .find((entry) => (entry.textContent || "").includes("auto-promote"));
+              if (!(node instanceof Element)) return null;
+              const parsed = Number.parseFloat(node.style.zIndex || "0");
+              return JSON.stringify({
+                nodeId: node.getAttribute("data-editor-node-id") || "",
+                zIndex: Number.isFinite(parsed) ? parsed : -1,
+              });
+            })()`,
+          ),
+        { timeout: 8000 },
+      )
+      .not.toBeNull();
+
+    const insertedNode = JSON.parse(
+      await evaluateEditor(
+        page,
+        `(() => {
+          const node = Array.from(state.modelDoc?.querySelectorAll("[data-editor-node-id]") || [])
+            .find((entry) => (entry.textContent || "").includes("auto-promote"));
+          if (!(node instanceof Element)) return "null";
+          const parsed = Number.parseFloat(node.style.zIndex || "0");
+          return JSON.stringify({
+            nodeId: node.getAttribute("data-editor-node-id") || "",
+            zIndex: Number.isFinite(parsed) ? parsed : -1,
+          });
+        })()`,
+      ),
+    );
+    expect(insertedNode?.nodeId).toBeTruthy();
+
+    await expect
+      .poll(
+        () =>
+          evaluateEditor(
+            page,
+            `(() => {
+              const nodeId = ${JSON.stringify(insertedNode.nodeId)};
+              const conflicts = state.overlapConflictsBySlide[state.activeSlideId] || [];
+              const covered = conflicts
+                .filter((entry) => entry.bottomNodeId === nodeId)
+                .map((entry) => Number(entry.coveredPercent || 0));
+              return covered.length ? Math.max(...covered) : 0;
+            })()`,
+          ),
+        { timeout: 8000 },
+      )
+      .toBeLessThan(80);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // N2 — Rail warning badge
 // ---------------------------------------------------------------------------

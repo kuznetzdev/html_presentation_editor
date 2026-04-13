@@ -74,6 +74,26 @@ async function waitForLayerRows(page, minimumCount = 1) {
     .toBeGreaterThanOrEqual(minimumCount);
 }
 
+async function getSelectedScopeLayerOrder(page) {
+  return JSON.parse(
+    await evaluateEditor(
+      page,
+      `JSON.stringify((() => {
+        if (typeof getLayerScopeInfo !== "function" || typeof buildLayerVisualOrder !== "function") {
+          return [];
+        }
+        const scope = getLayerScopeInfo();
+        if (!scope || !Array.isArray(scope.nodes)) return [];
+        return buildLayerVisualOrder(scope.nodes)
+          .slice()
+          .reverse()
+          .map((node) => node?.getAttribute?.("data-editor-node-id") || "")
+          .filter(Boolean);
+      })())`,
+    ),
+  );
+}
+
 test.describe("stage-o-layers-lock-group @stage-o", () => {
   test.beforeEach(async ({ page }, testInfo) => {
     test.skip(
@@ -360,5 +380,131 @@ test.describe("stage-o-layers-lock-group @stage-o", () => {
     ).toBe(false);
     const hasGroupAfter = await evaluateEditor(page, `Boolean(state.modelDoc.querySelector(".editor-group"))`);
     expect(hasGroupAfter).toBe(false);
+  });
+
+  test("normalize-layers @stage-o", async ({ page }) => {
+    await waitForLayerRows(page, 3);
+
+    await previewLocator(page, ".card").first().click();
+    await waitForSelectedNodeId(page);
+
+    const initialOrder = await getSelectedScopeLayerOrder(page);
+    expect(initialOrder.length).toBeGreaterThanOrEqual(3);
+
+    await evaluateEditor(
+      page,
+      `(() => {
+        const ids = ${JSON.stringify(initialOrder)};
+        const values = [97, 53, 11, 5, 3, 1];
+        ids.forEach((nodeId, index) => {
+          const node = state.modelDoc?.querySelector('[data-editor-node-id="' + nodeId + '"]');
+          if (!(node instanceof Element)) return;
+          node.style.zIndex = String(values[index] || Math.max(1, 97 - index * 9));
+        });
+        renderLayersPanel();
+      })()`,
+    );
+
+    const scrambledOrder = await getSelectedScopeLayerOrder(page);
+
+    await page.locator("#normalizeLayersBtn").click();
+
+    await expect
+      .poll(async () => JSON.stringify(await getSelectedScopeLayerOrder(page)), { timeout: 6000 })
+      .toBe(JSON.stringify(scrambledOrder));
+
+    const normalizedZValues = JSON.parse(
+      await evaluateEditor(
+        page,
+        `JSON.stringify(${JSON.stringify(scrambledOrder)}.map((nodeId) => {
+          const node = state.modelDoc?.querySelector('[data-editor-node-id="' + nodeId + '"]');
+          const parsed = Number.parseFloat(node?.style?.zIndex || "0");
+          return Number.isFinite(parsed) ? parsed : -1;
+        }))`,
+      ),
+    );
+    expect(normalizedZValues).toEqual(
+      scrambledOrder.map((_, index) => (scrambledOrder.length - index) * 10),
+    );
+  });
+
+  test("z-order-shortcuts @stage-o", async ({ page }) => {
+    await waitForLayerRows(page, 2);
+
+    await previewLocator(page, ".card").first().click();
+    const selectedCardNodeId = await evaluateEditor(page, "state.selectedNodeId || ''");
+    expect(selectedCardNodeId).toBeTruthy();
+
+    const initialOrder = await getSelectedScopeLayerOrder(page);
+    const initialIndex = initialOrder.indexOf(selectedCardNodeId);
+    expect(initialIndex).toBeGreaterThan(0);
+
+    const shortcutDispatched = await evaluateEditor(
+      page,
+      `(() => {
+        const doc = document.getElementById("previewFrame")?.contentDocument;
+        if (!doc) return false;
+        return doc.dispatchEvent(new KeyboardEvent("keydown", {
+          key: "]",
+          bubbles: true,
+          cancelable: true,
+        }));
+      })()`,
+    );
+    expect(shortcutDispatched).toBe(false);
+
+    await expect
+      .poll(async () => {
+        const order = await getSelectedScopeLayerOrder(page);
+        return order.indexOf(selectedCardNodeId);
+      }, { timeout: 6000 })
+      .toBe(initialIndex - 1);
+
+    const editableNodeId = await evaluateEditor(
+      page,
+      `(() => {
+        const doc = document.getElementById("previewFrame")?.contentDocument;
+        const el = doc?.querySelector("[data-editor-editable='true'][data-editor-node-id]");
+        return el?.getAttribute("data-editor-node-id") || "";
+      })()`,
+    );
+    expect(editableNodeId).toBeTruthy();
+
+    const textNodeSelected = await evaluateEditor(
+      page,
+      `(() => {
+        if (typeof buildSelectionBridgePayload !== "function" || typeof sendToBridge !== "function") {
+          return false;
+        }
+        const payload = buildSelectionBridgePayload(${JSON.stringify(editableNodeId)}, {
+          focusText: false,
+        });
+        if (!payload) return false;
+        sendToBridge("select-element", payload);
+        return true;
+      })()`,
+    );
+    expect(textNodeSelected).toBe(true);
+    await waitForSelectedNodeId(page, editableNodeId);
+    const textEditingStarted = await evaluateEditor(
+      page,
+      `(() => {
+        if (typeof startTextEditing !== "function") return false;
+        startTextEditing();
+        return true;
+      })()`,
+    );
+    expect(textEditingStarted).toBe(true);
+    await expect
+      .poll(() => evaluateEditor(page, "Boolean(state.selectedFlags?.isTextEditing)"), { timeout: 6000 })
+      .toBe(true);
+
+    await page.keyboard.press("]");
+
+    const titleText = await previewLocator(
+      page,
+      `[data-editor-node-id="${editableNodeId}"]`,
+    ).textContent();
+    expect(String(titleText || "")).toContain("]");
   });
 });

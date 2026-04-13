@@ -1,11 +1,10 @@
 # CHANGELOG
 
-## Unreleased - stable editor entrypoint cleanup - 2026-04-10
-- promoted the active editor runtime back to the stable `editor/presentation-editor.html` entrypoint
-- removed the root-level semver runtime file from active use while keeping archived runtime history under `docs/history/`
-- synchronized the launchpad, local skills, Playwright harness, and asset-parity tooling to the stable runtime path
-- added a dedicated authoring guideline for developers and AI agents describing the preferred slide, node, and prompt contract for editor-friendly HTML decks
-- simplified the root entrypoint into a clearer user-first start page and added `start-editor.cmd` as a one-command Windows launcher from the repo root
+## 0.19.4 - layer order truth, overlap picker readiness, and stage-o regression coverage - 2026-04-13
+- fixed layer ordering truth in the stable runtime by sorting authored layers from inline `z-index` values even when `modelDoc` is detached from the live preview document
+- fixed the advanced overlap recovery flow so `Magic Select` only becomes interactive after the layer picker payload is actually ready for the current overlap selection
+- tightened `stage-o` regression coverage around sibling-scope reorder and normalize behavior, plus stabilized inline text editing assertions under the shell selection overlay
+- kept the active editor runtime on the stable `editor/presentation-editor.html` entrypoint with no release-line fork or archived runtime promotion
 
 ## 0.19.3 - entrypoint simplification, support policy cleanup, and semver resync - 2026-04-10
 - promoted the active runtime artifact to `editor/presentation-editor-v0.19.3.html` so the latest `main` state, package metadata, launchpad, shim, Playwright harness, and asset-parity tooling resolve to one semver runtime again
