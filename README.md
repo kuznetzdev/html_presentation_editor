@@ -246,6 +246,7 @@ See `docs/GITHUB_PACKAGES.md` for the exact recommendation and tradeoffs.
 - `v0.19.2`
 - `v0.19.3`
 - `v0.19.4`
+- `v0.19.5`
 - `ux-regression-baseline-v1`
 - `ux-direct-manipulation-v1`
 - `ux-slide-structure-v1`

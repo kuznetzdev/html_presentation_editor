@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 0.19.5 - pilot shell hardening, asset parity validation, and operator runbooks - 2026-04-15
+- hardened the stable `editor/presentation-editor.html` pilot workflow with clearer shell state transitions, compact-safe actions, and release-ready editor entrypoint behavior
+- strengthened export asset parity validation and Playwright coverage across desktop, wide, tablet, and compact shell profiles with updated visual baselines
+- added shared local test-server configuration to reduce port conflicts and make Playwright validation runs more deterministic
+- documented the pilot checklist, operator runbook, known limitations, and auditability notes for reviewers adopting the current editor workflow
+- kept the active runtime path stable while synchronizing package metadata to `0.19.5`
+
 ## 0.19.4 - layer order truth, overlap picker readiness, and stage-o regression coverage - 2026-04-13
 - fixed layer ordering truth in the stable runtime by sorting authored layers from inline `z-index` values even when `modelDoc` is detached from the live preview document
 - fixed the advanced overlap recovery flow so `Magic Select` only becomes interactive after the layer picker payload is actually ready for the current overlap selection
