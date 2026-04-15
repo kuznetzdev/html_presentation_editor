@@ -1,6 +1,6 @@
 {
   "name": "html-presentation-editor",
-  "version": "0.19.4",
+  "version": "0.19.5",
   "description": "Local HTML presentation editor with Playwright regression coverage.",
   "private": true,
   "scripts": {
@@ -10,6 +10,7 @@
     "docker:build": "docker build -t html-presentation-editor:local .",
     "docker:run": "docker run --rm -p 4173:4173 html-presentation-editor:local",
     "smoke": "npm run test:gate-a",
+    "test:pilot": "npm run test:gate-a && npm run test:asset-parity",
     "test:install-browsers": "playwright install",
     "test": "playwright test",
     "test:pw": "playwright test",
