@@ -406,6 +406,44 @@
         font-size: 12px;
       }
 
+      .modal-status {
+        padding: 10px 12px;
+        border: 1px solid var(--shell-border);
+        border-radius: 12px;
+        background: var(--shell-field-bg);
+        color: var(--shell-text);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .modal-status[hidden] {
+        display: none;
+      }
+
+      .modal-status.is-info {
+        border-color: var(--shell-border);
+        background: var(--shell-field-bg);
+        color: var(--shell-text-muted);
+      }
+
+      .modal-status.is-warning {
+        border-color: var(--shell-warning-border);
+        background: var(--shell-warning-bg);
+        color: var(--shell-warning);
+      }
+
+      .modal-status.is-error {
+        border-color: var(--shell-danger-border);
+        background: var(--shell-danger-bg);
+        color: var(--shell-danger);
+      }
+
+      .modal-status.is-success {
+        border-color: var(--shell-success-border);
+        background: var(--shell-success-bg);
+        color: var(--shell-success);
+      }
+
       .status-pill {
         display: inline-flex;
         align-items: center;
@@ -541,7 +579,7 @@
       }
 
       .inspector-density-toggle button {
-        min-width: 74px;
+        min-width: 82px;
         min-height: 28px;
         padding: 0 10px;
       }
@@ -604,7 +642,20 @@
         align-items: center;
         gap: 10px 14px;
         border-bottom: 1px solid var(--shell-border);
-        background: var(--shell-panel-translucent);
+        background-color: var(--shell-panel);
+        background-image:
+          linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--shell-panel-translucent) 96%, #ffffff 4%) 0%,
+            color-mix(in srgb, var(--shell-panel) 92%, #f4f7fb 8%) 100%
+          ),
+          radial-gradient(
+            circle at top left,
+            color-mix(in srgb, var(--shell-accent-soft) 18%, transparent) 0%,
+            transparent 52%
+          );
+        box-shadow: 0 10px 26px color-mix(in srgb, var(--shell-shadow) 6%, transparent);
+        backdrop-filter: blur(18px);
       }
 
       .topbar > *,
@@ -616,15 +667,15 @@
       .topbar-identity {
         min-width: 0;
         display: flex;
-        align-items: center;
-        gap: 12px;
+        align-items: flex-start;
+        gap: 14px;
       }
 
       .topbar-title {
         min-width: 0;
         display: flex;
         flex-direction: column;
-        gap: 3px;
+        gap: 4px;
         padding-right: 4px;
       }
 
@@ -643,16 +694,17 @@
       .topbar-title h1 {
         margin: 0;
         font-family: var(--editor-display);
-        font-size: 15px;
+        font-size: 16px;
         line-height: 1.1;
-        font-weight: 600;
+        font-weight: 650;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
       }
 
       .topbar-title span {
-        font-size: 13px;
+        font-size: 12px;
+        line-height: 1.35;
         color: var(--shell-text-muted);
         white-space: nowrap;
         overflow: hidden;
@@ -692,8 +744,11 @@
       #topbarStateCluster {
         justify-content: flex-start;
         flex-wrap: nowrap;
-        padding: 0;
+        gap: 6px;
+        padding: 4px 8px;
+        border: 1px solid color-mix(in srgb, var(--shell-border) 84%, transparent);
         border-radius: 12px;
+        background: color-mix(in srgb, var(--shell-panel-elevated) 92%, transparent);
       }
 
       #workspaceStateBadge {
@@ -755,7 +810,7 @@
 
       #topbarCommandCluster #openHtmlBtn {
         border: 1px solid var(--shell-border-strong);
-        background: transparent;
+        background: color-mix(in srgb, var(--shell-panel-elevated) 92%, transparent);
         color: var(--shell-text);
         box-shadow: none;
       }
@@ -803,7 +858,7 @@
       }
 
       body[data-editor-workflow="empty"] .empty-state {
-        width: min(100%, 560px);
+        width: min(100%, 720px);
       }
 
       .slide-template-trigger {
@@ -1250,10 +1305,10 @@
         display: grid;
         grid-template-columns: minmax(0, 1fr);
         align-items: start;
-        gap: 6px;
-        padding: 8px 10px 8px;
+        gap: 10px;
+        padding: 12px 14px;
         border: 1px solid color-mix(in srgb, var(--shell-border) 88%, transparent);
-        border-radius: 14px;
+        border-radius: 18px;
         background:
           linear-gradient(
             180deg,
@@ -1261,21 +1316,31 @@
               0%,
             color-mix(in srgb, var(--canvas-note-bg) 82%, var(--shell-panel) 18%) 100%
           );
-        box-shadow: 0 10px 24px color-mix(in srgb, var(--shell-shadow) 8%, transparent);
+        box-shadow: 0 12px 28px color-mix(in srgb, var(--shell-shadow) 9%, transparent);
       }
 
       .preview-note-main {
         display: grid;
-        gap: 3px;
+        gap: 8px;
         align-items: start;
         min-width: 0;
-        flex: 1;
-        color: var(--shell-text-muted);
-        font-size: 11px;
-        line-height: 1.35;
       }
 
-      .preview-note-main span {
+      .preview-note-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      .preview-note-copy {
+        min-width: 0;
+        display: grid;
+        gap: 4px;
+      }
+
+      .preview-note-main span,
+      .preview-note-main strong {
         display: block;
       }
 
@@ -1291,13 +1356,20 @@
         text-transform: uppercase;
       }
 
+      .preview-note-title {
+        font-size: 16px;
+        line-height: 1.2;
+        font-weight: 650;
+        color: var(--shell-text);
+      }
+
       #previewNoteText {
         display: -webkit-box;
-        max-width: min(100%, 50ch);
+        max-width: min(100%, 58ch);
         overflow: hidden;
         color: var(--shell-text-muted);
-        font-size: 10.5px;
-        line-height: 1.35;
+        font-size: 11.5px;
+        line-height: 1.45;
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 1;
       }
@@ -1309,8 +1381,9 @@
       .preview-note-summary {
         min-width: 0;
         display: grid;
-        gap: 2px;
+        gap: 4px;
         align-items: start;
+        justify-items: end;
       }
 
       #previewStatusSummary {
@@ -1341,18 +1414,25 @@
       }
 
       .preview-note-actions {
-        display: flex;
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
         width: 100%;
-        align-items: center;
-        justify-content: flex-start;
-        gap: 6px;
-        padding-top: 6px;
+        gap: 8px;
+        padding-top: 10px;
         border-top: 1px solid color-mix(in srgb, var(--shell-border) 82%, transparent);
       }
 
-      .preview-note-actions > * {
-        flex: 0 0 auto;
+      .preview-note-primary-row,
+      .preview-note-meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .preview-note-meta-row {
+        gap: 6px;
       }
 
       .preview-note-actions button {
@@ -1417,6 +1497,12 @@
       .insert-toggle-btn {
         min-width: 110px;
         white-space: nowrap;
+      }
+
+      #reloadPreviewBtn[hidden],
+      #toggleInsertPaletteBtn[hidden],
+      #previewPrimaryActionBtn[hidden] {
+        display: none !important;
       }
 
       .insert-toggle-btn.is-active {
@@ -1533,25 +1619,48 @@
 
       .empty-state {
         margin: auto;
-        max-width: 560px;
-        padding: 28px 30px;
-        text-align: center;
+        width: min(100%, 720px);
+        max-width: 720px;
+        display: grid;
+        gap: 14px;
+        padding: 30px 32px;
+        text-align: left;
         color: var(--shell-text-muted);
         line-height: 1.55;
         border: 1px solid color-mix(in srgb, var(--shell-accent) 18%, var(--shell-border));
-        border-radius: 24px;
+        border-radius: 28px;
         background:
-          radial-gradient(circle at top, color-mix(in srgb, var(--shell-accent) 14%, transparent), transparent 62%),
+          radial-gradient(circle at top, color-mix(in srgb, var(--shell-accent) 14%, transparent), transparent 58%),
           linear-gradient(180deg, var(--shell-panel) 0%, var(--shell-panel-soft) 100%);
-        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+        box-shadow: 0 28px 72px rgba(15, 23, 42, 0.1);
+      }
+
+      .empty-state-kicker {
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        padding: 6px 10px;
+        border: 1px solid color-mix(in srgb, var(--shell-accent) 18%, var(--shell-border));
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--shell-accent-soft) 56%, #ffffff 44%);
+        color: var(--shell-accent);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
       }
 
       .empty-state strong {
         display: block;
-        margin-bottom: 8px;
-        font-size: 22px;
+        font-size: 30px;
         line-height: 1.2;
         color: var(--shell-text);
+      }
+
+      .empty-state-lead {
+        max-width: 60ch;
+        font-size: 14px;
+        line-height: 1.65;
       }
 
       .empty-state code {
@@ -1560,12 +1669,61 @@
         background: var(--shell-field-muted);
       }
 
-      .empty-state-actions {
-        margin-top: 16px;
-        display: flex;
+      .empty-state-steps {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .empty-state-step {
+        min-width: 0;
+        display: grid;
+        gap: 8px;
+        padding: 14px;
+        border: 1px solid var(--shell-border);
+        border-radius: 18px;
+        background:
+          linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--shell-panel) 96%, #ffffff 4%),
+            color-mix(in srgb, var(--shell-panel-soft) 92%, transparent)
+          );
+      }
+
+      .empty-state-step strong {
+        font-size: 15px;
+      }
+
+      .empty-state-step span:last-child {
+        font-size: 12px;
+        line-height: 1.55;
+      }
+
+      .empty-state-step-index {
+        display: inline-flex;
+        align-items: center;
         justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--shell-accent) 12%, #ffffff 88%);
+        color: var(--shell-accent);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .empty-state-actions {
+        display: flex;
+        justify-content: flex-start;
         flex-wrap: wrap;
         gap: 12px;
+      }
+
+      .empty-state-footnote {
+        max-width: 58ch;
+        font-size: 12px;
+        line-height: 1.55;
+        color: color-mix(in srgb, var(--shell-text-muted) 92%, var(--shell-text) 8%);
       }
 
       .summary-card {
@@ -2123,15 +2281,22 @@
       }
 
       /* Layers panel */
+      .layers-section-copy {
+        margin: 0 0 10px;
+        font-size: 12px;
+        line-height: 1.45;
+        color: var(--shell-text-muted);
+      }
+
       .layers-list-container {
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 8px;
         max-height: 320px;
         overflow-y: auto;
-        padding: 6px;
+        padding: 8px;
         border: 1px solid var(--shell-border);
-        border-radius: 8px;
+        border-radius: 10px;
         background: var(--shell-bg-secondary);
       }
 
@@ -2143,27 +2308,30 @@
 
       .layer-row {
         display: grid;
-        grid-template-columns: 24px 1fr auto auto auto auto;
-        gap: 6px;
+        grid-template-columns: 32px minmax(0, 1fr) auto;
+        gap: 10px;
         align-items: center;
-        padding: 6px 8px;
-        border: 1px solid transparent;
-        border-radius: 6px;
+        padding: 10px;
+        border: 1px solid var(--shell-border);
+        border-radius: 10px;
         background: var(--shell-bg);
         cursor: pointer;
-        transition: background var(--motion-quick) ease, border-color var(--motion-quick) ease;
+        transition:
+          background var(--motion-quick) ease,
+          border-color var(--motion-quick) ease,
+          box-shadow var(--motion-quick) ease;
         user-select: none;
       }
 
       .layer-row:hover {
         background: var(--shell-hover-bg);
-        border-color: var(--shell-border);
+        border-color: color-mix(in srgb, var(--shell-accent) 34%, var(--shell-border));
       }
 
       .layer-row.is-active {
         background: var(--shell-accent-bg);
         border-color: var(--shell-accent);
-        font-weight: 500;
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--shell-accent) 24%, transparent);
       }
 
       .layer-row.is-dragging {
@@ -2173,6 +2341,41 @@
       .layer-row.is-drop-target {
         border-color: var(--shell-accent);
         border-style: dashed;
+        background: color-mix(in srgb, var(--shell-accent-soft) 16%, var(--shell-bg));
+      }
+
+      .layer-row:focus-visible {
+        outline: 2px solid var(--shell-accent);
+        outline-offset: 2px;
+      }
+
+      .layer-drag-handle {
+        width: 28px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--shell-text-muted);
+        font-size: 16px;
+        cursor: grab;
+        transition:
+          background var(--motion-quick) ease,
+          border-color var(--motion-quick) ease,
+          color var(--motion-quick) ease;
+      }
+
+      .layer-drag-handle:hover,
+      .layer-drag-handle:focus-visible {
+        background: var(--shell-field-muted);
+        border-color: color-mix(in srgb, var(--shell-accent) 24%, var(--shell-border));
+        color: var(--shell-text);
+      }
+
+      .layer-drag-handle:active {
+        cursor: grabbing;
       }
 
       .layer-kind-icon {
@@ -2180,36 +2383,126 @@
         text-align: center;
       }
 
+      .layer-main {
+        min-width: 0;
+        display: grid;
+        gap: 4px;
+      }
+
       .layer-label {
+        display: block;
         font-size: 13px;
+        font-weight: 600;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
       }
 
+      .layer-meta {
+        font-size: 11px;
+        color: var(--shell-text-muted);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .layer-trailing {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        justify-content: flex-end;
+      }
+
+      .layer-status-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        justify-content: flex-end;
+      }
+
+      .layer-status-chip {
+        display: inline-flex;
+        align-items: center;
+        min-height: 22px;
+        padding: 0 8px;
+        border: 1px solid var(--shell-border);
+        border-radius: 999px;
+        background: var(--shell-bg-secondary);
+        color: var(--shell-text-muted);
+        font-size: 11px;
+        line-height: 1;
+        white-space: nowrap;
+      }
+
+      .layer-status-chip.is-current {
+        border-color: color-mix(in srgb, var(--shell-accent) 40%, var(--shell-border));
+        background: color-mix(in srgb, var(--shell-accent-soft) 34%, transparent);
+        color: var(--shell-text);
+      }
+
+      .layer-status-chip.is-hidden {
+        border-color: color-mix(in srgb, var(--shell-text-muted) 28%, var(--shell-border));
+        background: color-mix(in srgb, var(--shell-bg-secondary) 76%, white);
+      }
+
+      .layer-status-chip.is-locked {
+        border-color: color-mix(in srgb, var(--shell-danger) 36%, var(--shell-border));
+        background: color-mix(in srgb, var(--shell-danger) 10%, var(--shell-bg-secondary));
+        color: color-mix(in srgb, var(--shell-danger) 72%, var(--shell-text));
+      }
+
+      .layer-status-chip.is-top {
+        border-color: color-mix(in srgb, var(--shell-text) 14%, var(--shell-border));
+        color: var(--shell-text);
+      }
+
+      .layer-row-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .layer-z-field {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        color: var(--shell-text-muted);
+      }
+
       .layer-z-input {
-        width: 48px;
+        width: 56px;
         padding: 2px 4px;
         font-size: 12px;
         text-align: center;
         border: 1px solid var(--shell-border);
-        border-radius: 4px;
+        border-radius: 6px;
         background: var(--shell-bg);
         color: var(--shell-text);
       }
 
       .layer-action-btn {
-        padding: 2px 6px;
-        border: none;
+        width: 28px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        border: 1px solid transparent;
         background: transparent;
-        font-size: 16px;
+        font-size: 15px;
         cursor: pointer;
-        border-radius: 4px;
-        transition: background var(--motion-quick) ease;
+        border-radius: 8px;
+        transition:
+          background var(--motion-quick) ease,
+          border-color var(--motion-quick) ease,
+          color var(--motion-quick) ease;
       }
 
-      .layer-action-btn:hover {
-        background: var(--shell-hover-bg);
+      .layer-action-btn:hover,
+      .layer-action-btn:focus-visible {
+        background: var(--shell-field-muted);
+        border-color: color-mix(in srgb, var(--shell-accent) 24%, var(--shell-border));
       }
 
       .layer-action-btn:active {
@@ -2245,8 +2538,8 @@
 
       .layer-picker-header {
         display: grid;
-        gap: 2px;
-        padding: 10px 12px;
+        gap: 4px;
+        padding: 12px;
         border-bottom: 1px solid var(--menu-divider);
       }
 
@@ -2269,7 +2562,7 @@
 
       .layer-picker button {
         width: 100%;
-        min-height: 40px;
+        min-height: 52px;
         min-width: 0;
         border: 0;
         border-radius: 0;
@@ -2288,13 +2581,12 @@
       }
 
       .layer-picker button.is-current-layer {
-        font-weight: 700;
         background: color-mix(in srgb, var(--shell-accent-soft) 26%, transparent);
       }
 
       .layer-picker-row-copy {
         display: grid;
-        gap: 2px;
+        gap: 4px;
         min-width: 0;
       }
 
@@ -2309,6 +2601,12 @@
       .layer-picker-row-hint {
         font-size: 11px;
         color: var(--shell-text-muted);
+      }
+
+      .layer-picker-row-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
       }
 
       @layer overlay {
@@ -3213,6 +3511,20 @@
         .topbar-identity {
           gap: 10px;
         }
+
+        .preview-note {
+          gap: 8px;
+          padding: 10px 12px;
+        }
+
+        .preview-note-title {
+          font-size: 15px;
+        }
+
+        .preview-note-actions {
+          gap: 6px;
+          padding-top: 8px;
+        }
       }
 
       @media (max-width: 980px) {
@@ -3242,6 +3554,11 @@
           align-items: flex-start;
         }
 
+        .preview-note-header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
         .preview-note .topbar-eyebrow {
           display: inline-flex;
         }
@@ -3250,13 +3567,9 @@
           display: -webkit-box;
         }
 
-        .preview-note-actions {
+        .preview-note-summary {
           width: 100%;
-          justify-content: flex-start;
-        }
-
-        .preview-note-actions > * {
-          flex: 1 1 132px;
+          justify-items: start;
         }
       }
 
@@ -3381,6 +3694,18 @@
           padding: 12px;
         }
 
+        .empty-state {
+          padding: 24px 22px;
+        }
+
+        .empty-state strong {
+          font-size: 25px;
+        }
+
+        .empty-state-steps {
+          grid-template-columns: 1fr;
+        }
+
         .preview-note-summary {
           align-items: flex-start;
         }
@@ -3410,8 +3735,9 @@
           display: none;
         }
 
-        .preview-note-actions {
-          flex-direction: column;
+        .preview-note-primary-row,
+        .preview-note-meta-row {
+          width: 100%;
         }
 
         #topbarStateCluster {
@@ -3536,14 +3862,14 @@
   <body>
     <!-- ====================================================================
        Restore banner
-       Показывается только если найден autosave в localStorage и даёт пользователю
-       выбор: восстановить проект или начать с чистого состояния.
+       Показывается только если найден autosave в sessionStorage этой вкладки и
+       даёт пользователю выбор: восстановить проект или начать с чистого состояния.
        ==================================================================== -->
     <div id="restoreBanner" class="restore-banner" aria-live="polite">
       <div>
         <strong>Найдена автосохранённая версия проекта.</strong>
         <div class="hint" id="restoreBannerText">
-          Можно восстановить последние правки из localStorage.
+          Можно восстановить последние правки из этой вкладки браузера.
         </div>
       </div>
       <div class="inline-actions">
@@ -3563,21 +3889,21 @@
     <header class="topbar" id="topbar">
       <div class="topbar-identity">
         <div class="topbar-title">
-        <span class="topbar-eyebrow">Workspace shell</span>
+        <span class="topbar-eyebrow">Живой HTML-редактор</span>
         <h1>HTML Presentation Editor</h1>
-        <span id="documentMeta">Документ не загружен</span>
+        <span id="documentMeta">Откройте HTML, чтобы получить честное живое превью.</span>
         </div>
         <div
           id="topbarStateCluster"
           class="shell-cluster"
           role="group"
-          aria-label="Workspace status"
+          aria-label="Состояние рабочей области"
         >
           <span id="saveStatePill" class="status-pill save-pill"
-            >РђРІС‚РѕСЃРѕС…СЂР°РЅРµРЅРёРµ РЅРµР°РєС‚РёРІРЅРѕ</span
+            >Автосохранение неактивно</span
           >
           <span id="workspaceStateBadge" class="status-pill"
-            >Workspace idle</span
+            >Редактор ждёт HTML</span
           >
         </div>
       </div>
@@ -3596,20 +3922,6 @@
 
       <div class="topbar-actions">
           <div
-            data-legacy-topbar-state-cluster="true"
-            hidden
-            class="shell-cluster"
-            role="group"
-            aria-label="Workspace status"
-          >
-            <span data-legacy-save-state-pill="true" class="status-pill save-pill"
-              >Автосохранение неактивно</span
-            >
-            <span data-legacy-workspace-state-badge="true" class="status-pill"
-              >Workspace idle</span
-            >
-          </div>
-          <div
             id="topbarCommandCluster"
             class="shell-cluster"
             role="group"
@@ -3625,7 +3937,7 @@
             </button>
             <button id="undoBtn" disabled>Отменить</button>
             <button id="redoBtn" disabled>Повторить</button>
-            <button id="openHtmlBtn" class="primary-btn">Открыть</button>
+          <button id="openHtmlBtn" class="primary-btn">Открыть HTML</button>
             <button id="exportBtn" disabled>Экспорт</button>
           </div>
           <button
@@ -3763,58 +4075,76 @@
         <div class="preview-shell">
           <div class="preview-note">
             <div class="preview-note-main">
-              <span class="topbar-eyebrow">Live canvas</span>
-              <span id="previewNoteText"
-                >Здесь должно быть поведение, максимально близкое к обычному
-                открытию HTML в браузере.</span
-              >
-              <div class="preview-note-summary">
-                <span id="previewStatusSummary" class="mini-badge"
-                  >Workspace idle</span
-                >
-                <span id="activeSlideLabel">Слайд не выбран</span>
+              <div class="preview-note-header">
+                <div class="preview-note-copy">
+                  <span class="topbar-eyebrow">Следующий шаг</span>
+                  <strong id="previewNoteTitle" class="preview-note-title"
+                    >Откройте HTML и запустите превью</strong
+                  >
+                  <span id="previewNoteText"
+                    >Файл, вставка HTML и assets подключаются в одном потоке.</span
+                  >
+                </div>
+                <div class="preview-note-summary">
+                  <span id="previewStatusSummary" class="mini-badge"
+                    >Стартовый экран</span
+                  >
+                  <span id="activeSlideLabel">Слайд не выбран</span>
+                </div>
               </div>
             </div>
             <div class="preview-note-actions">
-              <button
-                type="button"
-                id="previewPrimaryActionBtn"
-                class="primary-btn preview-primary-action"
-                hidden
-              >
-                Начать редактирование
-              </button>
-              <span
-                id="interactionStatePill"
-                class="status-pill"
-                aria-live="polite"
-                >Просмотр</span
-              >
-              <span
-                id="previewLifecyclePill"
-                class="status-pill"
-                aria-live="polite"
-                >Пусто</span
-              >
-              <button
-                type="button"
-                id="reloadPreviewBtn"
-                class="ghost-btn"
-                title="Пересоздать iframe и заново подключить bridge"
-              >
-                ↻ Превью
-              </button>
-              <button
-                type="button"
-                id="toggleInsertPaletteBtn"
-                class="ghost-btn insert-toggle-btn"
-                aria-expanded="false"
-                aria-controls="quickPalette"
-                aria-haspopup="menu"
-                title="Открыть меню вставки"
-              >
-                ➕ Вставить
-              </button>
+              <div class="preview-note-primary-row">
+                <button
+                  type="button"
+                  id="previewPrimaryActionBtn"
+                  class="primary-btn preview-primary-action"
+                  hidden
+                >
+                  Начать редактирование
+                </button>
+                <button
+                  type="button"
+                  id="previewAssistActionBtn"
+                  class="ghost-btn"
+                  hidden
+                >
+                  Подключить папку ресурсов
+                </button>
+                <button
+                  type="button"
+                  id="toggleInsertPaletteBtn"
+                  class="ghost-btn insert-toggle-btn"
+                  aria-expanded="false"
+                  aria-controls="quickPalette"
+                  aria-haspopup="menu"
+                  title="Открыть меню вставки"
+                >
+                  ➕ Добавить блок
+                </button>
+                <button
+                  type="button"
+                  id="reloadPreviewBtn"
+                  class="ghost-btn"
+                  title="Пересоздать iframe и заново подключить bridge"
+                >
+                  ↻ Обновить
+                </button>
+              </div>
+              <div class="preview-note-meta-row">
+                <span
+                  id="interactionStatePill"
+                  class="status-pill"
+                  aria-live="polite"
+                  >Просмотр</span
+                >
+                <span
+                  id="previewLifecyclePill"
+                  class="status-pill"
+                  aria-live="polite"
+                  >Пусто</span
+                >
+              </div>
             </div>
           </div>
 
@@ -3898,13 +4228,55 @@
 
           <div class="preview-stage" id="previewStage">
             <div class="empty-state" id="emptyState">
-              <strong>Откройте презентацию в HTML</strong>
-              Выберите файл <code>presentation.html</code> или вставьте HTML из
-              буфера обмена.
+              <span class="empty-state-kicker">Живое превью без обмана</span>
+              <strong id="emptyStateTitle"
+                >Откройте HTML и сразу увидьте реальную презентацию</strong
+              >
+              <div class="empty-state-lead" id="emptyStateLead">
+                Редактор запускает исходный документ в отдельном iframe,
+                сохраняет его скрипты и только потом переводит вас к безопасной
+                поэлементной правке.
+              </div>
+              <div class="empty-state-steps" aria-label="Как начать работу">
+                <div class="empty-state-step">
+                  <span class="empty-state-step-index">1</span>
+                  <strong>Откройте HTML</strong>
+                  <span
+                    >Выберите <code>presentation.html</code> или любой основной
+                    HTML-файл презентации.</span
+                  >
+                </div>
+                <div class="empty-state-step">
+                  <span class="empty-state-step-index">2</span>
+                  <strong>Либо вставьте код</strong>
+                  <span
+                    >Подходит, если HTML уже лежит в буфере и не нужен файл на
+                    диске.</span
+                  >
+                </div>
+                <div class="empty-state-step">
+                  <span class="empty-state-step-index">3</span>
+                  <strong>Assets можно позже</strong>
+                  <span
+                    >Если есть относительные <code>css/js/img/video</code>,
+                    shell предложит подключить папку проекта.</span
+                  >
+                </div>
+              </div>
               <div class="empty-state-actions">
                 <button type="button" id="emptyOpenBtn" class="primary-btn">
                   Открыть HTML
                 </button>
+                <button type="button" id="emptyPasteBtn" class="ghost-btn">
+                  Вставить из буфера
+                </button>
+                <button type="button" id="emptyStarterDeckBtn" class="ghost-btn">
+                  Открыть стартовый пример
+                </button>
+              </div>
+              <div class="empty-state-footnote" id="emptyStateFootnote">
+                Путь по умолчанию: открыть HTML, проверить живое превью, затем
+                перейти к точечной правке.
               </div>
             </div>
             <iframe
@@ -4162,8 +4534,7 @@
           <div>
             <h2>Инспектор элемента</h2>
             <div class="panel-subtext">
-              Любой выбранный элемент: текст, контейнер, картинка, iframe,
-              список и т.п.
+              Контекст элемента, честные ограничения и следующий безопасный шаг.
             </div>
           </div>
           <div class="panel-header-actions">
@@ -4173,9 +4544,9 @@
               aria-label="Сложность инспектора"
             >
               <button type="button" id="basicModeBtn" class="is-active">
-                <span>Basic</span>
+                <span>Быстро</span>
               </button>
-              <button type="button" id="advancedModeBtn"><span>Advanced</span></button>
+              <button type="button" id="advancedModeBtn"><span>Точно</span></button>
             </div>
             <button
               type="button"
@@ -4213,7 +4584,7 @@
               hidden
             >
               <div id="overlapRecoveryText">
-                Этот элемент частично перекрыт другим. Можно переместить его наверх.
+                Под курсором несколько слоёв. Выберите нужный или поднимите текущий.
               </div>
               <div class="overlap-recovery-actions">
                 <button
@@ -4222,7 +4593,7 @@
                   id="overlapSelectLayerBtn"
                   data-ui-level="advanced"
                 >
-                  Magic Select
+                  Выбрать слой
                 </button>
                 <button type="button" class="ghost-btn" id="overlapMoveTopBtn">
                   Переместить наверх
@@ -4283,7 +4654,7 @@
             <span
               class="stack-depth-badge"
               id="stackDepthBadge"
-              aria-label="Количество элементов под курсором"
+              aria-label="Слой под курсором"
               hidden
             ></span>
             <div class="field-grid-2">
@@ -4698,9 +5069,12 @@
                 class="ghost-btn inspector-section-action"
                 id="normalizeLayersBtn"
               >
-                Normalize layers
+                Упорядочить стек
               </button>
             </div>
+            <p class="layers-section-copy">
+              Выберите слой, чтобы управлять порядком, видимостью и блокировкой.
+            </p>
             <div class="layers-list-container" id="layersListContainer">
               <!-- Layers list rendered dynamically -->
             </div>
@@ -4830,6 +5204,13 @@
             </div>
           </div>
 
+          <div
+            id="openHtmlStatus"
+            class="modal-status"
+            aria-live="polite"
+            hidden
+          ></div>
+
           <div class="upload-box">
             <h4>Папка ресурсов</h4>
             <p>
@@ -4891,7 +5272,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <div class="hint" id="htmlEditorStatus">
+          <div class="modal-status is-info" id="htmlEditorStatus" aria-live="polite">
             После сохранения изменится и модель, и живое превью.
           </div>
           <div class="modal-footer-actions">
@@ -4965,6 +5346,12 @@
             <code>mp4/webm</code> или держать файл рядом с HTML и вставлять
             относительный путь.
           </div>
+          <div
+            id="videoInsertStatus"
+            class="modal-status"
+            aria-live="polite"
+            hidden
+          ></div>
         </div>
       </div>
     </div>
@@ -4981,12 +5368,12 @@
       class="layer-picker"
       role="dialog"
       aria-hidden="true"
-      aria-label="Выбор слоя"
+      aria-label="Слои под курсором"
     >
       <div class="layer-picker-header">
-        <strong id="layerPickerTitle" class="layer-picker-title">Magic Select</strong>
+            <strong id="layerPickerTitle" class="layer-picker-title">Слои под курсором</strong>
         <div id="layerPickerSubtitle" class="layer-picker-subtitle">
-          Выберите слой под курсором.
+          В этой точке найдено несколько слоёв. Выберите нужный.
         </div>
       </div>
       <div id="layerPickerList" class="layer-picker-list"></div>
@@ -5119,7 +5506,7 @@
       // ====================================================================
       // Константы shell-редактора
       // STORAGE_KEY / HISTORY / UI-state ключи используются только в parent window,
-      // а bridge внутри iframe ничего не знает о localStorage редактора.
+      // а bridge внутри iframe ничего не знает о storage редактора.
       // ====================================================================
       const STORAGE_KEY = "presentation-editor:autosave:v3";
       const HISTORY_LIMIT = 20;
@@ -5135,6 +5522,14 @@
       const PREVIEW_ZOOM_STORAGE_KEY = "presentation-editor:preview-zoom:v1";
       const MAX_VISIBLE_TOASTS = 4;
       const THEME_PREFERENCES = ["system", "light", "dark"];
+      const STARTER_DECKS = Object.freeze({
+        basic: Object.freeze({
+          key: "basic",
+          href: "/tests/fixtures/playwright/basic-deck.html",
+          label: "Starter Example",
+          manualBasePath: "/tests/fixtures/playwright/",
+        }),
+      });
       const SHELL_WARNING_CACHE = new Set();
       const BRIDGE_MUTATION_TYPES = new Set([
         "apply-style",
@@ -5464,6 +5859,7 @@
         selectedOverlapWarning: null,
         overlapHoverNodeId: null,
         overlapHoverBoundDoc: null,
+        sessionVisibilityMap: {},
         layerPickerPayload: null,
         layerPickerHighlightNodeId: null,
         layerPickerActiveIndex: -1,
@@ -5576,11 +5972,13 @@
         ),
         activeSlideLabel: document.getElementById("activeSlideLabel"),
         previewModeLabel: document.getElementById("previewModeLabel"),
+        previewNoteTitle: document.getElementById("previewNoteTitle"),
         previewNoteText: document.getElementById("previewNoteText"),
         previewStatusSummary: document.getElementById("previewStatusSummary"),
         interactionStatePill: document.getElementById("interactionStatePill"),
         previewLifecyclePill: document.getElementById("previewLifecyclePill"),
         previewPrimaryActionBtn: document.getElementById("previewPrimaryActionBtn"),
+        previewAssistActionBtn: document.getElementById("previewAssistActionBtn"),
         reloadPreviewBtn: document.getElementById("reloadPreviewBtn"),
         documentMeta: document.getElementById("documentMeta"),
         saveStatePill: document.getElementById("saveStatePill"),
@@ -5616,7 +6014,12 @@
           "toggleInsertPaletteBtn",
         ),
         emptyState: document.getElementById("emptyState"),
+        emptyStateTitle: document.getElementById("emptyStateTitle"),
+        emptyStateLead: document.getElementById("emptyStateLead"),
+        emptyStateFootnote: document.getElementById("emptyStateFootnote"),
         emptyOpenBtn: document.getElementById("emptyOpenBtn"),
+        emptyStarterDeckBtn: document.getElementById("emptyStarterDeckBtn"),
+        emptyPasteBtn: document.getElementById("emptyPasteBtn"),
         slidesPanel: document.getElementById("slidesPanel"),
         inspectorPanel: document.getElementById("inspectorPanel"),
         panelBackdrop: document.getElementById("panelBackdrop"),
@@ -5776,6 +6179,7 @@
         assetDirectoryStatus: document.getElementById("assetDirectoryStatus"),
         loadFileBtn: document.getElementById("loadFileBtn"),
         loadPastedHtmlBtn: document.getElementById("loadPastedHtmlBtn"),
+        openHtmlStatus: document.getElementById("openHtmlStatus"),
         htmlEditorModalTitle: document.getElementById("htmlEditorModalTitle"),
         htmlEditorTextarea: document.getElementById("htmlEditorTextarea"),
         htmlEditorHint: document.getElementById("htmlEditorHint"),
@@ -5786,6 +6190,7 @@
         loadVideoFileBtn: document.getElementById("loadVideoFileBtn"),
         videoUrlInput: document.getElementById("videoUrlInput"),
         insertVideoUrlBtn: document.getElementById("insertVideoUrlBtn"),
+        videoInsertStatus: document.getElementById("videoInsertStatus"),
         contextMenu: document.getElementById("contextMenu"),
         contextMenuInner: document.getElementById("contextMenuInner"),
         layerPicker: document.getElementById("layerPicker"),
@@ -5800,6 +6205,12 @@
         discardDraftBtn: document.getElementById("discardDraftBtn"),
         toastContainer: document.getElementById("toastContainer"),
       };
+
+      const statusDefaults = Object.freeze({
+        htmlEditor:
+          (els.htmlEditorStatus?.textContent || "").trim() ||
+          "После сохранения изменится и модель, и живое превью.",
+      });
 
       function ensureNoviceShellOnboardingUi() {
         if (els.topbarOverflowBtn) {
@@ -5816,32 +6227,22 @@
           els.toggleSlideTemplateBarBtn.textContent = "Новый слайд";
         }
         if (els.reloadPreviewBtn && !state.modelDoc) {
-          els.reloadPreviewBtn.textContent = "Обновить превью";
+          els.reloadPreviewBtn.textContent = "↻ Обновить";
         }
         if (els.toggleInsertPaletteBtn && !isInsertPaletteOpen()) {
-          els.toggleInsertPaletteBtn.textContent = "➕ Вставить блок";
+          els.toggleInsertPaletteBtn.textContent = "➕ Добавить блок";
         }
         if (els.emptyState) {
-          const lead = els.emptyState.querySelector("strong");
-          if (lead) lead.textContent = "Откройте презентацию в HTML";
-          const code = els.emptyState.querySelector("code");
-          const textNodes = Array.from(els.emptyState.childNodes).filter(
-            (node) => node.nodeType === Node.TEXT_NODE,
-          );
-          if (code && textNodes.length) {
-            const summaryText =
-              " Выберите файл ";
-            const tailText =
-              " или вставьте HTML из буфера обмена.";
-            textNodes[0].textContent = summaryText;
-            if (textNodes[1]) {
-              textNodes[1].textContent = tailText;
-            } else {
-              els.emptyState.insertBefore(
-                document.createTextNode(tailText),
-                els.emptyState.querySelector(".empty-state-actions"),
-              );
-            }
+          if (els.emptyStateTitle) {
+            els.emptyStateTitle.textContent = "Откройте HTML и получите живое превью";
+          }
+          if (els.emptyStateLead) {
+            els.emptyStateLead.textContent =
+              "Shell загружает исходный HTML как отдельный документ без упрощений, а затем переводит вас в безопасную правку.";
+          }
+          if (els.emptyStateFootnote) {
+            els.emptyStateFootnote.textContent =
+              "Если у презентации есть относительные CSS, JS, img или video, сразу подключите папку проекта или assets.";
           }
           const actions =
             els.emptyState.querySelector(".empty-state-actions") || els.emptyState;
@@ -5860,6 +6261,9 @@
           }
           if (els.emptyOpenBtn) {
             els.emptyOpenBtn.textContent = "Открыть HTML";
+          }
+          if (els.emptyStarterDeckBtn) {
+            els.emptyStarterDeckBtn.textContent = "Открыть стартовый пример";
           }
           els.emptyPasteBtn = emptyPasteBtn;
         }
@@ -5897,7 +6301,7 @@
             const text = assetsBox.querySelector("p");
             if (text) {
               text.innerHTML =
-                "Если презентация ссылается на относительные <code>css/js/img/video</code>, выберите папку проекта или <code>assets</code>. Так превью точнее восстановит ресурсы.";
+                "Если презентация ссылается на относительные <code>css/js/img/video</code>, выберите папку проекта или <code>assets</code>. В Chromium-based браузерах можно выбрать папку целиком: так превью точнее восстановит ресурсы.";
             }
           }
           if (els.loadPastedHtmlBtn) {
@@ -6110,9 +6514,13 @@
         els.overlapMoveTopBtn?.addEventListener("click", () => {
           moveSelectedLayerByOrder("layer-front");
         });
-        els.overlapSelectLayerBtn?.addEventListener("click", () =>
-          openLayerPickerForSelectedOverlap(),
-        );
+        els.overlapSelectLayerBtn?.addEventListener("click", () => {
+          if (state.complexityMode === "advanced") {
+            openLayerPickerForSelectedOverlap();
+            return;
+          }
+          selectNextOverlapLayer();
+        });
         els.normalizeLayersBtn?.addEventListener("click", () =>
           normalizeLayersForCurrentScope(),
         );
@@ -6636,6 +7044,8 @@
               dirty: true,
               mode: normalizeEditorMode(payload.mode, "edit"),
               preferSlideIndex: payload.activeSlideIndex || 0,
+              onError: (message) =>
+                showToast(message, "error", { title: "Восстановление" }),
             },
           );
         });
@@ -6649,7 +7059,7 @@
 
       function tryRestoreDraftPrompt() {
         try {
-          const raw = localStorage.getItem(STORAGE_KEY);
+          const raw = getAutosaveStorage().getItem(STORAGE_KEY);
           if (!raw) return;
           const payload = JSON.parse(raw);
           if (!payload?.html) return;
@@ -6682,6 +7092,9 @@
       // ====================================================================
       function loadHtmlString(htmlString, sourceLabel, options = {}) {
         const requestedMode = normalizeEditorMode(options.mode, "preview");
+        const manualBaseUrl = String(
+          options.manualBaseUrl ?? els.baseUrlInput?.value ?? "",
+        ).trim();
         clearPendingPersistenceTimers();
         cleanupPreviewUrl();
         cleanupExportValidationUrl();
@@ -6696,7 +7109,9 @@
         state.sourceLabel = sourceLabel;
         state.sourceHtml = htmlString;
         state.doctypeString = extractDoctype(htmlString) || "<!DOCTYPE html>";
-        setManualBaseUrl(els.baseUrlInput?.value || "");
+        setManualBaseUrl(manualBaseUrl, {
+          reportInvalid: Boolean(manualBaseUrl),
+        });
         state.bridgeToken = createBridgeToken();
         state.mode = "preview";
         state.interactionMode = "preview";
@@ -6716,8 +7131,18 @@
           setPreviewLifecycleState("idle", { reason: "parse-error" });
           setPreviewLoading(false);
           refreshUi();
-          alert(`Не удалось разобрать HTML: ${error.message}`);
-          return;
+          const detail =
+            error instanceof Error && error.message
+              ? error.message
+              : "Не удалось разобрать HTML.";
+          const message = `Не удалось разобрать HTML: ${detail}`;
+          if (typeof options.onError === "function") options.onError(message, error);
+          else {
+            showToast(message, "error", {
+              title: "Открыть HTML",
+            });
+          }
+          return false;
         }
 
         const preferredSlideId = resolvePreferredSlideTarget({
@@ -6764,6 +7189,7 @@
         }
         schedulePersistence();
         refreshUi();
+        return true;
       }
 
       // buildModelDocument
@@ -7730,13 +8156,123 @@
         return String(fallbackValue || els.baseUrlInput?.value || "").trim();
       }
 
-      function setManualBaseUrl(nextValue = "") {
+      function normalizeManualBaseUrl(nextValue = "", options = {}) {
         const normalized = String(nextValue || "").trim();
+        if (!normalized) return "";
+        try {
+          const parsed = new URL(normalized);
+          if (!["http:", "https:"].includes(parsed.protocol)) {
+            throw new Error(`unsupported-protocol:${parsed.protocol}`);
+          }
+          return parsed.toString();
+        } catch (error) {
+          if (options.reportInvalid) {
+            reportShellWarning("manual-base-url-invalid", error, {
+              once: true,
+              diagnostic: false,
+            });
+            showToast(
+              "Base URL должен быть абсолютным http(s)-адресом. Некорректное значение очищено.",
+              "warning",
+              { title: "Base URL" },
+            );
+          }
+          return "";
+        }
+      }
+
+      function setManualBaseUrl(nextValue = "", options = {}) {
+        const normalized = normalizeManualBaseUrl(nextValue, options);
         state.manualBaseUrl = normalized;
         if (els.baseUrlInput && els.baseUrlInput.value !== normalized) {
           els.baseUrlInput.value = normalized;
         }
         return normalized;
+      }
+
+      function getAutosaveStorage() {
+        return window.sessionStorage;
+      }
+
+      function getStarterDeckConfig(key = "basic") {
+        const normalizedKey = String(key || "basic").trim().toLowerCase();
+        return STARTER_DECKS[normalizedKey] || STARTER_DECKS.basic || null;
+      }
+
+      function clearStarterLaunchIntent() {
+        try {
+          const currentUrl = new URL(window.location.href);
+          if (!currentUrl.searchParams.has("starter")) return;
+          currentUrl.searchParams.delete("starter");
+          window.history.replaceState({}, "", currentUrl.toString());
+        } catch (error) {
+          reportShellWarning("starter-launch-intent-clear-failed", error, {
+            once: true,
+          });
+        }
+      }
+
+      async function loadStarterDeck(starterKey = "basic") {
+        const starter = getStarterDeckConfig(starterKey);
+        if (!starter) {
+          showToast("Стартовый пример недоступен.", "warning", {
+            title: "Стартовый пример",
+          });
+          return;
+        }
+
+        const manualBaseUrl = new URL(
+          starter.manualBasePath,
+          `${window.location.origin}/`,
+        ).toString();
+
+        try {
+          setPreviewLoading(true, "Загрузка стартового примера…");
+          const response = await fetch(starter.href, {
+            cache: "no-store",
+            credentials: "same-origin",
+          });
+          if (!response.ok) {
+            throw new Error(`starter-fetch-${response.status}`);
+          }
+          const htmlText = await response.text();
+          loadHtmlString(htmlText, starter.label, {
+            resetHistory: true,
+            dirty: false,
+            manualBaseUrl,
+          });
+          closeModal(els.openHtmlModal);
+          showToast(
+            "Открыт стартовый пример. Превью готово, можно переходить к точечной правке.",
+            "success",
+            { title: "Стартовый пример" },
+          );
+        } catch (error) {
+          console.error(error);
+          setPreviewLoading(false);
+          showToast(
+            "Не удалось открыть стартовый пример. Проверьте локальный сервер и попробуйте ещё раз.",
+            "warning",
+            { title: "Стартовый пример" },
+          );
+        } finally {
+          clearStarterLaunchIntent();
+        }
+      }
+
+      function consumeStarterLaunchIntent() {
+        try {
+          const currentUrl = new URL(window.location.href);
+          const starterKey = currentUrl.searchParams.get("starter");
+          if (!starterKey) return false;
+          void loadStarterDeck(starterKey);
+          return true;
+        } catch (error) {
+          reportShellWarning("starter-launch-intent-read-failed", error, {
+            once: true,
+          });
+          return false;
+        }
       }
 
       function createRenderedOutputContract(options = {}) {
@@ -8054,7 +8590,8 @@
           if (!selectedEditing) return false;
           const selection = window.getSelection();
           const anchorNode = selection ? selection.anchorNode : null;
-          return Boolean(anchorNode && selected.contains(anchorNode));
+          if (anchorNode && selected.contains(anchorNode)) return true;
+          return active === document.body || active === document.documentElement || active == null;
         }
 
         function nextNodeId() {
@@ -8520,6 +9057,27 @@
         function markInlineTextEditDirty(el) {
           const session = getInlineTextEditSession(el);
           if (session) session.dirty = true;
+        }
+
+        function focusInlineTextEditingElement(el) {
+          if (!(el instanceof HTMLElement)) return;
+          const restoreFocus = () => {
+            if (STATE.selectedEl !== el) return;
+            if (el.getAttribute('contenteditable') !== 'true') return;
+            if (!getInlineTextEditSession(el)) return;
+            try {
+              el.focus({ preventScroll: true });
+            } catch (error) {
+              try { el.focus(); } catch (_focusError) {}
+            }
+            const selection = window.getSelection();
+            const anchorNode = selection ? selection.anchorNode : null;
+            if (!anchorNode || !el.contains(anchorNode)) {
+              placeCaretAtEnd(el);
+            }
+          };
+          restoreFocus();
+          requestAnimationFrame(() => restoreFocus());
         }
 
         function placeCaretAtEnd(el) {
@@ -10074,8 +10632,7 @@
             el.setAttribute('contenteditable', 'true');
             el.setAttribute('spellcheck', 'true');
             beginInlineTextEditSession(el);
-            try { el.focus(); } catch (e) {}
-            placeCaretAtEnd(el);
+            focusInlineTextEditingElement(el);
           }
           observeSelectedSize(el);
           postSelection(el, { selectionLeafEl, selectionPathEntries });
@@ -11730,6 +12287,7 @@
           replacement.removeAttribute("data-editor-hover");
           replacement.removeAttribute("data-editor-highlight");
           replacement.removeAttribute("data-editor-flash");
+          stripSessionOnlyVisibilityFromReplacement(nodeId, node, replacement);
           node.replaceWith(state.modelDoc.importNode(replacement, true));
         } catch (error) {
           addDiagnostic(`element-update-error: ${error.message}`);
@@ -12060,12 +12618,10 @@
             ? `Активный: слайд ${activeSlideIndex + 1} из ${slides.length}`
             : "Слайд не выбран";
         if (pendingSlideIndex >= 0) {
-          els.activeSlideLabel.textContent = `РџРµСЂРµС…РѕРґ: СЃР»Р°Р№Рґ ${pendingSlideIndex + 1} РёР· ${slides.length}`;
-        }
-        els.activeSlideLabel.textContent = getEditorialActiveSlideSummaryLabel();
-        if (pendingSlideIndex >= 0) {
           els.activeSlideLabel.textContent =
             `Переход к слайду ${pendingSlideIndex + 1} из ${slides.length}`;
+        } else {
+          els.activeSlideLabel.textContent = getEditorialActiveSlideSummaryLabel();
         }
         if (!slides.length) {
           const empty = document.createElement("div");
@@ -12608,6 +13164,7 @@
         els.htmlEditorHint.textContent =
           "Нужен один корневой HTML‑элемент. После сохранения он заменит выбранный блок.";
         els.htmlEditorTextarea.value = state.selectedHtml;
+        resetHtmlEditorStatus();
         openModal(els.htmlEditorModal);
       }
 
@@ -12630,23 +13187,29 @@
         els.htmlEditorHint.textContent =
           "Нужен один корневой HTML‑элемент. После сохранения превью полностью перезагрузится.";
         els.htmlEditorTextarea.value = slide.outerHTML;
+        resetHtmlEditorStatus();
         openModal(els.htmlEditorModal);
       }
 
       function saveHtmlEditorChanges() {
         const html = els.htmlEditorTextarea.value.trim();
         if (!html) {
-          alert("HTML не должен быть пустым.");
+          setHtmlEditorStatus("HTML не должен быть пустым.", "error");
           return;
         }
         try {
           const replacement = parseSingleRootElement(html);
           if (state.htmlEditorMode === "element") saveElementHtml(replacement);
           else if (state.htmlEditorMode === "slide") saveSlideHtml(replacement);
+          resetHtmlEditorStatus();
           closeModal(els.htmlEditorModal);
         } catch (error) {
           console.error(error);
-          alert(error.message || "Не удалось применить HTML.");
+          setHtmlEditorStatus(
+            (error instanceof Error && error.message) ||
+              "Не удалось применить HTML.",
+            "error",
+          );
         }
       }
 
@@ -12789,9 +13352,17 @@ ${doc.documentElement.outerHTML}`;
         if (!popup) {
           showToast("Браузер заблокировал новую вкладку. Скопируй проверочный preview вручную или разреши pop-up.", "warning", {
             title: "Проверка экспорта",
+            actionLabel: "Скопировать ссылку",
+            onAction: () => {
+              void copyTextWithShellFeedback(pack.previewUrl, {
+                title: "Проверка экспорта",
+                successMessage: "Ссылка на проверочный preview скопирована.",
+                failureMessage:
+                  "Не удалось скопировать ссылку автоматически. Разрешите pop-up или повторите действие.",
+              });
+            },
           });
           if (auditSummary) addDiagnostic(`export-validation-audit: ${auditSummary}`);
-          prompt("Открой проверочный preview вручную", pack.previewUrl);
           return;
         }
         addDiagnostic(`export-validation-audit: ${auditSummary}`);
@@ -12820,8 +13391,9 @@ ${doc.documentElement.outerHTML}`;
           );
         }, 0);
         state.dirty = false;
+        state.lastSavedAt = 0;
+        clearAutosave();
         refreshUi();
-        schedulePersistence();
         showToast(
           `HTML экспортирован. Слайдов: ${pack.slideCount || state.slides.length}. Проверочный preview можно открыть отдельно.`,
           "success",
@@ -13089,7 +13661,7 @@ ${exportDoc.documentElement.outerHTML}`;
 
       function clearAutosave() {
         try {
-          localStorage.removeItem(STORAGE_KEY);
+          getAutosaveStorage().removeItem(STORAGE_KEY);
         } catch (error) {
           reportShellWarning("autosave-clear-failed", error, { once: true });
         }
@@ -13723,13 +14295,13 @@ ${exportDoc.documentElement.outerHTML}`;
         if (state.complexityMode !== "advanced") return false;
         if (
           state.selectedNodeId &&
-          !guardSelectionAction("reorder", "Normalize layers")
+          !guardSelectionAction("reorder", "Упорядочить стек")
         ) {
           return false;
         }
         if (
           state.selectedNodeId &&
-          !guardProtectedSelection("Normalize layers", { action: "reorder" })
+          !guardProtectedSelection("Упорядочить стек", { action: "reorder" })
         ) {
           return false;
         }
@@ -13741,7 +14313,7 @@ ${exportDoc.documentElement.outerHTML}`;
           return false;
         }
         return applyLayerVisualOrder(buildLayerVisualOrder(scope.nodes), "normalize-layers", {
-          toastMessage: "Authored z-index переписан в последовательность 10, 20, 30… без изменения визуального порядка.",
+          toastMessage: "Стек упорядочен без изменения видимого порядка.",
         });
       }
 
@@ -13821,6 +14393,76 @@ ${exportDoc.documentElement.outerHTML}`;
             "aria-hidden",
             active ? "false" : "true",
           );
+        }
+      }
+
+      function setStatusMessage(element, message, type = "info", options = {}) {
+        if (!(element instanceof HTMLElement)) return;
+        const text = String(message || "").trim();
+        const visible = Boolean(text) || options.keepVisible === true;
+        element.hidden = !visible;
+        element.className = `modal-status is-${type}`;
+        element.textContent = text;
+        if (visible) element.dataset.statusKind = type;
+        else delete element.dataset.statusKind;
+      }
+
+      function clearOpenHtmlStatus() {
+        setStatusMessage(els.openHtmlStatus, "", "info");
+      }
+
+      function setOpenHtmlStatus(message, type = "warning") {
+        setStatusMessage(els.openHtmlStatus, message, type);
+      }
+
+      function resetHtmlEditorStatus() {
+        setStatusMessage(
+          els.htmlEditorStatus,
+          statusDefaults.htmlEditor,
+          "info",
+          { keepVisible: true },
+        );
+      }
+
+      function setHtmlEditorStatus(message, type = "info") {
+        setStatusMessage(els.htmlEditorStatus, message, type, {
+          keepVisible: true,
+        });
+      }
+
+      function clearVideoInsertStatus() {
+        setStatusMessage(els.videoInsertStatus, "", "info");
+      }
+
+      function setVideoInsertStatus(message, type = "warning") {
+        setStatusMessage(els.videoInsertStatus, message, type);
+      }
+
+      async function copyTextWithShellFeedback(text, options = {}) {
+        const value = String(text || "");
+        if (!value) return false;
+        try {
+          await navigator.clipboard.writeText(value);
+          if (options.successMessage) {
+            showToast(options.successMessage, "success", {
+              title: options.title || "Буфер обмена",
+            });
+          }
+          return true;
+        } catch (error) {
+          reportShellWarning("clipboard-write-failed", error, {
+            once: true,
+            diagnostic: false,
+          });
+          showToast(
+            options.failureMessage ||
+              "Не удалось скопировать текст автоматически. Попробуйте ещё раз из контекстного меню.",
+            "warning",
+            {
+              title: options.title || "Буфер обмена",
+            },
+          );
+          return false;
         }
       }
 
@@ -14403,6 +15045,7 @@ ${exportDoc.documentElement.outerHTML}`;
         }
 
         if (changedAuthorState) {
+          setLayerSessionVisibility(nodeId, false);
           sendToBridge("update-attributes", { nodeId, attrs });
           recordHistoryChange(`restore-visibility:${nodeId}`);
           refreshUi();
@@ -14413,10 +15056,25 @@ ${exportDoc.documentElement.outerHTML}`;
         }
 
         const previewNode = getSelectedPreviewNode();
+        if (state.sessionVisibilityMap?.[nodeId]) {
+          setLayerSessionVisibility(nodeId, false);
+          if (
+            previewNode instanceof HTMLElement &&
+            getComputedStyle(previewNode).visibility === "hidden"
+          ) {
+            sendToBridge("toggle-visibility", { nodeId });
+          }
+          refreshUi();
+          showToast("Сессионное скрытие снято.", "success", {
+            title: "Видимость",
+          });
+          return true;
+        }
         if (
           previewNode instanceof HTMLElement &&
           getComputedStyle(previewNode).visibility === "hidden"
         ) {
+          setLayerSessionVisibility(nodeId, false);
           sendToBridge("toggle-visibility", { nodeId });
           refreshUi();
           showToast("Сессионное скрытие снято.", "success", {
@@ -14452,6 +15110,9 @@ ${exportDoc.documentElement.outerHTML}`;
       // [v0.19.0 ADR-001] Block reason protocol
       function getBlockReason() {
         if (state.previewZoom !== 1) return "zoom";
+        if (state.selectedNodeId && isLayerSessionHidden(state.selectedNodeId)) {
+          return "hidden";
+        }
         const selectedNode = getSelectedModelNode();
         if (selectedNode instanceof HTMLElement) {
           if (selectedNode.getAttribute("data-editor-locked") === "true") {
@@ -14783,9 +15444,12 @@ ${exportDoc.documentElement.outerHTML}`;
         if (els.selectionFrameLabel)
           els.selectionFrameLabel.textContent = getSelectionFrameLabel();
         if (els.selectionFrameHitArea) {
-          els.selectionFrameHitArea.style.pointerEvents =
-            isProtected || pointerTransparent ? "none" : "auto";
-          els.selectionFrameHitArea.style.cursor = directManipBlocked
+          els.selectionFrameHitArea.style.pointerEvents = pointerTransparent
+            ? "none"
+            : "auto";
+          els.selectionFrameHitArea.style.cursor = overlayLocked
+            ? "not-allowed"
+            : directManipBlocked
             ? "not-allowed"
             : state.activeManipulation?.kind === "drag"
               ? "grabbing"
@@ -15199,10 +15863,15 @@ ${exportDoc.documentElement.outerHTML}`;
           return;
         }
         if (!canDirectManipulateSelection(kind === "resize" ? "resize" : "drag")) {
+          event.preventDefault();
+          event.stopPropagation();
           guardSelectionAction(
             action,
             kind === "resize" ? "Изменение размера" : "Перемещение",
           );
+          if (els.selectionFrame) {
+            els.selectionFrame.focus({ preventScroll: true });
+          }
           return;
         }
         const startRect = getSelectionInteractionRect();
@@ -15524,14 +16193,12 @@ ${exportDoc.documentElement.outerHTML}`;
           return;
         const src = state.selectedAttrs.src || "";
         if (!src) return;
-        try {
-          await navigator.clipboard.writeText(src);
-          showToast("URL изображения скопирован в буфер обмена.", "success", {
-            title: "Медиа",
-          });
-        } catch (error) {
-          prompt("Скопируй URL вручную", src);
-        }
+        await copyTextWithShellFeedback(src, {
+          title: "Медиа",
+          successMessage: "URL изображения скопирован в буфер обмена.",
+          failureMessage:
+            "Не удалось скопировать URL автоматически. Попробуйте ещё раз из контекстного меню.",
+        });
         closeContextMenu();
       }
 
@@ -15607,14 +16274,12 @@ ${exportDoc.documentElement.outerHTML}`;
         const node = getSelectedModelNode();
         const text = node?.textContent?.trim() || "";
         if (!text) return;
-        try {
-          await navigator.clipboard.writeText(text);
-          showToast("Текст скопирован в буфер обмена.", "success", {
-            title: "Текст",
-          });
-        } catch (error) {
-          prompt("Скопируй текст вручную", text);
-        }
+        await copyTextWithShellFeedback(text, {
+          title: "Текст",
+          successMessage: "Текст скопирован в буфер обмена.",
+          failureMessage:
+            "Не удалось скопировать текст автоматически. Попробуйте ещё раз из контекстного меню.",
+        });
         closeContextMenu();
       }
 
@@ -15847,9 +16512,19 @@ ${exportDoc.documentElement.outerHTML}`;
 
       function toggleLayerVisibility(nodeId) {
         if (!nodeId) return;
+        const nextHidden = !isLayerSessionHidden(nodeId);
+        setLayerSessionVisibility(nodeId, nextHidden);
+        clearSessionOnlyVisibilityFromModelNode(nodeId);
         sendToBridge("toggle-visibility", { nodeId });
-        showToast("Видимость переключена (только в сессии).", "info", { title: "Слои", duration: 1500 });
-        renderLayersPanel();
+        showToast(
+          nextHidden ? "Слой скрыт только в текущей сессии." : "Слой снова показан.",
+          "info",
+          { title: "Слои", duration: 1500 },
+        );
+        window.requestAnimationFrame(() => {
+          renderLayersPanel();
+          updateInspectorFromSelection();
+        });
       }
 
       function reorderLayers(fromIndex, toIndex) {
@@ -15917,6 +16592,101 @@ ${exportDoc.documentElement.outerHTML}`;
         return `${tagName} [${nodeId.slice(0, 6)}]`;
       }
 
+      function getPreviewLayerNode(nodeId) {
+        if (!nodeId) return null;
+        const doc = getPreviewDocument();
+        if (!doc) return null;
+        return doc.querySelector(`[data-editor-node-id="${cssEscape(nodeId)}"]`);
+      }
+
+      function isLayerSessionHidden(nodeId) {
+        if (!nodeId) return false;
+        const previewNode = getPreviewLayerNode(nodeId);
+        if (previewNode instanceof HTMLElement) {
+          const style = (previewNode.ownerDocument?.defaultView || window).getComputedStyle(
+            previewNode,
+          );
+          const isHidden = (
+            previewNode.hidden ||
+            style.display === "none" ||
+            style.visibility === "hidden"
+          );
+          if (isHidden && state.sessionVisibilityMap?.[nodeId]) {
+            clearSessionOnlyVisibilityFromModelNode(nodeId);
+          }
+          return isHidden;
+        }
+        const isHidden = Boolean(state.sessionVisibilityMap?.[nodeId]);
+        if (isHidden) clearSessionOnlyVisibilityFromModelNode(nodeId);
+        return isHidden;
+      }
+
+      function setLayerSessionVisibility(nodeId, isHidden) {
+        if (!nodeId) return;
+        if (!state.sessionVisibilityMap || typeof state.sessionVisibilityMap !== "object") {
+          state.sessionVisibilityMap = {};
+        }
+        if (isHidden) state.sessionVisibilityMap[nodeId] = true;
+        else delete state.sessionVisibilityMap[nodeId];
+      }
+
+      function clearSessionOnlyVisibilityFromModelNode(nodeId) {
+        if (!nodeId || !state.modelDoc) return;
+        const modelNode = state.modelDoc.querySelector(
+          `[data-editor-node-id="${cssEscape(nodeId)}"]`,
+        );
+        if (!(modelNode instanceof HTMLElement)) return;
+        if (modelNode.style.visibility === "hidden") {
+          modelNode.style.removeProperty("visibility");
+        }
+        if (!modelNode.getAttribute("style")) modelNode.removeAttribute("style");
+      }
+
+      function stripSessionOnlyVisibilityFromReplacement(nodeId, currentNode, replacement) {
+        if (!nodeId || !state.sessionVisibilityMap?.[nodeId]) return;
+        if (!(replacement instanceof HTMLElement)) return;
+        const authorVisibility =
+          currentNode instanceof HTMLElement
+            ? currentNode.style.getPropertyValue("visibility")
+            : "";
+        if (authorVisibility) {
+          replacement.style.setProperty("visibility", authorVisibility);
+        } else {
+          replacement.style.removeProperty("visibility");
+        }
+        if (!replacement.getAttribute("style")) replacement.removeAttribute("style");
+      }
+
+      function getRussianPlural(count, one, few, many) {
+        const abs = Math.abs(Number(count) || 0);
+        const mod10 = abs % 10;
+        const mod100 = abs % 100;
+        if (mod10 === 1 && mod100 !== 11) return one;
+        if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+        return many;
+      }
+
+      function formatLayerStackHint(index, total) {
+        if (total <= 1) return "единственный слой";
+        if (index === 0) return "верхний в стеке";
+        if (index === total - 1) return "нижний в стеке";
+        return `слой ${index + 1} из ${total}`;
+      }
+
+      function buildLayerStatusChipHtml(label, className = "") {
+        const normalizedClassName = String(className || "").trim();
+        const classAttr = normalizedClassName
+          ? `layer-status-chip ${normalizedClassName}`
+          : "layer-status-chip";
+        return `<span class="${classAttr}">${escapeHtml(label)}</span>`;
+      }
+
+      function buildLayerStatusChipsHtml(chips) {
+        return chips
+          .map((chip) => buildLayerStatusChipHtml(chip.label, chip.className || ""))
+          .join("");
+      }
+
       function renderLayersPanel() {
         if (!els.layersListContainer || !els.layersInspectorSection) return;
         if (state.complexityMode !== "advanced" || !state.activeSlideId || !state.modelDoc) {
@@ -15946,64 +16716,149 @@ ${exportDoc.documentElement.outerHTML}`;
         if (els.normalizeLayersBtn) {
           els.normalizeLayersBtn.disabled = !currentScope || currentScope.nodes.length < 2;
         }
-        const html = sortedLayers.map((layer, index) => {
-          const nodeId = layer.getAttribute("data-editor-node-id") || "";
-          const entityKind = layer.getAttribute("data-editor-entity-kind") || "element";
-          const isLocked = layer.getAttribute("data-editor-locked") === "true";
-          const zIndex = layer.style.zIndex || "auto";
-          const label = escapeHtml(getLayerLabel(layer));
-          const icon = getEntityKindIcon(entityKind);
-          const isActive = nodeId === state.selectedNodeId;
-          return `
-            <div class="layer-row ${isActive ? "is-active" : ""}" 
-                 draggable="true" 
-                 data-layer-node-id="${escapeHtml(nodeId)}" 
-                 data-layer-index="${index}">
-              <span class="layer-kind-icon">${icon}</span>
-              <span class="layer-label">${label}</span>
-              <input type="text" class="layer-z-input" value="${escapeHtml(zIndex)}" data-layer-node-id="${escapeHtml(nodeId)}" />
-              <button type="button" class="layer-action-btn layer-visibility-btn" data-layer-node-id="${escapeHtml(nodeId)}" title="Переключить видимость">👁</button>
-              <button type="button" class="layer-action-btn layer-lock-btn ${isLocked ? "is-locked" : ""}" data-layer-node-id="${escapeHtml(nodeId)}" title="${isLocked ? "Разблокировать" : "Заблокировать"}">
-                ${isLocked ? "🔒" : "🔓"}
-              </button>
-            </div>
-          `;
-        }).join("");
+        const html = sortedLayers
+          .map((layer, index) => {
+            const nodeId = layer.getAttribute("data-editor-node-id") || "";
+            const entityKind = layer.getAttribute("data-editor-entity-kind") || "element";
+            const isLocked = layer.getAttribute("data-editor-locked") === "true";
+            const isHidden = isLayerSessionHidden(nodeId);
+            const zIndex = layer.style.zIndex || "auto";
+            const label = escapeHtml(getLayerLabel(layer));
+            const icon = getEntityKindIcon(entityKind);
+            const isActive = nodeId === state.selectedNodeId;
+            const stackHint = `${getEntityKindLabel(entityKind)} · ${formatLayerStackHint(
+              index,
+              sortedLayers.length,
+            )}`;
+            const chips = [];
+            if (isActive) chips.push({ label: "Текущий", className: "is-current" });
+            if (isHidden) chips.push({ label: "Скрыт", className: "is-hidden" });
+            if (isLocked) chips.push({ label: "Заблокирован", className: "is-locked" });
+            const zControl = isActive
+              ? `
+                <label class="layer-z-field" title="z-index текущего слоя">
+                  <span>z</span>
+                  <input
+                    type="text"
+                    class="layer-z-input"
+                    value="${escapeHtml(zIndex)}"
+                    data-layer-node-id="${escapeHtml(nodeId)}"
+                  />
+                </label>
+              `
+              : "";
+            return `
+              <div
+                class="layer-row ${isActive ? "is-active" : ""}"
+                data-layer-node-id="${escapeHtml(nodeId)}"
+                data-layer-index="${index}"
+                tabindex="0"
+                aria-current="${isActive ? "true" : "false"}"
+              >
+                <button
+                  type="button"
+                  class="layer-drag-handle"
+                  draggable="true"
+                  data-layer-node-id="${escapeHtml(nodeId)}"
+                  data-layer-index="${index}"
+                  aria-label="Изменить порядок слоя ${label}"
+                  title="Перетащить, чтобы изменить порядок"
+                >
+                  ⋮⋮
+                </button>
+                <div class="layer-main">
+                  <span class="layer-label">${label}</span>
+                  <span class="layer-meta">${escapeHtml(stackHint)}</span>
+                </div>
+                <div class="layer-trailing">
+                  <div class="layer-status-list">${buildLayerStatusChipsHtml(chips)}</div>
+                  <div class="layer-row-actions">
+                    ${zControl}
+                    <button
+                      type="button"
+                      class="layer-action-btn layer-visibility-btn ${isHidden ? "is-hidden" : ""}"
+                      data-layer-node-id="${escapeHtml(nodeId)}"
+                      aria-label="${isHidden ? "Показать слой" : "Скрыть слой"}"
+                      title="${isHidden ? "Показать слой" : "Скрыть слой"}"
+                    >
+                      👁
+                    </button>
+                    <button
+                      type="button"
+                      class="layer-action-btn layer-lock-btn ${isLocked ? "is-locked" : ""}"
+                      data-layer-node-id="${escapeHtml(nodeId)}"
+                      aria-label="${isLocked ? "Разблокировать слой" : "Заблокировать слой"}"
+                      title="${isLocked ? "Разблокировать слой" : "Заблокировать слой"}"
+                    >
+                      ${isLocked ? "🔒" : "🔓"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            `;
+          })
+          .join("");
         els.layersListContainer.innerHTML = html;
         bindLayersPanelActions();
       }
 
       function bindLayersPanelActions() {
         if (!els.layersListContainer) return;
-        els.layersListContainer.querySelectorAll(".layer-row").forEach(row => {
+        const rows = Array.from(
+          els.layersListContainer.querySelectorAll(".layer-row[data-layer-node-id]"),
+        );
+        const focusRowByIndex = (index) => {
+          if (!rows.length) return;
+          const nextIndex = Math.max(0, Math.min(rows.length - 1, index));
+          rows[nextIndex].focus({ preventScroll: true });
+        };
+        rows.forEach((row) => {
           row.addEventListener("click", (e) => {
-            if (e.target.closest(".layer-action-btn") || e.target.closest(".layer-z-input")) return;
+            if (
+              e.target.closest(".layer-action-btn") ||
+              e.target.closest(".layer-z-input") ||
+              e.target.closest(".layer-drag-handle")
+            ) {
+              return;
+            }
             const nodeId = row.getAttribute("data-layer-node-id");
             if (nodeId) {
               sendToBridge("select-element", { nodeId });
             }
           });
-          row.addEventListener("dragstart", (e) => {
-            const nodeId = row.getAttribute("data-layer-node-id");
-            const index = parseInt(row.getAttribute("data-layer-index") || "-1", 10);
-            state.layersPanelDragState.draggedNodeId = nodeId;
-            state.layersPanelDragState.draggedIndex = index;
-            row.classList.add("is-dragging");
-            if (e.dataTransfer) {
-              e.dataTransfer.effectAllowed = "move";
-              e.dataTransfer.setData("text/plain", nodeId || "layer-row");
+          row.addEventListener("keydown", (event) => {
+            const currentIndex = rows.indexOf(row);
+            if (event.key === "ArrowDown") {
+              event.preventDefault();
+              focusRowByIndex((currentIndex + 1 + rows.length) % rows.length);
+              return;
             }
-          });
-          row.addEventListener("dragend", () => {
-            row.classList.remove("is-dragging");
-            els.layersListContainer.querySelectorAll(".layer-row").forEach(r => r.classList.remove("is-drop-target"));
-            state.layersPanelDragState = { draggedNodeId: null, draggedIndex: -1, dropTargetIndex: -1 };
+            if (event.key === "ArrowUp") {
+              event.preventDefault();
+              focusRowByIndex((currentIndex - 1 + rows.length) % rows.length);
+              return;
+            }
+            if (event.key === "Home") {
+              event.preventDefault();
+              focusRowByIndex(0);
+              return;
+            }
+            if (event.key === "End") {
+              event.preventDefault();
+              focusRowByIndex(rows.length - 1);
+              return;
+            }
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              const nodeId = row.getAttribute("data-layer-node-id");
+              if (nodeId) sendToBridge("select-element", { nodeId });
+            }
           });
           row.addEventListener("dragover", (e) => {
             e.preventDefault();
             const index = parseInt(row.getAttribute("data-layer-index") || "-1", 10);
             if (index >= 0 && index !== state.layersPanelDragState.draggedIndex) {
-              els.layersListContainer.querySelectorAll(".layer-row").forEach(r => r.classList.remove("is-drop-target"));
+              rows.forEach((item) => item.classList.remove("is-drop-target"));
               row.classList.add("is-drop-target");
               state.layersPanelDragState.dropTargetIndex = index;
             }
@@ -16012,29 +16867,57 @@ ${exportDoc.documentElement.outerHTML}`;
             e.preventDefault();
             const fromIndex = state.layersPanelDragState.draggedIndex;
             const rowIndex = parseInt(row.getAttribute("data-layer-index") || "-1", 10);
-            const toIndex = state.layersPanelDragState.dropTargetIndex >= 0
-              ? state.layersPanelDragState.dropTargetIndex
-              : rowIndex;
+            const toIndex =
+              state.layersPanelDragState.dropTargetIndex >= 0
+                ? state.layersPanelDragState.dropTargetIndex
+                : rowIndex;
             if (fromIndex >= 0 && toIndex >= 0 && fromIndex !== toIndex) {
               reorderLayers(fromIndex, toIndex);
             }
           });
         });
-        els.layersListContainer.querySelectorAll(".layer-lock-btn").forEach(btn => {
+
+        els.layersListContainer.querySelectorAll(".layer-drag-handle").forEach((handle) => {
+          handle.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+          });
+          handle.addEventListener("dragstart", (event) => {
+            event.stopPropagation();
+            const nodeId = handle.getAttribute("data-layer-node-id");
+            const index = parseInt(handle.getAttribute("data-layer-index") || "-1", 10);
+            const row = handle.closest(".layer-row");
+            state.layersPanelDragState.draggedNodeId = nodeId;
+            state.layersPanelDragState.draggedIndex = index;
+            if (row) row.classList.add("is-dragging");
+            if (event.dataTransfer) {
+              event.dataTransfer.effectAllowed = "move";
+              event.dataTransfer.setData("text/plain", nodeId || "layer-row");
+            }
+          });
+          handle.addEventListener("dragend", () => {
+            const row = handle.closest(".layer-row");
+            if (row) row.classList.remove("is-dragging");
+            rows.forEach((item) => item.classList.remove("is-drop-target"));
+            state.layersPanelDragState = { draggedNodeId: null, draggedIndex: -1, dropTargetIndex: -1 };
+          });
+        });
+
+        els.layersListContainer.querySelectorAll(".layer-lock-btn").forEach((btn) => {
           btn.addEventListener("click", (e) => {
             e.stopPropagation();
             const nodeId = btn.getAttribute("data-layer-node-id");
             if (nodeId) toggleLayerLock(nodeId);
           });
         });
-        els.layersListContainer.querySelectorAll(".layer-visibility-btn").forEach(btn => {
+        els.layersListContainer.querySelectorAll(".layer-visibility-btn").forEach((btn) => {
           btn.addEventListener("click", (e) => {
             e.stopPropagation();
             const nodeId = btn.getAttribute("data-layer-node-id");
             if (nodeId) toggleLayerVisibility(nodeId);
           });
         });
-        els.layersListContainer.querySelectorAll(".layer-z-input").forEach(input => {
+        els.layersListContainer.querySelectorAll(".layer-z-input").forEach((input) => {
           input.addEventListener("change", (e) => {
             e.stopPropagation();
             const nodeId = input.getAttribute("data-layer-node-id");
@@ -16043,6 +16926,8 @@ ${exportDoc.documentElement.outerHTML}`;
               sendToBridge("apply-style", { nodeId, property: "z-index", value: newZ });
               recordHistoryChange(`set-z-index:${nodeId}:${newZ}`);
               scheduleOverlapDetection();
+              renderLayersPanel();
+              updateInspectorFromSelection();
             }
           });
           input.addEventListener("click", (e) => e.stopPropagation());
@@ -17459,11 +18344,11 @@ ${exportDoc.documentElement.outerHTML}`;
           } else if (state.mode === "edit") {
             els.currentSlideSummaryText.textContent =
               "Здесь можно менять имя слайда, фон, отступы и безопасные пресеты без ручного редактирования HTML.";
-          } else {
-            els.currentSlideSummaryText.textContent =
-              "Слайд уже распознан. При необходимости можно перейти в Advanced для полного инспектора и HTML.";
+            } else {
+              els.currentSlideSummaryText.textContent =
+                "Слайд уже распознан. При необходимости можно перейти в режим «Точно» для полного инспектора и HTML.";
+            }
           }
-        }
         if (els.slideTitleOverrideInput) {
           els.slideTitleOverrideInput.value = getSlideTitleOverride(currentSlide);
           els.slideTitleOverrideInput.disabled = !canEditSlides || !currentSlide;
@@ -17921,13 +18806,29 @@ ${exportDoc.documentElement.outerHTML}`;
         // [v0.19.0 ADR-002] Stack depth badge
         if (els.stackDepthBadge) {
           const cts = state.clickThroughState;
-          const candidateCount = cts?.candidates?.length || 0;
-          const currentIndex = candidateCount > 1 ? (cts.index + 1) : 0;
+          const overlapItems = Array.isArray(state.layerPickerPayload?.items)
+            ? state.layerPickerPayload.items
+            : [];
+          const fallbackCandidateCount = overlapItems.length;
+          const fallbackActiveIndex =
+            overlapItems.findIndex((item) => item?.nodeId === state.selectedNodeId);
+          const candidateCount = cts?.candidates?.length || fallbackCandidateCount || 0;
+          const currentIndex = candidateCount > 1
+            ? ((cts?.candidates?.length || 0) > 1
+              ? (cts.index + 1)
+              : ((fallbackActiveIndex >= 0 ? fallbackActiveIndex : 0) + 1))
+            : 0;
           const showBadge = visible && candidateCount > 1;
           els.stackDepthBadge.hidden = !showBadge;
           els.stackDepthBadge.setAttribute("aria-hidden", showBadge ? "false" : "true");
+          els.stackDepthBadge.setAttribute(
+            "aria-label",
+            showBadge
+              ? `Слой ${currentIndex} из ${candidateCount} под курсором`
+              : "Слой под курсором",
+          );
           els.stackDepthBadge.textContent = showBadge
-            ? `${currentIndex}/${candidateCount}`
+            ? `${currentIndex} из ${candidateCount}`
             : "";
         }
       }
@@ -17956,9 +18857,9 @@ ${exportDoc.documentElement.outerHTML}`;
           hasBlockedDirectManipulationContext();
 
         els.elementTagInput.value = hasSelection
-          ? state.selectedTag || "вЂ”"
-          : "вЂ”";
-        els.selectedNodeBadge.textContent = `node: ${hasSelection ? state.selectedNodeId : "вЂ”"}`;
+          ? state.selectedTag || "—"
+          : "—";
+        els.selectedNodeBadge.textContent = `node: ${hasSelection ? state.selectedNodeId : "—"}`;
         const selectedSlideIndex = hasSelection
           ? state.slides.findIndex((slide) => slide.id === state.activeSlideId)
           : -1;
@@ -17971,11 +18872,10 @@ ${exportDoc.documentElement.outerHTML}`;
             overlapWarning &&
             overlapWarning.coveredPercent > 30,
         );
-        const canOpenLayerPicker = Boolean(
-          showOverlapBanner &&
-            state.complexityMode === "advanced" &&
-            buildSelectedOverlapLayerPickerPayload(),
-        );
+        const overlapLayerItems = showOverlapBanner
+          ? collectLayerPickerItemsFromOverlap()
+          : [];
+        const canResolveOverlap = overlapLayerItems.length > 1;
         if (els.overlapRecoveryBanner) {
           els.overlapRecoveryBanner.hidden = !showOverlapBanner;
           els.overlapRecoveryBanner.setAttribute(
@@ -17986,18 +18886,29 @@ ${exportDoc.documentElement.outerHTML}`;
         if (els.overlapRecoveryText) {
           els.overlapRecoveryText.textContent = showOverlapBanner
             ? state.complexityMode === "advanced"
-              ? `Этот элемент перекрыт примерно на ${overlapWarning.coveredPercent}%. Можно открыть Magic Select или поднять его выше по стеку.`
-              : `Этот элемент перекрыт примерно на ${overlapWarning.coveredPercent}%. Можно переместить наверх.`
-            : "Этот элемент частично перекрыт другим. Можно переместить его наверх.";
+              ? `Под курсором несколько слоёв. Перекрытие около ${overlapWarning.coveredPercent}%. Выберите нужный или поднимите текущий.`
+              : `Под курсором несколько слоёв. Перекрытие около ${overlapWarning.coveredPercent}%. Поднимите текущий, чтобы он оказался сверху.`
+            : "Под курсором несколько слоёв. Выберите нужный или поднимите текущий.";
         }
         if (els.overlapMoveTopBtn) {
           els.overlapMoveTopBtn.disabled = !showOverlapBanner;
         }
         if (els.overlapSelectLayerBtn) {
-          els.overlapSelectLayerBtn.hidden = !(
-            state.complexityMode === "advanced" && showOverlapBanner
+          els.overlapSelectLayerBtn.hidden = !showOverlapBanner;
+          els.overlapSelectLayerBtn.disabled = !canResolveOverlap;
+          els.overlapSelectLayerBtn.setAttribute(
+            "aria-hidden",
+            showOverlapBanner ? "false" : "true",
           );
-          els.overlapSelectLayerBtn.disabled = !canOpenLayerPicker;
+          setElementInertState(els.overlapSelectLayerBtn, !showOverlapBanner);
+          els.overlapSelectLayerBtn.textContent =
+            state.complexityMode === "advanced"
+              ? "Выбрать слой"
+              : "Следующий слой";
+          els.overlapSelectLayerBtn.setAttribute(
+            "data-ui-level",
+            state.complexityMode === "advanced" ? "advanced" : "basic",
+          );
         }
         // [v0.18.0] Lock banner (advanced mode only)
         const isLocked = hasSelection && state.modelDoc
@@ -18062,11 +18973,11 @@ ${exportDoc.documentElement.outerHTML}`;
         if (els.selectedElementSummary) {
           els.selectedElementSummary.textContent = getSelectedElementSummary(entityKind);
         }
-        renderSelectionBreadcrumbs(hasSelection);
+        renderSelectionBreadcrumbs(hasSelection && !showBlockBanner);
         syncInspectorEntitySections(hasSelection);
         if (els.selectionPolicyText && !hasSelection) {
           els.selectionPolicyText.textContent =
-            "Р’С‹Р±РµСЂРё СЌР»РµРјРµРЅС‚, С‡С‚РѕР±С‹ СѓРІРёРґРµС‚СЊ РѕРіСЂР°РЅРёС‡РµРЅРёСЏ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ.";
+            "Выберите элемент, чтобы увидеть ограничения редактирования.";
         }
 
         const controls = [
@@ -18139,8 +19050,8 @@ ${exportDoc.documentElement.outerHTML}`;
           );
           els.currentSlideMetaBadge.textContent =
             slideIndex >= 0
-              ? `СЃР»Р°Р№Рґ ${slideIndex + 1} / ${state.slides.length}`
-              : "СЃР»Р°Р№Рґ: вЂ”";
+              ? `слайд ${slideIndex + 1} / ${state.slides.length}`
+              : "слайд: —";
         }
 
         if (!hasSelection || !state.selectedComputed) {
@@ -18200,9 +19111,9 @@ ${exportDoc.documentElement.outerHTML}`;
           ].forEach((button) => button.classList.remove("is-active"));
           if (els.selectionPolicyText) {
             els.selectionPolicyText.textContent =
-              "Р’С‹Р±РµСЂРё СЌР»РµРјРµРЅС‚, С‡С‚РѕР±С‹ СѓРІРёРґРµС‚СЊ РѕРіСЂР°РЅРёС‡РµРЅРёСЏ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ.";
+              "Выберите элемент, чтобы увидеть ограничения редактирования.";
           }
-          if (els.inspectorHelp) {
+          if (els.inspectorHelp && state.mode === "edit") {
             els.inspectorHelp.textContent = getSelectionGuidanceCopy(false);
           }
           updateFloatingToolbarContext();
@@ -18449,7 +19360,7 @@ ${exportDoc.documentElement.outerHTML}`;
             !hasSelection || !selectionPolicy.canEditStyles || !isImageSelection;
         }
         updateFloatingToolbarContext();
-        if (els.inspectorHelp) {
+        if (els.inspectorHelp && state.mode === "edit") {
           els.inspectorHelp.textContent = getSelectionGuidanceCopy(hasSelection);
         }
       }
@@ -18487,11 +19398,33 @@ ${exportDoc.documentElement.outerHTML}`;
       }
 
       function openOpenHtmlModal(options = {}) {
-        const focusTarget = options.focusTarget === "paste" ? "paste" : "file";
+        const focusTarget = ["file", "paste", "assets", "base"].includes(
+          String(options.focusTarget || ""),
+        )
+          ? String(options.focusTarget)
+          : "file";
+        clearOpenHtmlStatus();
+        if (focusTarget === "assets") {
+          setOpenHtmlStatus(
+            "Подключите папку проекта или assets, чтобы превью честно подтянуло относительные css/js/img/video.",
+            "info",
+          );
+        } else if (focusTarget === "base") {
+          setOpenHtmlStatus(
+            "Укажите абсолютный Base URL, если HTML ссылается на соседние ресурсы по относительным путям.",
+            "info",
+          );
+        }
         openModal(els.openHtmlModal);
         window.requestAnimationFrame(() => {
           const target =
-            focusTarget === "paste" ? els.pasteHtmlTextarea : els.fileInput;
+            focusTarget === "paste"
+              ? els.pasteHtmlTextarea
+              : focusTarget === "assets"
+                ? els.assetDirectoryInput
+                : focusTarget === "base"
+                  ? els.baseUrlInput
+                  : els.fileInput;
           if (!(target instanceof HTMLElement)) return;
           if (typeof target.focus === "function") {
             target.focus({ preventScroll: true });
@@ -18626,7 +19559,7 @@ ${exportDoc.documentElement.outerHTML}`;
         );
         els.toggleInsertPaletteBtn.textContent = active
           ? "✕ Закрыть вставку"
-          : "➕ Вставить блок";
+          : "➕ Добавить блок";
         els.toggleInsertPaletteBtn.title = active
           ? "Скрыть меню вставки"
           : "Открыть меню вставки";
@@ -18850,21 +19783,16 @@ ${exportDoc.documentElement.outerHTML}`;
           const entityKind = node.getAttribute("data-editor-entity-kind") || "element";
           const isLocked = node.getAttribute("data-editor-locked") === "true";
           const isHidden =
+            isLayerSessionHidden(nodeId) ||
             node.hasAttribute("hidden") ||
             node.style.visibility === "hidden" ||
             node.style.display === "none";
-          const hintParts = [
-            getEntityKindLabel(entityKind),
-            `stack ${uniqueItems.length + 1}`,
-          ];
-          if (isLocked) hintParts.push("locked");
-          if (isHidden) hintParts.push("hidden");
-          if (nodeId === state.selectedNodeId) hintParts.push("текущий");
           uniqueItems.push({
             nodeId,
             entityKind,
             label: getLayerLabel(node),
-            hint: hintParts.join(" • "),
+            isLocked,
+            isHidden,
             isCurrent: nodeId === state.selectedNodeId,
           });
         };
@@ -18902,16 +19830,21 @@ ${exportDoc.documentElement.outerHTML}`;
           });
         }
         if (selectedNode instanceof Element) collect(selectedNode);
-        return uniqueItems;
+        return uniqueItems.map((item, index, items) => ({
+          ...item,
+          hint: `${getEntityKindLabel(item.entityKind)} • ${formatLayerStackHint(index, items.length)}`,
+          isTopMost: index === 0,
+        }));
       }
 
       function buildSelectedOverlapLayerPickerPayload() {
         const items = collectLayerPickerItemsFromOverlap();
         if (items.length < 2 || !state.selectedOverlapWarning) return null;
         const rect = state.selectedOverlapWarning.overlapRect || state.selectedRect;
+        const layerWord = getRussianPlural(items.length, "слой", "слоя", "слоёв");
         return {
-          title: "Magic Select",
-          subtitle: `Перекрытие около ${state.selectedOverlapWarning.coveredPercent}% — выберите authored-слой под курсором.`,
+          title: "Слои под курсором",
+          subtitle: `В этой точке найдено ${items.length} ${layerWord}. Перекрытие около ${state.selectedOverlapWarning.coveredPercent}%.`,
           items,
           shellClientX: rect ? Math.round(rect.right + 12) : 0,
           shellClientY: rect ? Math.round((rect.top + rect.bottom) / 2) : 0,
@@ -18919,29 +19852,68 @@ ${exportDoc.documentElement.outerHTML}`;
         };
       }
 
+      function selectNextOverlapLayer() {
+        const items = collectLayerPickerItemsFromOverlap();
+        if (items.length < 2) {
+          showToast(
+            "Под курсором не найден следующий authored-слой для переключения.",
+            "info",
+            { title: "Слои" },
+          );
+          return false;
+        }
+        const currentIndex = items.findIndex(
+          (item) => item.nodeId === state.selectedNodeId,
+        );
+        const nextIndex = currentIndex >= 0 ? currentIndex + 1 : 1;
+        const nextItem = items[nextIndex % items.length] || null;
+        if (!nextItem?.nodeId) return false;
+        sendToBridge("select-element", { nodeId: nextItem.nodeId });
+        return true;
+      }
+
       function renderLayerPicker(payload) {
         const items = Array.isArray(payload?.items) ? payload.items : [];
         if (!els.layerPickerList) return;
-        els.layerPickerTitle.textContent = payload?.title || "Magic Select";
+        els.layerPickerTitle.textContent = payload?.title || "Слои под курсором";
         els.layerPickerSubtitle.textContent =
-          payload?.subtitle || "Выберите слой под курсором.";
+          payload?.subtitle || "В этой точке найдено несколько слоёв. Выберите нужный.";
         els.layerPickerList.innerHTML = "";
         items.forEach((item, index) => {
           const button = document.createElement("button");
           button.type = "button";
           button.dataset.layerPickerNodeId = item.nodeId;
           if (item.isCurrent) button.classList.add("is-current-layer");
+          const chips = [];
+          if (item.isTopMost) {
+            chips.push(buildLayerStatusChipHtml("Верхний", "is-top"));
+          }
+          if (item.isCurrent) {
+            chips.push(buildLayerStatusChipHtml("Текущий", "is-current"));
+          }
+          if (item.isHidden) {
+            chips.push(buildLayerStatusChipHtml("Скрыт", "is-hidden"));
+          }
+          if (item.isLocked) {
+            chips.push(buildLayerStatusChipHtml("Заблокирован", "is-locked"));
+          }
           button.innerHTML = `
             <span class="menu-icon">${escapeHtml(getEntityKindIcon(item.entityKind))}</span>
             <span class="layer-picker-row-copy">
               <span class="layer-picker-row-title">${escapeHtml(item.label)}</span>
               <span class="layer-picker-row-hint">${escapeHtml(item.hint || "")}</span>
+              <span class="layer-picker-row-chips">${chips.join("")}</span>
             </span>
           `;
           button.addEventListener("pointerenter", () => {
             state.layerPickerActiveIndex = index;
             syncLayerPickerActiveButton();
             setLayerPickerHighlight(item.nodeId);
+          });
+          button.addEventListener("pointerleave", () => {
+            if (state.layerPickerActiveIndex === index) {
+              setLayerPickerHighlight(null);
+            }
           });
           button.addEventListener("focus", () => {
             state.layerPickerActiveIndex = index;
@@ -18994,12 +19966,12 @@ ${exportDoc.documentElement.outerHTML}`;
       function reopenLayerPickerFromState() {
         if (!state.layerPickerPayload) return;
         renderLayerPicker(state.layerPickerPayload);
+        els.layerPicker.classList.add("is-open");
+        els.layerPicker.setAttribute("aria-hidden", "false");
         positionLayerPicker(
           Number(state.layerPickerPayload.shellClientX || 0),
           Number(state.layerPickerPayload.shellClientY || 0),
         );
-        els.layerPicker.classList.add("is-open");
-        els.layerPicker.setAttribute("aria-hidden", "false");
       }
 
       function closeLayerPicker(options = {}) {
@@ -19028,12 +20000,12 @@ ${exportDoc.documentElement.outerHTML}`;
         hideFloatingToolbar();
         state.layerPickerPayload = payload;
         renderLayerPicker(payload);
+        els.layerPicker.classList.add("is-open");
+        els.layerPicker.setAttribute("aria-hidden", "false");
         positionLayerPicker(
           Number(payload.shellClientX || 0),
           Number(payload.shellClientY || 0),
         );
-        els.layerPicker.classList.add("is-open");
-        els.layerPicker.setAttribute("aria-hidden", "false");
         window.requestAnimationFrame(() => focusLayerPickerButton(state.layerPickerActiveIndex || 0));
         return true;
       }
@@ -19042,7 +20014,7 @@ ${exportDoc.documentElement.outerHTML}`;
         if (state.complexityMode !== "advanced") return false;
         const payload = buildSelectedOverlapLayerPickerPayload();
         if (!payload) {
-          showToast("Для Magic Select нужен реальный overlap с несколькими authored-кандидатами.", "info", {
+          showToast("Под курсором должно быть хотя бы два authored-слоя, чтобы открыть выбор.", "info", {
             title: "Слои",
           });
           return false;
@@ -19109,6 +20081,22 @@ ${exportDoc.documentElement.outerHTML}`;
       }
 
       function bindLayerPicker() {
+        document.addEventListener(
+          "pointerdown",
+          (event) => {
+            if (!els.layerPicker?.classList.contains("is-open")) return;
+            const target = event.target;
+            if (!(target instanceof Element)) return;
+            if (
+              target.closest("#layerPicker") ||
+              target.closest("#overlapSelectLayerBtn")
+            ) {
+              return;
+            }
+            closeLayerPicker();
+          },
+          true,
+        );
         els.layerPicker?.addEventListener("keydown", (event) => {
           const items = getLayerPickerButtons();
           if (!items.length) return;
@@ -19227,7 +20215,9 @@ ${exportDoc.documentElement.outerHTML}`;
         bindRestoreBanner();
         bindPaletteActions();
         addInspectorHelpBadges();
-        tryRestoreDraftPrompt();
+        if (!consumeStarterLaunchIntent()) {
+          tryRestoreDraftPrompt();
+        }
         startBridgeWatchdog();
         updateAssetDirectoryStatus();
         refreshUi();
@@ -19587,6 +20577,9 @@ ${exportDoc.documentElement.outerHTML}`;
         els.emptyPasteBtn?.addEventListener("click", () =>
           openOpenHtmlModal({ focusTarget: "paste" }),
         );
+        els.emptyStarterDeckBtn?.addEventListener("click", () => {
+          void loadStarterDeck("basic");
+        });
         els.previewPrimaryActionBtn?.addEventListener("click", () => {
           const action = String(els.previewPrimaryActionBtn?.dataset.action || "");
           if (action === "open") {
@@ -19595,6 +20588,16 @@ ${exportDoc.documentElement.outerHTML}`;
           }
           if (action === "edit" && state.modelDoc && state.editingSupported) {
             setMode("edit");
+          }
+        });
+        els.previewAssistActionBtn?.addEventListener("click", () => {
+          const action = String(els.previewAssistActionBtn?.dataset.action || "");
+          if (action === "assets") {
+            openOpenHtmlModal({ focusTarget: "assets" });
+            return;
+          }
+          if (action === "base") {
+            openOpenHtmlModal({ focusTarget: "base" });
           }
         });
         els.showSlideHtmlBtn?.addEventListener("click", openSlideHtmlEditor);
@@ -19701,34 +20704,46 @@ ${exportDoc.documentElement.outerHTML}`;
         });
 
         els.loadFileBtn?.addEventListener("click", async () => {
+          clearOpenHtmlStatus();
           const file = els.fileInput.files?.[0];
           if (!file) {
-            alert("Сначала выбери HTML-файл.");
+            setOpenHtmlStatus("Сначала выбери HTML-файл.", "warning");
+            els.fileInput?.focus();
             return;
           }
           try {
             const htmlText = await file.text();
-            loadHtmlString(htmlText, file.name, {
+            const loaded = loadHtmlString(htmlText, file.name, {
               resetHistory: true,
               dirty: false,
+              onError: (message) => setOpenHtmlStatus(message, "error"),
             });
+            if (!loaded) return;
             closeModal(els.openHtmlModal);
           } catch (error) {
             console.error(error);
-            alert("Не удалось прочитать файл.");
+            reportShellWarning("open-html-file-read-failed", error, {
+              once: true,
+              diagnostic: false,
+            });
+            setOpenHtmlStatus("Не удалось прочитать HTML-файл.", "error");
           }
         });
 
         els.loadPastedHtmlBtn?.addEventListener("click", () => {
+          clearOpenHtmlStatus();
           const htmlText = els.pasteHtmlTextarea.value.trim();
           if (!htmlText) {
-            alert("Вставь HTML-код в текстовое поле.");
+            setOpenHtmlStatus("Вставь HTML-код в текстовое поле.", "warning");
+            els.pasteHtmlTextarea?.focus();
             return;
           }
-          loadHtmlString(htmlText, "Вставленный HTML", {
+          const loaded = loadHtmlString(htmlText, "Вставленный HTML", {
             resetHistory: true,
             dirty: false,
+            onError: (message) => setOpenHtmlStatus(message, "error"),
           });
+          if (!loaded) return;
           closeModal(els.openHtmlModal);
         });
 
@@ -20843,11 +21858,11 @@ ${exportDoc.documentElement.outerHTML}`;
           .map((item) => escapeHtml(item))
           .join(", ");
         if (!state.assetFileCount && !unresolvedCount && baseUrlDependentCount) {
-          els.assetDirectoryStatus.innerHTML = `РџР°РїРєР° СЂРµСЃСѓСЂСЃРѕРІ РЅРµ РІС‹Р±СЂР°РЅР°. <span class="small-note">Р§Р°СЃС‚СЊ РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅС‹С… СЃСЃС‹Р»РѕРє СЃРµР№С‡Р°СЃ РѕРїРёСЂР°РµС‚СЃСЏ РЅР° base URL: ${baseUrlDependentCount}${baseUrlPreview ? ` вЂ” ${baseUrlPreview}` : ""}.</span>`;
+          els.assetDirectoryStatus.innerHTML = `Папка ресурсов не выбрана. <span class="small-note">Часть относительных ссылок сейчас идёт через Base URL: ${baseUrlDependentCount}${baseUrlPreview ? ` — ${baseUrlPreview}` : ""}.</span>`;
           return;
         }
         if (state.assetFileCount && !unresolvedCount && baseUrlDependentCount) {
-          els.assetDirectoryStatus.innerHTML = `<strong>${escapeHtml(state.assetResolverLabel || "Р РµСЃСѓСЂСЃС‹ РїРѕРґРєР»СЋС‡РµРЅС‹")}</strong><span class="small-note">Preview СѓР¶Рµ Р·Р°РєСЂС‹РІР°РµС‚ С‡Р°СЃС‚СЊ РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅС‹С… РїСѓС‚РµР№, РѕСЃС‚Р°РІС€РёРµСЃСЏ СЃСЃС‹Р»РєРё РѕРїРёСЂР°СЋС‚СЃСЏ РЅР° base URL: ${baseUrlDependentCount}${baseUrlPreview ? ` вЂ” ${baseUrlPreview}` : ""}.</span>`;
+          els.assetDirectoryStatus.innerHTML = `<strong>${escapeHtml(state.assetResolverLabel || "Ресурсы подключены")}</strong><span class="small-note">Папка уже закрывает часть относительных путей, остальные пока идут через Base URL: ${baseUrlDependentCount}${baseUrlPreview ? ` — ${baseUrlPreview}` : ""}.</span>`;
           return;
         }
         if (!state.assetFileCount) {
@@ -21008,6 +22023,7 @@ ${exportDoc.documentElement.outerHTML}`;
         setInteractionMode("insert");
         els.videoFileInput.value = "";
         els.videoUrlInput.value = "";
+        clearVideoInsertStatus();
         openModal(els.videoInsertModal);
       }
 
@@ -21030,9 +22046,11 @@ ${exportDoc.documentElement.outerHTML}`;
       }
 
       async function insertVideoFromSelectedFile() {
+        clearVideoInsertStatus();
         const file = els.videoFileInput.files?.[0];
         if (!file) {
-          alert("Сначала выбери видеофайл.");
+          setVideoInsertStatus("Сначала выбери видеофайл.", "warning");
+          els.videoFileInput?.focus();
           return;
         }
         const MAX_INLINE_VIDEO_BYTES = 12 * 1024 * 1024;
@@ -21048,24 +22066,33 @@ ${exportDoc.documentElement.outerHTML}`;
           const dataUrl = await fileToDataUrl(file);
           const html = `<video controls playsinline preload="metadata" style="display:block; width:640px; max-width:100%; height:auto;" src="${escapeHtml(dataUrl)}"></video>`;
           insertHtmlViaBridge(html, { focusText: false });
+          clearVideoInsertStatus();
           closeModal(els.videoInsertModal);
           showToast("Локальное видео вставлено на слайд.", "success", {
             title: "Медиа",
           });
         } catch (error) {
-          alert("Не удалось прочитать видеофайл.");
+          reportShellWarning("video-file-read-failed", error, {
+            once: true,
+            diagnostic: false,
+          });
+          setVideoInsertStatus("Не удалось прочитать видеофайл.", "error");
         }
       }
 
       function insertVideoFromUrlInput() {
+        clearVideoInsertStatus();
         const html = buildVideoHtmlFromSource(els.videoUrlInput.value.trim());
         if (!html) {
-          alert(
+          setVideoInsertStatus(
             "Поддерживаются YouTube, Vimeo и прямые ссылки на MP4/WebM/Ogg/MOV.",
+            "warning",
           );
+          els.videoUrlInput?.focus();
           return;
         }
         insertHtmlViaBridge(html, { focusText: false });
+        clearVideoInsertStatus();
         closeModal(els.videoInsertModal);
         showToast("Видео добавлено на слайд.", "success", { title: "Медиа" });
       }
@@ -21135,11 +22162,13 @@ ${exportDoc.documentElement.outerHTML}`;
 
         if (els.saveStatePill) {
           const text = !hasPresentation
-            ? "Автосохранение неактивно"
+            ? "Локальный черновик не создан"
             : state.dirty
-              ? "Есть несохранённые правки"
+              ? state.lastSavedAt
+                ? `Есть правки • локальный черновик: ${new Date(state.lastSavedAt).toLocaleTimeString()}`
+                : "Есть несохранённые правки"
               : state.lastSavedAt
-                ? `Сохранено ${new Date(state.lastSavedAt).toLocaleTimeString()}`
+                ? `Локальный черновик: ${new Date(state.lastSavedAt).toLocaleTimeString()}`
                 : "Изменений нет";
           els.saveStatePill.textContent = text;
           els.saveStatePill.className =
@@ -21147,17 +22176,18 @@ ${exportDoc.documentElement.outerHTML}`;
         }
 
         if (els.toggleInsertPaletteBtn) {
-          els.toggleInsertPaletteBtn.disabled =
-            !hasPresentation || !state.previewReady;
+          const canShowInsertAction = hasPresentation && state.mode === "edit";
+          els.toggleInsertPaletteBtn.hidden = !canShowInsertAction;
+          els.toggleInsertPaletteBtn.disabled = !canInsertNow;
           if (!hasPresentation) {
             els.toggleInsertPaletteBtn.title =
               "Сначала открой HTML-презентацию.";
+          } else if (state.mode !== "edit") {
+            els.toggleInsertPaletteBtn.title =
+              "Сначала перейдите к редактированию, затем добавляйте блоки.";
           } else if (!state.previewReady) {
             els.toggleInsertPaletteBtn.title =
               "Дождись полной загрузки превью.";
-          } else if (state.mode !== "edit") {
-            els.toggleInsertPaletteBtn.title =
-              "Переключиться в режим редактирования и открыть меню вставки.";
           } else {
             els.toggleInsertPaletteBtn.title = isInsertPaletteOpen()
               ? "Скрыть меню вставки"
@@ -21165,14 +22195,7 @@ ${exportDoc.documentElement.outerHTML}`;
           }
         }
         if (els.previewPrimaryActionBtn) {
-          if (!hasPresentation) {
-            els.previewPrimaryActionBtn.hidden = false;
-            els.previewPrimaryActionBtn.disabled = false;
-            els.previewPrimaryActionBtn.dataset.action = "open";
-            els.previewPrimaryActionBtn.textContent = "Открыть HTML";
-            els.previewPrimaryActionBtn.title =
-              "Загрузить HTML-файл и открыть презентацию в shell.";
-          } else if (workflow === "loaded-preview") {
+          if (hasPresentation && workflow === "loaded-preview") {
             els.previewPrimaryActionBtn.hidden = false;
             els.previewPrimaryActionBtn.disabled = !state.editingSupported;
             els.previewPrimaryActionBtn.dataset.action = "edit";
@@ -21181,9 +22204,12 @@ ${exportDoc.documentElement.outerHTML}`;
               "Перейти из просмотра к правке текущего слайда.";
           } else {
             els.previewPrimaryActionBtn.hidden = true;
-            els.previewPrimaryActionBtn.disabled = !canInsertNow;
+            els.previewPrimaryActionBtn.disabled = true;
             els.previewPrimaryActionBtn.dataset.action = "";
           }
+        }
+        if (els.reloadPreviewBtn) {
+          els.reloadPreviewBtn.hidden = !hasPresentation;
         }
 
         [
@@ -21212,8 +22238,8 @@ ${exportDoc.documentElement.outerHTML}`;
         if (!hasPresentation) {
           return {
             className: "status-pill",
-            label: "Workspace idle",
-            title: "Load an HTML presentation to activate the editor shell.",
+            label: "Ждёт HTML",
+            title: "Загрузите HTML-презентацию, чтобы активировать shell редактора.",
           };
         }
 
@@ -21221,82 +22247,86 @@ ${exportDoc.documentElement.outerHTML}`;
           case "loading":
             return {
               className: "status-pill is-accent",
-              label: "Preview loading",
-              title: "The preview iframe is still booting.",
+              label: "Превью стартует",
+              title: "iframe ещё поднимается и подключает bridge.",
             };
           case "recovering":
             return {
               className: "status-pill is-accent",
-              label: "Preview recovering",
-              title: "The shell is rebuilding the iframe and bridge.",
+              label: "Идёт восстановление",
+              title: "Shell пересоздаёт iframe и восстанавливает bridge.",
             };
           case "bridge-degraded":
             return {
               className: "status-pill is-warning",
-              label: "Bridge degraded",
-              title: "Bridge heartbeats are missing and the shell is degraded.",
+              label: "Потеряна связь",
+              title: "Heartbeat bridge пропал, shell ждёт пересборку превью.",
             };
           case "desync-suspected":
             return {
               className: "status-pill is-warning",
-              label: "Sync check",
-              title: "The shell suspects model and live DOM drift.",
+              label: "Нужна синхронизация",
+              title: "Shell подозревает расхождение между моделью и live DOM.",
             };
           default:
             if (state.mode === "edit") {
               return hasSelection
                 ? {
                     className: "status-pill is-accent",
-                    label: "Selection active",
-                    title: "A live node is selected inside the preview iframe.",
+                    label: "Элемент выбран",
+                    title: "Внутри preview iframe выбран живой DOM-узел.",
                   }
                 : {
                     className: "status-pill is-accent",
-                    label: "Edit canvas ready",
-                    title: "The preview is ready for insert and edit actions.",
+                    label: "Можно править",
+                    title: "Превью готово к вставке и редактированию.",
                   };
             }
             return {
               className: "status-pill is-ok",
-              label: "Live preview",
-              title: "The preview iframe and bridge are synchronized.",
+              label: "Готово",
+              title: "iframe и bridge синхронизированы и готовы к работе.",
             };
         }
       }
 
       function getPreviewStatusSummary(hasPresentation, hasSelection) {
         if (!hasPresentation) {
-          return "Откройте HTML, чтобы начать работу.";
+          return "Откройте HTML.";
         }
 
         switch (state.previewLifecycle) {
           case "loading":
-            return "Превью ещё загружается.";
+            return "Превью запускается.";
           case "recovering":
-            return "Превью пересобирается из текущего документа.";
+            return "Восстанавливаем превью.";
           case "bridge-degraded":
-            return "Сначала восстановите связь с превью.";
+            return "Связь потеряна.";
           case "desync-suspected":
-            return "Обновите превью, чтобы вернуть синхронность.";
+            return "Нужна пересборка.";
           default:
             if (state.mode === "edit") {
               if (!hasSelection) {
-                return "Кликните по элементу на слайде, чтобы начать редактирование.";
+                return "Выберите элемент.";
               }
               if (isCompactShell()) {
                 return getSelectionPrimarySurface() === "toolbar"
-                  ? "Быстрые действия готовы."
-                  : "Свойства выбранного элемента готовы.";
+                  ? "Действия готовы."
+                  : "Свойства готовы.";
               }
-              return "Свойства выбранного элемента готовы.";
+              return "Свойства готовы.";
             }
-            return "Выберите слайд и нажмите «Редактирование».";
+            return "Проверьте текущий слайд.";
         }
+      }
+
+      function getComplexityModeDisplayLabel(mode = state.complexityMode) {
+        return mode === "advanced" ? "режим «Точно»" : "режим «Быстро»";
       }
 
       function getSelectionGuidanceCopy(hasSelection) {
         if (!hasSelection) {
-          return "Кликните по элементу на слайде, чтобы выбрать его. Для текста можно сделать двойной клик и сразу печатать.";
+          return "Сначала выберите элемент на слайде. Для текста можно сделать двойной клик и сразу печатать.";
         }
         const entityKind = getSelectedEntityKindForUi();
         const primarySurface = getSelectionPrimarySurface(entityKind);
@@ -21308,19 +22338,19 @@ ${exportDoc.documentElement.outerHTML}`;
         }
         if (hasBlockedDirectManipulationContext()) {
           return state.complexityMode === "advanced"
-            ? "Этот элемент нельзя свободно двигать мышью в текущем контексте. Используйте точные поля справа для размера и позиции."
-            : "Этот элемент нельзя свободно двигать мышью в базовом режиме. Если нужна точная позиция, переключитесь в Advanced.";
+            ? `Этот элемент нельзя свободно двигать мышью в текущем контексте. Используйте ${getComplexityModeDisplayLabel()} и точные поля справа для размера и позиции.`
+            : `Этот элемент нельзя свободно двигать мышью в ${getComplexityModeDisplayLabel()}. Если нужна точная позиция, переключитесь в режим «Точно».`;
         }
         if (isCompactShell()) {
           if (primarySurface === "toolbar") {
-            return "Быстрые действия доступны снизу, а подробные настройки остаются справа в свойствах.";
+            return "Быстрые действия доступны снизу, а точные свойства остаются справа.";
           }
           if (entityKind === "video") {
-            return "Выбрано видео. Справа доступны источник, подписи и основные media-настройки.";
+            return "Выбрано видео. Справа доступны источник, подписи и базовые media-настройки.";
           }
           return "Свойства выбранного элемента открыты автоматически.";
         }
-        return "Справа открыты свойства выбранного элемента. Изменения применяются сразу в превью.";
+        return "Справа открыты свойства выбранного элемента. Изменения применяются сразу в живом превью.";
       }
 
       function getEntityKindLabel(entityKind) {
@@ -21352,9 +22382,9 @@ ${exportDoc.documentElement.outerHTML}`;
       function getSelectedElementTitle(entityKind) {
         if (entityKind === "table") return "Таблица на слайде";
         if (entityKind === "table-cell") return "Ячейка таблицы";
-        if (entityKind === "code-block") return "Code block";
+        if (entityKind === "code-block") return "Блок кода";
         if (entityKind === "svg") return "SVG-графика";
-        if (entityKind === "fragment") return "Stateful fragment";
+        if (entityKind === "fragment") return "Фрагмент с состоянием";
         if (!state.selectedNodeId || entityKind === "none") return "Элемент не выбран";
         if (entityKind === "text") return "Текстовый блок";
         if (entityKind === "image") return "Изображение на слайде";
@@ -21379,7 +22409,7 @@ ${exportDoc.documentElement.outerHTML}`;
           return "Fragment/state wrapper хранит reveal-state и data-* маркеры. Правки текста допустимы только если они не ломают stateful-обёртку.";
         }
         if (!state.selectedNodeId || entityKind === "none") {
-          return "Кликните по объекту на слайде. Для текста можно сделать двойной клик и сразу печатать.";
+          return "Сначала выберите объект на слайде. Для текста можно сделать двойной клик и сразу печатать.";
         }
         // [v0.19.0] Show block reason as primary feedback when manipulation is blocked
         const blockReason = getBlockReason();
@@ -21394,7 +22424,7 @@ ${exportDoc.documentElement.outerHTML}`;
           return "Можно заменить файл, поправить alt и перемещать/масштабировать мышкой на холсте.";
         }
         if (entityKind === "video") {
-          return "Проверьте источник и размер блока. Точные HTML-правки остаются только в Advanced.";
+          return `Проверьте источник и размер блока. Точные HTML-правки доступны в ${getComplexityModeDisplayLabel("advanced")}.`;
         }
         if (entityKind === "slide-root") {
           return "Выбран весь слайд. Справа доступны безопасные настройки слайда и действия без изменения каркаса.";
@@ -21418,7 +22448,8 @@ ${exportDoc.documentElement.outerHTML}`;
 
       function syncDocumentMetaUi(hasPresentation) {
         if (!hasPresentation) {
-          els.documentMeta.textContent = "Документ не загружен";
+          els.documentMeta.textContent =
+            "Откройте HTML, чтобы получить честное живое превью и затем перейти к правке.";
           return;
         }
         const lifecycleMeta = getPreviewLifecycleMeta(state.previewLifecycle);
@@ -21468,7 +22499,7 @@ ${exportDoc.documentElement.outerHTML}`;
           els.mobileInspectorBtn.disabled = !hasPresentation;
         if (els.mobileInsertBtn) {
           els.mobileInsertBtn.disabled =
-            !hasPresentation || !state.previewReady;
+            !hasPresentation || !state.previewReady || state.mode !== "edit";
           setToggleButtonState(
             els.mobileInsertBtn,
             Boolean(isInsertPaletteOpen()),
@@ -21498,31 +22529,54 @@ ${exportDoc.documentElement.outerHTML}`;
 
       function getEditorialPreviewStatusSummary(hasPresentation, hasSelection) {
         if (!hasPresentation) {
-          return "HTML не загружен";
+          return "Стартовый экран";
         }
 
         switch (state.previewLifecycle) {
           case "loading":
-            return "Превью загружается";
+            return "Превью запускается";
           case "recovering":
-            return "Превью пересобирается";
+            return "Идёт восстановление";
           case "bridge-degraded":
-            return "Нужна перезагрузка превью";
+            return "Потеряна связь";
           case "desync-suspected":
-            return "Нужна проверка синхронности";
+            return "Нужна синхронизация";
           default:
             if (state.mode === "edit") {
               if (!hasSelection) {
-                return "Редактирование готово";
+                return "Ждёт выбор";
               }
               if (isCompactShell()) {
                 return getSelectionPrimarySurface() === "toolbar"
-                  ? "Быстрые действия готовы"
-                  : "Элемент готов к правке";
+                  ? "Действия готовы"
+                  : "Элемент выбран";
               }
-              return "Элемент готов к правке";
+              return "Элемент выбран";
             }
-            return "Превью синхронизировано";
+            return "Готово к проверке";
+        }
+      }
+
+      function getPreviewNoteTitle(hasPresentation, hasSelection) {
+        if (!hasPresentation) {
+          return "Откройте HTML и запустите превью";
+        }
+        switch (state.previewLifecycle) {
+          case "loading":
+            return "Поднимаем живое превью";
+          case "recovering":
+            return "Восстанавливаем shell";
+          case "bridge-degraded":
+            return "Связь с превью потеряна";
+          case "desync-suspected":
+            return "Нужно пересобрать превью";
+          default:
+            if (state.mode === "preview") {
+              return "Проверьте текущий слайд";
+            }
+            return hasSelection
+              ? "Редактируйте выбранный элемент"
+              : "Выберите элемент для правки";
         }
       }
 
@@ -21535,105 +22589,117 @@ ${exportDoc.documentElement.outerHTML}`;
           state.previewAssetAuditCounts?.unresolved || 0;
         const baseUrlDependentCount =
           state.previewAssetAuditCounts?.baseUrlDependent || 0;
+        const manualBaseUrl = getManualBaseUrl();
 
-        if (!hasPresentation) {
-          els.previewModeLabel.textContent = "Загрузите HTML-презентацию.";
-          els.previewNoteText.textContent =
-            "Откройте HTML или вставьте разметку, чтобы поднять live preview.";
-          els.inspectorHelp.textContent =
-            "Сначала загрузите HTML, затем переключайтесь между просмотром и правкой.";
-          return;
-        }
-
-        if (state.mode === "preview") {
-          els.previewModeLabel.textContent =
-            "Режим просмотра: live preview без правок.";
-          if (state.previewLifecycle !== "ready") {
-            els.previewNoteText.textContent = lifecycleMeta.previewCopy;
-          } else if (unresolvedAssetCount > 0) {
-            els.previewNoteText.textContent =
-              `Нужны ассеты для ${unresolvedAssetCount} ресурсов.`;
-          } else if (baseUrlDependentCount > 0) {
-            els.previewNoteText.textContent =
-              `Base URL нужен для ${baseUrlDependentCount} ресурсов.`;
-          } else if (state.assetFileCount) {
-            els.previewNoteText.textContent =
-              `Ассеты подключены: ${resolvedAssetCount} ссылок.`;
-          } else {
-            els.previewNoteText.textContent = "";
-          }
-          els.inspectorHelp.textContent =
-            "Просмотр готов. Для правок нажмите «Редактирование».";
-          return;
-        }
-
-        els.previewModeLabel.textContent =
-          "Режим редактирования: выберите элемент на canvas.";
-        if (state.previewLifecycle !== "ready") {
-          els.previewNoteText.textContent = lifecycleMeta.editCopy;
-        } else if (unresolvedAssetCount > 0) {
-          els.previewNoteText.textContent =
-            `Нужны ассеты для ${unresolvedAssetCount} ресурсов.`;
-        } else if (baseUrlDependentCount > 0) {
-          els.previewNoteText.textContent =
-            `Base URL нужен для ${baseUrlDependentCount} ресурсов.`;
-        } else if (state.assetFileCount) {
-          els.previewNoteText.textContent =
-            `Ассеты подключены: ${resolvedAssetCount} ссылок.`;
-        } else if (hasSelection) {
-          els.previewNoteText.textContent =
-            "Выбранный элемент открыт для правок.";
-        } else {
-          els.previewNoteText.textContent = "Кликните по элементу на слайде.";
-        }
-        els.inspectorHelp.textContent = getSelectionGuidanceCopy(hasSelection);
-      }
-
-      function syncPreviewCopyUi(hasPresentation, hasSelection) {
-        const lifecycleMeta = getPreviewLifecycleMeta(
-          hasPresentation ? state.previewLifecycle : "idle",
-        );
-        if (state.mode === "preview") {
-          if (!hasPresentation) {
-            els.previewModeLabel.textContent =
-              "Начните с загрузки HTML-презентации.";
-            els.previewNoteText.textContent =
-              "Нажмите «Открыть HTML». Если код уже готов, можно использовать «Вставить HTML».";
-            els.inspectorHelp.textContent =
-              "Сначала откройте HTML, затем выберите режим работы.";
+        const setPreviewAssistAction = (config = null) => {
+          if (!els.previewAssistActionBtn) return;
+          if (!config?.action || !config?.label) {
+            els.previewAssistActionBtn.hidden = true;
+            els.previewAssistActionBtn.dataset.action = "";
+            els.previewAssistActionBtn.textContent = "";
             return;
           }
+          els.previewAssistActionBtn.hidden = false;
+          els.previewAssistActionBtn.dataset.action = config.action;
+          els.previewAssistActionBtn.textContent = config.label;
+        };
+
+        if (els.previewNoteTitle) {
+          els.previewNoteTitle.textContent = getPreviewNoteTitle(
+            hasPresentation,
+            hasSelection,
+          );
+        }
+
+        if (!hasPresentation) {
+          setPreviewAssistAction(null);
           els.previewModeLabel.textContent =
-            "Режим просмотра: презентация открыта без правок.";
+            "Загрузите HTML, затем проверьте живое превью.";
           els.previewNoteText.textContent =
-            state.previewLifecycle !== "ready"
-              ? lifecycleMeta.previewCopy
-              : (state.previewAssetAuditCounts?.unresolved || 0) > 0
-                ? `В превью ещё остались относительные ресурсы без резолва: ${state.previewAssetAuditCounts.unresolved}. Подключите папку ассетов или задайте base URL.`
-                : (state.previewAssetAuditCounts?.baseUrlDependent || 0) > 0
-                  ? `Часть относительных ресурсов зависит от base URL: ${state.previewAssetAuditCounts.baseUrlDependent}. Validation preview использует тот же contract.`
-                  : state.assetFileCount
-                    ? `Папка ресурсов подключена. Переписанных относительных ссылок: ${state.previewAssetAuditCounts?.resolved || 0}.`
-                    : "Выберите слайд слева и нажмите «Редактирование», чтобы менять содержимое.";
+            "Файл откроется в iframe без упрощений.";
           els.inspectorHelp.textContent =
-            "Просмотр готов. Для правок нажмите «Редактирование».";
+            "Сначала загрузите HTML, затем переходите к проверке и правке.";
+          return;
+        }
+
+        if (state.mode === "preview") {
+          els.previewModeLabel.textContent =
+            "Сначала проверьте текущий слайд в живом превью.";
+          if (state.previewLifecycle !== "ready") {
+            setPreviewAssistAction(null);
+            els.previewNoteText.textContent = lifecycleMeta.previewCopy;
+          } else if (unresolvedAssetCount > 0) {
+            setPreviewAssistAction({
+              action: "assets",
+              label: "Подключить папку ресурсов",
+            });
+            els.previewNoteText.textContent =
+              `Подключите папку проекта: не хватает ресурсов (${unresolvedAssetCount}).`;
+          } else if (baseUrlDependentCount > 0) {
+            setPreviewAssistAction(
+              manualBaseUrl
+                ? null
+                : {
+                    action: "base",
+                    label: "Указать Base URL",
+                  },
+            );
+            els.previewNoteText.textContent = manualBaseUrl
+              ? `Base URL нужен для ${baseUrlDependentCount} ресурсов.`
+              : "Для export укажите Base URL.";
+          } else if (state.assetFileCount) {
+            setPreviewAssistAction(null);
+            els.previewNoteText.textContent =
+              `Папка ресурсов подключена: подтверждено ссылок — ${resolvedAssetCount}.`;
+          } else {
+            setPreviewAssistAction(null);
+            els.previewNoteText.textContent =
+              "Проверьте слайд и начните правку.";
+          }
+          els.inspectorHelp.textContent =
+            "Если всё выглядит верно, нажмите «Начать редактирование».";
           return;
         }
 
         els.previewModeLabel.textContent =
-          "Режим редактирования: выберите элемент и меняйте его справа.";
-        els.previewNoteText.textContent =
-          state.previewLifecycle !== "ready" && hasPresentation
-            ? lifecycleMeta.editCopy
-            : (state.previewAssetAuditCounts?.unresolved || 0) > 0
-              ? `Есть неразрешённые относительные ресурсы: ${state.previewAssetAuditCounts.unresolved}. Лучше подключить папку ассетов до точной проверки layout и экспорта.`
-              : (state.previewAssetAuditCounts?.baseUrlDependent || 0) > 0
-                ? `Часть относительных ресурсов пока держится на base URL: ${state.previewAssetAuditCounts.baseUrlDependent}. Validation preview повторяет тот же base contract.`
-                : state.assetFileCount
-                  ? `Папка ресурсов подключена. Правки выполняются поверх живого preview, переписанных относительных ссылок: ${state.previewAssetAuditCounts?.resolved || 0}.`
-                  : hasSelection
-                    ? "Текущий элемент выбран. Меняйте текст, медиа и базовые свойства справа."
-                    : "Кликните по элементу на слайде. Для текста можно сделать двойной клик и сразу печатать.";
+          "Режим правки: выбирайте элемент и меняйте его без перезагрузки.";
+        if (state.previewLifecycle !== "ready") {
+          setPreviewAssistAction(null);
+          els.previewNoteText.textContent = lifecycleMeta.editCopy;
+        } else if (unresolvedAssetCount > 0) {
+          setPreviewAssistAction({
+            action: "assets",
+            label: "Подключить папку ресурсов",
+          });
+          els.previewNoteText.textContent =
+            `Подключите папку проекта: не хватает ресурсов (${unresolvedAssetCount}).`;
+        } else if (baseUrlDependentCount > 0) {
+          setPreviewAssistAction(
+            manualBaseUrl
+              ? {
+                  action: "assets",
+                  label: "Подключить папку ресурсов",
+                }
+              : {
+                  action: "base",
+                  label: "Указать Base URL",
+                },
+          );
+          els.previewNoteText.textContent = manualBaseUrl
+            ? "Для export нужна папка проекта."
+            : "Для export укажите Base URL.";
+        } else if (state.assetFileCount) {
+          setPreviewAssistAction(null);
+          els.previewNoteText.textContent =
+            `Папка ресурсов подключена: подтверждено ссылок — ${resolvedAssetCount}.`;
+        } else if (hasSelection) {
+          setPreviewAssistAction(null);
+          els.previewNoteText.textContent =
+            "Правки применяются сразу в превью.";
+        } else {
+          setPreviewAssistAction(null);
+          els.previewNoteText.textContent = "Выберите элемент на слайде.";
+        }
         els.inspectorHelp.textContent = getSelectionGuidanceCopy(hasSelection);
       }
 
@@ -21724,7 +22790,7 @@ ${exportDoc.documentElement.outerHTML}`;
             ),
             html: serializeCurrentProject(),
           };
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+          getAutosaveStorage().setItem(STORAGE_KEY, JSON.stringify(payload));
           state.lastSavedAt = payload.savedAt;
           refreshUi();
         } catch (error) {

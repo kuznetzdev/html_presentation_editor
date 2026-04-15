@@ -103,6 +103,11 @@
         transform: translateY(-1px);
       }
 
+      .button:focus-visible {
+        outline: 3px solid rgba(15, 118, 110, 0.32);
+        outline-offset: 3px;
+      }
+
       .button.primary {
         color: #fff;
         background: linear-gradient(135deg, var(--accent), var(--accent-strong));
@@ -187,6 +192,12 @@
           <a class="button primary" href="/editor/presentation-editor.html">Open Editor</a>
           <a
             class="button secondary"
+            href="/editor/presentation-editor.html?starter=basic"
+          >
+            Open Starter Example
+          </a>
+          <a
+            class="button secondary"
             href="/references_pres/html-presentation-examples_v3/00_examples_index.html"
           >
             Browse Example Decks
@@ -198,7 +209,7 @@
             <h2>How to start</h2>
             <ol>
               <li>Run <code>npm start</code> or double-click <code>start-editor.cmd</code>.</li>
-              <li>Open <code>http://127.0.0.1:4173/</code>.</li>
+              <li>Open <code id="localOriginCode">/</code>.</li>
               <li>Click <strong>Open Editor</strong> and load your HTML deck.</li>
             </ol>
           </article>
@@ -207,6 +218,7 @@
             <h2>What to open first</h2>
             <ul>
               <li><strong>Open Editor</strong> opens the active runtime.</li>
+              <li><strong>Open Starter Example</strong> loads a ready bundled deck instantly.</li>
               <li><strong>Browse Example Decks</strong> gives you ready-made sample files.</li>
               <li>The stable local URL is <code>/</code>.</li>
             </ul>
@@ -222,7 +234,17 @@
           Run <code>npm start or double-click start-editor.cmd</code> if you just want the app
           to open locally without thinking about repo internals.
         </p>
+        <p class="hint">
+          Autosave stays in this browser. Use Export when you need an HTML file.
+        </p>
       </section>
     </main>
+    <script>
+      (() => {
+        const originCode = document.getElementById("localOriginCode");
+        if (!(originCode instanceof HTMLElement)) return;
+        originCode.textContent = `${window.location.origin}/`;
+      })();
+    </script>
   </body>
 </html>
