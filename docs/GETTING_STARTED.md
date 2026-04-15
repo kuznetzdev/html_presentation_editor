@@ -2,16 +2,14 @@
 
 ## Goal
 
-Get the editor running locally in the shortest possible path, without having to
-reverse-engineer the repo first.
+Launch the editor locally, open a working sample, and verify the main product path
+ without reading the whole repository first.
 
-## Fastest local launch
-
-Prerequisite:
+## Prerequisites
 
 - Node.js 18 or newer
 
-Command:
+## Fastest local launch
 
 ```bash
 npm start
@@ -23,17 +21,32 @@ Windows shortcut:
 start-editor.cmd
 ```
 
-Then open:
+Open:
 
 - `http://127.0.0.1:4173/`
 
-The root URL is the simple human-facing entrypoint.
+The root launchpad is the canonical human entrypoint.
 
-From there:
+## First pilot path
 
-- `Open Editor` goes to the active runtime
-- `Browse Example Decks` gives you ready-made HTML decks from `references_pres/`
-- the root page itself is the stable local URL to bookmark
+From the root launchpad:
+
+1. Open `Open Starter Example`
+2. Verify that the preview loads immediately
+3. Switch to edit mode
+4. Change headline or paragraph text
+5. Use `Export`
+6. Open the exported HTML separately
+
+This is the shortest happy path for pilot verification.
+
+## Manual deck fallback
+
+If you want to load a hand-picked deck instead of the starter route:
+
+- open `references_pres/html-presentation-examples_v3/01_basic_minimal.html`
+- or browse the local gallery at
+  `http://127.0.0.1:4173/references_pres/html-presentation-examples_v3/00_examples_index.html`
 
 ## Headless local serving
 
@@ -41,51 +54,50 @@ From there:
 npm run serve
 ```
 
-This starts the local static server without opening the browser automatically.
+This starts the local static server without auto-opening the browser.
 
-## Direct runtime URL
+## Busy port recovery
 
-If you already know what you are doing, open the runtime directly:
+If port `4173` is already occupied, start the editor on another port.
 
-- `http://127.0.0.1:4173/editor/presentation-editor.html`
+PowerShell:
 
-## Starter sample deck
+```powershell
+$env:EDITOR_PORT="4174"
+npm start
+```
 
-If you want a zero-prep file to load into the editor first, use:
+Bash:
 
-- `references_pres/html-presentation-examples_v3/01_basic_minimal.html`
+```bash
+EDITOR_PORT=4174 npm start
+```
 
-Or browse the local sample gallery:
+## Pilot validation commands
 
-- `http://127.0.0.1:4173/references_pres/html-presentation-examples_v3/00_examples_index.html`
-
-## Run the test gate
-
-For Playwright-based verification, install dependencies first:
+Install dependencies once before Playwright runs:
 
 ```bash
 npm install
 npm run test:install-browsers
-npm run test:gate-a
+```
+
+Fast pilot verification:
+
+```bash
+npm run test:pilot
 ```
 
 Useful follow-ups:
 
-- `npm run test:asset-parity`
 - `npm run test:gate-b`
 - `npm run test:gate-d`
+- `npm run test:gate-f`
 
-## Run via Docker
-
-Build the local image:
+## Docker
 
 ```bash
 npm run docker:build
-```
-
-Run it:
-
-```bash
 npm run docker:run
 ```
 
@@ -93,18 +105,8 @@ Then open:
 
 - `http://127.0.0.1:4173/`
 
-## GitHub Packages / GHCR
+## Related docs
 
-This repo is prepared for GitHub Container Registry publishing.
-
-Once a version tag is published through GitHub Actions, the intended pull path is:
-
-```bash
-docker run --rm -p 4173:4173 ghcr.io/kuznetzdev/html_presentation_editor:v0.19.4
-```
-
-Manual workflow dispatch is useful for refreshing `latest`; semver image tags come
-from actual Git tags.
-
-See `docs/GITHUB_PACKAGES.md` for the exact strategy and why GHCR is the right
-package surface here.
+- `docs/PILOT_RUNBOOK.md`
+- `docs/PILOT_CHECKLIST.md`
+- `docs/KNOWN_LIMITATIONS.md`

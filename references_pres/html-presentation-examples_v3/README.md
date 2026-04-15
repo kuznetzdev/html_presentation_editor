@@ -1,49 +1,50 @@
-# HTML Presentation Editor — examples package
+# HTML Presentation Editor example decks
 
-Пакет примеров для редактора HTML-презентаций с разной сложностью.
+Self-contained sample decks for manual editor checks.
 
-## Состав
+## Recommended order
 
 1. `01_basic_minimal.html`
-   - Самый простой дек
-   - Проверяет: текст, списки, базовые операции со слайдами
-
 2. `02_cards_columns_comparison.html`
-   - Карточки, двухколоночные и трёхколоночные layout'ы
-   - Проверяет: выбор контейнеров, редактирование составных блоков
-
 3. `03_tables_metrics.html`
-   - KPI, таблицы, structured business content
-   - Проверяет: правку чисел, ячеек таблицы, подписи и SVG-легенды
-
 4. `04_visual_storytelling.html`
-   - Слайды с крупными иллюстрациями и callout-блоками
-   - Проверяет: работу с narrative-композицией и большими SVG
-
 5. `05_complex_mixed_stress_test.html`
-   - Самый плотный и сложный пример
-   - Проверяет: dense layout, overlays, диаграммы, множественные selectable-зоны, стресс-сценарии для editor shell
 
-6. `00_examples_index.html`
-   - Обзорный файл с описанием всех примеров
+## Official manual pilot deck
 
-## Как использовать
+- `01_basic_minimal.html`
 
-- Открывай любой `.html` как существующий deck
-- Тестируй сценарии:
-  - выбор элемента
-  - редактирование текста
-  - дублирование / удаление слайда
-  - undo / redo
-  - экспорт
-- Рекомендуемый порядок: `01` → `05`
+Use this when you want a human-readable manual sample deck from the examples
+package.
 
-## Подход
+## Zero-prep starter route
 
-Все примеры самодостаточные:
-- без внешних зависимостей
-- без CDN
-- с inline CSS
-- с inline SVG вместо внешних изображений
+If you want the fastest path from the launchpad, use:
 
-Это сделано, чтобы examples работали предсказуемо в локальном shell-driven редакторе.
+- `Open Starter Example`
+
+That route is the recommended product onboarding path for pilot users.
+
+## Example deck intent
+
+- `01_basic_minimal.html`
+  Minimal deck for basic text and slide operations
+- `02_cards_columns_comparison.html`
+  Card and multi-column layouts
+- `03_tables_metrics.html`
+  Tables, KPI blocks, and structured business content
+- `04_visual_storytelling.html`
+  Large illustrations and callout composition
+- `05_complex_mixed_stress_test.html`
+  Dense layout and stress coverage for the editor shell
+- `00_examples_index.html`
+  Local gallery overview
+
+## Authoring constraints
+
+The examples are intentionally self-contained:
+
+- no CDN dependencies
+- inline CSS
+- inline SVG where possible
+- predictable local behavior inside the shell-driven editor

@@ -33,6 +33,8 @@ Then open:
 
 - `http://127.0.0.1:4173/` for the simple local entrypoint
 - `http://127.0.0.1:4173/editor/presentation-editor.html` for the editor runtime directly
+- `http://127.0.0.1:4173/editor/presentation-editor.html?starter=basic`
+  for the zero-prep starter flow
 - `http://127.0.0.1:4173/references_pres/html-presentation-examples_v3/00_examples_index.html`
   for a ready-made sample gallery
 
@@ -43,6 +45,8 @@ Important:
 - The repo root now acts as the default first-stop entrypoint for humans
 - The stable human-facing URL to bookmark locally is `/`
 - Sample HTML decks already ship in `references_pres/` if you want a no-prep first run
+- Autosave is tab-scoped and stays in this browser session; use Export for a portable HTML file
+- If `4173` is busy, run `PowerShell: $env:EDITOR_PORT="4174"; npm start`
 
 ## Current state
 
@@ -94,6 +98,12 @@ Important:
   Current editor runtime
 - `docs/GETTING_STARTED.md`
   Quick runbook for first local launch, tests, and Docker
+- `docs/PILOT_RUNBOOK.md`
+  The 5-minute operator path for a two-person pilot
+- `docs/PILOT_CHECKLIST.md`
+  Human acceptance checklist before inviting pilot users
+- `docs/KNOWN_LIMITATIONS.md`
+  Current user-facing limits for the pilot
 - `docs/HTML_PRESENTATION_GUIDELINES.md`
   Authoring contract for developers and AI agents creating HTML decks for this editor
 - `docs/GITHUB_PACKAGES.md`
@@ -132,6 +142,9 @@ npm test
 # Fast PR gate (chromium-desktop only)
 npm run test:gate-a
 
+# Pilot acceptance gate
+npm run test:pilot
+
 # Release-core gate (desktop + intermediate)
 npm run test:gate-b
 
@@ -164,9 +177,18 @@ Use `npm start` and go to `http://127.0.0.1:4173/`.
 That launchpad gives you:
 
 - one primary `Open Editor` path
+- one `Open Starter Example` path for a zero-prep pilot run
 - a direct link to the sample gallery under `references_pres/`
 - the current release/runtime identity
 - a low-noise hint for the legacy compatibility redirect
+
+Recommended first pilot pass:
+
+1. Open `Open Starter Example`
+2. Verify the preview
+3. Enter edit mode and change text
+4. Export HTML
+5. Open the exported file separately
 
 ### Run tests
 
