@@ -122,8 +122,12 @@
 
         --topbar-min-h: 52px;
         --shell-top-offset: 52px;
-        --workspace-max: 1440px;
-        --drawer-width: min(86vw, 360px);
+        --workspace-max: 1840px;
+        --slide-rail-width: clamp(260px, 18vw, 360px);
+        --inspector-panel-width: clamp(320px, 22vw, 440px);
+        --workspace-gap: clamp(12px, 1vw, 20px);
+        --workspace-padding: clamp(12px, 1.2vw, 24px);
+        --drawer-width: min(92vw, 420px);
         --mobile-rail-offset: 0px;
         --shell-popover-inset: 8px;
 
@@ -873,15 +877,13 @@
         width: min(100%, var(--workspace-max));
         margin: 0 auto;
         display: grid;
-        /* [v0.18.3] Optimized for preview panel as primary workspace */
-        /* Reduced side panel max widths to allocate more space for editing/preview area */
-        grid-template-columns: minmax(200px, 220px) minmax(0, 1fr) minmax(
-            220px,
-            240px
-          );
+        grid-template-columns:
+          minmax(250px, var(--slide-rail-width))
+          minmax(360px, 1fr)
+          minmax(300px, var(--inspector-panel-width));
         align-items: stretch;
-        gap: 16px;
-        padding: 16px;
+        gap: var(--workspace-gap);
+        padding: var(--workspace-padding);
         overflow: hidden;
       }
 
@@ -1755,6 +1757,36 @@
         font-size: 12px;
         line-height: 1.55;
         color: var(--shell-text-muted);
+      }
+
+      .summary-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 6px;
+      }
+
+      .summary-actions[hidden] {
+        display: none;
+      }
+
+      .summary-actions button {
+        min-height: 30px;
+        padding: 0 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 650;
+      }
+
+      .summary-actions button.is-primary {
+        border-color: transparent;
+        background: var(--shell-accent);
+        color: #ffffff;
+      }
+
+      .summary-actions button:not(.is-primary):hover:not(:disabled) {
+        border-color: var(--shell-border-strong);
+        background: var(--shell-field-bg);
       }
 
       #selectedElementSummaryCard,
@@ -3460,10 +3492,12 @@
         }
 
         .workspace {
-          grid-template-columns: minmax(240px, 260px) minmax(0, 1fr) minmax(
-              256px,
-              280px
-            );
+          --slide-rail-width: clamp(250px, 22vw, 300px);
+          --inspector-panel-width: clamp(290px, 27vw, 350px);
+          grid-template-columns:
+            minmax(240px, var(--slide-rail-width))
+            minmax(320px, 1fr)
+            minmax(280px, var(--inspector-panel-width));
         }
 
         body[data-editor-workflow="empty"] .workspace {
@@ -3473,12 +3507,14 @@
 
       @media (max-width: 1280px) {
         .workspace {
-          grid-template-columns: minmax(240px, 260px) minmax(0, 1fr) minmax(
-              256px,
-              280px
-            );
-          gap: 12px;
-          padding: 12px;
+          --slide-rail-width: clamp(250px, 22vw, 300px);
+          --inspector-panel-width: clamp(290px, 27vw, 350px);
+          --workspace-gap: 12px;
+          --workspace-padding: 12px;
+          grid-template-columns:
+            minmax(240px, var(--slide-rail-width))
+            minmax(320px, 1fr)
+            minmax(280px, var(--inspector-panel-width));
         }
 
         body[data-editor-workflow="empty"] .workspace {
@@ -3574,6 +3610,10 @@
       }
 
       @media (max-width: 1024px) {
+        .topbar-center {
+          display: none;
+        }
+
         .panel-close-btn,
         .panel-toggle-btn {
           display: inline-flex;
@@ -4569,6 +4609,12 @@
                 Кликните по объекту на слайде. Для текста можно сделать двойной
                 клик и сразу печатать.
               </div>
+              <div
+                class="summary-actions"
+                id="selectedElementQuickActions"
+                aria-label="Быстрые действия с выбранным объектом"
+                hidden
+              ></div>
             </div>
             <h3>Текущий элемент</h3>
             <div class="badge-row">
@@ -6058,6 +6104,7 @@
         selectedElementSummaryCard: document.getElementById("selectedElementSummaryCard"),
         selectedElementTitle: document.getElementById("selectedElementTitle"),
         selectedElementSummary: document.getElementById("selectedElementSummary"),
+        selectedElementQuickActions: document.getElementById("selectedElementQuickActions"),
         overlapRecoveryBanner: document.getElementById("overlapRecoveryBanner"),
         overlapRecoveryText: document.getElementById("overlapRecoveryText"),
         overlapSelectLayerBtn: document.getElementById("overlapSelectLayerBtn"),
@@ -6348,6 +6395,8 @@
           els.selectedElementTitle || document.getElementById("selectedElementTitle");
         els.selectedElementSummary =
           els.selectedElementSummary || document.getElementById("selectedElementSummary");
+        els.selectedElementQuickActions =
+          els.selectedElementQuickActions || document.getElementById("selectedElementQuickActions");
         els.currentSlideSummaryCard =
           els.currentSlideSummaryCard || document.getElementById("currentSlideSummaryCard");
         els.currentSlideTitleDisplay =
@@ -6544,6 +6593,10 @@
             restoreSelectedElementVisibility();
           }
         });
+        els.selectedElementQuickActions?.addEventListener(
+          "click",
+          handleSelectedElementQuickAction,
+        );
         els.resetStylesBtn.addEventListener("click", resetSelectedStyles);
         els.copyStyleBtn.addEventListener("click", copySelectedStyle);
         els.pasteStyleBtn.addEventListener("click", pasteStyleToSelected);
@@ -18833,6 +18886,92 @@ ${exportDoc.documentElement.outerHTML}`;
         }
       }
 
+      function getSelectedElementQuickActionDefs({
+        directManipulationBlocked = false,
+        entityKind = "none",
+        hasSelection = false,
+      } = {}) {
+        if (!hasSelection || !state.selectedNodeId || entityKind === "none") return [];
+        const actions = [];
+        const addAction = (action, label, options = {}) => {
+          if (actions.some((item) => item.action === action)) return;
+          actions.push({
+            action,
+            label,
+            primary: Boolean(options.primary),
+          });
+        };
+
+        if (entityKind === "text" || entityKind === "table-cell" || entityKind === "code-block") {
+          addAction("edit-text", "Печатать", { primary: true });
+        } else if (entityKind === "image") {
+          addAction("replace-image", "Заменить", { primary: true });
+          addAction("fit-image", "Вписать");
+        } else if (entityKind === "video") {
+          addAction("edit-media-url", "URL", { primary: true });
+        } else if (directManipulationBlocked && state.complexityMode === "basic") {
+          addAction("switch-advanced", "Точно", { primary: true });
+        }
+
+        if (entityKind !== "slide-root" && entityKind !== "protected") {
+          addAction("duplicate", "Дублировать");
+        }
+
+        if (
+          directManipulationBlocked &&
+          state.complexityMode === "basic" &&
+          actions.length < 4
+        ) {
+          addAction("switch-advanced", "Точно");
+        }
+
+        return actions.slice(0, 4);
+      }
+
+      function renderSelectedElementQuickActions(options = {}) {
+        const container = els.selectedElementQuickActions;
+        if (!(container instanceof HTMLElement)) return;
+        const actions = getSelectedElementQuickActionDefs(options);
+        container.replaceChildren();
+        container.hidden = actions.length === 0;
+        container.setAttribute("aria-hidden", actions.length ? "false" : "true");
+        actions.forEach((item) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = `ghost-btn${item.primary ? " is-primary" : ""}`;
+          button.dataset.summaryAction = item.action;
+          button.textContent = item.label;
+          button.setAttribute("aria-label", item.label);
+          container.appendChild(button);
+        });
+      }
+
+      function handleSelectedElementQuickAction(event) {
+        const target = event.target instanceof Element
+          ? event.target.closest("[data-summary-action]")
+          : null;
+        if (!(target instanceof HTMLButtonElement)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const action = target.dataset.summaryAction || "";
+        if (action === "edit-text") {
+          startTextEditing();
+        } else if (action === "replace-image") {
+          requestImageInsert("replace");
+        } else if (action === "fit-image") {
+          fitSelectedImageToWidth();
+        } else if (action === "edit-media-url") {
+          editSelectedMediaUrl();
+        } else if (action === "duplicate") {
+          duplicateSelectedElement();
+        } else if (action === "switch-advanced") {
+          setComplexityMode("advanced");
+          showToast("Включён режим точных правок.", "success", {
+            title: "Инспектор",
+          });
+        }
+      }
+
       function updateInspectorFromSelection() {
         const hasSelection = Boolean(
           state.selectedNodeId && state.mode === "edit",
@@ -18973,6 +19112,11 @@ ${exportDoc.documentElement.outerHTML}`;
         if (els.selectedElementSummary) {
           els.selectedElementSummary.textContent = getSelectedElementSummary(entityKind);
         }
+        renderSelectedElementQuickActions({
+          directManipulationBlocked,
+          entityKind,
+          hasSelection,
+        });
         renderSelectionBreadcrumbs(hasSelection && !showBlockBanner);
         syncInspectorEntitySections(hasSelection);
         if (els.selectionPolicyText && !hasSelection) {

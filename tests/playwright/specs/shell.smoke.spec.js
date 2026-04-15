@@ -685,6 +685,43 @@ test.describe("Editor shell smoke @harness", () => {
     await assertShellGeometry(page);
   });
 
+  test("desktop shell panels scale with viewport and keep quick inspector actions @stage-f", async ({
+    page,
+  }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== "chromium-desktop",
+      "Responsive panel scaling is asserted on the desktop shell viewport.",
+    );
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
+    await clickPreview(page, "#hero-title");
+
+    const baseShell = await readWorkflowShellState(page);
+    expect(baseShell.metrics.slidesPanel?.width || 0).toBeGreaterThanOrEqual(258);
+    expect(baseShell.metrics.inspectorPanel?.width || 0).toBeGreaterThanOrEqual(318);
+    await expect(page.locator("#selectedElementQuickActions")).toBeVisible();
+    await expect(
+      page.locator('#selectedElementQuickActions [data-summary-action="edit-text"]'),
+    ).toBeVisible();
+    await expect(
+      page.locator('#selectedElementQuickActions [data-summary-action="duplicate"]'),
+    ).toBeVisible();
+
+    await page.setViewportSize({ width: 1680, height: 960 });
+    await page.waitForTimeout(150);
+    const wideShell = await readWorkflowShellState(page);
+    expect(wideShell.metrics.slidesPanel?.width || 0).toBeGreaterThan(
+      (baseShell.metrics.slidesPanel?.width || 0) + 24,
+    );
+    expect(wideShell.metrics.inspectorPanel?.width || 0).toBeGreaterThan(
+      (baseShell.metrics.inspectorPanel?.width || 0) + 32,
+    );
+
+    await assertNoHorizontalOverflow(page);
+    await assertShellGeometry(page);
+  });
+
   test("slide rail status marker keeps clear of slide text @stage-f", async (
     { page },
     testInfo,

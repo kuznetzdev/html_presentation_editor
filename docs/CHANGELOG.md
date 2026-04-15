@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 0.19.6 - responsive shell sidebars and inspector quick actions - 2026-04-15
+- widened the slide rail and inspector with responsive `clamp(...)` sizing so desktop and wide viewports allocate meaningful space to navigation and element properties
+- added selection-aware quick actions to the selected-element summary card for common text, media, image-fit, duplicate, and precision-mode workflows without exposing advanced fields first
+- aligned compact shell CSS with the 1024px JS breakpoint so tablet/mobile users keep one clear bottom-rail mode control instead of duplicate preview toggles
+- refreshed Playwright visual baselines for the wider shell geometry and added regression coverage for responsive panel scaling plus quick inspector actions
+- kept quick-action rendering DOM-safe by constructing buttons with `createElement` and `textContent` instead of injecting HTML strings
+
 ## 0.19.5 - pilot shell hardening, asset parity validation, and operator runbooks - 2026-04-15
 - hardened the stable `editor/presentation-editor.html` pilot workflow with clearer shell state transitions, compact-safe actions, and release-ready editor entrypoint behavior
 - strengthened export asset parity validation and Playwright coverage across desktop, wide, tablet, and compact shell profiles with updated visual baselines
