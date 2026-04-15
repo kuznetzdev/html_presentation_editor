@@ -4,16 +4,21 @@ const path = require("path");
 const { spawn } = require("child_process");
 const assert = require("assert");
 const { chromium } = require("playwright");
+const {
+  TEST_SERVER_HOST,
+  TEST_SERVER_PORT,
+  toTestServerUrl,
+} = require("./test-server-config");
 
 const WORKSPACE_ROOT =
   process.env.WORKSPACE_ROOT ||
   path.resolve(__dirname, "..");
 
-const SERVER_HOST = process.env.STATIC_SERVER_HOST || "127.0.0.1";
-const SERVER_PORT = Number(process.env.STATIC_SERVER_PORT || 4173);
+const SERVER_HOST = process.env.STATIC_SERVER_HOST || TEST_SERVER_HOST;
+const SERVER_PORT = Number(process.env.STATIC_SERVER_PORT || TEST_SERVER_PORT);
 const TARGET_URL =
   process.env.TARGET_URL ||
-  `http://${SERVER_HOST}:${SERVER_PORT}/editor/presentation-editor.html`;
+  toTestServerUrl("/editor/presentation-editor.html");
 
 const FIXTURE_ROOT = path.resolve(
   WORKSPACE_ROOT,
@@ -24,7 +29,7 @@ const FIXTURE_ROOT = path.resolve(
 
 const MANUAL_BASE_URL =
   process.env.MANUAL_BASE_URL ||
-  `http://${SERVER_HOST}:${SERVER_PORT}/tests/fixtures/export-asset-parity/`;
+  toTestServerUrl("/tests/fixtures/export-asset-parity/");
 
 const COMPLEX_HTML = `<!doctype html>
 <html lang="en">

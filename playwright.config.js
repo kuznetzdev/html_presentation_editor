@@ -1,11 +1,17 @@
 const path = require("path");
 const os = require("os");
 const { defineConfig } = require("@playwright/test");
+const {
+  TEST_SERVER_HOST,
+  TEST_SERVER_PORT,
+  TEST_SERVER_ORIGIN,
+  toTestServerUrl,
+} = require("./scripts/test-server-config");
 
 const ARTIFACTS_DIR = path.join("artifacts", "playwright");
 const DEFAULT_WINDOWS_WORKERS = Math.max(
   1,
-  Math.min(4, Math.ceil(os.cpus().length / 2)),
+  Math.min(2, Math.ceil(os.cpus().length / 2)),
 );
 const PLAYWRIGHT_WORKERS = process.env.PLAYWRIGHT_WORKERS
   ? Number(process.env.PLAYWRIGHT_WORKERS)
@@ -34,7 +40,7 @@ module.exports = defineConfig({
     ["json", { outputFile: path.join(ARTIFACTS_DIR, "results.json") }],
   ],
   use: {
-    baseURL: "http://127.0.0.1:4173",
+    baseURL: TEST_SERVER_ORIGIN,
     trace: "retain-on-failure",
     video: "retain-on-failure",
     screenshot: "only-on-failure",
@@ -42,9 +48,9 @@ module.exports = defineConfig({
     navigationTimeout: 15_000,
   },
   webServer: {
-    command: "node scripts/static-server.js . 4173 127.0.0.1",
-    url: "http://127.0.0.1:4173/editor/presentation-editor.html",
-    reuseExistingServer: !process.env.CI,
+    command: `node scripts/static-server.js . ${TEST_SERVER_PORT} ${TEST_SERVER_HOST}`,
+    url: toTestServerUrl("/editor/presentation-editor.html"),
+    reuseExistingServer: false,
     timeout: 30_000,
   },
   projects: [

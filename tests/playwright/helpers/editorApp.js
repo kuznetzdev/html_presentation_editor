@@ -2,6 +2,10 @@ const fs = require("fs");
 const path = require("path");
 const { expect } = require("@playwright/test");
 const {
+  TEST_SERVER_ORIGIN,
+  toTestServerUrl,
+} = require("../../../scripts/test-server-config");
+const {
   getReferenceDeckCase,
 } = require("./referenceDeckRegistry");
 
@@ -25,10 +29,10 @@ const ASSET_PARITY_CASE_PATH = path.join(
   EXPORT_FIXTURE_ROOT,
   "asset-parity-case.html",
 );
-const BASIC_MANUAL_BASE_URL =
-  "http://127.0.0.1:4173/tests/fixtures/playwright/";
-const ASSET_MANUAL_BASE_URL =
-  "http://127.0.0.1:4173/tests/fixtures/export-asset-parity/";
+const BASIC_MANUAL_BASE_URL = toTestServerUrl("/tests/fixtures/playwright/");
+const ASSET_MANUAL_BASE_URL = toTestServerUrl(
+  "/tests/fixtures/export-asset-parity/",
+);
 const SHELL_PANEL_CONFIG = Object.freeze({
   inspector: {
     buttonSelector: "#mobileInspectorBtn",
@@ -42,9 +46,30 @@ const SHELL_PANEL_CONFIG = Object.freeze({
 const TOPBAR_OVERFLOW_CONTROL_MAP = Object.freeze({
   "#themeToggleBtn": "#topbarOverflowThemeBtn",
 });
+const COMPACT_EDITOR_CONTROL_ALIASES = Object.freeze({
+  "#copyImageUrlBtn": "#ftCopyImageUrlBtn",
+  "#copyStyleBtn": "#ftCopyStyleBtn",
+  "#editTextBtn": "#ftEditTextBtn",
+  "#fitImageBtn": "#ftFitImageBtn",
+  "#mediaUrlBtn": "#ftMediaUrlBtn",
+  "#pasteStyleBtn": "#ftPasteStyleBtn",
+  "#replaceImageBtn": "#ftReplaceImageBtn",
+});
 
 async function evaluateEditor(page, expression) {
   return page.evaluate((source) => globalThis.eval(source), expression);
+}
+
+async function isCompactShellViewport(page) {
+  return page.evaluate(() => window.innerWidth <= 1024);
+}
+
+async function getVisibleCompactAliasControl(page, selector) {
+  const aliasSelector = COMPACT_EDITOR_CONTROL_ALIASES[selector];
+  if (!aliasSelector) return null;
+  const aliasControl = page.locator(aliasSelector);
+  if (!(await aliasControl.isVisible())) return null;
+  return aliasControl;
 }
 
 function inferMimeType(filePath) {
@@ -498,7 +523,78 @@ async function ensureEditorControlVisible(page, selector, options = {}) {
 async function clickEditorControl(page, selector, options = {}) {
   const control = await ensureEditorControlVisible(page, selector, options);
   await expect(control).toBeEnabled();
-  await control.click();
+  const compactShell = await isCompactShellViewport(page);
+  if (compactShell) {
+    await control.evaluate((element) => {
+      element.scrollIntoView({
+        block: "center",
+        inline: "nearest",
+        behavior: "instant",
+      });
+    });
+  }
+  try {
+    await control.click();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error || "");
+    const recoverableCompactFailure =
+      compactShell &&
+      /(intercepts pointer events|outside of the viewport)/i.test(message);
+    if (!recoverableCompactFailure) {
+      throw error;
+    }
+    if (options.panel) {
+      await ensureShellPanelVisible(page, options.panel);
+      await control.evaluate((element) => {
+        element.scrollIntoView({
+          block: "center",
+          inline: "nearest",
+          behavior: "instant",
+        });
+      });
+      try {
+        await control.click();
+        return;
+      } catch (panelError) {
+        const panelMessage =
+          panelError instanceof Error
+            ? panelError.message
+            : String(panelError || "");
+        if (!/(intercepts pointer events|outside of the viewport)/i.test(panelMessage)) {
+          throw panelError;
+        }
+      }
+    }
+
+    if (compactShell) {
+      await closeCompactShellPanels(page);
+      const compactAliasControl = await getVisibleCompactAliasControl(
+        page,
+        selector,
+      );
+      if (compactAliasControl) {
+        await expect(compactAliasControl).toBeEnabled();
+        await compactAliasControl.evaluate((element) => {
+          element.scrollIntoView({
+            block: "center",
+            inline: "nearest",
+            behavior: "instant",
+          });
+        });
+        await compactAliasControl.click();
+        return;
+      }
+    }
+    await control.evaluate((element) => {
+      element.scrollIntoView({
+        block: "start",
+        inline: "nearest",
+        behavior: "instant",
+      });
+    });
+    await page.waitForTimeout(50);
+    await control.click();
+  }
 }
 
 async function waitForSelectedEntityKind(page, expectedKind) {
@@ -887,7 +983,7 @@ async function openSlideRailContextMenu(page, index, options = {}) {
 }
 
 async function closeCompactShellPanels(page) {
-  const compact = await page.evaluate(() => window.innerWidth <= 1024);
+  const compact = await isCompactShellViewport(page);
   if (!compact) return;
 
   const hasOpenPanel = await evaluateEditor(
@@ -1045,6 +1141,7 @@ module.exports = {
   BASIC_DECK_PATH,
   BASIC_MANUAL_BASE_URL,
   EXPORT_FIXTURE_ROOT,
+  TEST_SERVER_ORIGIN,
   TARGET_URL,
   activateSlideByIndex,
   assertHiddenPanelsAreInert,

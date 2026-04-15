@@ -120,6 +120,10 @@ test.describe("stage-o-layers-lock-group @stage-o", () => {
     // Verify layers panel is visible in advanced mode
     const layersSection = page.locator("#layersInspectorSection");
     await expect(layersSection).toBeVisible();
+    await expect(layersSection).toContainText(
+      "Выберите слой, чтобы управлять порядком, видимостью и блокировкой.",
+    );
+    await expect(page.locator("#normalizeLayersBtn")).toHaveText("Упорядочить стек");
 
     // Verify it has rows
     await waitForLayerRows(page, 1);
@@ -134,17 +138,30 @@ test.describe("stage-o-layers-lock-group @stage-o", () => {
   });
 
   test("layers-panel-selection-sync @stage-o", async ({ page }) => {
-    // Click on an element in the canvas
-    await previewLocator(page, "[data-editor-node-id]").first().click();
+    const targetNodeId = await page
+      .locator(".layer-row[data-layer-node-id]")
+      .first()
+      .getAttribute("data-layer-node-id");
+    expect(targetNodeId).toBeTruthy();
 
-    // Get selected node ID from state
-    await waitForSelectedNodeId(page);
-    const selectedNodeId = await evaluateEditor(page, "state.selectedNodeId || ''");
-    expect(selectedNodeId).toBeTruthy();
+    // Click the corresponding authored layer inside the canvas
+    await previewLocator(page, `[data-editor-node-id="${targetNodeId}"]`)
+      .first()
+      .click({ force: true });
+
+    // Wait until shell selection reflects the clicked authored layer
+    await expect
+      .poll(() => evaluateEditor(page, "state.selectedNodeId || ''"), {
+        timeout: 10000,
+      })
+      .toBe(targetNodeId);
+    const selectedNodeId = targetNodeId;
 
     // Verify the corresponding layer row has is-active class
     const activeRow = page.locator(`.layer-row.is-active[data-layer-node-id="${selectedNodeId}"]`);
     await expect(activeRow).toBeVisible();
+    await expect(activeRow).toContainText("Текущий");
+    await expect(page.locator(".layer-z-input:visible")).toHaveCount(1);
 
     // Click on a different layer row
     const secondNodeId = await page.evaluate((currentSelectedNodeId) => {
@@ -173,6 +190,16 @@ test.describe("stage-o-layers-lock-group @stage-o", () => {
     // Verify state updated
     const newSelectedNodeId = await evaluateEditor(page, `state.selectedNodeId`);
     expect(newSelectedNodeId).toBe(secondNodeId);
+  });
+
+  test("reorder-affordance-is-handle-only @stage-o", async ({ page }) => {
+    const firstRow = page.locator(".layer-row[data-layer-node-id]").first();
+    await expect(firstRow).toBeVisible();
+    await expect(firstRow).not.toHaveAttribute("draggable", "true");
+
+    const dragHandle = firstRow.locator(".layer-drag-handle");
+    await expect(dragHandle).toBeVisible();
+    await expect(dragHandle).toHaveAttribute("draggable", "true");
   });
 
   test("drag-reorder @stage-o", async ({ page }) => {
@@ -244,6 +271,9 @@ test.describe("stage-o-layers-lock-group @stage-o", () => {
       })()
     `);
     expect(isLocked).toBe(true);
+    await expect(page.locator(`.layer-row[data-layer-node-id="${selectedNodeId}"]`)).toContainText(
+      "Заблокирован",
+    );
 
     // Verify lock banner is visible
     const lockBanner = page.locator("#lockBanner");
@@ -305,16 +335,25 @@ test.describe("stage-o-layers-lock-group @stage-o", () => {
       })()
     `);
     expect(visibilityInIframe).toBe("hidden");
+    await expect(page.locator(`.layer-row[data-layer-node-id="${selectedNodeId}"]`)).toContainText(
+      "Скрыт",
+    );
 
     // Verify visibility NOT written to modelDoc (session-only; modelDoc should NOT have visibility:hidden).
+    await expect.poll(() =>
+      evaluateEditor(page, `
+        (function() {
+          const el = state.modelDoc.querySelector(\`[data-editor-node-id="${selectedNodeId}"]\`);
+          return el ? el.style.getPropertyValue("visibility") : "";
+        })()
+      `),
+    ).not.toBe("hidden");
     const visibilityInModel = await evaluateEditor(page, `
       (function() {
         const el = state.modelDoc.querySelector(\`[data-editor-node-id="${selectedNodeId}"]\`);
-        // Measure inline style directly — should not contain visibility:hidden.
         return el ? el.style.getPropertyValue("visibility") : "";
       })()
     `);
-    // Accept empty-string or "visible" — anything other than "hidden".
     expect(["", "visible", "inherit", "unset", "initial"].includes(visibilityInModel) || !visibilityInModel).toBe(true);
   });
 

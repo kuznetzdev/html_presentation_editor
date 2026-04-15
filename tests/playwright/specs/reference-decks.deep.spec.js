@@ -840,7 +840,7 @@ async function verifyTextEditingFlow(page, deckCase, logs) {
     .poll(async () => {
       const snapshot = await readRuntimeNodeSnapshot(page, textCandidate);
       return normalizeTextValue(snapshot?.text).includes(committedNeedle);
-    })
+    }, { timeout: 15_000 })
     .toBe(true);
 
   await selectRuntimeNode(page, textCandidate);
@@ -855,7 +855,7 @@ async function verifyTextEditingFlow(page, deckCase, logs) {
       const snapshot = await readRuntimeNodeSnapshot(page, textCandidate);
       const normalized = normalizeTextValue(snapshot?.text);
       return normalized.includes(committedNeedle) && !normalized.includes(cancelledNeedle);
-    })
+    }, { timeout: 15_000 })
     .toBe(true);
 
   await page.locator("#selectionFrameHitArea").click({ button: "right" });

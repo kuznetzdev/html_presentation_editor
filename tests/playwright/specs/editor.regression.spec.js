@@ -1246,7 +1246,7 @@ test.describe("Editor regression coverage", () => {
     await clickPreview(page, "#cta-box");
 
     await page.waitForFunction(() =>
-      String(window.localStorage.getItem("presentation-editor:autosave:v3") || "").includes(
+      String(window.sessionStorage.getItem("presentation-editor:autosave:v3") || "").includes(
         "Autosave recovery text",
       ),
     );
@@ -1269,20 +1269,20 @@ test.describe("Editor regression coverage", () => {
     await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
     await activateSlideByIndex(page, 2);
     const projectHtml = await evaluateEditor(page, "serializeCurrentProject()");
-    await page.evaluate((html) => {
-      window.localStorage.setItem(
+    await page.evaluate(({ html, manualBaseUrl }) => {
+      window.sessionStorage.setItem(
         "presentation-editor:autosave:v3",
         JSON.stringify({
           version: 3,
           savedAt: Date.now(),
           sourceLabel: "Fallback payload",
-          manualBaseUrl: "http://127.0.0.1:4173/tests/fixtures/playwright/",
+          manualBaseUrl,
           mode: "edit",
           activeSlideIndex: 2,
           html,
         }),
       );
-    }, projectHtml);
+    }, { html: projectHtml, manualBaseUrl: BASIC_MANUAL_BASE_URL });
 
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.locator("#restoreBanner")).toBeVisible();

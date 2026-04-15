@@ -1,11 +1,13 @@
 /**
- * Overlap Recovery — e2e tests (@stage-n)
+ * Overlap recovery e2e coverage (@stage-n).
  *
- * Covers issue #1:
+ * Covers:
  *  N1 overlap detection map appears for covered elements
- *  N2 severe overlap warning badge appears in slide rail (basic mode)
- *  N3 overlap hover does not draw a ghost outline over hidden elements
- *  N4 move-to-top action raises z-index and hides recovery banner
+ *  N2 overlap warning badge appears in the slide rail
+ *  N3 hover does not create a ghost outline for hidden layers
+ *  N4 move-to-top raises z-index and clears the recovery banner
+ *  N5 basic and advanced magic-select flows
+ *  N6 inserted elements auto-promote out of severe overlap
  */
 
 "use strict";
@@ -19,19 +21,10 @@ const {
   loadReferenceDeck,
 } = require("../helpers/editorApp");
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Load the absolute-positioned reference deck (slide 2 has 3 overlapping
- * .card elements) and activate slide 2.
- */
 async function loadOverlapDeck(page) {
   await loadReferenceDeck(page, "v1-absolute-positioned", { mode: "edit" });
   await closeCompactShellPanels(page);
 
-  // Activate slide 2 (index 1) — request slide activation and wait for it
   const targetSlideId = await evaluateEditor(
     page,
     "state.slides[Math.min(1, state.slides.length - 1)]?.id || null",
@@ -42,7 +35,6 @@ async function loadOverlapDeck(page) {
     page,
     `requestSlideActivation(${JSON.stringify(targetSlideId)}, { reason: "stage-n-overlap" })`,
   );
-  // Wait for the bridge roundtrip to confirm slide is active
   await expect
     .poll(
       () =>
@@ -55,25 +47,37 @@ async function loadOverlapDeck(page) {
     .toBe(true);
 }
 
-/**
- * Select the first non-slide-root element in the active slide's modelDoc
- * directly via the bridge (bypasses context menu, fully deterministic).
- */
+async function triggerAndWaitForOverlapDetection(page) {
+  await evaluateEditor(page, 'runOverlapDetectionNow("test-trigger")');
+  await expect
+    .poll(
+      () =>
+        evaluateEditor(
+          page,
+          "Array.isArray(state.overlapConflictsBySlide[state.activeSlideId])",
+        ),
+      { timeout: 5000 },
+    )
+    .toBe(true);
+}
+
 async function selectFirstCoveredCard(page) {
   const nodeId = await evaluateEditor(
     page,
     `(() => {
       const slideId = state.activeSlideId;
       if (!slideId || !state.modelDoc) return null;
-      const esc = slideId.replace(/["\\\\]/g, "\\\\$&");
-      const slideEl = state.modelDoc.querySelector('[data-editor-slide-id="' + esc + '"]');
+      const escapedSlideId = slideId.replace(/["\\\\]/g, "\\\\$&");
+      const slideEl = state.modelDoc.querySelector('[data-editor-slide-id="' + escapedSlideId + '"]');
       if (!slideEl) return null;
       const nodes = Array.from(slideEl.querySelectorAll("[data-editor-node-id]"))
-        .filter(el => !el.hasAttribute("data-editor-slide-id"));
+        .filter((el) => !el.hasAttribute("data-editor-slide-id"));
       return nodes[0]?.getAttribute("data-editor-node-id") || null;
     })()`,
   );
-  if (!nodeId) throw new Error("Could not resolve covered card nodeId from modelDoc");
+  if (!nodeId) {
+    throw new Error("Could not resolve covered card nodeId from modelDoc");
+  }
 
   await evaluateEditor(
     page,
@@ -82,33 +86,79 @@ async function selectFirstCoveredCard(page) {
   await expect
     .poll(() => evaluateEditor(page, "state.selectedNodeId || ''"), { timeout: 6000 })
     .toBe(nodeId);
-  return nodeId;
+  await triggerAndWaitForOverlapDetection(page);
+
+  const preferredNodeId = await evaluateEditor(
+    page,
+    `(() => {
+      const threshold = 30;
+      const currentNodeId = state.selectedNodeId || "";
+      const currentCovered = Number(state.selectedOverlapWarning?.coveredPercent || 0);
+      if (currentNodeId && currentCovered > threshold) return currentNodeId;
+      const conflicts = Array.isArray(state.overlapConflictsBySlide[state.activeSlideId])
+        ? state.overlapConflictsBySlide[state.activeSlideId]
+        : [];
+      const preferredConflict = conflicts.find((conflict) =>
+        Number(conflict?.coveredPercent || 0) > threshold && conflict?.bottomNodeId,
+      );
+      return preferredConflict?.bottomNodeId || currentNodeId || null;
+    })()`,
+  );
+  if (preferredNodeId && preferredNodeId !== nodeId) {
+    await evaluateEditor(
+      page,
+      `sendToBridge("select-element", { nodeId: ${JSON.stringify(preferredNodeId)} })`,
+    );
+    await expect
+      .poll(() => evaluateEditor(page, "state.selectedNodeId || ''"), { timeout: 6000 })
+      .toBe(preferredNodeId);
+    await triggerAndWaitForOverlapDetection(page);
+  }
+
+  return preferredNodeId || nodeId;
 }
 
-/**
- * Explicitly run overlap detection (bypasses the 200ms debounce) and wait
- * until the conflict array for the active slide is populated.
- */
-async function triggerAndWaitForOverlapDetection(page) {
-  await evaluateEditor(page, 'runOverlapDetectionNow("test-trigger")');
-  // Wait until overlapConflictsBySlide[activeSlideId] is defined (may be [])
+async function readSelectedLayerPickerPayload(page) {
+  const rawPayload = await evaluateEditor(
+    page,
+    `JSON.stringify(
+      typeof buildSelectedOverlapLayerPickerPayload === "function"
+        ? buildSelectedOverlapLayerPickerPayload()
+        : null
+    )`,
+  );
+  return rawPayload === "null" ? null : JSON.parse(rawPayload);
+}
+
+async function ensureOverlapMagicButtonVisible(page) {
+  await ensureShellPanelVisible(page, "inspector");
   await expect
     .poll(
       () =>
         evaluateEditor(
           page,
-          `Array.isArray(state.overlapConflictsBySlide[state.activeSlideId])`,
+          `Boolean(
+            !document.getElementById("overlapRecoveryBanner")?.hidden &&
+            !document.getElementById("overlapSelectLayerBtn")?.hidden
+          )`,
         ),
-      { timeout: 5000 },
+      { timeout: 6000 },
     )
     .toBe(true);
+
+  const button = page.locator("#overlapSelectLayerBtn");
+  await button.evaluate((element) => {
+    element.scrollIntoView({
+      block: "center",
+      inline: "nearest",
+      behavior: "instant",
+    });
+  });
+  await expect(button).toBeVisible({ timeout: 6000 });
+  return button;
 }
 
-// ---------------------------------------------------------------------------
-// N1 — Basic overlap detection
-// ---------------------------------------------------------------------------
-
-test.describe("N1 — Overlap detection", () => {
+test.describe("N1 overlap detection", () => {
   test("covered element generates overlap conflicts @stage-n", async ({ page }, testInfo) => {
     test.skip(!isChromiumOnlyProject(testInfo.project.name));
 
@@ -126,39 +176,73 @@ test.describe("N1 — Overlap detection", () => {
       ),
     );
 
-    // The deck's slide 2 has 3 overlapping cards → at least 1 conflict expected
     expect(snapshot.conflictCount).toBeGreaterThan(0);
-    // The first card is covered by card 2 (~41%) → > 30 threshold
     expect(snapshot.selectedCovered).toBeGreaterThan(30);
   });
 });
 
-test.describe("N5 вЂ” Magic Select", () => {
-  test("advanced overlap banner opens layer picker and keyboard selection works @stage-n", async ({ page }, testInfo) => {
+test.describe("N5 magic select", () => {
+  test("basic overlap banner cycles to the next layer without opening the picker @stage-n", async ({ page }, testInfo) => {
     test.skip(!isChromiumOnlyProject(testInfo.project.name));
 
     await loadOverlapDeck(page);
     const initialNodeId = await selectFirstCoveredCard(page);
     await triggerAndWaitForOverlapDetection(page);
 
-    await ensureShellPanelVisible(page, "inspector");
+    const cycleButton = await ensureOverlapMagicButtonVisible(page);
+    await expect(cycleButton).toContainText(/Следующий слой/i);
+
+    const candidateIds = JSON.parse(
+      await evaluateEditor(
+        page,
+        `JSON.stringify(collectLayerPickerItemsFromOverlap().map((item) => item.nodeId))`,
+      ),
+    );
+    expect(candidateIds.length).toBeGreaterThanOrEqual(2);
+    const initialIndex = candidateIds.indexOf(initialNodeId);
+    expect(initialIndex).toBeGreaterThanOrEqual(0);
+    const expectedNodeId = candidateIds[(initialIndex + 1) % candidateIds.length];
+
+    await cycleButton.click();
+
+    await expect
+      .poll(() => evaluateEditor(page, "state.selectedNodeId || ''"), {
+        timeout: 6000,
+      })
+      .toBe(expectedNodeId);
+    await expect(page.locator("#layerPicker")).toBeHidden();
+  });
+
+  test("advanced overlap banner opens layer picker and keyboard selection works @stage-n", async ({ page }, testInfo) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name));
+
+    await loadOverlapDeck(page);
+    await selectFirstCoveredCard(page);
+    await triggerAndWaitForOverlapDetection(page);
+
     await evaluateEditor(
       page,
       `typeof setComplexityMode === "function" && setComplexityMode("advanced")`,
     );
-
-    const magicSelectBtn = page.locator("#overlapSelectLayerBtn");
-    await expect(magicSelectBtn).toBeVisible({ timeout: 6000 });
     await expect
       .poll(
         () =>
           evaluateEditor(
             page,
-            `Boolean(typeof buildSelectedOverlapLayerPickerPayload === "function" && buildSelectedOverlapLayerPickerPayload())`,
+            `(document.getElementById("overlapSelectLayerBtn")?.textContent || "").trim()`,
           ),
         { timeout: 6000 },
       )
-      .toBe(true);
+      .toMatch(/Выбрать слой/i);
+
+    const magicSelectBtn = await ensureOverlapMagicButtonVisible(page);
+    await expect
+      .poll(() => readSelectedLayerPickerPayload(page), { timeout: 6000 })
+      .not.toBeNull();
+
+    const layerPickerPayload = await readSelectedLayerPickerPayload(page);
+    expect(Array.isArray(layerPickerPayload?.items)).toBe(true);
+    expect(layerPickerPayload.items.length).toBeGreaterThanOrEqual(2);
     await expect(magicSelectBtn).toBeEnabled();
 
     await magicSelectBtn.click();
@@ -167,29 +251,58 @@ test.describe("N5 вЂ” Magic Select", () => {
     await expect(picker).toBeVisible({ timeout: 6000 });
     await expect
       .poll(
+        async () => {
+          const text = await page.locator("#layerPickerTitle").textContent();
+          return String(text || "").trim().length;
+        },
+        { timeout: 6000 },
+      )
+      .toBeGreaterThan(0);
+    await expect(page.locator("#layerPickerSubtitle")).toContainText(
+      String(layerPickerPayload.items.length),
+    );
+    await expect
+      .poll(
         () => page.locator("#layerPickerList button").count(),
         { timeout: 6000 },
       )
-      .toBeGreaterThanOrEqual(2);
+      .toBe(layerPickerPayload.items.length);
+    await expect(page.locator("#layerPickerList button.is-current-layer")).toHaveCount(1);
 
     const nextButton = page.locator("#layerPickerList button").nth(1);
     const nextNodeId = await nextButton.getAttribute("data-layer-picker-node-id");
     expect(nextNodeId).toBeTruthy();
+    await nextButton.hover();
+    await expect
+      .poll(() => evaluateEditor(page, "state.layerPickerHighlightNodeId || ''"), {
+        timeout: 6000,
+      })
+      .toBe(nextNodeId);
     await nextButton.focus();
+    await expect(nextButton).toHaveClass(/is-active/);
     await page.keyboard.press("Enter");
 
     await expect
-      .poll(() => evaluateEditor(page, "state.selectedNodeId || ''"), { timeout: 6000 })
+      .poll(() => evaluateEditor(page, "state.selectedNodeId || ''"), {
+        timeout: 6000,
+      })
       .toBe(nextNodeId);
 
-    await magicSelectBtn.click();
+    const reopenedMagicSelectBtn = await ensureOverlapMagicButtonVisible(page);
+    await reopenedMagicSelectBtn.click();
     await expect(picker).toBeVisible({ timeout: 6000 });
     await picker.press("Escape");
+    await expect(picker).toBeHidden({ timeout: 6000 });
+
+    const reopenedAfterEscapeBtn = await ensureOverlapMagicButtonVisible(page);
+    await reopenedAfterEscapeBtn.click();
+    await expect(picker).toBeVisible({ timeout: 6000 });
+    await page.locator("#previewStage").click({ position: { x: 24, y: 24 } });
     await expect(picker).toBeHidden({ timeout: 6000 });
   });
 });
 
-test.describe("N6 вЂ” Insert auto-promotion", () => {
+test.describe("N6 insert auto-promotion", () => {
   test("inserted element auto-promotes when it lands heavily covered @stage-n", async ({ page }, testInfo) => {
     test.skip(!isChromiumOnlyProject(testInfo.project.name));
 
@@ -272,48 +385,35 @@ test.describe("N6 вЂ” Insert auto-promotion", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// N2 — Rail warning badge
-// ---------------------------------------------------------------------------
-
-test.describe("N2 — Warning badge", () => {
+test.describe("N2 warning badge", () => {
   test("basic mode shows overlap warning badge in rail @stage-n", async ({ page }, testInfo) => {
     test.skip(!isChromiumOnlyProject(testInfo.project.name));
 
     await loadOverlapDeck(page);
-    // Run detection explicitly so rail re-renders before the assertion
     await triggerAndWaitForOverlapDetection(page);
 
-    // slideOverlapWarnings threshold is now > 30%, deck has ~41% → badge appears
     await ensureShellPanelVisible(page, "slides");
     const warningTag = page.locator("#slidesList .slide-tag.is-overlap-warning").first();
     await expect(warningTag).toBeVisible({ timeout: 6000 });
-    await expect(warningTag).toContainText("перекрытие");
+    await expect(warningTag).toContainText(/перекрытие/i);
   });
 });
 
-// ---------------------------------------------------------------------------
-// N3 — No ghost outline on overlap hover
-// ---------------------------------------------------------------------------
-
-test.describe("N3 — No overlap ghost outline", () => {
+test.describe("N3 no overlap ghost outline", () => {
   test("hovering overlap area does not highlight hidden element @stage-n", async ({ page }, testInfo) => {
     test.skip(!isChromiumOnlyProject(testInfo.project.name));
 
     await loadOverlapDeck(page);
     await triggerAndWaitForOverlapDetection(page);
 
-    // Dispatch a mousemove event at the centre of the first conflict's overlapRect.
-    // Overlap recovery must stay discoverable via banner/warning only, without
-    // rendering a translucent ghost element in the canvas on plain hover.
     const dispatched = await evaluateEditor(
       page,
       `(() => {
         const conflicts = state.overlapConflictsBySlide[state.activeSlideId] || [];
-        const c = conflicts.find(x => x.coveredPercent >= 30);
-        if (!c) return false;
-        const cx = Math.round((c.overlapRect.left + c.overlapRect.right) / 2);
-        const cy = Math.round((c.overlapRect.top + c.overlapRect.bottom) / 2);
+        const conflict = conflicts.find((entry) => entry.coveredPercent >= 30);
+        if (!conflict) return false;
+        const cx = Math.round((conflict.overlapRect.left + conflict.overlapRect.right) / 2);
+        const cy = Math.round((conflict.overlapRect.top + conflict.overlapRect.bottom) / 2);
         const doc = document.getElementById("previewFrame")?.contentDocument;
         if (!doc) return false;
         doc.dispatchEvent(
@@ -327,7 +427,6 @@ test.describe("N3 — No overlap ghost outline", () => {
         return true;
       })()`,
     );
-
     expect(dispatched).toBe(true);
 
     await page.waitForTimeout(250);
@@ -343,11 +442,7 @@ test.describe("N3 — No overlap ghost outline", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// N4 — Move to top
-// ---------------------------------------------------------------------------
-
-test.describe("N4 — Move to top", () => {
+test.describe("N4 move to top", () => {
   test("move-to-top action raises z-index and clears recovery banner @stage-n", async ({ page }, testInfo) => {
     test.skip(!isChromiumOnlyProject(testInfo.project.name));
 
@@ -355,7 +450,6 @@ test.describe("N4 — Move to top", () => {
     await selectFirstCoveredCard(page);
     await triggerAndWaitForOverlapDetection(page);
 
-    // Banner must be visible before the test makes sense
     await ensureShellPanelVisible(page, "inspector");
     const banner = page.locator("#overlapRecoveryBanner");
     await expect(banner).toBeVisible({ timeout: 6000 });
@@ -363,27 +457,32 @@ test.describe("N4 — Move to top", () => {
     const moveBtn = page.locator("#overlapMoveTopBtn");
     await expect(moveBtn).toBeEnabled();
 
-    // z-index may be "auto" initially → normalise to 0
     const before = await evaluateEditor(
       page,
-      `(() => { const z = state.selectedComputed?.zIndex || ""; const n = Number.parseFloat(z); return Number.isFinite(n) ? n : 0; })()`,
+      `(() => {
+        const z = state.selectedComputed?.zIndex || "";
+        const parsed = Number.parseFloat(z);
+        return Number.isFinite(parsed) ? parsed : 0;
+      })()`,
     );
 
     await moveBtn.click();
 
-    // Bridge roundtrip: apply-style → element-updated → state.selectedComputed.zIndex updated
     await expect
       .poll(
         () =>
           evaluateEditor(
             page,
-            `(() => { const z = state.selectedComputed?.zIndex || ""; const n = Number.parseFloat(z); return Number.isFinite(n) ? n : 0; })()`,
+            `(() => {
+              const z = state.selectedComputed?.zIndex || "";
+              const parsed = Number.parseFloat(z);
+              return Number.isFinite(parsed) ? parsed : 0;
+            })()`,
           ),
         { timeout: 6000 },
       )
       .toBeGreaterThan(before);
 
-    // After re-detection the banner should be hidden (element now on top, coveredPercent drops)
     await expect(banner).toBeHidden({ timeout: 8000 });
   });
 });

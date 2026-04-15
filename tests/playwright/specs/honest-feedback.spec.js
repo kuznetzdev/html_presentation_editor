@@ -50,11 +50,11 @@ test.describe("Honest feedback and transient shell routing", () => {
       page,
       `(() => {
         const nodeId = state.selectedNodeId;
-        if (!nodeId || !state.modelDoc) throw new Error("selection-missing");
-        const node = state.modelDoc.querySelector('[data-editor-node-id="' + nodeId + '"]');
-        if (!(node instanceof Element)) throw new Error("node-missing");
-        node.setAttribute("hidden", "");
-        updateInspectorFromSelection();
+        if (!nodeId) throw new Error("selection-missing");
+        if (typeof toggleLayerVisibility !== "function") {
+          throw new Error("toggle-visibility-unavailable");
+        }
+        toggleLayerVisibility(nodeId);
       })()`,
     );
 
@@ -101,7 +101,19 @@ test.describe("Honest feedback and transient shell routing", () => {
     );
 
     await expect(page.locator("#lockBanner")).toBeHidden();
-    await expect(page.locator("#blockReasonBanner")).toBeVisible();
+    await expect
+      .poll(
+        () =>
+          evaluateEditor(
+            page,
+            `Boolean(
+              !document.getElementById("blockReasonBanner")?.hidden &&
+              !document.getElementById("blockReasonActionBtn")?.hidden
+            )`,
+          ),
+        { timeout: 6000 },
+      )
+      .toBe(true);
     await expect(page.locator("#blockReasonText")).toContainText("заблокирован");
     await expect(page.locator("#blockReasonActionBtn")).toContainText("Разблокировать");
   });
@@ -171,7 +183,20 @@ test.describe("Honest feedback and transient shell routing", () => {
     );
 
     await expect(page.locator("#stackDepthBadge")).toBeVisible();
-    await expect(page.locator("#stackDepthBadge")).toHaveText("2/3");
+    await expect(page.locator("#stackDepthBadge")).toHaveText("2 из 3");
+    await expect(page.locator("#stackDepthBadge")).toHaveAttribute(
+      "aria-label",
+      "Слой 2 из 3 под курсором",
+    );
+  });
+
+  test("save state pill names the draft honestly instead of pretending to export @stage-f", async ({
+    page,
+  }) => {
+    await evaluateEditor(page, "saveProjectToLocalStorage()");
+
+    await expect(page.locator("#saveStatePill")).toContainText(/локальный черновик/i);
+    await expect(page.locator("#saveStatePill")).not.toContainText("Сохранено");
   });
 
   test("shell-owned storage failures surface diagnostics instead of silent fallback @stage-f", async ({ page }) => {

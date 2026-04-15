@@ -1,4 +1,5 @@
 const path = require("path");
+const { toTestServerUrl } = require("../../../scripts/test-server-config");
 
 const WORKSPACE_ROOT = path.resolve(__dirname, "..", "..", "..");
 const REFERENCE_ROOT = path.join(WORKSPACE_ROOT, "references_pres");
@@ -6,13 +7,13 @@ const REFERENCE_ROOT = path.join(WORKSPACE_ROOT, "references_pres");
 const REFERENCE_FAMILIES = Object.freeze({
   v1: {
     dir: path.join(REFERENCE_ROOT, "html-presentation-examples_v1"),
-    manualBaseUrl:
-      "http://127.0.0.1:4173/references_pres/html-presentation-examples_v1/",
+    manualBaseUrl: toTestServerUrl("/references_pres/html-presentation-examples_v1/"),
   },
   v2: {
     dir: path.join(REFERENCE_ROOT, "html-presentation-examples_v2", "examples"),
-    manualBaseUrl:
-      "http://127.0.0.1:4173/references_pres/html-presentation-examples_v2/examples/",
+    manualBaseUrl: toTestServerUrl(
+      "/references_pres/html-presentation-examples_v2/examples/",
+    ),
   },
 });
 

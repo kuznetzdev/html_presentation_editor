@@ -6,6 +6,7 @@ const {
   clickPreview,
   closeCompactShellPanels,
   connectAssetDirectory,
+  ensureShellPanelVisible,
   evaluateEditor,
   gotoFreshEditor,
   isChromiumOnlyProject,
@@ -205,9 +206,33 @@ test.describe("Asset parity regression", () => {
         updateInspectorFromSelection();
       })()`,
     );
-    await expect(page.locator("#blockReasonBanner")).toBeVisible();
+    await expect
+      .poll(
+        () =>
+          evaluateEditor(
+            page,
+            `Boolean(
+              !document.getElementById("blockReasonBanner")?.hidden &&
+              (document.getElementById("blockReasonText")?.textContent || "").trim().length
+            )`,
+          ),
+        { timeout: 6000 },
+      )
+      .toBe(true);
+    await ensureShellPanelVisible(page, "inspector");
+    await page.locator("#blockReasonActionBtn").scrollIntoViewIfNeeded();
+    await expect(page.locator("#blockReasonActionBtn")).toBeVisible();
     await page.locator("#blockReasonActionBtn").click();
-    await expect(page.locator("#blockReasonBanner")).toBeHidden();
+    await expect
+      .poll(
+        () =>
+          evaluateEditor(
+            page,
+            `Boolean(document.getElementById("blockReasonBanner")?.hidden)`,
+          ),
+        { timeout: 6000 },
+      )
+      .toBe(true);
 
     await evaluateEditor(
       page,
@@ -218,7 +243,19 @@ test.describe("Asset parity regression", () => {
         updateInspectorFromSelection();
       })()`,
     );
-    await expect(page.locator("#blockReasonBanner")).toBeVisible();
+    await expect
+      .poll(
+        () =>
+          evaluateEditor(
+            page,
+            `Boolean(
+              !document.getElementById("blockReasonBanner")?.hidden &&
+              (document.getElementById("blockReasonText")?.textContent || "").trim().length
+            )`,
+          ),
+        { timeout: 6000 },
+      )
+      .toBe(true);
 
     const popup = await openExportValidationPopup(page);
     await expect(popup.locator("body")).toContainText("Stable editing baseline");

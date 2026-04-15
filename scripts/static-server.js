@@ -62,3 +62,24 @@ const server = http.createServer((request, response) => {
 server.listen(port, host, () => {
   console.log(`static-server listening on http://${host}:${port} root=${rootDir}`);
 });
+
+server.on("error", (error) => {
+  if (error && error.code === "EADDRINUSE") {
+    console.error(
+      `static-server could not bind http://${host}:${port}/ because the port is already in use.`,
+    );
+    if (process.platform === "win32") {
+      console.error(
+        `PowerShell: $env:EDITOR_PORT="${port + 1}"; npm start`,
+      );
+    } else {
+      console.error(`Use another port: EDITOR_PORT=${port + 1} npm start`);
+    }
+    process.exit(1);
+    return;
+  }
+
+  const message = error instanceof Error ? error.stack || error.message : String(error);
+  console.error(message);
+  process.exit(1);
+});

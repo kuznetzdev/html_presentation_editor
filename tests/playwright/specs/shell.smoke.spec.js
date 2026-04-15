@@ -1,7 +1,8 @@
-const { test, expect } = require("@playwright/test");
+﻿const { test, expect } = require("@playwright/test");
 const {
   BASIC_DECK_PATH,
   BASIC_MANUAL_BASE_URL,
+  TEST_SERVER_ORIGIN,
   assertHiddenPanelsAreInert,
   assertNoHorizontalOverflow,
   assertShellGeometry,
@@ -49,6 +50,9 @@ test.describe("Editor shell smoke @harness", () => {
       "/references_pres/html-presentation-examples_v3/00_examples_index.html",
     );
     await expect(
+      page.getByRole("link", { name: "Open Starter Example" }),
+    ).toHaveAttribute("href", "/editor/presentation-editor.html?starter=basic");
+    await expect(
       page.getByRole("link", { name: "Open Compatibility Entry" }),
     ).toHaveCount(0);
     await expect(
@@ -58,11 +62,30 @@ test.describe("Editor shell smoke @harness", () => {
       page.getByText("Run npm start or double-click start-editor.cmd").first(),
     ).toBeVisible();
     await expect(
-      page.locator("code").filter({ hasText: "http://127.0.0.1:4173/" }).first(),
+      page.getByText(
+        "Autosave stays in this browser. Use Export when you need an HTML file.",
+      ).first(),
+    ).toBeVisible();
+    await expect(
+      page.locator("code").filter({ hasText: `${TEST_SERVER_ORIGIN}/` }).first(),
     ).toBeVisible();
 
     await page.getByRole("link", { name: "Open Editor" }).click();
     await expect(page.locator("#openHtmlBtn")).toBeVisible();
+  });
+
+  test("starter launchpad route opens a ready bundled sample @harness", async ({
+    page,
+  }) => {
+    await page.goto("/editor/presentation-editor.html?starter=basic", {
+      waitUntil: "domcontentloaded",
+    });
+
+    await expect(previewLocator(page, "#hero-title")).toContainText(
+      "Stable editing baseline",
+    );
+    await expect(page.locator("#workspaceStateBadge")).toContainText("Готово");
+    await expect(page.locator("#documentMeta")).toContainText("Starter Example");
   });
 
   test("open html modal keeps shell stable @harness", async ({ page }) => {
@@ -497,7 +520,7 @@ test.describe("Editor shell smoke @harness", () => {
     expect(chrome.activeSlideLabel?.visible).toBe(true);
     expect(chrome.primaryAction?.visible).toBe(true);
     expect(chrome.reloadAction?.visible).toBe(true);
-    expect(chrome.insertAction?.visible).toBe(true);
+    expect(chrome.insertAction?.visible).toBe(false);
     expect(chrome.statePill?.visible).toBe(true);
     expect(chrome.lifecyclePill?.visible).toBe(true);
 
@@ -617,6 +640,7 @@ test.describe("Editor shell smoke @harness", () => {
     expect(chrome.overflowMenuVisible).toBe(true);
     expect(chrome.overflowTriggerExpanded).toBe("true");
 
+    await expect(page.locator("#toggleInsertPaletteBtn")).toBeVisible();
     await page.click("#toggleInsertPaletteBtn");
     await expect(page.locator("#quickPalette")).toBeVisible();
     await expect(page.locator("#topbarOverflowMenu")).toBeHidden();
@@ -720,6 +744,7 @@ test.describe("Editor shell smoke @harness", () => {
     expect(shell.controls.open).toBe(true);
     expect(shell.controls.emptyOpen).toBe(true);
     expect(shell.controls.emptyPaste).toBe(true);
+    await expect(page.locator("#emptyStarterDeckBtn")).toBeVisible();
     expect(shell.controls.previewMode).toBe(false);
     expect(shell.controls.editMode).toBe(false);
     expect(shell.controls.basicMode).toBe(false);
@@ -818,6 +843,7 @@ test.describe("Editor shell smoke @harness", () => {
     expect(shell.controls.editSuggested).toBe(true);
     expect(shell.controls.basicMode).toBe(shell.controls.advancedMode);
     expect(shell.controls.previewPrimaryAction).toBe(true);
+    expect(shell.copy.previewNote.toLowerCase()).toContain("base url");
     expect(shell.copy.previewPrimaryAction.toLowerCase()).toContain("редакт");
     expect(shell.panels.slides).toBe(!compactShell);
     expect(shell.panels.inspector).toBe(true);
@@ -832,6 +858,8 @@ test.describe("Editor shell smoke @harness", () => {
     expect(shell.inspector.diagnostics).toBe(false);
     expect(shell.inspector.showSlideHtml).toBe(false);
     expect(shell.inspector.showElementHtml).toBe(false);
+    await expect(page.locator("#layersInspectorSection")).toBeHidden();
+    await expect(page.locator("#overlapSelectLayerBtn")).toBeHidden();
 
     const densityToggleVisible = shell.controls.basicMode;
     if (!densityToggleVisible) {
@@ -888,9 +916,84 @@ test.describe("Editor shell smoke @harness", () => {
     expect(shell.inspector.diagnostics).toBe(false);
     expect(shell.copy.selectedElementTitle.length).toBeGreaterThan(3);
     expect(shell.copy.inspectorHelp.length).toBeGreaterThan(16);
+    await expect(page.locator("#layersInspectorSection")).toBeHidden();
 
     await assertNoHorizontalOverflow(page);
     await assertShellGeometry(page);
+  });
+
+  test("empty-state starter example button loads the bundled pilot deck @stage-f", async ({
+    page,
+  }) => {
+    await gotoFreshEditor(page);
+
+    await page.click("#emptyStarterDeckBtn");
+
+    await expect(previewLocator(page, "#hero-title")).toContainText(
+      "Stable editing baseline",
+    );
+    await expect(page.locator("#documentMeta")).toContainText("Starter Example");
+    await expect.poll(() => evaluateEditor(page, "state.mode")).toBe("preview");
+    const compactShell = (await readViewportWidth(page)) <= 1024;
+    if (compactShell) {
+      await expect(page.locator("#mobilePreviewBtn")).toBeVisible();
+      await expect(page.locator("#mobilePreviewBtn")).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+      await expect(page.locator("#previewModeBtn")).toBeHidden();
+    } else {
+      await expect(page.locator("#previewModeBtn")).toBeVisible();
+      await expect(page.locator("#previewModeBtn")).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+      await expect(page.locator("#mobilePreviewBtn")).toBeHidden();
+    }
+  });
+
+  test("preview assist action routes unresolved decks to the asset picker @stage-f", async ({
+    page,
+  }) => {
+    await gotoFreshEditor(page);
+    await openHtmlFixture(page, BASIC_DECK_PATH, {
+      manualBaseUrl: "",
+    });
+
+    await expect(page.locator("#previewAssistActionBtn")).toBeVisible();
+    await expect(page.locator("#previewAssistActionBtn")).toContainText(
+      "Подключить папку ресурсов",
+    );
+    await expect(page.locator("#previewNoteText")).toContainText(
+      "Подключите папку проекта",
+    );
+
+    await page.click("#previewAssistActionBtn");
+
+    await expect(page.locator("#openHtmlModal")).toHaveAttribute(
+      "aria-hidden",
+      "false",
+    );
+    await expect
+      .poll(() => page.evaluate(() => document.activeElement?.id || ""))
+      .toBe("assetDirectoryInput");
+  });
+
+  test("base-url backed preview keeps a compact single-action note @stage-f", async ({
+    page,
+  }) => {
+    await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL });
+
+    await expect(page.locator("#previewAssistActionBtn")).toBeHidden();
+    await expect(page.locator("#previewNoteText")).toHaveText(
+      /Base URL нужен для 5 ресурсов\./,
+    );
+    await expect(page.locator("#inspectorHelp")).toHaveText(
+      /Если всё выглядит верно, нажмите «Начать редактирование»\./,
+    );
+    await expect(page.locator("#currentSlideMetaBadge")).toHaveText(
+      /слайд 1 \/ 3/,
+    );
   });
 
   test("narrow drawers close cleanly and stay out of focus order @stage-e", async (
