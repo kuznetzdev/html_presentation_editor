@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## 0.20.0 - PPTX export and PowerPoint-parity UX - 2026-04-16
+- **Export PPTX**: added "Экспорт PPTX" button to the topbar (outlined accent style, next to "Экспорт HTML")
+- PptxGenJS loaded lazily from CDN on first use — no npm runtime dependency added
+- Slide dimensions auto-detected from CSS custom properties (`--slide-w`, `--slide-h`) or `.slide { width }` rules, defaulting to 1280×720
+- Absolute-positioned elements mapped to PptxGenJS coordinates (left/top/width/height in % and px both supported)
+- Text leaves extracted with font-size (px→pt), color, bold, italic, align; flow-layout fallback for non-positioned text
+- Image elements with `data:` URIs or `https://` src included; relative URLs skipped gracefully
+- Slide background color parsed from inline `background-color` / `background` with gradient/url stripping
+- Export does not modify `modelDoc`, the iframe DOM, or the HTML export path
+- `exportPptxBtn` wired into `syncPrimaryActionUi` — enabled/disabled in sync with `exportBtn`
+- Renamed "Экспорт" button label to "Экспорт HTML" for disambiguation
+
 ## 0.19.6 - responsive shell sidebars and inspector quick actions - 2026-04-15
 - widened the slide rail and inspector with responsive `clamp(...)` sizing so desktop and wide viewports allocate meaningful space to navigation and element properties
 - added selection-aware quick actions to the selected-element summary card for common text, media, image-fit, duplicate, and precision-mode workflows without exposing advanced fields first
