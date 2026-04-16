@@ -1,0 +1,206 @@
+/* Layer order — must be declared before any layer rules */
+@layer tokens, base, layout, preview, inspector, overlay, modal, responsive;
+
+@layer tokens {
+/* ======================================================================
+ [STYLE 01] Theme tokens
+ Shell tokens drive the editor UI. Canvas tokens affect only preview
+ surfaces around the iframe, never the presentation DOM itself.
+ ====================================================================== */
+:root {
+  color-scheme: light;
+  --shell-bg: #f5f5f7;
+  --shell-panel: #ffffff;
+  --shell-panel-soft: #f9f9fb;
+  --shell-panel-elevated: #ffffff;
+  --shell-panel-translucent: #ffffff;
+  --shell-field-bg: #f2f2f7;
+  --shell-field-muted: #f2f2f7;
+  --shell-border: rgba(29, 29, 31, 0.06);
+  --shell-border-strong: rgba(29, 29, 31, 0.12);
+  --shell-text: #1d1d1f;
+  --shell-text-muted: rgba(60, 60, 67, 0.6);
+  --shell-accent: #0071e3;
+  --shell-accent-soft: rgba(0, 113, 227, 0.1);
+  --shell-focus: rgba(0, 113, 227, 0.18);
+  --on-accent: #ffffff;
+  --state-accent-border: rgba(0, 113, 227, 0.18);
+  --shell-success: #247a4d;
+  --shell-success-bg: rgba(36, 122, 77, 0.08);
+  --shell-success-border: rgba(36, 122, 77, 0.14);
+  --shell-warning: #8f6a15;
+  --shell-warning-bg: rgba(143, 106, 21, 0.08);
+  --shell-warning-border: rgba(143, 106, 21, 0.14);
+  --shell-danger: #c9342f;
+  --shell-danger-bg: rgba(201, 52, 47, 0.08);
+  --shell-danger-border: rgba(201, 52, 47, 0.14);
+
+  --canvas-stage-bg: #ffffff;
+  --canvas-stage-border: rgba(29, 29, 31, 0.08);
+  --canvas-note-bg: #ffffff;
+  --canvas-grad-a: rgba(0, 113, 227, 0.04);
+  --canvas-grad-b: #fafafe;
+  --canvas-grad-c: #f2f2f7;
+  --preview-loading-bg: rgba(255, 255, 255, 0.88);
+  --dropzone-border: rgba(0, 113, 227, 0.26);
+  --dropzone-bg: rgba(0, 113, 227, 0.08);
+  --menu-divider: rgba(0, 0, 0, 0.08);
+  --restore-accent-border: rgba(0, 113, 227, 0.14);
+  --restore-accent-bg: rgba(0, 113, 227, 0.06);
+  --drawer-backdrop-bg: rgba(0, 0, 0, 0.28);
+  --shell-cluster-bg: transparent;
+  --shell-cluster-border: transparent;
+  --shell-cluster-shadow: none;
+  --shell-accent-glow: transparent;
+  --shell-selection-ring: rgba(0, 113, 227, 0.14);
+  --shell-note-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shell-spinner-track: rgba(0, 113, 227, 0.18);
+  --shell-modal-backdrop: rgba(0, 0, 0, 0.35);
+  --shell-modal-shadow: 0 18px 48px rgba(0, 0, 0, 0.16);
+  --canvas-stage-highlight: rgba(255, 255, 255, 0.8);
+  --canvas-stage-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
+  --shell-flash-ring: rgba(36, 122, 77, 0.2);
+  --shell-flash-ring-clear: rgba(36, 122, 77, 0);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.16);
+  --motion-fast: 160ms;
+  --motion-medium: 180ms;
+  --motion-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+
+  --topbar-min-h: 52px;
+  --shell-top-offset: 52px;
+  --workspace-max: 1840px;
+  --slide-rail-width: clamp(260px, 18vw, 360px);
+  --inspector-panel-width: clamp(320px, 22vw, 440px);
+  --workspace-gap: clamp(12px, 1vw, 20px);
+  --workspace-padding: clamp(12px, 1.2vw, 24px);
+  --drawer-width: min(92vw, 420px);
+  --mobile-rail-offset: 0px;
+  --shell-popover-inset: 8px;
+
+  --z-topbar: 40;
+  --z-stage-toolbar: 18;
+  --z-stage-selection: 17;
+  --z-stage-overlay: 22;
+  --z-drawer-backdrop: 65;
+  --z-drawer: 68;
+  --z-mobile-rail: 90;
+  --z-shell-popover: 96;
+  --z-context-menu: 100;
+  --z-modal: 110;
+  --z-toast: 140;
+
+  /* Spacing scale (4-point grid) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Typography scale */
+  --text-2xs: 10px;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 18px;
+  --text-2xl: 22px;
+
+  /* Line height scale */
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.45;
+  --leading-relaxed: 1.55;
+  --leading-loose: 1.7;
+
+  accent-color: var(--shell-accent);
+  font-family:
+    Inter,
+    "SF Pro Text",
+    "SF Pro Display",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  --editor-display:
+    Inter,
+    "SF Pro Display",
+    "SF Pro Text",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --shell-bg: #111214;
+  --shell-panel: #1c1d20;
+  --shell-panel-soft: #242529;
+  --shell-panel-elevated: #1c1d20;
+  --shell-panel-translucent: #1c1d20;
+  --shell-field-bg: #2a2b30;
+  --shell-field-muted: #2a2b30;
+  --shell-border: rgba(255, 255, 255, 0.08);
+  --shell-border-strong: rgba(255, 255, 255, 0.14);
+  --shell-text: #f5f5f7;
+  --shell-text-muted: rgba(235, 235, 245, 0.6);
+  --shell-accent: #4da3ff;
+  --shell-accent-soft: rgba(77, 163, 255, 0.16);
+  --shell-focus: rgba(77, 163, 255, 0.24);
+  --on-accent: #08111d;
+  --state-accent-border: rgba(77, 163, 255, 0.2);
+  --shell-success: #8fe6b5;
+  --shell-success-bg: rgba(143, 230, 181, 0.14);
+  --shell-success-border: rgba(143, 230, 181, 0.28);
+  --shell-warning: #ffd37a;
+  --shell-warning-bg: rgba(255, 211, 122, 0.16);
+  --shell-warning-border: rgba(255, 211, 122, 0.3);
+  --shell-danger: #ff9b9b;
+  --shell-danger-bg: rgba(255, 155, 155, 0.16);
+  --shell-danger-border: rgba(255, 155, 155, 0.32);
+
+  --canvas-stage-bg: #16171a;
+  --canvas-stage-border: rgba(255, 255, 255, 0.1);
+  --canvas-note-bg: #1c1d20;
+  --canvas-grad-a: rgba(77, 163, 255, 0.08);
+  --canvas-grad-b: #17181b;
+  --canvas-grad-c: #121316;
+  --preview-loading-bg: rgba(17, 18, 20, 0.88);
+  --dropzone-border: rgba(77, 163, 255, 0.32);
+  --dropzone-bg: rgba(77, 163, 255, 0.14);
+  --menu-divider: rgba(255, 255, 255, 0.08);
+  --restore-accent-border: rgba(77, 163, 255, 0.2);
+  --restore-accent-bg: rgba(77, 163, 255, 0.1);
+  --drawer-backdrop-bg: rgba(0, 0, 0, 0.42);
+  --shell-cluster-bg: transparent;
+  --shell-cluster-border: transparent;
+  --shell-cluster-shadow: none;
+  --shell-accent-glow: transparent;
+  --shell-selection-ring: rgba(126, 162, 255, 0.2);
+  --shell-note-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  --shell-spinner-track: rgba(77, 163, 255, 0.24);
+  --shell-modal-backdrop: rgba(0, 0, 0, 0.58);
+  --shell-modal-shadow: 0 22px 46px rgba(0, 0, 0, 0.32);
+  --canvas-stage-highlight: rgba(255, 255, 255, 0.06);
+  --canvas-stage-shadow: 0 20px 44px rgba(0, 0, 0, 0.24);
+  --shell-flash-ring: rgba(143, 230, 181, 0.32);
+  --shell-flash-ring-clear: rgba(143, 230, 181, 0);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.18);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.24);
+  --shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.28);
+}
+}

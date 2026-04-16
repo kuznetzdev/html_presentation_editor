@@ -1,5 +1,79 @@
 # CHANGELOG
 
+## 0.22.0 - architecture: split monolith into 8 CSS layers + 21 JS modules - 2026-04-16
+
+### Архитектурный рефакторинг — разделение монолита
+
+**Было:** единый файл `editor/presentation-editor.html` (~24 000 строк = CSS + HTML + JS в одном файле)
+**Стало:** чёткое разделение по слоям — 1 HTML-шелл + 8 CSS-файлов + 21 JS-файл
+
+#### CSS → `editor/styles/`
+Все стили вынесены из `<style>` (было ~3 978 строк) в отдельные файлы по `@layer`:
+| Файл | Слой | Содержание |
+|------|------|------------|
+| `tokens.css` | `tokens` | CSS-переменные, дизайн-токены, тема |
+| `base.css` | `base` | Сброс, типографика, примитивы |
+| `layout.css` | `layout` | Сетка шелла, панели, топбар |
+| `preview.css` | `preview` | Превью-стейдж, рейл слайдов |
+| `inspector.css` | `inspector` | Правая панель, формы, поля |
+| `overlay.css` | `overlay` | Плавающий тулбар, контекстное меню, тосты |
+| `modal.css` | `modal` | Модальные окна, шторки |
+| `responsive.css` | `responsive` | Брейкпоинты, мобильные адаптации |
+
+#### JS → `editor/src/`
+Скрипт (~18 235 строк) разбит по ZONE-маркерам в 21 файл:
+| Файл | Зона / содержание |
+|------|------------------|
+| `constants.js` | Константы, ключи хранилища, наборы тегов |
+| `state.js` | SelectionPolicy + PreviewLifecycle + объект `state` |
+| `onboarding.js` | Shell Onboarding — UI помощника |
+| `dom.js` | Inspector Wiring — объект `els`, `cacheEls()` |
+| `bridge.js` | Bridge Message Dispatch |
+| `shortcuts.js` | Global Shortcuts & Window Events |
+| `clipboard.js` | Clipboard & Drag-Drop |
+| `import.js` | Document Loading & Import Pipeline |
+| `slides.js` | Slide Registry & Navigation |
+| `preview.js` | Preview Build & Bridge Bootstrap |
+| `slide-rail.js` | Slide Rail Rendering |
+| `style-app.js` | Style Application |
+| `export.js` | Export & Assets |
+| `history.js` | History: Undo / Redo |
+| `feedback.js` | Feedback & Notifications |
+| `selection.js` | Selection Overlay & Direct Manipulation |
+| `toolbar.js` | Floating Toolbar |
+| `context-menu.js` | Context Menu |
+| `inspector-sync.js` | Inspector Sync (включает `function init()`) |
+| `primary-action.js` | Primary Action Sync + autosave |
+| `main.js` | Точка входа — вызывает `init()` последним |
+
+#### HTML-шелл `editor/presentation-editor.html`
+- Сжат с ~24 000 до **1 784 строк** (HTML-разметка + `<link>` + `<script src>`)
+- Сохранён inline-скрипт темы (FOUC prevention)
+- Порядок загрузки: 8 CSS-файлов → тело страницы → 21 JS-файл → `main.js`
+
+### Архитектурные решения
+- **Classic `<script src>` (не ES-модули)** — совместимость с `file://` в Chrome; все файлы делят глобальный скоуп
+- **Вызов `init()` перенесён** в `main.js` (последний загружаемый файл); в оригинале он был посредине скрипта на строке ~6 722
+- **Порядок CSS-слоёв** сохранён: декларация `@layer tokens, base, ...` в первом `tokens.css`
+
+### Gate-A baseline
+55 passed / 5 skipped / 0 failed — без регрессий
+
+---
+
+## 0.21.0 - design system polish: token consistency & dark-mode fixes - 2026-04-16
+
+### CSS design system (Phase 5)
+- **Hardcoded colors replaced** — все четыре вхождения `#8e8e93` заменены на `var(--shell-text-muted)`: `.topbar-eyebrow`, `.inspector-section h3`, `.section-toggle`, `.context-menu-section-title`
+- **Dark-mode border bug fixed** — `rgba(29, 29, 31, 0.12)` заменены на `var(--shell-border-strong)` в трёх местах: `.slide-item::before`, `.layer-picker`, `.context-menu`; в тёмной теме эти бордеры теперь корректно отображаются белыми (не невидимыми)
+- **Floating toolbar** — фон изменён с `var(--shell-field-bg)` на `var(--shell-panel-elevated)`, бордер — с `var(--shell-border)` на `var(--shell-border-strong)`; теперь панель визуально выделяется как плавающий попап, а не просто поле ввода
+- **Align button active state** — `#ftAlignGroup button.is-active` теперь использует `var(--shell-accent-soft)` + `color: var(--shell-accent)` вместо плотного синего фона `var(--shell-accent)` — соответствует стилю `.toolbar-row button.is-active`
+- **Token normalization** — `.floating-toolbar` и `.context-menu` используют `var(--radius-md)` вместо хардкода `12px`
+- **`.section-toggle` cleanup** — удалено избыточное `color: inherit` (перекрывалось следующей `color:` декларацией)
+
+### Git semver tags
+- Применены теги `v0.20.0` – `v0.20.5` на исторические коммиты
+
 ## 0.20.5 - internal code structure: 21 navigable zone headers - 2026-04-16
 
 ### Внутренние улучшения (Phase 4)
