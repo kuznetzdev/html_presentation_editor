@@ -1,5 +1,86 @@
 # CHANGELOG
 
+## 0.20.4 - element Ctrl+C/X/V, shortcut cheat-sheet modal - 2026-04-16
+
+### Копирование, вырезание и вставка элементов
+- **Ctrl+C** — копирует выбранный элемент во внутренний буфер (`state.copiedElementHtml`); `data-editor-node-id` у клона удаляются → пастированный элемент получает свежие ID
+- **Ctrl+X** — вырезает: копирует в буфер и удаляет выбранный элемент
+- **Ctrl+V** — вставляет элемент из буфера (после выбранного или в конец слайда); имеет приоритет над системным paste-ивентом
+- Кнопки **«Копировать»** и **«Вставить»** добавлены в инспектор (секция «Частые действия»)
+- Пункты **«Копировать», «Вырезать», «Вставить»** добавлены в контекстное меню; «Вырезать» видна при `canDelete`, «Вставить» — только при непустом буфере
+
+### Справка по горячим клавишам
+- Клавиша **`?`** открывает модальное окно со списком всех горячих клавиш
+- Кнопка **«⌨ Справка»** в меню overflow топбара
+- Модальное окно двухколоночное: «Редактирование текста», «Элементы» / «Навигация», «Вид и экспорт»
+- `shortcutsModal` включён в обработчик Escape и backdrop-close
+
+## 0.20.3 - inspector polish: opacity, border-radius, Shape insert - 2026-04-16
+
+### Инспектор — новые поля оформления блока
+- **Прозрачность (%)** (`opacityInput`): числовое поле 0–100; конвертируется в CSS `opacity` 0–1; синхронизируется с вычисленными стилями; пустое значение = непрозрачный (opacity 1)
+- **Скругление углов** (`borderRadiusInput`): текстовое поле, принимает `8px`, `50%`, `4px 8px`; применяется через `applyStyle("borderRadius")`; синхронизируется с `borderRadius` computed-стилей
+- Оба поля включаются/выключаются через `styleLocked`; сбрасываются при снятии выделения; присутствуют в обоих путях синхронизации (primary + legacy)
+
+### Вставка — кнопка «Форма»
+- Новая кнопка **Форма** (`addShapeBtn`) в секции «Вставка» рядом с «Текст», «Картинка», «Видео»
+- Вставляет абсолютно позиционированный `div` 160×100 px с синим фоном и `border-radius:8px` — готовая база для кастомных блоков
+- `addShapeBtn` привязана к `syncPrimaryActionUi` (disabled при отсутствии активного слайда)
+
+## 0.20.2 - keyboard formatting shortcuts & UX fixes - 2026-04-16
+
+### Keyboard shortcuts (новые)
+- **Ctrl+B** — жирный для выбранного элемента (не в режиме ввода текста)
+- **Ctrl+I** — курсив
+- **Ctrl+U** — подчёркнутый
+- **Ctrl+L** — выравнивание по левому краю
+- **Ctrl+E** — выравнивание по центру
+- **Ctrl+R** — выравнивание по правому краю
+- Все шорткаты работают только в режиме `edit` при выбранном текстовом элементе; в режиме `text-edit` (contenteditable) браузер обрабатывает их нативно
+
+### UX-исправления
+- Align-кнопки в floating toolbar: заменены нечитаемые символы ⬡/≡/⬢ на ← / ↔ / →
+- Align-кнопки в инспекторе: обновлены аналогично (были «Слева»/«Центр»/«Справа», стали ← / ↔ / →)
+- Tooltips на B/I/U в инспекторе дополнены шорткатами (Ctrl+B/I/U)
+- Tooltips на align-кнопках инспектора дополнены (Ctrl+L/E/R)
+
+### Инспектор — новые поля типографики
+- **Шрифт** (`inspectorFontFamilySelect`): 11 распространённых семейств, синхронизируется с выбранным элементом
+- **Межстрочный интервал** (`inspectorLineHeightSelect`): 1.0–2.0, синхронизируется с `lineHeight` вычисленных стилей
+- Размер шрифта в инспекторе расширен до 16 значений (10–96 px), синхронизирован с floating toolbar
+- Все новые поля включаются/выключаются и сбрасываются вместе с остальными text-entity контролами
+
+## 0.20.1 - PowerPoint-parity UX: rich-text toolbar & presentation mode - 2026-04-16
+
+### Floating toolbar — полный набор форматирования текста
+- **Подчёркивание** (`ftUnderlineBtn`): Ctrl+U-семантика, активное состояние синхронизировано с computed styles
+- **Выравнивание текста** (`ftAlignLeftBtn/CenterBtn/RightBtn`): три кнопки L/C/R в отдельной группе `#ftAlignGroup`; active-state отражает реальный `textAlign` выбранного элемента
+- **Шрифт** (`ftFontFamilySelect`): выпадающий список 11 распространённых семейств (Inter, Segoe UI, Arial, Georgia, Times New Roman, Courier New, Impact и др.)
+- **Размер шрифта** расширен: 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72, 96 px
+- Все новые контролы disabled при отсутствии текстового элемента, скрыты для нетекстовых сущностей
+- Оба пути синхронизации (primary + legacy) обновлены
+
+### Режим презентации
+- Кнопка **▶ Показать** в topbar (outlined accent): открывает чистый экспорт в новом окне, запрашивает fullscreen после загрузки
+- Tooltip-подсказка «Нажми F11 для полного экрана» в toast-уведомлении
+- Кнопка disabled при отсутствии загруженной презентации
+
+### UX-polish
+- Tooltips (`title=`) добавлены на все кнопки topbar: Открыть HTML, ▶ Показать, Экспорт HTML, Экспорт PPTX
+- Кнопка «Экспорт PPTX» переоформлена в нейтральный стиль (border/ghost), «▶ Показать» — в accent-outlined
+
+## 0.20.0 - PPTX export and PowerPoint-parity UX - 2026-04-16
+- **Export PPTX**: added "Экспорт PPTX" button to the topbar (outlined accent style, next to "Экспорт HTML")
+- PptxGenJS loaded lazily from CDN on first use — no npm runtime dependency added
+- Slide dimensions auto-detected from CSS custom properties (`--slide-w`, `--slide-h`) or `.slide { width }` rules, defaulting to 1280×720
+- Absolute-positioned elements mapped to PptxGenJS coordinates (left/top/width/height in % and px both supported)
+- Text leaves extracted with font-size (px→pt), color, bold, italic, align; flow-layout fallback for non-positioned text
+- Image elements with `data:` URIs or `https://` src included; relative URLs skipped gracefully
+- Slide background color parsed from inline `background-color` / `background` with gradient/url stripping
+- Export does not modify `modelDoc`, the iframe DOM, or the HTML export path
+- `exportPptxBtn` wired into `syncPrimaryActionUi` — enabled/disabled in sync with `exportBtn`
+- Renamed "Экспорт" button label to "Экспорт HTML" for disambiguation
+
 ## 0.19.6 - responsive shell sidebars and inspector quick actions - 2026-04-15
 - widened the slide rail and inspector with responsive `clamp(...)` sizing so desktop and wide viewports allocate meaningful space to navigation and element properties
 - added selection-aware quick actions to the selected-element summary card for common text, media, image-fit, duplicate, and precision-mode workflows without exposing advanced fields first

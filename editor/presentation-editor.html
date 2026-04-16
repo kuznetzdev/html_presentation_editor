@@ -834,6 +834,27 @@
         color: #ffffff;
       }
 
+      #topbarCommandCluster #presentBtn {
+        border: 1px solid var(--shell-accent);
+        background: transparent;
+        color: var(--shell-accent);
+        font-weight: 600;
+      }
+
+      #topbarCommandCluster #presentBtn:hover:not(:disabled) {
+        background: color-mix(in srgb, var(--shell-accent) 12%, transparent 88%);
+      }
+
+      #topbarCommandCluster #exportPptxBtn {
+        border: 1px solid var(--shell-border);
+        background: transparent;
+        color: var(--shell-fg);
+      }
+
+      #topbarCommandCluster #exportPptxBtn:hover:not(:disabled) {
+        background: var(--shell-field-bg);
+      }
+
       body[data-editor-workflow="empty"] #topbarStateCluster,
       body[data-editor-workflow="empty"] .topbar-center,
       body[data-editor-workflow="empty"] #mobileCommandRail,
@@ -2972,6 +2993,36 @@
         border-left: 0;
       }
 
+      /* Align buttons use text symbols — keep them monospace-width */
+      #ftAlignLeftBtn, #ftAlignCenterBtn, #ftAlignRightBtn {
+        font-size: 13px;
+        letter-spacing: 0;
+      }
+      #ftAlignLeftBtn::before   { content: "⬅"; display:none; }
+      /* Cleaner text symbols for alignment */
+      #ftAlignLeftBtn   { font-family: monospace; }
+      #ftAlignCenterBtn { font-family: monospace; }
+      #ftAlignRightBtn  { font-family: monospace; }
+
+      /* Show active state on align buttons */
+      #ftAlignGroup button.is-active {
+        background: var(--shell-accent);
+        color: #fff;
+        border-radius: 4px;
+      }
+
+      /* Font family select — slightly wider than font-size */
+      #ftFontFamilySelect {
+        max-width: 110px;
+        font-size: 12px;
+      }
+
+      /* Underline button visual */
+      #ftUnderlineBtn {
+        text-decoration: underline;
+        font-family: inherit;
+      }
+
       .toolbar-handle {
         cursor: grab;
         user-select: none;
@@ -3324,6 +3375,58 @@
         display: flex;
       }
 
+      .modal-card--wide {
+        width: min(760px, 98%);
+      }
+      .shortcuts-modal-body {
+        flex-direction: row;
+        gap: 24px;
+        padding: 20px;
+      }
+      .shortcuts-col {
+        flex: 1 1 0;
+        min-width: 0;
+      }
+      .shortcuts-col h4 {
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--shell-text-muted);
+        margin: 0 0 8px;
+      }
+      .shortcuts-col + .shortcuts-col {
+        border-left: 1px solid var(--shell-border);
+        padding-left: 24px;
+      }
+      .shortcuts-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 18px;
+        font-size: 13px;
+      }
+      .shortcuts-table tr + tr td {
+        border-top: 1px solid var(--shell-border);
+      }
+      .shortcuts-table td {
+        padding: 5px 4px;
+        vertical-align: middle;
+      }
+      .shortcuts-table td:first-child {
+        white-space: nowrap;
+        padding-right: 12px;
+      }
+      .shortcuts-table kbd {
+        display: inline-block;
+        padding: 2px 6px;
+        background: var(--shell-field-muted);
+        border: 1px solid var(--shell-border);
+        border-radius: 4px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 11px;
+        line-height: 1.5;
+        color: var(--shell-text);
+      }
       .modal-card {
         width: min(520px, 100%);
         max-height: 80vh;
@@ -3791,7 +3894,9 @@
         #undoBtn,
         #redoBtn,
         #openHtmlBtn,
-        #exportBtn {
+        #presentBtn,
+        #exportBtn,
+        #exportPptxBtn {
           min-height: 44px;
           padding: 0 10px;
           font-size: 12px;
@@ -3977,8 +4082,10 @@
             </button>
             <button id="undoBtn" disabled>Отменить</button>
             <button id="redoBtn" disabled>Повторить</button>
-          <button id="openHtmlBtn" class="primary-btn">Открыть HTML</button>
-            <button id="exportBtn" disabled>Экспорт</button>
+          <button id="openHtmlBtn" class="primary-btn" title="Открыть HTML-файл презентации">Открыть HTML</button>
+            <button id="presentBtn" disabled title="Открыть презентацию на весь экран (▶ F5)">▶ Показать</button>
+            <button id="exportBtn" disabled title="Скачать чистый HTML-файл">Экспорт HTML</button>
+            <button id="exportPptxBtn" disabled title="Скачать файл PowerPoint (.pptx)">Экспорт PPTX</button>
           </div>
           <button
             id="topbarOverflowBtn"
@@ -4002,6 +4109,16 @@
       aria-label="Дополнительные команды topbar"
     >
       <div class="topbar-overflow-menu-inner">
+        <button
+          id="topbarOverflowShortcutsBtn"
+          type="button"
+          class="ghost-btn"
+          data-topbar-overflow-action="shortcuts"
+          role="menuitem"
+          title="Список горячих клавиш (?)"
+        >
+          ⌨ Справка
+        </button>
         <button
           id="topbarOverflowThemeBtn"
           type="button"
@@ -4492,7 +4609,7 @@
                     id="ftEditTextBtn"
                     class="compact"
                     aria-label="Редактировать текст"
-                    title="Редактировать текст"
+                    title="Редактировать текст (двойной клик)"
                   >
                     ✎
                   </button>
@@ -4500,8 +4617,8 @@
                     type="button"
                     id="ftBoldBtn"
                     class="compact"
-                    aria-label="Сделать текст жирным"
-                    title="Жирный"
+                    aria-label="Жирный"
+                    title="Жирный (Ctrl+B)"
                   >
                     <strong>B</strong>
                   </button>
@@ -4509,21 +4626,60 @@
                     type="button"
                     id="ftItalicBtn"
                     class="compact"
-                    aria-label="Сделать текст курсивом"
-                    title="Курсив"
+                    aria-label="Курсив"
+                    title="Курсив (Ctrl+I)"
                   >
                     <em>I</em>
                   </button>
+                  <button
+                    type="button"
+                    id="ftUnderlineBtn"
+                    class="compact"
+                    aria-label="Подчёркнутый"
+                    title="Подчёркнутый (Ctrl+U)"
+                    style="text-decoration:underline"
+                  >
+                    U
+                  </button>
                   <input id="ftColorInput" type="color" title="Цвет текста" />
-                  <select id="ftFontSizeSelect" title="Размер шрифта">
+                  <select id="ftFontFamilySelect" title="Шрифт" aria-label="Шрифт">
+                    <option value="">— шрифт —</option>
+                    <option value="Inter, sans-serif">Inter</option>
+                    <option value="'Segoe UI', sans-serif">Segoe UI</option>
+                    <option value="Arial, sans-serif">Arial</option>
+                    <option value="Helvetica, sans-serif">Helvetica</option>
+                    <option value="Georgia, serif">Georgia</option>
+                    <option value="'Times New Roman', serif">Times New Roman</option>
+                    <option value="'Courier New', monospace">Courier New</option>
+                    <option value="monospace">monospace</option>
+                    <option value="Impact, sans-serif">Impact</option>
+                    <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                    <option value="Verdana, sans-serif">Verdana</option>
+                  </select>
+                  <select id="ftFontSizeSelect" title="Размер шрифта" aria-label="Размер шрифта">
                     <option value="">Px</option>
+                    <option value="10">10</option>
+                    <option value="12">12</option>
                     <option value="14">14</option>
                     <option value="16">16</option>
+                    <option value="18">18</option>
                     <option value="20">20</option>
                     <option value="24">24</option>
+                    <option value="28">28</option>
                     <option value="32">32</option>
+                    <option value="36">36</option>
+                    <option value="40">40</option>
                     <option value="48">48</option>
+                    <option value="56">56</option>
+                    <option value="64">64</option>
+                    <option value="72">72</option>
+                    <option value="96">96</option>
                   </select>
+                </div>
+                <div id="ftAlignGroup" class="floating-toolbar-group">
+                  <button type="button" id="ftAlignLeftBtn"   class="compact" data-ft-align="left"    aria-label="По левому краю"  title="По левому краю (Ctrl+L)">←</button>
+                  <button type="button" id="ftAlignCenterBtn" class="compact" data-ft-align="center"  aria-label="По центру"       title="По центру (Ctrl+E)">↔</button>
+                  <button type="button" id="ftAlignRightBtn"  class="compact" data-ft-align="right"   aria-label="По правому краю" title="По правому краю (Ctrl+R)">→</button>
                 </div>
                 <div id="ftMediaGroup" class="floating-toolbar-group">
                   <button
@@ -4823,6 +4979,7 @@
             <h3>Вставка</h3>
             <div class="insert-actions">
               <button type="button" id="addTextBtn">Текст</button>
+              <button type="button" id="addShapeBtn">Форма</button>
               <button type="button" id="addImageBtn">Картинка / GIF</button>
               <button type="button" id="addVideoBtn">Видео</button>
             </div>
@@ -4845,18 +5002,24 @@
           >
             <h3>Частые действия</h3>
             <div class="inspector-actions">
-              <button type="button" id="duplicateElementBtn">
+              <button type="button" id="copyElementBtn" title="Скопировать элемент (Ctrl+C)">
+                Копировать
+              </button>
+              <button type="button" id="pasteElementBtn" title="Вставить элемент (Ctrl+V)">
+                Вставить
+              </button>
+              <button type="button" id="duplicateElementBtn" title="Дублировать (Ctrl+D)">
                 Дублировать
               </button>
-              <button type="button" id="deleteElementBtn">Удалить</button>
+              <button type="button" id="deleteElementBtn" title="Удалить (Delete)">Удалить</button>
               <button type="button" id="moveElementUpBtn">
                 Сдвинуть вверх
               </button>
               <button type="button" id="moveElementDownBtn">
                 Сдвинуть вниз
               </button>
-              <button type="button" id="copyStyleBtn">Копировать стиль</button>
-              <button type="button" id="pasteStyleBtn">Вставить стиль</button>
+              <button type="button" id="copyStyleBtn" title="Копировать стиль (Ctrl+Shift+C)">Копировать стиль</button>
+              <button type="button" id="pasteStyleBtn" title="Вставить стиль (Ctrl+Shift+V)">Вставить стиль</button>
               <button type="button" id="resetStylesBtn">Сбросить стили</button>
               <button
                 type="button"
@@ -4875,18 +5038,18 @@
           >
             <h3>Текст и типографика</h3>
             <div class="toolbar-row wrap">
-              <button type="button" id="boldBtn" title="Жирный">
+              <button type="button" id="boldBtn" title="Жирный (Ctrl+B)">
                 <strong>B</strong>
               </button>
-              <button type="button" id="italicBtn" title="Курсив">
+              <button type="button" id="italicBtn" title="Курсив (Ctrl+I)">
                 <em>I</em>
               </button>
-              <button type="button" id="underlineBtn" title="Подчёркнутый">
+              <button type="button" id="underlineBtn" title="Подчёркнутый (Ctrl+U)">
                 <span class="text-underline">U</span>
               </button>
-              <button type="button" data-align="left">Слева</button>
-              <button type="button" data-align="center">Центр</button>
-              <button type="button" data-align="right">Справа</button>
+              <button type="button" data-align="left"   title="По левому краю (Ctrl+L)">←</button>
+              <button type="button" data-align="center" title="По центру (Ctrl+E)">↔</button>
+              <button type="button" data-align="right"  title="По правому краю (Ctrl+R)">→</button>
               <button type="button" id="editTextBtn">
                 Редактировать текст
               </button>
@@ -4896,18 +5059,60 @@
                 <label for="fontSizeSelect">Размер шрифта</label>
                 <select id="fontSizeSelect">
                   <option value="">Авто</option>
+                  <option value="10">10 px</option>
                   <option value="12">12 px</option>
                   <option value="14">14 px</option>
                   <option value="16">16 px</option>
+                  <option value="18">18 px</option>
                   <option value="20">20 px</option>
                   <option value="24">24 px</option>
+                  <option value="28">28 px</option>
                   <option value="32">32 px</option>
+                  <option value="36">36 px</option>
+                  <option value="40">40 px</option>
                   <option value="48">48 px</option>
+                  <option value="56">56 px</option>
+                  <option value="64">64 px</option>
+                  <option value="72">72 px</option>
+                  <option value="96">96 px</option>
                 </select>
               </div>
               <div class="field-group compact">
                 <label for="textColorInput">Цвет текста</label>
                 <input id="textColorInput" type="color" value="#000000" />
+              </div>
+            </div>
+            <div class="field-grid-2">
+              <div class="field-group compact">
+                <label for="inspectorFontFamilySelect">Шрифт</label>
+                <select id="inspectorFontFamilySelect">
+                  <option value="">— авто —</option>
+                  <option value="Inter, sans-serif">Inter</option>
+                  <option value="'Segoe UI', sans-serif">Segoe UI</option>
+                  <option value="Arial, sans-serif">Arial</option>
+                  <option value="Helvetica, sans-serif">Helvetica</option>
+                  <option value="Georgia, serif">Georgia</option>
+                  <option value="'Times New Roman', serif">Times New Roman</option>
+                  <option value="'Courier New', monospace">Courier New</option>
+                  <option value="monospace">monospace</option>
+                  <option value="Impact, sans-serif">Impact</option>
+                  <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                  <option value="Verdana, sans-serif">Verdana</option>
+                </select>
+              </div>
+              <div class="field-group compact">
+                <label for="inspectorLineHeightSelect">Межстрочный интервал</label>
+                <select id="inspectorLineHeightSelect">
+                  <option value="">— авто —</option>
+                  <option value="1">1 (тесно)</option>
+                  <option value="1.2">1.2</option>
+                  <option value="1.3">1.3</option>
+                  <option value="1.4">1.4</option>
+                  <option value="1.5">1.5</option>
+                  <option value="1.6">1.6 (удобно)</option>
+                  <option value="1.8">1.8</option>
+                  <option value="2">2 (широко)</option>
+                </select>
               </div>
             </div>
           </div>
@@ -5047,6 +5252,16 @@
               <div class="field-group compact">
                 <label for="paddingInput">Padding</label>
                 <input id="paddingInput" type="text" placeholder="8px 12px" />
+              </div>
+            </div>
+            <div class="field-grid-2">
+              <div class="field-group compact">
+                <label for="opacityInput">Прозрачность (%)</label>
+                <input id="opacityInput" type="number" min="0" max="100" step="5" placeholder="100" />
+              </div>
+              <div class="field-group compact">
+                <label for="borderRadiusInput">Скругление углов</label>
+                <input id="borderRadiusInput" type="text" placeholder="8px / 50%" />
               </div>
             </div>
           </div>
@@ -5398,6 +5613,61 @@
             aria-live="polite"
             hidden
           ></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Keyboard shortcuts reference modal -->
+    <div class="modal" id="shortcutsModal" aria-hidden="true">
+      <div class="modal-card modal-card--wide">
+        <div class="modal-header">
+          <h3>⌨ Горячие клавиши</h3>
+          <button type="button" class="ghost-btn" data-close-modal="shortcutsModal">Закрыть</button>
+        </div>
+        <div class="modal-body shortcuts-modal-body">
+          <div class="shortcuts-col">
+            <h4>Редактирование текста</h4>
+            <table class="shortcuts-table">
+              <tr><td><kbd>Ctrl+B</kbd></td><td>Жирный</td></tr>
+              <tr><td><kbd>Ctrl+I</kbd></td><td>Курсив</td></tr>
+              <tr><td><kbd>Ctrl+U</kbd></td><td>Подчёркнутый</td></tr>
+              <tr><td><kbd>Ctrl+L</kbd></td><td>По левому краю</td></tr>
+              <tr><td><kbd>Ctrl+E</kbd></td><td>По центру</td></tr>
+              <tr><td><kbd>Ctrl+R</kbd></td><td>По правому краю</td></tr>
+            </table>
+            <h4>Элементы</h4>
+            <table class="shortcuts-table">
+              <tr><td><kbd>Ctrl+C</kbd></td><td>Копировать элемент</td></tr>
+              <tr><td><kbd>Ctrl+X</kbd></td><td>Вырезать элемент</td></tr>
+              <tr><td><kbd>Ctrl+V</kbd></td><td>Вставить элемент</td></tr>
+              <tr><td><kbd>Ctrl+D</kbd></td><td>Дублировать</td></tr>
+              <tr><td><kbd>Delete</kbd></td><td>Удалить элемент</td></tr>
+              <tr><td><kbd>Ctrl+Shift+C</kbd></td><td>Копировать стиль</td></tr>
+              <tr><td><kbd>Ctrl+Shift+V</kbd></td><td>Вставить стиль</td></tr>
+            </table>
+          </div>
+          <div class="shortcuts-col">
+            <h4>Навигация и выделение</h4>
+            <table class="shortcuts-table">
+              <tr><td><kbd>↑ ↓ ← →</kbd></td><td>Сдвинуть элемент на 1 px</td></tr>
+              <tr><td><kbd>Shift+стрелки</kbd></td><td>Сдвинуть на 10 px</td></tr>
+              <tr><td><kbd>Ctrl+Click</kbd></td><td>Глубокое выделение</td></tr>
+              <tr><td><kbd>Alt+Click</kbd></td><td>Выделить родителя</td></tr>
+              <tr><td><kbd>Shift+Enter</kbd></td><td>Перейти к родителю</td></tr>
+              <tr><td><kbd>Enter</kbd></td><td>Войти в контейнер</td></tr>
+              <tr><td><kbd>Escape</kbd></td><td>Сбросить выделение</td></tr>
+            </table>
+            <h4>Вид и экспорт</h4>
+            <table class="shortcuts-table">
+              <tr><td><kbd>Ctrl++</kbd></td><td>Увеличить масштаб</td></tr>
+              <tr><td><kbd>Ctrl+–</kbd></td><td>Уменьшить масштаб</td></tr>
+              <tr><td><kbd>Ctrl+0</kbd></td><td>Масштаб 100%</td></tr>
+              <tr><td><kbd>Ctrl+Z</kbd></td><td>Отменить</td></tr>
+              <tr><td><kbd>Ctrl+Y</kbd></td><td>Повторить</td></tr>
+              <tr><td><kbd>Ctrl+F</kbd></td><td>Найти элемент</td></tr>
+              <tr><td><kbd>?</kbd></td><td>Эта справка</td></tr>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -5947,6 +6217,7 @@
         },
         restorePayload: null,
         copiedStyle: null,
+        copiedElementHtml: null,   // internal element clipboard (Ctrl+C / Ctrl+V)
         theme: "light",
         themePreference: "system",
         complexityMode: "basic",
@@ -6002,7 +6273,9 @@
         topbar: document.getElementById("topbar"),
         openHtmlBtn: document.getElementById("openHtmlBtn"),
         showSlideHtmlBtn: document.getElementById("showSlideHtmlBtn"),
+        presentBtn: document.getElementById("presentBtn"),
         exportBtn: document.getElementById("exportBtn"),
+        exportPptxBtn: document.getElementById("exportPptxBtn"),
         undoBtn: document.getElementById("undoBtn"),
         redoBtn: document.getElementById("redoBtn"),
         previewModeBtn: document.getElementById("previewModeBtn"),
@@ -6093,9 +6366,17 @@
         ftCopyImageUrlBtn: document.getElementById("ftCopyImageUrlBtn"),
         ftMediaUrlBtn: document.getElementById("ftMediaUrlBtn"),
         ftFitImageBtn: document.getElementById("ftFitImageBtn"),
+        inspectorFontFamilySelect: document.getElementById("inspectorFontFamilySelect"),
+        inspectorLineHeightSelect: document.getElementById("inspectorLineHeightSelect"),
         ftBoldBtn: document.getElementById("ftBoldBtn"),
         ftItalicBtn: document.getElementById("ftItalicBtn"),
+        ftUnderlineBtn: document.getElementById("ftUnderlineBtn"),
+        ftAlignGroup: document.getElementById("ftAlignGroup"),
+        ftAlignLeftBtn: document.getElementById("ftAlignLeftBtn"),
+        ftAlignCenterBtn: document.getElementById("ftAlignCenterBtn"),
+        ftAlignRightBtn: document.getElementById("ftAlignRightBtn"),
         ftColorInput: document.getElementById("ftColorInput"),
+        ftFontFamilySelect: document.getElementById("ftFontFamilySelect"),
         ftFontSizeSelect: document.getElementById("ftFontSizeSelect"),
         selectedNodeBadge: document.getElementById("selectedNodeBadge"),
         selectedSlideBadge: document.getElementById("selectedSlideBadge"),
@@ -6172,6 +6453,8 @@
         fontSizeSelect: document.getElementById("fontSizeSelect"),
         textColorInput: document.getElementById("textColorInput"),
         showElementHtmlBtn: document.getElementById("showElementHtmlBtn"),
+        copyElementBtn: document.getElementById("copyElementBtn"),
+        pasteElementBtn: document.getElementById("pasteElementBtn"),
         duplicateElementBtn: document.getElementById("duplicateElementBtn"),
         deleteElementBtn: document.getElementById("deleteElementBtn"),
         moveElementUpBtn: document.getElementById("moveElementUpBtn"),
@@ -6195,6 +6478,9 @@
         borderWidthInput: document.getElementById("borderWidthInput"),
         marginInput: document.getElementById("marginInput"),
         paddingInput: document.getElementById("paddingInput"),
+        opacityInput: document.getElementById("opacityInput"),
+        borderRadiusInput: document.getElementById("borderRadiusInput"),
+        addShapeBtn: document.getElementById("addShapeBtn"),
         imageSection: document.getElementById("imageSection"),
         imageSrcInput: document.getElementById("imageSrcInput"),
         applyImageSrcBtn: document.getElementById("applyImageSrcBtn"),
@@ -6218,6 +6504,7 @@
         diagnosticsBox: document.getElementById("diagnosticsBox"),
         alignButtons: Array.from(document.querySelectorAll("[data-align]")),
         openHtmlModal: document.getElementById("openHtmlModal"),
+        shortcutsModal: document.getElementById("shortcutsModal"),
         htmlEditorModal: document.getElementById("htmlEditorModal"),
         fileInput: document.getElementById("fileInput"),
         pasteHtmlTextarea: document.getElementById("pasteHtmlTextarea"),
@@ -6478,6 +6765,14 @@
         els.fontSizeSelect.addEventListener("change", () =>
           applyStyle("fontSize", toCssSize(els.fontSizeSelect.value)),
         );
+        els.inspectorFontFamilySelect?.addEventListener("change", () => {
+          const v = els.inspectorFontFamilySelect.value;
+          if (v) applyStyle("fontFamily", v);
+        });
+        els.inspectorLineHeightSelect?.addEventListener("change", () => {
+          const v = els.inspectorLineHeightSelect.value;
+          if (v) applyStyle("lineHeight", v);
+        });
         els.textColorInput.addEventListener("input", () =>
           applyStyle("color", els.textColorInput.value),
         );
@@ -6523,6 +6818,14 @@
         els.paddingInput.addEventListener("change", () =>
           applyStyle("padding", els.paddingInput.value.trim()),
         );
+        els.opacityInput.addEventListener("change", () => {
+          const v = parseFloat(els.opacityInput.value);
+          if (!isNaN(v)) applyStyle("opacity", String(Math.min(100, Math.max(0, v)) / 100));
+        });
+        els.borderRadiusInput.addEventListener("change", () =>
+          applyStyle("borderRadius", normalizeCssInput(els.borderRadiusInput.value)),
+        );
+        els.addShapeBtn.addEventListener("click", insertDefaultShape);
 
         els.elementIdInput.addEventListener("change", () =>
           updateAttributes({ id: els.elementIdInput.value.trim() }),
@@ -6549,6 +6852,8 @@
         // Inspector actions.
         els.showElementHtmlBtn.addEventListener("click", openElementHtmlEditor);
         els.saveHtmlEditorBtn.addEventListener("click", saveHtmlEditorChanges);
+        els.copyElementBtn.addEventListener("click", copySelectedElement);
+        els.pasteElementBtn.addEventListener("click", pasteSelectedElement);
         els.duplicateElementBtn.addEventListener(
           "click",
           duplicateSelectedElement,
@@ -6686,9 +6991,26 @@
         els.ftItalicBtn.addEventListener("click", () =>
           toggleStyleOnSelected("fontStyle", "italic", "normal", "italic"),
         );
+        els.ftUnderlineBtn?.addEventListener("click", () =>
+          toggleStyleOnSelected("textDecoration", "underline", "none", "underline"),
+        );
+        [els.ftAlignLeftBtn, els.ftAlignCenterBtn, els.ftAlignRightBtn].forEach((btn) => {
+          btn?.addEventListener("click", () => {
+            const align = btn.dataset.ftAlign || "left";
+            applyStyle("textAlign", align);
+            // Update active state immediately for responsiveness
+            [els.ftAlignLeftBtn, els.ftAlignCenterBtn, els.ftAlignRightBtn].forEach(
+              (b) => b?.classList.toggle("is-active", b === btn),
+            );
+          });
+        });
         els.ftColorInput.addEventListener("input", () =>
           applyStyle("color", els.ftColorInput.value),
         );
+        els.ftFontFamilySelect?.addEventListener("change", () => {
+          const val = els.ftFontFamilySelect.value;
+          if (val) applyStyle("fontFamily", val);
+        });
         els.ftFontSizeSelect.addEventListener("change", () =>
           applyStyle("fontSize", toCssSize(els.ftFontSizeSelect.value)),
         );
@@ -6892,11 +7214,19 @@
               closeModal(els.htmlEditorModal);
             if (els.videoInsertModal?.classList.contains("is-open"))
               closeModal(els.videoInsertModal);
+            if (els.shortcutsModal?.classList.contains("is-open"))
+              closeModal(els.shortcutsModal);
             return;
           }
           if (isActiveTextEditingContext(event)) return;
           if (shouldIgnoreGlobalShortcut(event)) return;
           const isMod = event.ctrlKey || event.metaKey;
+          // "?" — keyboard shortcut cheat sheet (Shift+/ on most keyboards)
+          if (!isMod && event.key === "?") {
+            event.preventDefault();
+            openModal(els.shortcutsModal);
+            return;
+          }
           if (isMod && event.key.toLowerCase() === "z" && !event.shiftKey) {
             event.preventDefault();
             undo();
@@ -6913,6 +7243,63 @@
           if (isMod && event.key.toLowerCase() === "d") {
             event.preventDefault();
             duplicateSelectedElement();
+            return;
+          }
+          // Ctrl+B / Ctrl+I / Ctrl+U — format selected text element
+          // (only when NOT in text-edit mode; browser handles those natively there)
+          if (isMod && !event.shiftKey && state.mode === "edit" && state.selectedNodeId) {
+            const k = event.key.toLowerCase();
+            const entityKind = getSelectedEntityKindForUi();
+            const isTextEntity = entityKind === "text" || entityKind === "table-cell";
+            if (isTextEntity && state.selectedPolicy?.canEditStyles && state.selectedPolicy?.canEditText) {
+              if (k === "b") {
+                event.preventDefault();
+                toggleStyleOnSelected("fontWeight", "700", "400", "bold");
+                return;
+              }
+              if (k === "i") {
+                event.preventDefault();
+                toggleStyleOnSelected("fontStyle", "italic", "normal", "italic");
+                return;
+              }
+              if (k === "u") {
+                event.preventDefault();
+                toggleStyleOnSelected("textDecoration", "underline", "none", "underline");
+                return;
+              }
+              if (k === "l") {
+                event.preventDefault();
+                applyStyle("textAlign", "left");
+                return;
+              }
+              if (k === "e") {
+                event.preventDefault();
+                applyStyle("textAlign", "center");
+                return;
+              }
+              if (k === "r") {
+                event.preventDefault();
+                applyStyle("textAlign", "right");
+                return;
+              }
+            }
+          }
+          // Ctrl+C — copy selected element to internal clipboard
+          if (isMod && !event.shiftKey && event.key.toLowerCase() === "c" && state.mode === "edit" && state.selectedNodeId) {
+            event.preventDefault();
+            copySelectedElement();
+            return;
+          }
+          // Ctrl+X — cut selected element (copy + delete)
+          if (isMod && !event.shiftKey && event.key.toLowerCase() === "x" && state.mode === "edit" && state.selectedNodeId) {
+            event.preventDefault();
+            cutSelectedElement();
+            return;
+          }
+          // Ctrl+V — paste element from internal clipboard (takes priority over image paste)
+          if (isMod && !event.shiftKey && event.key.toLowerCase() === "v" && state.mode === "edit" && state.copiedElementHtml) {
+            event.preventDefault();
+            pasteSelectedElement();
             return;
           }
           if (isMod && event.shiftKey && event.key.toLowerCase() === "c") {
@@ -7038,6 +7425,8 @@
             )
           )
             return;
+          // Internal element clipboard takes priority — keydown handler already handled it
+          if (state.copiedElementHtml) return;
           const file = extractImageFromClipboardEvent(event);
           if (!file) return;
           event.preventDefault();
@@ -13459,6 +13848,353 @@ ${doc.documentElement.outerHTML}`;
         );
       }
 
+      // ======================================================================
+      // PPTX Export — v0.20.0
+      // Converts the clean modelDoc snapshot to a PowerPoint file using
+      // PptxGenJS (loaded lazily from CDN). Does NOT touch modelDoc or the
+      // HTML export path.
+      // ======================================================================
+
+      function pptxLoadScript(src) {
+        return new Promise((resolve, reject) => {
+          if (document.querySelector(`script[src="${CSS.escape ? src : src}"]`)) {
+            resolve();
+            return;
+          }
+          const s = document.createElement("script");
+          s.src = src;
+          s.onload = resolve;
+          s.onerror = () => reject(new Error("pptx-cdn-load-failed"));
+          document.head.appendChild(s);
+        });
+      }
+
+      // Parse a CSS length value to a fraction of containerPx (0..1+).
+      function pptxLengthToFraction(val, containerPx) {
+        if (!val) return null;
+        const v = String(val).trim();
+        if (v.endsWith("%")) return parseFloat(v) / 100;
+        if (v.endsWith("px")) return parseFloat(v) / containerPx;
+        if (v.endsWith("em")) return (parseFloat(v) * 16) / containerPx;
+        if (v.endsWith("rem")) return (parseFloat(v) * 16) / containerPx;
+        const n = parseFloat(v);
+        return Number.isFinite(n) ? n / containerPx : null;
+      }
+
+      // CSS color string → 6-char RRGGBB hex or null.
+      function pptxColorToHex(c) {
+        if (!c) return null;
+        const s = String(c).trim().toLowerCase();
+        if (s === "transparent" || s === "none" || s === "inherit" || s === "initial" || s === "currentcolor") return null;
+        if (s.startsWith("#")) {
+          const h = s.slice(1).replace(/[^0-9a-f]/gi, "");
+          if (h.length === 3) return h.split("").map((x) => x + x).join("").toUpperCase();
+          if (h.length >= 6) return h.slice(0, 6).toUpperCase();
+          return null;
+        }
+        const rgb = s.match(/rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/);
+        if (rgb) {
+          return [rgb[1], rgb[2], rgb[3]]
+            .map((v) => Math.min(255, Math.round(parseFloat(v))).toString(16).padStart(2, "0"))
+            .join("")
+            .toUpperCase();
+        }
+        const NAMED = {
+          white: "FFFFFF", black: "000000", red: "FF0000", blue: "0000FF",
+          green: "008000", yellow: "FFFF00", orange: "FFA500", purple: "800080",
+          pink: "FFC0CB", gray: "808080", grey: "808080", silver: "C0C0C0",
+          darkgray: "A9A9A9", lightgray: "D3D3D3", navy: "000080",
+          teal: "008080", maroon: "800000", lime: "00FF00", aqua: "00FFFF",
+          fuchsia: "FF00FF", cyan: "00FFFF", magenta: "FF00FF",
+        };
+        return NAMED[s] || null;
+      }
+
+      // Parse element's inline style attribute into a key→value object.
+      function pptxParseStyle(el) {
+        const raw = el.getAttribute ? (el.getAttribute("style") || "") : "";
+        const obj = {};
+        raw.split(";").forEach((part) => {
+          const idx = part.indexOf(":");
+          if (idx < 0) return;
+          const key = part.slice(0, idx).trim().toLowerCase()
+            .replace(/-([a-z])/g, (_, ch) => ch.toUpperCase());
+          obj[key] = part.slice(idx + 1).trim();
+        });
+        return obj;
+      }
+
+      // Try to detect slide pixel dimensions from CSS custom properties or rules.
+      function pptxDetectSlideDimensions(doc) {
+        const styleEls = Array.from(doc.querySelectorAll("style"));
+        for (const st of styleEls) {
+          const t = st.textContent || "";
+          const wm = t.match(/--slide-w\s*:\s*([\d.]+)px/);
+          const hm = t.match(/--slide-h\s*:\s*([\d.]+)px/);
+          if (wm && hm) return { w: parseFloat(wm[1]), h: parseFloat(hm[1]) };
+        }
+        for (const st of styleEls) {
+          const t = st.textContent || "";
+          const block = t.match(/\.slide\s*\{([^}]+)\}/s);
+          if (block) {
+            const wm = block[1].match(/\bwidth\s*:\s*([\d.]+)px/);
+            const hm = block[1].match(/\b(?:min-)?height\s*:\s*([\d.]+)px/);
+            if (wm) {
+              const w = parseFloat(wm[1]);
+              const h = hm ? parseFloat(hm[1]) : Math.round(w * 9 / 16);
+              return { w, h };
+            }
+          }
+        }
+        return { w: 1280, h: 720 };
+      }
+
+      // Extract dominant background color from a slide element's inline style.
+      function pptxGetSlideBgColor(slideEl) {
+        const st = pptxParseStyle(slideEl);
+        const raw = st.backgroundColor || st.background || "";
+        // Strip gradients and url() keeping only color tokens
+        const stripped = raw
+          .replace(/(?:linear|radial|conic)-gradient\([^)]*\)/gi, "")
+          .replace(/url\([^)]*\)/gi, "")
+          .trim();
+        // Try each space-separated segment for a valid color
+        for (const tok of stripped.split(/[\s,]+/)) {
+          const hex = pptxColorToHex(tok);
+          if (hex) return hex;
+        }
+        return null;
+      }
+
+      // Returns PPTX position { x, y, w, h } in inches for an absolutely
+      // positioned element, or null for flow-layout elements.
+      function pptxGetAbsPos(el, slideW, slideH, pptxW, pptxH) {
+        const st = pptxParseStyle(el);
+        const pos = (st.position || "").toLowerCase();
+        if (pos !== "absolute" && pos !== "fixed") return null;
+        const lf = pptxLengthToFraction(st.left, slideW);
+        const tp = pptxLengthToFraction(st.top, slideH);
+        const wd = pptxLengthToFraction(st.width, slideW);
+        const ht = pptxLengthToFraction(st.height || st.minHeight, slideH);
+        if (lf === null || tp === null || wd === null) return null;
+        return {
+          x: parseFloat((lf * pptxW).toFixed(4)),
+          y: parseFloat((tp * pptxH).toFixed(4)),
+          w: parseFloat((wd * pptxW).toFixed(4)),
+          h: parseFloat(((ht !== null ? ht : 0.4) * pptxH).toFixed(4)),
+        };
+      }
+
+      // font-size px → PowerPoint pt (1pt = 1/72in, 1px ≈ 0.75pt).
+      function pptxFontSizePt(styleObj, tagName) {
+        const fs = styleObj.fontSize || "";
+        if (fs.endsWith("px")) return Math.max(6, Math.round(parseFloat(fs) * 0.75));
+        if (fs.endsWith("pt")) return Math.max(6, Math.round(parseFloat(fs)));
+        if (fs.endsWith("em")) return Math.max(6, Math.round(parseFloat(fs) * 12));
+        const TAG_PT = { H1: 36, H2: 28, H3: 22, H4: 18, H5: 14, H6: 12,
+                         P: 12, SPAN: 12, DIV: 12, LI: 12, A: 12,
+                         TD: 11, TH: 11, BLOCKQUOTE: 13 };
+        return TAG_PT[tagName] || 12;
+      }
+
+      // True when the element is a text "leaf": has visible text but no
+      // child elements that also carry text (prevents double-adding).
+      function pptxIsTextLeaf(el) {
+        const text = (el.textContent || "").trim();
+        if (!text) return false;
+        return !Array.from(el.children).some((ch) => (ch.textContent || "").trim().length > 0);
+      }
+
+      // Walk a slide element and add text + image shapes to pSlide.
+      function pptxPopulateSlide(pSlide, slideEl, slideW, slideH, pptxW, pptxH) {
+        const SKIP_TAGS = new Set(["STYLE", "SCRIPT", "HEAD", "NOSCRIPT", "TEMPLATE", "SVG", "CANVAS", "VIDEO", "IFRAME"]);
+        const allEls = Array.from(slideEl.querySelectorAll("*"));
+
+        // ── Images ─────────────────────────────────────────────────────────
+        for (const el of allEls) {
+          if (el.tagName !== "IMG") continue;
+          const src = (el.getAttribute("src") || "").trim();
+          if (!src) continue;
+          const pos = pptxGetAbsPos(el, slideW, slideH, pptxW, pptxH);
+          if (!pos) continue;
+          const imgOpts = { x: pos.x, y: pos.y, w: pos.w, h: pos.h };
+          if (src.startsWith("data:")) {
+            imgOpts.data = src;
+          } else if (/^https?:\/\//.test(src)) {
+            imgOpts.path = src;
+          } else {
+            continue; // relative URL — cannot resolve without base
+          }
+          try { pSlide.addImage(imgOpts); } catch (_) { /* skip unresolvable */ }
+        }
+
+        // ── Text (leaf nodes) ──────────────────────────────────────────────
+        let flowY = 0.3; // running Y for non-positioned text (inches)
+        const FLOW_X = 0.5;
+        const FLOW_W = pptxW - 1.0;
+
+        for (const el of allEls) {
+          if (SKIP_TAGS.has(el.tagName)) continue;
+          if (!pptxIsTextLeaf(el)) continue;
+          const text = (el.textContent || "").trim();
+          if (!text) continue;
+
+          const st = pptxParseStyle(el);
+          const fontSize = pptxFontSizePt(st, el.tagName);
+          const colorHex = pptxColorToHex(st.color || "") || "000000";
+          const bold = /bold|[789]\d\d/.test(st.fontWeight || "") || /^H[1-6]$/.test(el.tagName);
+          const italic = (st.fontStyle || "").includes("italic");
+          const align = ["center", "right", "justify"].includes(st.textAlign)
+            ? st.textAlign : "left";
+          const lineSpacingPt = Math.round(fontSize * 1.3);
+
+          const textProps = {
+            fontSize,
+            bold,
+            italic,
+            color: colorHex,
+            wrap: true,
+            valign: "top",
+            align,
+            lineSpacingMultiple: 1.3,
+          };
+
+          const pos = pptxGetAbsPos(el, slideW, slideH, pptxW, pptxH);
+          if (pos) {
+            const minH = Math.max(pos.h, (fontSize / 72) * 1.6);
+            try {
+              pSlide.addText(text, { x: pos.x, y: pos.y, w: pos.w, h: minH, ...textProps });
+            } catch (_) { /* skip */ }
+          } else {
+            const lineH = Math.max(0.25, (fontSize / 72) * 1.8);
+            try {
+              pSlide.addText(text, { x: FLOW_X, y: Math.min(flowY, pptxH - 0.25), w: FLOW_W, h: lineH, ...textProps });
+            } catch (_) { /* skip */ }
+            flowY += lineH * 1.15;
+          }
+        }
+      }
+
+      // Main entry point — loads PptxGenJS lazily, builds clean doc snapshot,
+      // maps each slide, and triggers browser download.
+      async function exportPptx() {
+        if (!state.modelDoc) return;
+
+        const PPTX_CDN = "https://cdn.jsdelivr.net/npm/pptxgenjs/dist/pptxgen.bundled.js";
+        if (typeof PptxGenJS === "undefined") {
+          showToast("Загрузка PptxGenJS…", "info", { ttl: 8000 });
+          try {
+            await pptxLoadScript(PPTX_CDN);
+          } catch (_) {
+            showToast(
+              "Не удалось загрузить PptxGenJS. Проверь сетевое подключение.",
+              "error",
+              { title: "Экспорт PPTX" },
+            );
+            return;
+          }
+        }
+
+        const pack = buildCleanExportPackage();
+        if (!pack) return;
+        const doc = pack.document;
+
+        // Resolve slide elements using the same selector chain as the editor.
+        const selector = state.staticSlideSelector || "[data-slide-id]";
+        let slideEls = Array.from(doc.querySelectorAll(selector));
+        if (!slideEls.length) {
+          slideEls = Array.from(
+            doc.querySelectorAll(".slide, section.slide, article.slide, [class*='slide']"),
+          );
+        }
+        if (!slideEls.length) {
+          slideEls = Array.from(doc.querySelectorAll("section, article")).filter(
+            (el) => el.children.length > 0,
+          );
+        }
+        if (!slideEls.length) {
+          showToast("Слайды не найдены для PPTX-экспорта.", "warning", {
+            title: "Экспорт PPTX",
+          });
+          return;
+        }
+
+        const { w: slideW, h: slideH } = pptxDetectSlideDimensions(doc);
+        const PPTX_W = 10.0; // inches (standard widescreen width)
+        const PPTX_H = parseFloat((PPTX_W * (slideH / slideW)).toFixed(4));
+
+        const PptxCtor = typeof PptxGenJS === "function" ? PptxGenJS : window.PptxGenJS;
+        const pptx = new PptxCtor();
+        pptx.defineLayout({ name: "HTML_PRES", width: PPTX_W, height: PPTX_H });
+        pptx.layout = "HTML_PRES";
+        pptx.title = doc.title || "Presentation";
+        pptx.author = "HTML Presentation Editor";
+
+        for (const slideEl of slideEls) {
+          const pSlide = pptx.addSlide();
+          const bgColor = pptxGetSlideBgColor(slideEl);
+          if (bgColor) pSlide.background = { color: bgColor };
+          try {
+            pptxPopulateSlide(pSlide, slideEl, slideW, slideH, PPTX_W, PPTX_H);
+          } catch (err) {
+            reportShellWarning("pptx-slide-failed", String(err));
+          }
+        }
+
+        const safeTitle = (doc.title || "presentation")
+          .replace(/[\\/:*?"<>|]/g, "")
+          .trim() || "presentation";
+        try {
+          await pptx.writeFile({ fileName: `${safeTitle}.pptx` });
+          showToast(
+            `PPTX экспортирован. Слайдов: ${slideEls.length}.`,
+            "success",
+            { title: "Экспорт PPTX", ttl: 4000 },
+          );
+        } catch (err) {
+          reportShellWarning("pptx-write-failed", String(err));
+          showToast("Ошибка при создании PPTX-файла.", "error", {
+            title: "Экспорт PPTX",
+          });
+        }
+      }
+
+      // ── Presentation play mode ─────────────────────────────────────────────
+      // Opens the current deck in a new fullscreen window using the same clean
+      // export snapshot used for HTML export. No modelDoc mutation.
+      function presentDeck() {
+        if (!state.modelDoc) return;
+        const pack = buildCleanExportPackage();
+        if (!pack) return;
+        const url = URL.createObjectURL(pack.blob);
+        const win = window.open(url, "_blank", "noopener,noreferrer");
+        if (!win) {
+          showToast(
+            "Браузер заблокировал новое окно. Разреши pop-up для этого сайта.",
+            "warning",
+            { title: "Режим презентации" },
+          );
+          // Revoke immediately since we can't track when popup cleans up
+          setTimeout(() => revokeEditorObjectUrl(url, "present-popup-blocked"), 0);
+          return;
+        }
+        // Attempt fullscreen after load — best-effort, browser may deny
+        win.addEventListener("load", () => {
+          try {
+            if (win.document?.documentElement?.requestFullscreen) {
+              void win.document.documentElement.requestFullscreen();
+            }
+          } catch (_) { /* ignore — fullscreen is non-critical */ }
+        });
+        // Revoke blob URL after the window has had time to load it
+        setTimeout(() => revokeEditorObjectUrl(url, "present-url-revoke-failed"), 10000);
+        showToast(
+          "Презентация открыта в новом окне. Нажми F11 для полного экрана.",
+          "success",
+          { title: "Режим презентации", ttl: 4000 },
+        );
+      }
+
       function collectEditorArtifactResidue(root) {
         if (!root?.querySelectorAll) return [];
         const residue = [];
@@ -16209,6 +16945,49 @@ ${exportDoc.documentElement.outerHTML}`;
         closeContextMenu();
       }
 
+      // ====================================================================
+      // Element clipboard — internal Ctrl+C / Ctrl+V (not OS clipboard)
+      // Copies the selected element's HTML into state.copiedElementHtml,
+      // strips data-editor-node-id so the bridge's assignIdsDeep gives
+      // the pasted clone entirely fresh IDs (no ID collision).
+      // ====================================================================
+      function copySelectedElement() {
+        if (!state.modelDoc || !state.selectedNodeId) return;
+        const el = state.modelDoc.querySelector(
+          `[data-editor-node-id="${cssEscape(state.selectedNodeId)}"]`,
+        );
+        if (!el) return;
+        const clone = el.cloneNode(true);
+        // Strip all editor-node IDs so the pasted clone gets fresh ones
+        clone.removeAttribute("data-editor-node-id");
+        clone.querySelectorAll("[data-editor-node-id]").forEach((node) => {
+          node.removeAttribute("data-editor-node-id");
+        });
+        state.copiedElementHtml = clone.outerHTML;
+        showToast("Элемент скопирован — Ctrl+V для вставки.", "success", {
+          title: "Копировать",
+        });
+        closeContextMenu();
+      }
+
+      function pasteSelectedElement() {
+        if (!state.copiedElementHtml) return;
+        if (!state.modelDoc) return;
+        insertHtmlViaBridge(state.copiedElementHtml, { focusText: false });
+        showToast("Элемент вставлен.", "success", { title: "Вставить" });
+      }
+
+      function cutSelectedElement() {
+        if (!state.modelDoc || !state.selectedNodeId) return;
+        if (!guardSelectionAction("delete", "Вырезать")) return;
+        if (!guardProtectedSelection("Вырезать")) return;
+        copySelectedElement();   // copies to buffer — shows toast
+        sendToBridge("delete-element", { nodeId: state.selectedNodeId });
+        showToast("Элемент вырезан — Ctrl+V для вставки.", "success", { title: "Вырезать" });
+        closeContextMenu();
+        hideFloatingToolbar();
+      }
+
       function fitSelectedImageToWidth() {
         if (!state.selectedFlags.isImage || !state.selectedNodeId) return;
         if (!guardSelectionAction("editStyles", "Медиа")) return;
@@ -16502,6 +17281,15 @@ ${exportDoc.documentElement.outerHTML}`;
           { focusText: true },
         );
         showToast("Текстовый блок добавлен.", "success", { title: "Палитра" });
+      }
+
+      function insertDefaultShape() {
+        if (!state.modelDoc) return;
+        insertHtmlViaBridge(
+          '<div style="position:absolute;left:40px;top:40px;width:160px;height:100px;background:#4f8ef7;border-radius:8px;"></div>',
+          { focusText: false },
+        );
+        showToast("Форма добавлена.", "success", { title: "Палитра" });
       }
 
       function duplicateSelectedElement() {
@@ -17262,14 +18050,16 @@ ${exportDoc.documentElement.outerHTML}`;
         els.ftFitImageBtn.disabled =
           !hasSelection || !policy.canEditStyles || !state.selectedFlags.isImage;
         els.ftEditTextBtn.disabled = !canStartPlainTextEditing;
-        els.ftBoldBtn.disabled =
-          !canEditRichTextStyles;
-        els.ftItalicBtn.disabled =
-          !canEditRichTextStyles;
-        els.ftColorInput.disabled =
-          !canEditRichTextStyles;
-        els.ftFontSizeSelect.disabled =
-          !canEditRichTextStyles;
+        els.ftBoldBtn.disabled = !canEditRichTextStyles;
+        els.ftItalicBtn.disabled = !canEditRichTextStyles;
+        if (els.ftUnderlineBtn) els.ftUnderlineBtn.disabled = !canEditRichTextStyles;
+        if (els.ftColorInput) els.ftColorInput.disabled = !canEditRichTextStyles;
+        if (els.ftFontFamilySelect) els.ftFontFamilySelect.disabled = !canEditRichTextStyles;
+        if (els.ftFontSizeSelect) els.ftFontSizeSelect.disabled = !canEditRichTextStyles;
+        if (els.ftAlignGroup) els.ftAlignGroup.hidden = !canEditRichTextStyles;
+        [els.ftAlignLeftBtn, els.ftAlignCenterBtn, els.ftAlignRightBtn].forEach(
+          (b) => { if (b) b.disabled = !canEditRichTextStyles; },
+        );
         els.ftDeleteBtn.disabled = !hasSelection || !policy.canDelete;
         els.ftDuplicateBtn.disabled = !hasSelection || !policy.canDuplicate;
       }
@@ -17661,6 +18451,30 @@ ${exportDoc.documentElement.outerHTML}`;
             hint: "",
           });
         }
+        // Copy / Cut / Paste element
+        items.push({
+          section: "structure",
+          action: "copy-element",
+          icon: "📋",
+          label: "Копировать",
+          hint: "Ctrl+C",
+        });
+        if (policy.canDelete)
+          items.push({
+            section: "structure",
+            action: "cut-element",
+            icon: "✂",
+            label: "Вырезать",
+            hint: "Ctrl+X",
+          });
+        if (state.copiedElementHtml)
+          items.push({
+            section: "structure",
+            action: "paste-element",
+            icon: "📌",
+            label: "Вставить",
+            hint: "Ctrl+V",
+          });
         if (policy.canDuplicate)
           items.push({
             section: "structure",
@@ -17993,6 +18807,15 @@ ${exportDoc.documentElement.outerHTML}`;
             break;
           case "wrap-div":
             wrapSelectedInDiv();
+            break;
+          case "copy-element":
+            copySelectedElement();
+            break;
+          case "cut-element":
+            cutSelectedElement();
+            break;
+          case "paste-element":
+            pasteSelectedElement();
             break;
           case "copy-style":
             copySelectedStyle();
@@ -18473,6 +19296,10 @@ ${exportDoc.documentElement.outerHTML}`;
           els.selectionPolicyText.textContent =
             "Выбери элемент, чтобы увидеть ограничения редактирования.";
         }
+        // pasteElementBtn is always available when the internal clipboard has content
+        if (els.pasteElementBtn) {
+          els.pasteElementBtn.disabled = !state.copiedElementHtml || !state.modelDoc || state.mode !== "edit";
+        }
         const controls = [
           els.boldBtn,
           els.italicBtn,
@@ -18480,6 +19307,7 @@ ${exportDoc.documentElement.outerHTML}`;
           els.fontSizeSelect,
           els.textColorInput,
           els.showElementHtmlBtn,
+          els.copyElementBtn,
           els.duplicateElementBtn,
           els.deleteElementBtn,
           els.moveElementUpBtn,
@@ -18502,6 +19330,8 @@ ${exportDoc.documentElement.outerHTML}`;
           els.borderWidthInput,
           els.marginInput,
           els.paddingInput,
+          els.opacityInput,
+          els.borderRadiusInput,
           els.editTextBtn,
           els.insertTableRowAboveBtn,
           els.insertTableRowBelowBtn,
@@ -18557,6 +19387,8 @@ ${exportDoc.documentElement.outerHTML}`;
           els.elementClassInput.value = "";
           els.fontSizeSelect.value = "";
           els.ftFontSizeSelect.value = "";
+          if (els.inspectorFontFamilySelect) els.inspectorFontFamilySelect.value = "";
+          if (els.inspectorLineHeightSelect) els.inspectorLineHeightSelect.value = "";
           els.textColorInput.value = "#000000";
           els.ftColorInput.value = "#000000";
           els.bgColorInput.value = "#ffffff";
@@ -18571,6 +19403,8 @@ ${exportDoc.documentElement.outerHTML}`;
           els.topInput.value = "";
           els.marginInput.value = "";
           els.paddingInput.value = "";
+          if (els.opacityInput) els.opacityInput.value = "";
+          if (els.borderRadiusInput) els.borderRadiusInput.value = "";
           els.imageSrcInput.value = "";
           els.imageAltInput.value = "";
           els.imageSection.style.display = "none";
@@ -18600,7 +19434,12 @@ ${exportDoc.documentElement.outerHTML}`;
             els.underlineBtn,
             els.ftBoldBtn,
             els.ftItalicBtn,
-          ].forEach((button) => button.classList.remove("is-active"));
+            els.ftUnderlineBtn,
+            els.ftAlignLeftBtn,
+            els.ftAlignCenterBtn,
+            els.ftAlignRightBtn,
+          ].forEach((button) => button?.classList.remove("is-active"));
+          if (els.ftFontFamilySelect) els.ftFontFamilySelect.value = "";
           if (els.selectionPolicyText) {
             els.selectionPolicyText.textContent =
               "Выбери элемент, чтобы увидеть ограничения редактирования.";
@@ -18644,12 +19483,27 @@ ${exportDoc.documentElement.outerHTML}`;
         els.resetStylesBtn.disabled = !hasSelection || !selectionPolicy.canEditStyles;
         els.pasteStyleBtn.disabled = !hasSelection || !selectionPolicy.canEditStyles;
         const fontSize = parseInt(state.selectedComputed.fontSize, 10);
-        const supportedSizes = ["12", "14", "16", "20", "24", "32", "48"];
-        const normalizedSize = supportedSizes.includes(String(fontSize))
-          ? String(fontSize)
-          : "";
+        const supportedSizes = ["10","12","14","16","18","20","24","28","32","36","40","48","56","64","72","96"];
+        const normalizedSize = supportedSizes.includes(String(fontSize)) ? String(fontSize) : "";
         els.fontSizeSelect.value = normalizedSize;
         els.ftFontSizeSelect.value = normalizedSize;
+        // Sync inspector font-family
+        if (els.inspectorFontFamilySelect) {
+          const rawFam = (state.selectedComputed.fontFamily || "").trim();
+          let famMatched = "";
+          Array.from(els.inspectorFontFamilySelect.options).forEach((opt) => {
+            if (opt.value && rawFam.replace(/['"]/g,"").startsWith(opt.value.split(",")[0].replace(/['"]/g,"").trim())) famMatched = opt.value;
+          });
+          els.inspectorFontFamilySelect.value = famMatched;
+        }
+        // Sync inspector line-height
+        if (els.inspectorLineHeightSelect) {
+          const rawLH = (state.selectedComputed.lineHeight || "").trim();
+          const lhNum = parseFloat(rawLH);
+          const lhOptions = ["1","1.2","1.3","1.4","1.5","1.6","1.8","2"];
+          const lhMatched = lhOptions.find((v) => Math.abs(parseFloat(v) - lhNum) < 0.05) || "";
+          els.inspectorLineHeightSelect.value = lhMatched;
+        }
         els.textColorInput.value = rgbToHex(
           state.selectedComputed.color || "#000000",
         );
@@ -18686,6 +19540,14 @@ ${exportDoc.documentElement.outerHTML}`;
         els.borderWidthInput.value = sanitizeCssValue(
           state.selectedComputed.borderWidth,
         );
+        if (els.opacityInput) {
+          const opRaw = state.selectedComputed.opacity;
+          els.opacityInput.value = (!opRaw || opRaw === "1")
+            ? "" : String(Math.round(parseFloat(opRaw) * 100));
+        }
+        if (els.borderRadiusInput) {
+          els.borderRadiusInput.value = sanitizeCssValue(state.selectedComputed.borderRadius);
+        }
         const alignment = state.selectedComputed.textAlign || "left";
         els.alignButtons.forEach((button) =>
           button.classList.toggle(
@@ -18697,20 +19559,36 @@ ${exportDoc.documentElement.outerHTML}`;
           state.selectedComputed.fontWeight,
         );
         const italicActive = state.selectedComputed.fontStyle === "italic";
+        const underlineActive = (state.selectedComputed.textDecorationLine || "").includes("underline");
         els.boldBtn.classList.toggle("is-active", boldActive);
         els.ftBoldBtn.classList.toggle("is-active", boldActive);
         els.italicBtn.classList.toggle("is-active", italicActive);
         els.ftItalicBtn.classList.toggle("is-active", italicActive);
-        els.underlineBtn.classList.toggle(
-          "is-active",
-          (state.selectedComputed.textDecorationLine || "").includes(
-            "underline",
-          ),
-        );
+        els.underlineBtn.classList.toggle("is-active", underlineActive);
+        els.ftUnderlineBtn?.classList.toggle("is-active", underlineActive);
+        const ftAlignment = state.selectedComputed.textAlign || "left";
+        els.ftAlignLeftBtn?.classList.toggle("is-active",   ftAlignment === "left");
+        els.ftAlignCenterBtn?.classList.toggle("is-active", ftAlignment === "center");
+        els.ftAlignRightBtn?.classList.toggle("is-active",  ftAlignment === "right");
+        if (els.ftFontFamilySelect) {
+          const rawFamily = (state.selectedComputed.fontFamily || "").trim();
+          let matched = "";
+          Array.from(els.ftFontFamilySelect.options).forEach((opt) => {
+            if (opt.value && rawFamily.replace(/['"]/g,"").startsWith(opt.value.split(",")[0].replace(/['"]/g,"").trim())) matched = opt.value;
+          });
+          els.ftFontFamilySelect.value = matched;
+        }
         [
           els.boldBtn,
           els.italicBtn,
           els.underlineBtn,
+          els.ftUnderlineBtn,
+          els.ftAlignLeftBtn,
+          els.ftAlignCenterBtn,
+          els.ftAlignRightBtn,
+          els.ftFontFamilySelect,
+          els.inspectorFontFamilySelect,
+          els.inspectorLineHeightSelect,
           els.fontSizeSelect,
           els.textColorInput,
           ...els.alignButtons,
@@ -18741,6 +19619,8 @@ ${exportDoc.documentElement.outerHTML}`;
           els.borderWidthInput,
           els.marginInput,
           els.paddingInput,
+          els.opacityInput,
+          els.borderRadiusInput,
         ].forEach((control) => {
           if (!control) return;
           control.disabled = !hasSelection || styleLocked;
@@ -19123,7 +20003,10 @@ ${exportDoc.documentElement.outerHTML}`;
           els.selectionPolicyText.textContent =
             "Выберите элемент, чтобы увидеть ограничения редактирования.";
         }
-
+        // pasteElementBtn: enabled as long as internal clipboard has content and editor is loaded
+        if (els.pasteElementBtn) {
+          els.pasteElementBtn.disabled = !state.copiedElementHtml || !state.modelDoc || state.mode !== "edit";
+        }
         const controls = [
           els.boldBtn,
           els.italicBtn,
@@ -19131,6 +20014,7 @@ ${exportDoc.documentElement.outerHTML}`;
           els.fontSizeSelect,
           els.textColorInput,
           els.showElementHtmlBtn,
+          els.copyElementBtn,
           els.duplicateElementBtn,
           els.deleteElementBtn,
           els.moveElementUpBtn,
@@ -19153,6 +20037,8 @@ ${exportDoc.documentElement.outerHTML}`;
           els.borderWidthInput,
           els.marginInput,
           els.paddingInput,
+          els.opacityInput,
+          els.borderRadiusInput,
           els.editTextBtn,
           els.imageSrcInput,
           els.applyImageSrcBtn,
@@ -19203,6 +20089,8 @@ ${exportDoc.documentElement.outerHTML}`;
           els.elementClassInput.value = "";
           els.fontSizeSelect.value = "";
           els.ftFontSizeSelect.value = "";
+          if (els.inspectorFontFamilySelect) els.inspectorFontFamilySelect.value = "";
+          if (els.inspectorLineHeightSelect) els.inspectorLineHeightSelect.value = "";
           els.textColorInput.value = "#000000";
           els.ftColorInput.value = "#000000";
           els.bgColorInput.value = "#ffffff";
@@ -19217,6 +20105,8 @@ ${exportDoc.documentElement.outerHTML}`;
           els.topInput.value = "";
           els.marginInput.value = "";
           els.paddingInput.value = "";
+          if (els.opacityInput) els.opacityInput.value = "";
+          if (els.borderRadiusInput) els.borderRadiusInput.value = "";
           els.imageSrcInput.value = "";
           els.imageAltInput.value = "";
           if (els.showSlideHtmlBtn) {
@@ -19252,7 +20142,12 @@ ${exportDoc.documentElement.outerHTML}`;
             els.underlineBtn,
             els.ftBoldBtn,
             els.ftItalicBtn,
-          ].forEach((button) => button.classList.remove("is-active"));
+            els.ftUnderlineBtn,
+            els.ftAlignLeftBtn,
+            els.ftAlignCenterBtn,
+            els.ftAlignRightBtn,
+          ].forEach((button) => button?.classList.remove("is-active"));
+          if (els.ftFontFamilySelect) els.ftFontFamilySelect.value = "";
           if (els.selectionPolicyText) {
             els.selectionPolicyText.textContent =
               "Выберите элемент, чтобы увидеть ограничения редактирования.";
@@ -19311,12 +20206,27 @@ ${exportDoc.documentElement.outerHTML}`;
         els.pasteStyleBtn.disabled = !hasSelection || !selectionPolicy.canEditStyles;
 
         const fontSize = parseInt(state.selectedComputed.fontSize, 10);
-        const supportedSizes = ["12", "14", "16", "20", "24", "32", "48"];
-        const normalizedSize = supportedSizes.includes(String(fontSize))
-          ? String(fontSize)
-          : "";
+        const supportedSizes = ["10","12","14","16","18","20","24","28","32","36","40","48","56","64","72","96"];
+        const normalizedSize = supportedSizes.includes(String(fontSize)) ? String(fontSize) : "";
         els.fontSizeSelect.value = normalizedSize;
         els.ftFontSizeSelect.value = normalizedSize;
+        // Sync inspector font-family
+        if (els.inspectorFontFamilySelect) {
+          const rawFam = (state.selectedComputed.fontFamily || "").trim();
+          let famMatched = "";
+          Array.from(els.inspectorFontFamilySelect.options).forEach((opt) => {
+            if (opt.value && rawFam.replace(/['"]/g,"").startsWith(opt.value.split(",")[0].replace(/['"]/g,"").trim())) famMatched = opt.value;
+          });
+          els.inspectorFontFamilySelect.value = famMatched;
+        }
+        // Sync inspector line-height
+        if (els.inspectorLineHeightSelect) {
+          const rawLH = (state.selectedComputed.lineHeight || "").trim();
+          const lhNum = parseFloat(rawLH);
+          const lhOptions = ["1","1.2","1.3","1.4","1.5","1.6","1.8","2"];
+          const lhMatched = lhOptions.find((v) => Math.abs(parseFloat(v) - lhNum) < 0.05) || "";
+          els.inspectorLineHeightSelect.value = lhMatched;
+        }
         els.textColorInput.value = rgbToHex(
           state.selectedComputed.color || "#000000",
         );
@@ -19353,6 +20263,14 @@ ${exportDoc.documentElement.outerHTML}`;
         els.borderWidthInput.value = sanitizeCssValue(
           state.selectedComputed.borderWidth,
         );
+        if (els.opacityInput) {
+          const opRaw2 = state.selectedComputed.opacity;
+          els.opacityInput.value = (!opRaw2 || opRaw2 === "1")
+            ? "" : String(Math.round(parseFloat(opRaw2) * 100));
+        }
+        if (els.borderRadiusInput) {
+          els.borderRadiusInput.value = sanitizeCssValue(state.selectedComputed.borderRadius);
+        }
 
         const alignment = state.selectedComputed.textAlign || "left";
         els.alignButtons.forEach((button) =>
@@ -19365,21 +20283,27 @@ ${exportDoc.documentElement.outerHTML}`;
           state.selectedComputed.fontWeight,
         );
         const italicActive = state.selectedComputed.fontStyle === "italic";
+        const underlineActive = (state.selectedComputed.textDecorationLine || "").includes("underline");
         els.boldBtn.classList.toggle("is-active", boldActive);
         els.ftBoldBtn.classList.toggle("is-active", boldActive);
         els.italicBtn.classList.toggle("is-active", italicActive);
         els.ftItalicBtn.classList.toggle("is-active", italicActive);
-        els.underlineBtn.classList.toggle(
-          "is-active",
-          (state.selectedComputed.textDecorationLine || "").includes(
-            "underline",
-          ),
-        );
+        els.underlineBtn.classList.toggle("is-active", underlineActive);
+        els.ftUnderlineBtn?.classList.toggle("is-active", underlineActive);
+        const ftAlignment2 = state.selectedComputed.textAlign || "left";
+        els.ftAlignLeftBtn?.classList.toggle("is-active",   ftAlignment2 === "left");
+        els.ftAlignCenterBtn?.classList.toggle("is-active", ftAlignment2 === "center");
+        els.ftAlignRightBtn?.classList.toggle("is-active",  ftAlignment2 === "right");
 
         [
           els.boldBtn,
           els.italicBtn,
           els.underlineBtn,
+          els.ftUnderlineBtn,
+          els.ftAlignLeftBtn,
+          els.ftAlignCenterBtn,
+          els.ftAlignRightBtn,
+          els.ftFontFamilySelect,
           els.fontSizeSelect,
           els.textColorInput,
           ...els.alignButtons,
@@ -19412,6 +20336,8 @@ ${exportDoc.documentElement.outerHTML}`;
           els.borderWidthInput,
           els.marginInput,
           els.paddingInput,
+          els.opacityInput,
+          els.borderRadiusInput,
         ].forEach((control) => {
           if (!control) return;
           control.disabled = !hasSelection || styleLocked;
@@ -20765,7 +21691,9 @@ ${exportDoc.documentElement.outerHTML}`;
         els.zoomOutBtn?.addEventListener("click", () => stepZoom(-1));
         els.zoomInBtn?.addEventListener("click", () => stepZoom(1));
         els.zoomResetBtn?.addEventListener("click", () => setPreviewZoom(1.0, true));
+        els.presentBtn?.addEventListener("click", presentDeck);
         els.exportBtn?.addEventListener("click", exportHtml);
+        els.exportPptxBtn?.addEventListener("click", () => { void exportPptx(); });
         els.themeToggleBtn?.addEventListener("click", toggleTheme);
         els.undoBtn?.addEventListener("click", undo);
         els.redoBtn?.addEventListener("click", redo);
@@ -20779,6 +21707,10 @@ ${exportDoc.documentElement.outerHTML}`;
               event.key === "ArrowUp" ? getTopbarOverflowButtons().length - 1 : 0,
             ),
           );
+        });
+        document.getElementById("topbarOverflowShortcutsBtn")?.addEventListener("click", () => {
+          closeTopbarOverflow();
+          openModal(els.shortcutsModal);
         });
         els.topbarOverflowThemeBtn?.addEventListener("click", () => {
           toggleTheme();
@@ -20915,7 +21847,7 @@ ${exportDoc.documentElement.outerHTML}`;
           });
         });
 
-        [els.openHtmlModal, els.htmlEditorModal, els.videoInsertModal].forEach(
+        [els.openHtmlModal, els.htmlEditorModal, els.videoInsertModal, els.shortcutsModal].forEach(
           (modal, index) => {
             if (!modal) return;
             modal.setAttribute("role", "dialog");
@@ -22283,7 +23215,9 @@ ${exportDoc.documentElement.outerHTML}`;
         canInsertNow,
       ) {
         const workflow = state.editorWorkflow || getEditorWorkflowState();
+        if (els.presentBtn)    els.presentBtn.disabled    = !hasPresentation;
         els.exportBtn.disabled = !hasPresentation;
+        if (els.exportPptxBtn) els.exportPptxBtn.disabled = !hasPresentation;
         els.undoBtn.disabled = state.historyIndex <= 0;
         els.redoBtn.disabled =
           state.historyIndex >= state.history.length - 1 ||
@@ -22358,6 +23292,7 @@ ${exportDoc.documentElement.outerHTML}`;
 
         [
           els.addTextBtn,
+          els.addShapeBtn,
           els.addImageBtn,
           els.addVideoBtn,
           els.insertHtmlBtn,
