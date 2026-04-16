@@ -1,3 +1,7 @@
+// dom.js
+// Layer: DOM Cache
+// Initializes the `els` object with references to all shell DOM elements.
+
       // ZONE: Inspector Wiring
       // Event listeners for all inspector fields — typography, geometry, appearance, media
       // =====================================================================
