@@ -1,405 +1,407 @@
-      @layer base {
+@layer base {
 /* ======================================================================
-       [STYLE 02] Base + primitives
-       ====================================================================== */
-      *,
-      *::before,
-      *::after {
-        box-sizing: border-box;
-      }
+ [STYLE 02] Base + primitives
+ ====================================================================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
-      html {
-        height: 100%;
-      }
+html {
+  height: 100%;
+}
 
-      body {
-        min-height: 100%;
-        margin: 0;
-        background: var(--shell-bg);
-        color: var(--shell-text);
-      }
+body {
+  min-height: 100%;
+  margin: 0;
+  background: var(--shell-bg);
+  color: var(--shell-text);
+}
 
-      body {
-        display: flex;
-        flex-direction: column;
-        min-height: 100vh;
-        height: 100vh;
-        min-height: 100dvh;
-        height: 100dvh;
-        max-height: 100dvh;
-        line-height: 1.45;
-        text-rendering: optimizeLegibility;
-        overflow: hidden;
-      }
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  height: 100vh;
+  min-height: 100dvh;
+  height: 100dvh;
+  max-height: 100dvh;
+  line-height: var(--leading-normal);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+}
 
-      body[data-shell-locked="true"] {
-        overflow: hidden;
-      }
+body[data-shell-locked="true"] {
+  overflow: hidden;
+}
 
-      [hidden],
-      .hidden {
-        display: none !important;
-      }
+[hidden],
+.hidden {
+  display: none !important;
+}
 
-      button,
-      input,
-      select,
-      textarea {
-        font: inherit;
-        color: inherit;
-      }
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
 
-      code {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-        font-size: 0.92em;
-      }
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.92em;
+}
 
-      button {
-        cursor: pointer;
-        appearance: none;
-        border: 1px solid var(--shell-border);
-        background: var(--shell-panel);
-        color: var(--shell-text);
-        border-radius: var(--radius-sm);
-        min-width: 0;
-        max-width: 100%;
-        min-height: 32px;
-        padding: 0 12px;
-        font-size: 13px;
-        font-weight: 500;
-        transition:
-          border-color var(--motion-fast) var(--motion-ease),
-          background-color var(--motion-fast) var(--motion-ease),
-          color var(--motion-fast) var(--motion-ease),
-          box-shadow var(--motion-fast) var(--motion-ease),
-          opacity var(--motion-fast) var(--motion-ease),
-          transform var(--motion-fast) var(--motion-ease);
-      }
+button {
+  cursor: pointer;
+  appearance: none;
+  border: 1px solid var(--shell-border);
+  background: var(--shell-panel);
+  color: var(--shell-text);
+  border-radius: var(--radius-sm);
+  min-width: 0;
+  max-width: 100%;
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 500;
+  transition:
+    border-color var(--motion-fast) var(--motion-ease),
+    background-color var(--motion-fast) var(--motion-ease),
+    color var(--motion-fast) var(--motion-ease),
+    box-shadow var(--motion-fast) var(--motion-ease),
+    opacity var(--motion-fast) var(--motion-ease),
+    transform var(--motion-fast) var(--motion-ease);
+}
 
-      :root[data-theme-booting="true"] *,
-      :root[data-theme-booting="true"] *::before,
-      :root[data-theme-booting="true"] *::after,
-      :root[data-theme-transition="locked"] *,
-      :root[data-theme-transition="locked"] *::before,
-      :root[data-theme-transition="locked"] *::after {
-        transition: none !important;
-        animation: none !important;
-      }
+:root[data-theme-booting="true"] *,
+:root[data-theme-booting="true"] *::before,
+:root[data-theme-booting="true"] *::after,
+:root[data-theme-transition="locked"] *,
+:root[data-theme-transition="locked"] *::before,
+:root[data-theme-transition="locked"] *::after {
+  transition: none !important;
+  animation: none !important;
+}
 
-      button:hover:not(:disabled) {
-        border-color: var(--shell-border-strong);
-        background: var(--shell-field-muted);
-      }
+button:hover:not(:disabled) {
+  border-color: var(--shell-border-strong);
+  background: var(--shell-field-muted);
+}
 
-      button:disabled,
-      input:disabled,
-      select:disabled,
-      textarea:disabled {
-        opacity: 0.55;
-        cursor: not-allowed;
-      }
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
 
-      button:focus-visible,
-      input:focus-visible,
-      select:focus-visible,
-      textarea:focus-visible,
-      .section-toggle:focus-visible,
-      .context-menu button:focus-visible,
-      .layer-picker button:focus-visible,
-      .quick-palette button:focus-visible {
-        outline: none;
-        border-color: var(--shell-accent);
-        box-shadow: 0 0 0 4px var(--shell-focus);
-      }
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.section-toggle:focus-visible,
+.context-menu button:focus-visible,
+.layer-picker button:focus-visible,
+.quick-palette button:focus-visible {
+  outline: none;
+  border-color: var(--shell-accent);
+  box-shadow: 0 0 0 4px var(--shell-focus);
+}
 
-      .primary-btn {
-        border-color: var(--shell-accent);
-        background: var(--shell-accent);
-        color: var(--on-accent);
-        font-weight: 600;
-      }
+.primary-btn {
+  border-color: var(--shell-accent);
+  background: var(--shell-accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
 
-      .primary-btn:hover:not(:disabled) {
-        border-color: var(--shell-accent);
-        background: var(--shell-accent);
-        box-shadow: 0 8px 18px rgba(0, 113, 227, 0.18);
-      }
+.primary-btn:hover:not(:disabled) {
+  border-color: var(--shell-accent);
+  background: var(--shell-accent);
+  box-shadow: 0 8px 18px rgba(0, 113, 227, 0.18);
+}
 
-      .ghost-btn {
-        background: transparent;
-        border-color: var(--shell-border-strong);
-      }
+.ghost-btn {
+  background: transparent;
+  border-color: var(--shell-border-strong);
+}
 
-      .ghost-btn:hover:not(:disabled) {
-        background: var(--shell-field-muted);
-      }
+.ghost-btn:hover:not(:disabled) {
+  background: var(--shell-field-muted);
+}
 
-      .danger-btn,
-      .context-menu .danger-item {
-        color: var(--shell-danger);
-      }
+.danger-btn,
+.context-menu .danger-item {
+  color: var(--shell-danger);
+}
 
-      .icon-btn {
-        width: 32px;
-        min-width: 32px;
-        height: 32px;
-        min-height: 32px;
-        padding: 0;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 999px;
-        color: color-mix(in srgb, var(--shell-text) 55%, transparent);
-      }
+.icon-btn {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: color-mix(in srgb, var(--shell-text) 55%, transparent);
+}
 
-      .icon-btn:hover:not(:disabled) {
-        background: var(--shell-field-muted);
-      }
+.icon-btn:hover:not(:disabled) {
+  background: var(--shell-field-muted);
+}
 
-      .compact {
-        min-width: 28px;
-        min-height: 28px;
-        padding: 0 8px;
-      }
+.compact {
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0 8px;
+}
 
-      .hint,
-      .small-note {
-        font-size: 12px;
-        line-height: 1.5;
-        color: var(--shell-text-muted);
-      }
+.hint,
+.small-note {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--shell-text-muted);
+}
 
-      .small-note strong {
-        color: var(--shell-text);
-      }
+.small-note strong {
+  color: var(--shell-text);
+}
 
-      .warning-box {
-        padding: 12px 14px;
-        border: 1px solid var(--shell-warning-border);
-        border-radius: 12px;
-        background: var(--shell-warning-bg);
-        color: var(--shell-warning);
-        line-height: 1.5;
-        font-size: 12px;
-      }
+.warning-box {
+  padding: 12px 14px;
+  border: 1px solid var(--shell-warning-border);
+  border-radius: 12px;
+  background: var(--shell-warning-bg);
+  color: var(--shell-warning);
+  line-height: 1.5;
+  font-size: 12px;
+}
 
-      .modal-status {
-        padding: 10px 12px;
-        border: 1px solid var(--shell-border);
-        border-radius: 12px;
-        background: var(--shell-field-bg);
-        color: var(--shell-text);
-        font-size: 12px;
-        line-height: 1.5;
-      }
+.modal-status {
+  padding: 10px 12px;
+  border: 1px solid var(--shell-border);
+  border-radius: 12px;
+  background: var(--shell-field-bg);
+  color: var(--shell-text);
+  font-size: 12px;
+  line-height: 1.5;
+}
 
-      .modal-status[hidden] {
-        display: none;
-      }
+.modal-status[hidden] {
+  display: none;
+}
 
-      .modal-status.is-info {
-        border-color: var(--shell-border);
-        background: var(--shell-field-bg);
-        color: var(--shell-text-muted);
-      }
+.modal-status.is-info {
+  border-color: var(--shell-border);
+  background: var(--shell-field-bg);
+  color: var(--shell-text-muted);
+}
 
-      .modal-status.is-warning {
-        border-color: var(--shell-warning-border);
-        background: var(--shell-warning-bg);
-        color: var(--shell-warning);
-      }
+.modal-status.is-warning {
+  border-color: var(--shell-warning-border);
+  background: var(--shell-warning-bg);
+  color: var(--shell-warning);
+}
 
-      .modal-status.is-error {
-        border-color: var(--shell-danger-border);
-        background: var(--shell-danger-bg);
-        color: var(--shell-danger);
-      }
+.modal-status.is-error {
+  border-color: var(--shell-danger-border);
+  background: var(--shell-danger-bg);
+  color: var(--shell-danger);
+}
 
-      .modal-status.is-success {
-        border-color: var(--shell-success-border);
-        background: var(--shell-success-bg);
-        color: var(--shell-success);
-      }
+.modal-status.is-success {
+  border-color: var(--shell-success-border);
+  background: var(--shell-success-bg);
+  color: var(--shell-success);
+}
 
-      .status-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 0 10px;
-        border-radius: 999px;
-        min-height: 26px;
-        min-width: 0;
-        max-width: 100%;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        font-size: 11px;
-        border: 1px solid var(--shell-border);
-        background: var(--shell-panel);
-        color: var(--shell-text-muted);
-      }
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border-radius: 999px;
+  min-height: 26px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  border: 1px solid var(--shell-border);
+  background: var(--shell-panel);
+  color: var(--shell-text-muted);
+}
 
-      .status-pill.is-dirty,
-      .status-pill.is-accent {
-        color: var(--shell-accent);
-        border-color: var(--state-accent-border);
-        background: var(--shell-accent-soft);
-      }
+.status-pill.is-dirty,
+.status-pill.is-accent {
+  color: var(--shell-accent);
+  border-color: var(--state-accent-border);
+  background: var(--shell-accent-soft);
+}
 
-      .status-pill.is-warning {
-        color: var(--shell-warning);
-        border-color: var(--shell-warning-border);
-        background: var(--shell-warning-bg);
-      }
+.status-pill.is-warning {
+  color: var(--shell-warning);
+  border-color: var(--shell-warning-border);
+  background: var(--shell-warning-bg);
+}
 
-      .status-pill.is-ok,
-      .save-pill.is-saved {
-        color: var(--shell-success);
-        border-color: var(--shell-success-border);
-        background: var(--shell-success-bg);
-      }
+.status-pill.is-ok,
+.save-pill.is-saved {
+  color: var(--shell-success);
+  border-color: var(--shell-success-border);
+  background: var(--shell-success-bg);
+}
 
-      .save-pill.is-saving {
-        color: var(--shell-accent);
-        border-color: var(--state-accent-border);
-        background: var(--shell-accent-soft);
-      }
+.save-pill.is-saving {
+  color: var(--shell-accent);
+  border-color: var(--state-accent-border);
+  background: var(--shell-accent-soft);
+}
 
-      .mode-toggle {
-        display: inline-flex;
-        align-items: stretch;
-        gap: 2px;
-        overflow: hidden;
-        min-width: 0;
-        padding: 2px;
-        border: 1px solid var(--shell-border-strong);
-        border-radius: 10px;
-        background: var(--shell-field-bg);
-        background-color: var(--shell-field-bg);
-      }
+.mode-toggle {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 2px;
+  overflow: hidden;
+  min-width: 0;
+  padding: 2px;
+  border: 1px solid var(--shell-border-strong);
+  border-radius: 10px;
+  background: var(--shell-field-bg);
+  background-color: var(--shell-field-bg);
+}
 
-      .mode-toggle button {
-        all: unset;
-        box-sizing: border-box;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-        cursor: pointer;
-        padding: 0;
-        min-width: 92px;
-        min-height: 32px;
-        border-radius: 8px;
-        background: var(--shell-field-bg);
-        color: color-mix(in srgb, var(--shell-text) 68%, transparent);
-        -webkit-text-fill-color: currentColor;
-        font-weight: 600;
-        transition:
-          background-color var(--motion-fast) var(--motion-ease),
-          color var(--motion-fast) var(--motion-ease),
-          box-shadow var(--motion-fast) var(--motion-ease);
-      }
+.mode-toggle button {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  padding: 0;
+  min-width: 92px;
+  min-height: 32px;
+  border-radius: 8px;
+  background: var(--shell-field-bg);
+  color: color-mix(in srgb, var(--shell-text) 68%, transparent);
+  -webkit-text-fill-color: currentColor;
+  font-weight: 600;
+  transition:
+    background-color var(--motion-fast) var(--motion-ease),
+    color var(--motion-fast) var(--motion-ease),
+    box-shadow var(--motion-fast) var(--motion-ease);
+}
 
-      .mode-toggle button > span {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        min-height: 32px;
-        padding: 0 12px;
-        border-radius: inherit;
-        pointer-events: none;
-      }
+.mode-toggle button > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: inherit;
+  pointer-events: none;
+}
 
-      .mode-toggle button:last-child {
-        border-right: 0;
-      }
+.mode-toggle button:last-child {
+  border-right: 0;
+}
 
-      .mode-toggle button:disabled {
-        cursor: not-allowed;
-        opacity: 0.55;
-      }
+.mode-toggle button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
 
-      .mode-toggle button:focus-visible {
-        outline: none;
-        box-shadow: 0 0 0 4px var(--shell-focus);
-      }
+.mode-toggle button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--shell-focus);
+}
 
-      .mode-toggle button:hover:not(:disabled):not(.is-active) {
-        background: color-mix(in srgb, var(--shell-panel) 72%, transparent);
-        color: var(--shell-text);
-      }
+.mode-toggle button:hover:not(:disabled):not(.is-active) {
+  background: color-mix(in srgb, var(--shell-panel) 72%, transparent);
+  color: var(--shell-text);
+}
 
-      .mode-toggle button.is-active {
-        background: var(--shell-panel-elevated);
-        color: var(--shell-accent);
-        -webkit-text-fill-color: var(--shell-accent);
-        box-shadow: var(--shadow-sm);
-      }
+.mode-toggle button.is-active {
+  background: var(--shell-panel-elevated);
+  color: var(--shell-accent);
+  -webkit-text-fill-color: var(--shell-accent);
+  box-shadow: var(--shadow-sm);
+}
 
-      .mode-toggle button.is-active:disabled {
-        color: var(--shell-accent);
-        -webkit-text-fill-color: var(--shell-accent);
-        opacity: 1;
-      }
+.mode-toggle button.is-active:disabled {
+  color: var(--shell-accent);
+  -webkit-text-fill-color: var(--shell-accent);
+  opacity: 1;
+}
 
-      .mode-toggle button.is-suggested:not(.is-active):not(:disabled) {
-        background: var(--shell-accent-soft);
-        color: var(--shell-accent);
-        -webkit-text-fill-color: var(--shell-accent);
-        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--shell-accent) 28%, transparent);
-      }
+.mode-toggle button.is-suggested:not(.is-active):not(:disabled) {
+  background: var(--shell-accent-soft);
+  color: var(--shell-accent);
+  -webkit-text-fill-color: var(--shell-accent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--shell-accent) 28%, transparent);
+}
 
-      .inspector-density-toggle {
-        flex-shrink: 0;
-        border-radius: 10px;
-      }
+.inspector-density-toggle {
+  flex-shrink: 0;
+  border-radius: 10px;
+}
 
-      .inspector-density-toggle button {
-        min-width: 82px;
-        min-height: 28px;
-        padding: 0 10px;
-      }
+.inspector-density-toggle button {
+  min-width: 82px;
+  min-height: 28px;
+  padding: 0 10px;
+}
 
-      /* [LAYER-MODEL v2] selection mode toggle */
-      .selection-mode-toggle {
-        flex-shrink: 0;
-        border-radius: 8px;
-        margin-bottom: 6px;
-      }
+/* [LAYER-MODEL v2] selection mode toggle */
+.selection-mode-toggle {
+  flex-shrink: 0;
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
 
-      .selection-mode-toggle button {
-        min-width: 64px;
-        min-height: 24px;
-        padding: 0 8px;
-        font-size: 11px;
-      }
+.selection-mode-toggle button {
+  min-width: 64px;
+  min-height: 24px;
+  padding: 0 8px;
+  font-size: 11px;
+}
 
-      .mini-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 10px;
-        border-radius: 999px;
-        border: 1px solid var(--shell-border);
-        background: var(--shell-field-bg);
-        color: var(--shell-text-muted);
-        font-size: 12px;
-      }
+.mini-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--shell-border);
+  background: var(--shell-field-bg);
+  color: var(--shell-text-muted);
+  font-size: 12px;
+}
 
-      .inline-actions,
-      .modal-footer-actions {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        align-items: center;
-      }
+.inline-actions,
+.modal-footer-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
 
-      .modal-footer-actions {
-        justify-content: flex-end;
-      }
+.modal-footer-actions {
+  justify-content: flex-end;
+}
 
-      .text-underline {
-        text-decoration: underline;
-      }
-      }
+.text-underline {
+  text-decoration: underline;
+}
+}
