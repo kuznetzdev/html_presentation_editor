@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="slides-format" content="viewport">
+<meta name="editor-compatible" content="html_presentation_editor">
+<title>SelectiOS — инвестиционный питч 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet">
+<style>
+/* ─── DESIGN TOKENS ─── */
+:root{
+  --bg:#07101e;
+  --bg2:#0c1828;
+  --surface:rgba(18,30,52,.94);
+  --surface2:rgba(25,40,68,.94);
+  --line:rgba(255,255,255,.10);
+  --line2:rgba(255,255,255,.18);
+  --text:#eef4ff;
+  --text2:#c6d8f0;
+  --muted:#8aa8c8;
+  --green:#28db6a;
+  --green2:#1db058;
+  --gsoft:rgba(40,219,106,.12);
+  --gsoft2:rgba(40,219,106,.22);
+  --blue:#52a6ff;
+  --blue2:#2870de;
+  --bsoft:rgba(82,166,255,.12);
+  --gold:#ffbe42;
+  --goldsoft:rgba(255,190,66,.12);
+  --red:#ff6a6a;
+  --redsoft:rgba(255,106,106,.11);
+  --shadow:0 20px 60px rgba(0,0,0,.28),0 4px 16px rgba(0,0,0,.18);
+  --radius:16px;
+  --radius-sm:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Inter',sans-serif;color:var(--text)}
+body{background:
+  radial-gradient(ellipse 60% 40% at 10% 12%, rgba(40,219,106,.09), transparent),
+  radial-gradient(ellipse 50% 35% at 92% 14%, rgba(82,166,255,.09), transparent),
+  radial-gradient(ellipse 40% 30% at 50% 98%, rgba(255,190,66,.05), transparent),
+  linear-gradient(170deg, #07101e 0%, #0a1422 100%);
+}
+
+/* ─── DECK / SLIDE ─── */
+.deck{position:relative;width:100vw;height:100vh}
+.slide{
+  position:absolute;inset:0;opacity:0;transform:scale(.975) translateY(8px);
+  pointer-events:none;transition:opacity .5s cubic-bezier(.4,0,.2,1), transform .5s cubic-bezier(.4,0,.2,1);
+  overflow:hidden;display:flex;align-items:center;justify-content:center;
+}
+.slide.active{opacity:1;transform:none;pointer-events:auto}
+
+/* vignette */
+.slide::after{
+  content:'';position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(ellipse at center, transparent 48%, rgba(2,8,18,.52) 100%);
+}
+.content{
+  position:relative;z-index:2;
+  width:min(1120px, 100%);
+  padding:28px 40px 82px;
+  display:flex;flex-direction:column;justify-content:center;
+  gap:0;
+  max-height:100vh;
+}
+
+/* ─── MESH ─── */
+.mesh{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+.blob{position:absolute;border-radius:50%;filter:blur(90px);animation:bfloat 16s ease-in-out infinite}
+.blob:nth-child(2){animation-name:bfloat2;animation-duration:20s}
+.blob:nth-child(3){animation-name:bfloat;animation-duration:24s;animation-direction:reverse}
+@keyframes bfloat{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(36px,-26px) scale(1.09)}}
+@keyframes bfloat2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-44px,32px) scale(1.11)}}
+
+/* ─── NAV ─── */
+.nav{
+  position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:100;
+  display:flex;align-items:center;gap:10px;padding:7px 16px;
+  border-radius:999px;background:rgba(7,16,30,.88);
+  backdrop-filter:blur(16px);border:1px solid var(--line2);
+  box-shadow:0 6px 24px rgba(0,0,0,.3);
+}
+.nav-btn{
+  width:34px;height:34px;border:0;border-radius:50%;
+  background:rgba(255,255,255,.08);color:var(--green);cursor:pointer;
+  font-size:18px;font-weight:900;line-height:1;
+  transition:background .2s;display:flex;align-items:center;justify-content:center;
+}
+.nav-btn:hover{background:rgba(40,219,106,.2)}
+.dots{display:flex;gap:7px;align-items:center}
+.dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.2);cursor:pointer;transition:all .25s}
+.dot.active{background:var(--green);transform:scale(1.4)}
+.ctr{font-size:12px;font-weight:700;color:var(--muted);min-width:42px;text-align:center}
+
+/* ─── TYPOGRAPHY ─── */
+.tag{
+  display:inline-flex;align-items:center;gap:7px;padding:4px 12px;
+  border-radius:999px;border:1px solid var(--gsoft2);background:var(--gsoft);
+  font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--green);
+  font-weight:800;width:max-content;margin-bottom:14px;
+}
+.h1{font-family:'Playfair Display',serif;font-size:clamp(32px,4.4vw,56px);line-height:1.06;font-weight:900;letter-spacing:-.025em}
+.h2{font-family:'Playfair Display',serif;font-size:clamp(24px,2.9vw,40px);line-height:1.1;font-weight:800;letter-spacing:-.02em;margin-bottom:4px}
+.h3{font-size:17px;font-weight:800;line-height:1.25;color:var(--text);margin-bottom:8px}
+.lead{font-size:16px;line-height:1.65;color:var(--text2)}
+.body-sm{font-size:13.5px;line-height:1.62;color:var(--muted)}
+.muted{color:var(--muted)}
+.small-label{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.grad{background:linear-gradient(130deg,var(--green),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.grad-gold{background:linear-gradient(130deg,var(--gold),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* ─── CARDS ─── */
+.card{
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--radius);padding:18px;
+  box-shadow:var(--shadow);
+  transition:transform .2s ease, border-color .2s, background .2s;
+}
+.card:hover{transform:translateY(-2px);border-color:var(--line2)}
+.card-g{background:linear-gradient(160deg, rgba(40,219,106,.10), rgba(18,30,52,.96));border-color:rgba(40,219,106,.24)}
+.card-b{background:linear-gradient(160deg, rgba(82,166,255,.10), rgba(18,30,52,.96));border-color:rgba(82,166,255,.22)}
+.card-r{background:linear-gradient(160deg, rgba(255,106,106,.10), rgba(18,30,52,.96));border-color:rgba(255,106,106,.22)}
+.card-gold{background:linear-gradient(160deg, rgba(255,190,66,.10), rgba(18,30,52,.96));border-color:rgba(255,190,66,.24)}
+.note{padding:13px 16px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--line);font-size:13.5px;line-height:1.58;color:var(--text2)}
+.note strong{color:var(--text)}
+
+/* ─── GRIDS ─── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px}
+
+/* ─── KPI / STAT ─── */
+.kpi{font-size:38px;font-weight:900;line-height:1;letter-spacing:-.04em}
+.kpi-sm{font-size:26px;font-weight:900;line-height:1;letter-spacing:-.03em}
+.kpi-note{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.45}
+
+/* ─── SIGNAL BOXES ─── */
+.signals{display:flex;flex-wrap:wrap;gap:12px;margin-top:18px}
+.sig{padding:12px 16px;border-radius:12px;background:var(--surface);border:1px solid var(--line);min-width:160px}
+.sig .sv{font-size:15px;font-weight:800;color:var(--green)}
+.sig .sl{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.45}
+
+/* ─── FLOW DIAGRAM ─── */
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-top:12px}
+.fbox{position:relative;padding:9px 13px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid var(--line);font-size:13px;color:var(--text2)}
+.farr{color:var(--muted);font-weight:900;font-size:16px}
+.fproblem{position:absolute;top:-17px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:800;color:var(--red);white-space:nowrap;letter-spacing:.04em}
+
+/* ─── BEFORE/AFTER ─── */
+.compare{display:grid;grid-template-columns:1fr 1fr;border-radius:18px;overflow:hidden;border:1px solid var(--line)}
+.compare .col-l{padding:20px;background:linear-gradient(160deg, rgba(255,106,106,.10), rgba(18,30,52,.96));border-right:1px solid var(--line)}
+.compare .col-r{padding:20px;background:linear-gradient(160deg, rgba(40,219,106,.10), rgba(18,30,52,.96))}
+.citem{display:flex;gap:8px;align-items:flex-start;margin-bottom:11px;font-size:14px;color:var(--text2);line-height:1.5}
+.citem span.icon{flex-shrink:0;font-weight:900;margin-top:1px}
+.compare-foot{padding:12px 20px;text-align:center;background:rgba(255,255,255,.04);border-top:1px solid var(--line);font-size:14px;color:var(--muted)}
+.compare-foot strong{color:var(--green)}
+
+/* ─── COUNTRY BLOCKS ─── */
+.country-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}
+.cblock{padding:16px 12px;border-radius:14px;text-align:center;border:1px solid var(--line);background:var(--surface)}
+.cblock .cha{font-size:24px;font-weight:900;line-height:1;margin-bottom:5px}
+.cblock .cn{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.cblock .cp{font-size:11px;font-weight:800;margin-top:5px;letter-spacing:.04em}
+
+/* ─── EXPAND PATH ─── */
+.expand-path{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;margin-top:14px}
+.ep-box{padding:5px 14px;border-radius:999px;background:var(--gsoft);border:1px solid var(--gsoft2);color:var(--green);font-size:13px;font-weight:800}
+.ep-arr{color:var(--muted);font-weight:800;font-size:15px}
+
+/* ─── TAM FUNNEL ─── */
+.funnel{display:flex;flex-direction:column;gap:9px;margin-top:10px}
+.fl{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:13px 18px;border-radius:14px;border:1px solid var(--line)}
+.fl1{background:linear-gradient(90deg, rgba(82,166,255,.16), rgba(18,30,52,.94));border-color:rgba(82,166,255,.28)}
+.fl2{background:linear-gradient(90deg, rgba(40,219,106,.14), rgba(18,30,52,.94));border-color:rgba(40,219,106,.28)}
+.fl3{background:linear-gradient(90deg, rgba(255,190,66,.14), rgba(18,30,52,.94));border-color:rgba(255,190,66,.28)}
+.fl4{background:linear-gradient(90deg, rgba(255,106,106,.12), rgba(18,30,52,.94));border-color:rgba(255,106,106,.26)}
+.fl-l{display:flex;flex-direction:column;min-width:200px}
+.fl-tag{font-size:11px;font-weight:800;letter-spacing:.10em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.fl-val{font-size:28px;font-weight:900;line-height:1.05;letter-spacing:-.03em}
+.fl-desc{font-size:12px;color:var(--muted);margin-top:4px}
+.fl-r{font-size:13.5px;line-height:1.55;color:var(--text2);text-align:right;max-width:340px}
+
+/* ─── PRICING ─── */
+.price-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:14px}
+.pcard{position:relative;padding:20px 18px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--line)}
+.pcard.pro{border-color:rgba(40,219,106,.36);background:linear-gradient(160deg, rgba(40,219,106,.11), rgba(18,30,52,.96))}
+.pcard.ent{border-color:rgba(255,190,66,.34);background:linear-gradient(160deg, rgba(255,190,66,.10), rgba(18,30,52,.96))}
+.pbadge{position:absolute;top:-11px;right:14px;background:var(--green);color:#003018;font-size:11px;font-weight:900;padding:2px 10px;border-radius:999px;letter-spacing:.05em}
+.pt{font-size:11px;font-weight:800;letter-spacing:.10em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.pp{font-size:26px;font-weight:900;line-height:1.1;color:var(--green);margin-bottom:10px}
+.pcard.ent .pp{color:var(--gold)}
+.pf{font-size:13.5px;line-height:1.6;color:var(--text2)}
+.upsell{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:14px}
+.ustep{padding:5px 14px;border-radius:999px;background:var(--gsoft);border:1px solid var(--gsoft2);font-size:13px;font-weight:700;color:var(--green)}
+.uarr{color:var(--muted);font-weight:900}
+
+/* ─── GROWTH CARDS ─── */
+.growth-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:14px}
+.yr{padding:18px;border-radius:var(--radius);border:1px solid var(--line)}
+.yr.y1{background:linear-gradient(160deg, rgba(82,166,255,.12), rgba(18,30,52,.96));border-color:rgba(82,166,255,.26)}
+.yr.y2{background:linear-gradient(160deg, rgba(40,219,106,.12), rgba(18,30,52,.96));border-color:rgba(40,219,106,.26)}
+.yr.y3{background:linear-gradient(160deg, rgba(255,190,66,.12), rgba(18,30,52,.96));border-color:rgba(255,190,66,.26)}
+.yr-title{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.yr-num{font-size:42px;font-weight:900;line-height:1;letter-spacing:-.04em}
+.yr-sub{font-size:12px;font-weight:700;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.06em}
+.yr-list{font-size:13px;color:var(--text2);line-height:1.62;margin-top:10px}
+.btrack{height:20px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;margin-top:4px}
+.bfill{height:100%;width:0;border-radius:999px;transition:width 1.1s cubic-bezier(.4,0,.2,1)}
+
+/* ─── ARCH DIAGRAM ─── */
+.arch{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;margin-top:14px}
+.arch-col{display:flex;flex-direction:column;gap:8px}
+.arch-item{padding:10px 14px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid var(--line);font-size:13.5px;color:var(--text2)}
+.arch-core{
+  padding:22px 16px;border-radius:18px;text-align:center;
+  border:2px solid rgba(40,219,106,.38);
+  background:linear-gradient(135deg, rgba(40,219,106,.16), rgba(82,166,255,.14));
+  min-width:170px;
+}
+.arch-core-name{font-size:20px;font-weight:900;color:var(--text);letter-spacing:-.02em}
+.arch-core-sub{font-size:12px;color:var(--green);margin-top:5px;font-weight:700}
+.arch-arr{font-size:22px;color:var(--muted);font-weight:900;text-align:center}
+
+/* ─── COMPETITOR ─── */
+.pos-wrap{display:grid;grid-template-columns:260px 1fr;gap:18px;align-items:start}
+.quad{position:relative;width:260px;height:260px;border-radius:14px;background:rgba(255,255,255,.025);border:1px solid var(--line)}
+.quad::before,.quad::after{content:'';position:absolute;background:var(--line)}
+.quad::before{left:50%;top:8%;bottom:8%;width:1px}
+.quad::after{top:50%;left:8%;right:8%;height:1px}
+.qlabel{position:absolute;font-size:9px;color:var(--muted);font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.bubble{position:absolute;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.2;font-size:10.5px;font-weight:800;border-radius:50%;padding:4px}
+.mtable{width:100%;border-collapse:collapse;font-size:13.5px}
+.mtable th{padding:9px 11px;text-align:left;border-bottom:1px solid var(--line);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.mtable td{padding:9px 11px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--text2)}
+.mtable tr:last-child td{border-bottom:none}
+.check{color:var(--green);font-weight:900;text-align:center!important}
+.cross{color:var(--red);text-align:center!important}
+.part{color:var(--muted);text-align:center!important}
+
+/* ─── TEAM ─── */
+.founder-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:14px}
+.fcard{padding:20px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--line)}
+.ftop{display:grid;grid-template-columns:110px 1fr;gap:16px;align-items:start}
+.photo-ph{
+  width:110px;height:138px;border-radius:14px;
+  border:2px dashed rgba(255,255,255,.16);
+  background:rgba(255,255,255,.025);
+  display:flex;align-items:center;justify-content:center;
+  text-align:center;font-size:11px;color:var(--muted);font-weight:700;line-height:1.45;padding:10px
+}
+.fname{font-size:20px;font-weight:900;color:var(--text);line-height:1.15}
+.frole{font-size:11px;color:var(--green);text-transform:uppercase;letter-spacing:.09em;font-weight:800;margin-top:5px}
+.fpts{list-style:none;margin-top:10px}
+.fpts li{position:relative;padding-left:13px;font-size:13.5px;color:var(--text2);line-height:1.58;margin-bottom:7px}
+.fpts li::before{content:'›';position:absolute;left:0;color:var(--green);font-weight:900}
+
+/* ─── USE OF FUNDS ─── */
+.alloc-bar{display:flex;overflow:hidden;border-radius:12px;height:38px;border:1px solid var(--line);margin:12px 0}
+.aseg{display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:800;color:#fff;letter-spacing:.02em}
+.alloc-legend{display:grid;grid-template-columns:1fr 1fr;gap:8px 20px;margin-top:10px}
+.al{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--text2)}
+.al-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+/* ─── MILESTONES ─── */
+.milestones{display:flex;flex-direction:column;gap:9px}
+.ms{display:flex;gap:10px;align-items:center;font-size:13.5px;color:var(--text2)}
+.msn{width:24px;height:24px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-weight:900;color:#003018;font-size:12px;flex-shrink:0}
+
+/* ─── INVEST ─── */
+.raise-box{padding:22px;border-radius:18px;background:linear-gradient(135deg, rgba(40,219,106,.16), rgba(82,166,255,.14));border:1px solid rgba(40,219,106,.36);text-align:center}
+.econ-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:14px}
+.econ{padding:13px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.econ-val{font-size:22px;font-weight:900;color:var(--green);line-height:1.1}
+.econ-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:5px;line-height:1.4}
+
+/* ─── CLOSE ─── */
+.close-map{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:16px 0}
+.cmap{padding:6px 16px;border-radius:999px;font-size:13px;font-weight:800}
+.contact-card{display:inline-block;padding:18px 26px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid var(--line)}
+.contact-grid{display:grid;gap:8px}
+.cit{font-size:15px;color:var(--text2)}
+.cit span{color:var(--text);font-weight:700}
+
+/* ─── REVEAL ─── */
+.rev{opacity:0;transform:translateY(14px)}
+[contenteditable]:focus{outline:2px solid rgba(40,219,106,.52);border-radius:6px}
+[contenteditable]:empty::before{content:attr(data-placeholder);color:var(--muted);font-style:italic}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:960px){
+  .content{padding:22px 24px 82px}
+  .g4,.g3,.price-grid,.growth-grid,.founder-grid,.econ-grid,.country-grid{grid-template-columns:1fr 1fr}
+  .g2,.pos-wrap,.arch{grid-template-columns:1fr}
+}
+@media(max-width:680px){
+  .g4,.g3,.g2,.price-grid,.growth-grid,.founder-grid,.econ-grid,.country-grid{grid-template-columns:1fr}
+  .content{padding:16px 16px 80px}
+}
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- ─── SLIDE 1: TITLE ─── -->
+<div class="slide active" data-slide="1">
+  <div class="mesh">
+    <div class="blob" style="width:520px;height:520px;top:-130px;right:-90px;background:#28db6a;opacity:.11"></div>
+    <div class="blob" style="width:360px;height:360px;bottom:-100px;left:-80px;background:#52a6ff;opacity:.10"></div>
+    <div class="blob" style="width:230px;height:230px;top:44%;left:16%;background:#ffbe42;opacity:.07"></div>
+  </div>
+  <canvas id="particles" style="position:absolute;inset:0;z-index:1;pointer-events:none"></canvas>
+  <div class="content">
+    <div style="display:grid;grid-template-columns:1fr 400px;gap:40px;align-items:center">
+      <div>
+        <div class="tag rev">Инвестиционный питч · 2026</div>
+        <div class="h1 rev" style="margin-bottom:14px">
+          <span class="grad">SelectiOS</span> — программный слой для селекции и семян в ЕАЭС
+        </div>
+        <div class="lead rev" style="max-width:520px;margin-bottom:22px" contenteditable="true">
+          Web-first B2B платформа для селекционных центров, семенных компаний и агроорганизаций. Чистые данные, повторяемая отчётность, более быстрые решения.
+        </div>
+        <div style="display:flex;flex-direction:column;gap:9px" class="rev">
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:11px;background:var(--gsoft);border:1px solid var(--gsoft2)">
+            <span style="font-size:18px">🌍</span>
+            <div>
+              <div style="font-size:13px;font-weight:800;color:var(--green)">ЕАЭС-first рынок</div>
+              <div class="body-sm">Россия → Казахстан / Беларусь → весь регион</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:11px;background:var(--bsoft);border:1px solid rgba(82,166,255,.22)">
+            <span style="font-size:18px">🔄</span>
+            <div>
+              <div style="font-size:13px;font-weight:800;color:var(--blue)">Повторяемая выручка</div>
+              <div class="body-sm">Пилот → расширение → крупный контракт</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:11px;background:var(--goldsoft);border:1px solid rgba(255,190,66,.22)">
+            <span style="font-size:18px">📊</span>
+            <div>
+              <div style="font-size:13px;font-weight:800;color:var(--gold)">18 млрд ₽</div>
+              <div class="body-sm">верхняя рамка рынка ЕАЭС</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="rev" style="display:flex;flex-direction:column;gap:12px">
+        <div style="padding:20px;border-radius:18px;background:linear-gradient(135deg,rgba(40,219,106,.13),rgba(82,166,255,.13));border:1px solid rgba(40,219,106,.3)">
+          <div class="small-label" style="margin-bottom:12px">Ключевые цифры</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:3px">Рынок</div><div style="font-size:22px;font-weight:900;color:var(--blue)">18 млрд ₽</div></div>
+            <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:3px">Привлечение</div><div style="font-size:22px;font-weight:900;color:var(--green)">10 млн ₽ / 10%</div></div>
+            <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:3px">Цель за 3 года</div><div style="font-size:22px;font-weight:900;color:var(--gold)">11–13 млн ₽</div></div>
+            <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:3px">Клиентов</div><div style="font-size:22px;font-weight:900;color:var(--text)">22–30</div></div>
+          </div>
+        </div>
+        <div class="note" style="text-align:center"><span class="muted">Узкая, но стратегически важная цифровая ниша</span></div>
+      </div>
+    </div>
+    <div class="rev" style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);text-align:center;letter-spacing:.04em">
+      Россия — точка входа &nbsp;·&nbsp; ЕАЭС — логика масштабирования
+    </div>
+  </div>
+</div>
+
+<!-- ─── SLIDE 2: PROBLEM ─── -->
+<div class="slide" data-slide="2">
+  <div class="mesh">
+    <div class="blob" style="width:420px;height:420px;top:-100px;right:-60px;background:#ff6a6a;opacity:.09"></div>
+    <div class="blob" style="width:280px;height:280px;bottom:-70px;left:-50px;background:#52a6ff;opacity:.08"></div>
+  </div>
+  <div class="content">
+    <div class="tag rev" style="border-color:rgba(255,106,106,.3);background:var(--redsoft);color:var(--red)">Проблема</div>
+    <div class="h2 rev" style="margin-bottom:16px" contenteditable="true">Селекционные и семенные процессы: стратегически важные — и операционно раздроблены</div>
+    <div class="g4 rev" style="margin-bottom:14px">
+      <div class="card card-r"><div style="font-size:24px;margin-bottom:8px">📂</div><div class="h3">Фрагментированные данные</div><div class="body-sm" contenteditable="true">Excel, папки, почта. Одни и те же данные в нескольких местах — версии расходятся.</div></div>
+      <div class="card card-r"><div style="font-size:24px;margin-bottom:8px">✍️</div><div class="h3">Ручная консолидация</div><div class="body-sm" contenteditable="true">Полевые данные собирают вручную и переносят в таблицы. Каждый цикл — потери и ошибки.</div></div>
+      <div class="card card-r"><div style="font-size:24px;margin-bottom:8px">🔍</div><div class="h3">Слабая прослеживаемость</div><div class="body-sm" contenteditable="true">Материалы, партии и результаты сложно отследить между сезонами и командами.</div></div>
+      <div class="card card-r"><div style="font-size:24px;margin-bottom:8px">⏳</div><div class="h3">Задержки в отчётности</div><div class="body-sm" contenteditable="true">Отчёты готовятся неделями. Решения принимаются с опозданием. Цикл замедляется.</div></div>
+    </div>
+    <div class="flow rev">
+      <div class="small-label" style="width:100%;margin-bottom:4px">Типичный операционный контур <em style="color:var(--red);font-style:normal">→ с проблемами</em></div>
+      <div class="fbox">Поле<div class="fproblem">ручной ввод</div></div>
+      <div class="farr">→</div>
+      <div class="fbox">Excel<div class="fproblem">версия расходится</div></div>
+      <div class="farr">→</div>
+      <div class="fbox">Email<div class="fproblem">нет трассировки</div></div>
+      <div class="farr">→</div>
+      <div class="fbox">Консолидация<div class="fproblem">ручная сверка</div></div>
+      <div class="farr">→</div>
+      <div class="fbox">Отчёт<div class="fproblem">задержка недели</div></div>
+      <div class="farr">→</div>
+      <div class="fbox">Решение<div class="fproblem">медленный цикл</div></div>
+    </div>
+    <div class="note rev" style="margin-top:14px">
+      <strong>Итог:</strong> больше ручного труда, меньше контроля, медленнее коммерческий и селекционный цикл
+    </div>
+  </div>
+</div>
+
+<!-- ─── SLIDE 3: WHY NOW ─── -->
+<div class="slide" data-slide="3">
+  <div class="mesh">
+    <div class="blob" style="width:400px;height:400px;top:-90px;right:-60px;background:#52a6ff;opacity:.09"></div>
+    <div class="blob" style="width:260px;height:260px;bottom:-60px;left:-40px;background:#28db6a;opacity:.08"></div>
+  </div>
+  <div class="content">
+    <div class="tag rev">Время для входа</div>
+    <div class="h2 rev" style="margin-bottom:16px" contenteditable="true">Рынок структурно готов к появлению программного слоя для селекции</div>
+    <div class="g3 rev">
+      <div class="card" style="border-color:rgba(82,166,255,.28);background:linear-gradient(160deg,rgba(82,166,255,.10),rgba(18,30,52,.96))">
+        <div style="font-size:32px;margin-bottom:12px">🌾</div>
+        <div class="h3" contenteditable="true">Семеноводство — государственный приоритет</div>
+        <div class="body-sm" contenteditable="true">Уровень самообеспеченности семенами в России достиг 67,6% к концу 2024 года. Тема селекционной инфраструктуры обозначена как критическая на уровне политики.</div>
+      </div>
+      <div class="card" style="border-color:rgba(40,219,106,.28);background:linear-gradient(160deg,rgba(40,219,106,.10),rgba(18,30,52,.96))">
+        <div style="font-size:32px;margin-bottom:12px">📱</div>
+        <div class="h3" contenteditable="true">Давление на цифровизацию растёт</div>
+        <div class="body-sm" contenteditable="true">Требования к прослеживаемости, отчётности и качеству данных в агросекторе усиливаются. Ручные процессы становятся уязвимостью, а не нормой.</div>
+      </div>
+      <div class="card" style="border-color:rgba(255,190,66,.28);background:linear-gradient(160deg,rgba(255,190,66,.10),rgba(18,30,52,.96))">
+        <div style="font-size:32px;margin-bottom:12px">🤝</div>
+        <div class="h3" contenteditable="true">ЕАЭС создаёт рамку масштабирования</div>
+        <div class="body-sm" contenteditable="true">В ЕАЭС идёт унификация реестров сортов и логики обращения семян. Это делает спрос на единый программный контур устойчивым и повторяемым на весь регион.</div>
+      </div>
+    </div>
+    <div class="note rev" style="margin-top:16px">
+      <strong>Окно возможности:</strong> категория под-цифровизирована относительно своей стратегической роли. Первый сильный игрок получает долгосрочное преимущество в ключевом регионе.
+    </div>
+  </div>
+</div>
+
+<!-- ─── SLIDE 4: PRODUCT ─── -->
+<div class="slide" data-slide="4">
+  <div class="mesh">
+    <div class="blob" style="width:400px;height:400px;top:-90px;right:-60px;background:#28db6a;opacity:.10"></div>
+    <div class="blob" style="width:260px;height:260px;bottom:-60px;left:-40px;background:#52a6ff;opacity:.09"></div>
+  </div>
+  <div class="content">
+    <div class="tag rev">Продукт</div>
+    <div class="h2 rev" style="margin-bottom:14px" contenteditable="true">Единый управляющий слой для данных по селекции, испытаниям и семенам</div>
+    <div class="arch rev">
+      <div class="arch-col">
+        <div class="small-label" style="margin-bottom:4px">Входы в систему</div>
+        <div class="arch-item">🌱 Программы и проекты</div>
+        <div class="arch-item">🧪 Полевые испытания и сезоны</div>
+        <div class="arch-item">📏 Делянки и наблюдения</div>
+        <div class="arch-item">🗂 Партии и материалы</div>
+        <div class="arch-item">👥 Команды и площадки</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+        <div class="arch-arr">→</div>
+        <div class="arch-core">
+          <div class="arch-core-name">SelectiOS</div>
+          <div class="arch-core-sub">Управляющий слой</div>
+        </div>
+        <div class="arch-arr">→</div>
+      </div>
+      <div class="arch-col">
+        <div class="small-label" style="margin-bottom:4px">Бизнес-результаты</div>
+        <div class="arch-item" style="border-color:rgba(40,219,106,.24);color:var(--green)">✓ Оцифрованные рабочие процессы</div>
+        <div class="arch-item" style="border-color:rgba(40,219,106,.24);color:var(--green)">✓ Прослеживаемые материалы и партии</div>
+        <div class="arch-item" style="border-color:rgba(40,219,106,.24);color:var(--green)">✓ Повторяемая отчётность</div>
+        <div class="arch-item" style="border-color:rgba(40,219,106,.24);color:var(--green)">✓ Аналитика и поддержка решений</div>
+        <div class="arch-item" style="border-color:rgba(40,219,106,.24);color:var(--green)">✓ Масштабируемый контур программы</div>
+      </div>
+    </div>
+    <div class="note rev" style="margin-top:14px">
+      <strong>Суть продукта:</strong> чище данные · лучше прослеживаемость · меньше ручной консолидации · быстрее отчётность · выше доверие к данным
+    </div>
+  </div>
+</div>
+
+<!-- ─── SLIDE 5: BEFORE / AFTER ─── -->
+<div class="slide" data-slide="5">
+  <div class="mesh">
+    <div class="blob" style="width:380px;height:380px;top:-80px;right:-50px;background:#ff6a6a;opacity:.07"></div>
+    <div class="blob" style="width:260px;height:260px;bottom:-60px;left:-40px;background:#28db6a;opacity:.09"></div>
+  </div>
+  <div class="content">
+    <div class="tag rev">Трансформация</div>
+    <div class="h2 rev" style="margin-bottom:14px" contenteditable="true">От хаоса в таблицах — к масштабируемому цифровому контуру</div>
+    <div class="compare rev">
+      <div class="col-l">
+        <div class="small-label" style="color:var(--red);margin-bottom:14px">❌ До внедрения</div>
+        <div class="citem"><span class="icon" style="color:var(--red)">✗</span><span contenteditable="true">Excel, папки и почта — данные везде</span></div>
+        <div class="citem"><span class="icon" style="color:var(--red)">✗</span><span contenteditable="true">Фрагментированный учёт материалов</span></div>
+        <div class="citem"><span class="icon" style="color:var(--red)">✗</span><span contenteditable="true">Ручная консолидация по каждому циклу</span></div>
+        <div class="citem"><span class="icon" style="color:var(--red)">✗</span><span contenteditable="true">Задержки отчётности на недели</span></div>
+        <div class="citem"><span class="icon" style="color:var(--red)">✗</span><span contenteditable="true">Низкое доверие к данным</span></div>
+      </div>
+      <div class="col-r">
+        <div class="small-label" style="color:var(--green);margin-bottom:14px">✅ После внедрения</div>
+        <div class="citem"><span class="icon" style="color:var(--green)">✓</span><span contenteditable="true">Единый рабочий процесс по программе</span></div>
+        <div class="citem"><span class="icon" style="color:var(--green)">✓</span><span contenteditable="true">Стандартизированные наблюдения</span></div>
+        <div class="citem"><span class="icon" style="color:var(--green)">✓</span><span contenteditable="true">Прослеживаемые материалы и программы</span></div>
+        <div class="citem"><span class="icon" style="color:var(--green)">✓</span><span contenteditable="true">Повторяемая отчётность</span></div>
+        <div class="citem"><span class="icon" style="color:var(--green)">✓</span><span contenteditable="true">Более быстрые решения</span></div>
+      </div>
+      <div class="compare-foot" style="grid-column:1/-1">
+        меньше ручной координации → <strong>больше управляемых данных</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SLIDE 6: EAEU MARKET ─── -->
+<div class="slide" data-slide="6">
+  <div class="mesh">
+    <div class="blob" style="width:400px;height:400px;top:-90px;right:-60px;background:#52a6ff;opacity:.09"></div>
+    <div class="blob" style="width:260px;height:260px;bottom:-60px;left:-40px;background:#28db6a;opacity:.08"></div>
+  </div>
+  <div class="content">
+    <div class="tag rev">Рынок ЕАЭС</div>
+    <div class="h2 rev" style="margin-bottom:12px" contenteditable="true">ЕАЭС — правильная рыночная рамка для SelectiOS</div>
+    <div class="g3 rev" style="margin-bottom:14px">
+      <div class="card"><div class="h3" contenteditable="true">ЕАЭС — основной рынок, не постскриптум</div><div class="body-sm" contenteditable="true">Региональная логика семенного оборота и данных делает ЕАЭС естественной рамкой масштабирования.</div></div>
+      <div class="card"><div class="h3" contenteditable="true">Россия + КЗ + BY = основная ёмкость</div><div class="body-sm" contenteditable="true">Три страны дают 98,9% пахотных угодий ЕАЭС и основной пул целевых клиентов.</div></div>
+      <div class="card"><div class="h3" contenteditable="true">Интеграция усиливает продукт</div><div class="body-sm" contenteditable="true">Единые требования к prослеживаемости делают спрос повторяемым на весь регион.</div></div>
+    </div>
+    <div class="country-grid rev">
+      <div class="cblock card-g">
+        <div class="cha" style="color:var(--green)" contenteditable="true">~133 млн га</div>
+        <div class="cn">🇷🇺 Россия</div>
+        <div class="cp" style="color:var(--green)">~83,9%</div>
+      </div>
+      <div class="cblock card-b">
+        <div class="cha" style="color:var(--blue)" contenteditable="true">~22 млн га</div>
+        <div class="cn">🇰🇿 Казахстан</div>
+        <div class="cp" style="color:var(--blue)">~13,9%</div>
+      </div>
+      <div class="cblock card-gold">
+        <div class="cha" style="color:var(--gold)" contenteditable="true">~5,6 млн га</div>
+        <div class="cn">🇧🇾 Беларусь</div>
+        <div class="cp" style="color:var(--gold)">~3,5%</div>
+      </div>
+      <div class="cblock">
+        <div class="cha" style="color:var(--muted)" contenteditable="true">~1,7%</div>
+        <div class="cn">Остальные</div>
+        <div class="cp" style="color:var(--muted)">длинный хвост</div>
+      </div>
+    </div>
+    <div class="muted rev" style="text-align:center;font-size:12px;margin-top:10px">
+      Итого ЕАЭС: ~158,6 млн га пашни &nbsp;·&nbsp; Россия + Казахстан + Беларусь = 98,9%
+    </div>
+    <div class="expand-path rev">
+      <span class="muted" style="font-size:12px">Путь масштабирования:</span>
+      <div class="ep-box">🇷🇺 Россия</div>
+      <div class="ep-arr">→</div>
+      <div class="ep-box">🇰🇿 Казахстан / 🇧🇾 Беларусь</div>
+      <div class="ep-arr">→</div>
+      <div class="ep-box">Весь ЕАЭС</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SLIDE 7: TAM/SAM/PAM/SOM ─── -->
+<div class="slide" data-slide="7">
+  <div class="mesh">
+    <div class="blob" style="width:380px;height:380px;top:-80px;right:-50px;background:#28db6a;opacity:.09"></div>
+    <div class="blob" style="width:240px;height:240px;bottom:-50px;left:-30px;background:#52a6ff;opacity:.08"></div>
+  </div>
+  <div class="content">
+    <div class="tag rev">Рыночная возможность</div>
+    <div class="h2 rev" style="margin-bottom:10px" contenteditable="true">Рынок ЕАЭС: достаточно большой для лидерства, достаточно узкий для сфокусированного входа</div>
+    <div class="funnel rev">
+      <div class="fl fl1">
+        <div class="fl-l">
+          <div class="fl-tag">TAM — весь адресуемый рынок</div>
+          <div class="fl-val" style="color:var(--blue)" contenteditable="true">18 млрд ₽</div>
+          <div class="fl-desc" contenteditable="true">Все breeding-центры, семенные компании и агрохолдинги с профилем испытаний</div>
+        </div>
+        <div class="fl-r" contenteditable="true">Полная ёмкость сегмента по ЕАЭС</div>
+      </div>
+      <div class="fl fl2">
+        <div class="fl-l">
+          <div class="fl-tag">SAM — достижимый рынок</div>
+          <div class="fl-val" style="color:var(--green)" contenteditable="true">6,4 млрд ₽</div>
+          <div class="fl-desc" contenteditable="true">Организации, готовые к SaaS-инструментам для breeding и seed-процессов</div>
+        </div>
+        <div class="fl-r" contenteditable="true">Рынок для текущего класса продукта</div>
+      </div>
+      <div class="fl fl3">
+        <div class="fl-l">
+          <div class="fl-tag">PAM / первый сегмент</div>
+          <div class="fl-val" style="color:var(--gold)" contenteditable="true">1,5 млрд ₽</div>
+          <div class="fl-desc" contenteditable="true">Селекционные центры, семенные организации с сильным запросом на данные</div>
+        </div>
+        <div class="fl-r" contenteditable="true">Beachhead: breeding-центры, семенные организации, агрокоманды с потребностью в данных</div>
+      </div>
+      <div class="fl fl4">
+        <div class="fl-l">
+          <div class="fl-tag">SOM — реалистичный захват</div>
+          <div class="fl-val" style="color:var(--red)" contenteditable="true">100 млн ₽ ARR</div>
+          <div class="fl-desc" contenteditable="true">За 5–7 лет при устойчивом росте</div>
+        </div>
+        <div class="fl-r"><strong style="color:var(--text)" contenteditable="true">Скромная доля рынка</strong> <span contenteditable="true">— цель не в агрессивном захвате, а в доказательстве повторяемых продаж в значимой категории</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SLIDE 8: PRICING ─── -->
+<div class="slide" data-slide="8">
+  <div class="mesh">
+    <div class="blob" style="width:380px;height:380px;top:-80px;right:-50px;background:#28db6a;opacity:.09"></div>
+    <div class="blob" style="width:220px;height:220px;bottom:-50px;left:-30px;background:#ffbe42;opacity:.08"></div>
+  </div>
+  <div class="content">
+    <div class="tag rev">Модель монетизации</div>
+    <div class="h2 rev" style="margin-bottom:12px" contenteditable="true">Повторяемая выручка: пилот → расширение → крупный контракт</div>
+    <div class="price-grid rev">
+      <div class="pcard">
+        <div class="pt">Пилот</div>
+        <div class="pp" contenteditable="true">0–100 тыс. ₽ / год</div>
+        <div class="pf" contenteditable="true">Вход и проверка ценности.<br>1 программа / ограниченный контур.<br>Умеренный порог — лёгкий старт.</div>
+      </div>
+      <div class="pcard pro">
+        <div class="pbadge">основной</div>
+        <div class="pt">Профессиональный</div>
+        <div class="pp" contenteditable="true">360–400 тыс. ₽ / год</div>
+        <div class="pf" contenteditable="true">Основной операционный слой.<br>Аналитика, отчётность, рост по нескольким программам. Повторяемый доход.</div>
+      </div>
+      <div class="pcard ent">
+        <div class="pt">Крупный клиент</div>
+        <div class="pp" contenteditable="true">1–2 млн ₽ / год</div>
+        <div class="pf" contenteditable="true">Масштаб, интеграции, управление доступами и правилами, AI-дополнение. Более высокий чек и глубокий контур.</div>
+      </div>
+    </div>
+    <div class="upsell rev">
+      <div class="ustep">Умеренный вход</div>
+      <div class="uarr">→</div>
+      <div class="ustep">Повторяемая подписка</div>
+      <div class="uarr">→</div>
+      <div class="ustep">Рост до Enterprise</div>
+    </div>
+    <div class="note rev" style="margin-top:12px">
+      Понятная доска: объясняется за 20 секунд &nbsp;·&nbsp; Enterprise-чек = до 20× выше пилота &nbsp;·&nbsp; upsell не требует новых продаж
+    </div>
+  </div>
+</div>
+
+<!-- ─── SLIDE 9: GROWTH PLAN ─── -->
+<div class="slide" data-slide="9">
+  <div class="mesh">
+    <div class="blob" style="width:380px;height:380px;top:-80px;right:-50px;background:#28db6a;opacity:.09"></div>
+    <div class="blob" style="width:240px;height:240px;bottom:-50px;left:-30px;background:#52a6ff;opacity:.08"></div>
+  </div>
+  <div class="content">
+    <div class="tag rev">Коммерческий план</div>
+    <div class="h2 rev" style="margin-bottom:12px" contenteditable="true">3-летний путь: умеренное проникновение, убедительное доказательство масштаба</div>
+    <div class="growth-grid rev">
+      <div class="yr y1">
+        <div class="yr-title">Год 1</div>
+        <div class="yr-num" style="color:var(--blue)" contenteditable="true">3–7</div>
+        <div class="yr-sub">пилотов и первых конверсий</div>
+        <div class="yr-list" contenteditable="true">Пилотные запуски · проверка ценности · первые платящие клиенты · старт регулярной выручки</div>
+      </div>
+      <div class="yr y2">
+        <div class="yr-title">Год 2</div>
+        <div class="yr-num" style="color:var(--green)" contenteditable="true">10–16</div>
+        <div class="yr-sub">повторяемые продажи</div>
+        <div class="yr-list" contenteditable="true">Продажи становятся процессом · расширение внутри клиентов · рост повторяемой выручки</div>
+      </div>
+      <div class="yr y3">
+        <div class="yr-title">Год 3</div>
+        <div class="yr-num" style="color:var(--gold)" contenteditable="true">22–30</div>
+        <div class="yr-sub">платящих B2B-клиентов</div>
+        <div class="yr-list" contenteditable="true">Портфель платящих клиентов · крупные контракты · первый региональный шаг</div>
+      </div>
+    </div>
+    <div class="g2 rev" style="margin-top:14px">
+      <div class="card">
+        <div class="small-label" style="margin-bottom:10px">Рост годовой регулярной выручки (ARR)</div>
+        <div style="display:grid;gap:10px">
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:5px">
+              <span class="muted">Год 1</span><strong style="color:var(--blue)">~1,5 млн ₽</strong>
+            </div>
+            <div class="btrack"><div class="bfill" data-width="12" style="background:linear-gradient(90deg,var(--blue2),var(--blue))"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:5px">
+              <span class="muted">Год 2</span><strong style="color:var(--green)">~5 млн ₽</strong>
+            </div>
+            <div class="btrack"><div class="bfill" data-width="38" style="background:linear-gradient(90deg,var(--green2),var(--green))"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:5px">
+              <span class="muted">Год 3</span><strong style="color:var(--gold)">11–13 млн ₽</strong>
+            </div>
+            <div class="btrack"><div class="bfill" data-width="92" style="background:linear-gradient(90deg,#c97206,var(--gold))"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="note" style="display:flex;align-items:center">
+        <div>
+          <strong>Важно:</strong> это не агрессивный захват рынка. Это доказательство повторяемых продаж.<br><br>
+          Цель за 3 года остаётся <strong>маленькой относительно PAM (1,5 млрд ₽)</strong> — что делает её реалистичной и привлекательной для инвестора.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SLIDE 10: MVP ─── -->
+<div class="slide" data-slide="10">
+  <div class="mesh">
+    <div class="blob" style="width:380px;height:380px;top:-80px;right:-50px;background:#28db6a;opacity:.09"></div>
+    <div class="blob" style="width:240px;height:240px;bottom:-50px;left:-30px;background:#52a6ff;opacity:.08"></div>
+  </div>
+  <div class="content">
+    <div class="tag rev">Готовность продукта</div>
+    <div class="h2 rev" style="margin-bottom:14px" contenteditable="true">Практичный путь к MVP: без перегруза, с ориентацией на пилот</div>
+    <div class="g3 rev">
+      <div class="card">
+        <div style="font-size:28px;margin-bottom:10px">📦</div>
+        <div class="h3" contenteditable="true">Что получает первый клиент</div>
+        <div class="body-sm" contenteditable="true">Оцифрованный рабочий процесс программы, структурированную фиксацию наблюдений, учёт материалов и базовую отчётность.</div>
+      </div>
+      <div class="card card-g">
+        <div style="font-size:28px;margin-bottom:10px">✅</div>
+        <div class="h3" contenteditable="true">Что доказывает пилот</div>
+        <div class="body-sm" contenteditable="true">Продукт работает на реальных данных и реально сокращает ручную консолидацию и задержки отчётности.</div>
+      </div>
+      <div class="card card-b">
+        <div style="font-size:28px;margin-bottom:10px">📈</div>
+        <div class="h3" contenteditable="true">Что масштабируется после</div>
+        <div class="body-sm" contenteditable="true">Больше программ, больше команд, глубже аналитика, сильнее роль продукта в принятии решений.</div>
+      </div>
+    </div>
+    <div class="flow rev" style="margin-top:14px">
+      <div class="small-label" style="width:100%;margin-bottom:4px">Сценарий пилота</div>
+      <div class="fbox" contenteditable="true">Настройка</div>
+      <div class="farr">→</div>
+      <div class="fbox" contenteditable="true">Сбор данных</div>
+      <div class="farr">→</div>
+      <div class="fbox" contenteditable="true">Нормализация</div>
+      <div class="farr">→</div>
+      <div class="fbox" contenteditable="true">Отчёт</div>
+      <div class="farr">→</div>
+      <div class="fbox" contenteditable="true">Поддержка решений</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SLIDE 11: COMPETITION ─── -->
+<div class="slide" data-slide="11">
+  <div class="mesh">
+    <div class="blob" style="width:360px;height:360px;top:-80px;right:-50px;background:#52a6ff;opacity:.08"></div>
+    <div class="blob" style="width:220px;height:220px;bottom:-50px;left:-30px;background:#28db6a;opacity:.07"></div>
+  </div>
+  <div class="content">
+    <div class="tag rev">Позиционирование</div>
+    <div class="h2 rev" style="margin-bottom:14px" contenteditable="true">Понятное место на рынке: проще внедрять, понятнее ценность, ближе к региональному клиенту</div>
+    <div class="pos-wrap rev">
+      <div>
+        <div class="quad">
+          <div class="qlabel" style="bottom:7px;left:8px;font-size:9px">сложнее запуск</div>
+          <div class="qlabel" style="bottom:7px;right:8px;font-size:9px">быстрее запуск</div>
+          <div class="qlabel" style="top:10px;left:50%;transform:translateX(-50%);font-size:9px">↑ прикладная ценность</div>
+          <div class="bubble" style="left:16%;top:18%;width:56px;height:56px;background:var(--redsoft);border:2px solid rgba(255,106,106,.4);color:var(--red)">Тяжёлые<br>системы</div>
+          <div class="bubble" style="left:18%;top:70%;width:44px;height:44px;background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.18);color:var(--muted)">Excel<br>ручной</div>
+          <div class="bubble" style="left:66%;top:64%;width:44px;height:44px;background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.18);color:var(--muted)">Open<br>source</div>
+          <div class="bubble" style="left:74%;top:18%;width:60px;height:60px;background:var(--gsoft);border:2px solid rgba(40,219,106,.52);color:var(--green)">SelectiOS</div>
+        </div>
+        <div class="note" style="margin-top:12px;font-size:12px">
+          <strong>Wedge:</strong> локальный рынок, быстрее внедрение, SaaS-модель
+        </div>
+      </div>
+      <div>
+        <table class="mtable">
+          <thead>
+            <tr>
+              <th>Критерий</th>
+              <th style="text-align:center;color:var(--green)">SelectiOS</th>
+              <th style="text-align:center">Таблицы</th>
+              <th style="text-align:center">Тяжёлые</th>
+              <th style="text-align:center">Open-source</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Фокус на breeding / seed</td><td class="check">✓</td><td class="cross">✗</td><td class="part">~</td><td class="part">~</td></tr>
+            <tr><td>Скорость запуска</td><td class="check">✓</td><td class="part">~</td><td class="cross">✗</td><td class="cross">✗</td></tr>
+            <tr><td>Простота внедрения</td><td class="check">✓</td><td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td></tr>
+            <tr><td>Подписочная SaaS-модель</td><td class="check">✓</td><td class="cross">✗</td><td class="part">~</td><td class="cross">✗</td></tr>
+            <tr><td>Региональная актуальность</td><td class="check">✓</td><td class="part">~</td><td class="cross">✗</td><td class="cross">✗</td></tr>
+          </tbody>
+        </table>
+        <div class="note" style="margin-top:12px"><strong>Суть:</strong> не «всё для всех», а чёткий программный слой для узкой стратегически важной ниши.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SLIDE 12: TEAM ─── -->
+<div class="slide" data-slide="12">
+  <div class="mesh">
+    <div class="blob" style="width:360px;height:360px;top:-80px;right:-50px;background:#28db6a;opacity:.09"></div>
+    <div class="blob" style="width:220px;height:220px;bottom:-50px;left:-30px;background:#52a6ff;opacity:.07"></div>
+  </div>
+  <div class="content">
+    <div class="tag rev">Команда</div>
+    <div class="h2 rev" style="margin-bottom:14px" contenteditable="true">Основатели: домен + продукт + исполнение</div>
+    <div class="founder-grid rev">
+      <div class="fcard">
+        <div class="ftop">
+          <div class="photo-ph" contenteditable="true" data-placeholder="Фото">📷<br><br>Бойцова<br>Маргарита</div>
+          <div>
+            <div class="fname" contenteditable="true">Бойцова Маргарита</div>
+            <div class="frole" contenteditable="true">Агробиотех · Домен · Рынок</div>
+            <ul class="fpts">
+              <li contenteditable="true">Собственный стартап в области агробиотеха</li>
+              <li contenteditable="true">Понимание задач селекционных и семенных команд</li>
+              <li contenteditable="true">Отвечает за предметную логику и связь продукта с отраслевой болью</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="fcard">
+        <div class="ftop">
+          <div class="photo-ph" contenteditable="true" data-placeholder="Фото">📷<br><br>Кузнецов<br>Никита</div>
+          <div>
+            <div class="fname" contenteditable="true">Кузнецов Никита</div>
+            <div class="frole" contenteditable="true">Продукт · AI · Разработка</div>
+            <ul class="fpts">
+              <li contenteditable="true">Архитектура и продуктовая сборка</li>
+              <li contenteditable="true">Интеграция AI-инструментов в рабочие процессы</li>
+              <li contenteditable="true">Исполнение от MVP до пилота</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="note rev" style="margin-top:14px;text-align:center">
+      Взаимодополняющая пара основателей · Домен + Технологии · Ориентация на коммерческое исполнение
+    </div>
+  </div>
+</div>
+
+<!-- ─── SLIDE 13: USE OF FUNDS ─── -->
+<div class="slide" data-slide="13">
+  <div class="mesh">
+    <div class="blob" style="width:360px;height:360px;top:-80px;right:-50px;background:#28db6a;opacity:.09"></div>
+    <div class="blob" style="width:220px;height:220px;bottom:-50px;left:-30px;background:#52a6ff;opacity:.08"></div>
+  </div>
+  <div class="content">
+    <div class="tag rev">Использование инвестиций</div>
+    <div class="h2 rev" style="margin-bottom:12px" contenteditable="true">Капиталоэффективный путь к пилотам и первой базе платящих клиентов</div>
+    <div class="rev">
+      <div class="small-label" style="margin-bottom:8px">Структура расходования · 10 млн ₽</div>
+      <div class="alloc-bar">
+        <div class="aseg" style="width:35%;background:linear-gradient(90deg,#1a7a3a,var(--green));gap:4px" title="Разработка продукта">💻 35%</div>
+        <div class="aseg" style="width:28%;background:linear-gradient(90deg,#1a5a9a,var(--blue));gap:4px" title="Пилоты / GTM / Продажи">📢 28%</div>
+        <div class="aseg" style="width:18%;background:linear-gradient(90deg,#8a6200,var(--gold));gap:4px" title="Основатели / команда / операционка">👥 18%</div>
+        <div class="aseg" style="width:12%;background:linear-gradient(90deg,#6a3a8a,#a060cc);gap:4px" title="Облако / AI / инфраструктура">☁️ 12%</div>
+        <div class="aseg" style="width:7%;background:rgba(255,255,255,.15);gap:4px" title="Резерв / юр / бухгалтерия">🔒 7%</div>
+      </div>
+      <div class="alloc-legend">
+        <div class="al"><div class="al-dot" style="background:var(--green)"></div><span>Разработка продукта — 35%</span></div>
+        <div class="al"><div class="al-dot" style="background:var(--blue)"></div><span>Пилоты / GTM / Продажи — 28%</span></div>
+        <div class="al"><div class="al-dot" style="background:var(--gold)"></div><span>Основатели / ключевые роли — 18%</span></div>
+        <div class="al"><div class="al-dot" style="background:#a060cc"></div><span>Облако / AI-инструменты — 12%</span></div>
+        <div class="al"><div class="al-dot" style="background:rgba(255,255,255,.35)"></div><span>Резерв / юр / бухгалтерия — 7%</span></div>
+      </div>
+    </div>
+    <div class="divider rev" style="height:1px;background:var(--line);margin:14px 0"></div>
+    <div class="g2 rev">
+      <div>
+        <div class="small-label" style="margin-bottom:10px">Что разблокируют деньги</div>
+        <div class="milestones">
+          <div class="ms"><div class="msn">1</div><span contenteditable="true">Усиление продукта и MVP-готовность</span></div>
+          <div class="ms"><div class="msn">2</div><span contenteditable="true">Пилотные запуски у первых клиентов</span></div>
+          <div class="ms"><div class="msn">3</div><span contenteditable="true">Первая база платящих клиентов</span></div>
+        </div>
+      </div>
+      <div class="note" style="display:flex;align-items:center">
+        <div>
+          <div style="font-size:13.5px;color:var(--text2);line-height:1.6">
+            Фокус: <strong>доказательство повторяемых продаж</strong>, а не максимальный охват.<br><br>
+            Высокий процент на разработку + GTM = <strong>капиталоэффективная модель</strong> для ранней стадии.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SLIDE 14: INVESTMENT ASK ─── -->
+<div class="slide" data-slide="14">
+  <div class="mesh">
+    <div class="blob" style="width:400px;height:400px;top:-90px;right:-60px;background:#28db6a;opacity:.11"></div>
+    <div class="blob" style="width:280px;height:280px;bottom:-70px;left:-50px;background:#52a6ff;opacity:.10"></div>
+    <div class="blob" style="width:180px;height:180px;top:40%;left:20%;background:#ffbe42;opacity:.07"></div>
+  </div>
+  <div class="content">
+    <div class="tag rev">Инвестиционное предложение</div>
+    <div class="h2 rev" style="margin-bottom:14px" contenteditable="true">10 млн ₽ за 10% — для доказательства коммерческой модели и логики регионального масштаба</div>
+    <div class="g2 rev">
+      <div class="raise-box">
+        <div class="small-label" style="margin-bottom:10px">Параметры раунда</div>
+        <div style="font-size:52px;font-weight:900;line-height:1;background:linear-gradient(130deg,var(--green),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text" contenteditable="true">10 млн ₽</div>
+        <div style="font-size:22px;font-weight:900;color:var(--text);margin-top:6px" contenteditable="true">за 10% компании</div>
+        <div class="muted" style="font-size:13px;margin-top:8px" contenteditable="true">Ранняя стадия · Региональная B2B software-компания</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="small-label">Экономика для инвестора</div>
+        <div class="econ-grid">
+          <div class="econ"><div class="econ-val" contenteditable="true">22–30</div><div class="econ-lbl">B2B-клиентов через 3 года</div></div>
+          <div class="econ"><div class="econ-val" contenteditable="true">11–13 млн ₽</div><div class="econ-lbl">ARR через 3 года</div></div>
+          <div class="econ"><div class="econ-val" style="color:var(--gold)" contenteditable="true">15–20 млн ₽</div><div class="econ-lbl">Стоимость 10% доли (базовый сценарий)</div></div>
+          <div class="econ"><div class="econ-val" style="color:var(--gold)" contenteditable="true">1,5x–2x</div><div class="econ-lbl">ROI в базовом сценарии</div></div>
+          <div class="econ" style="grid-column:span 2"><div class="econ-val" style="color:var(--blue)" contenteditable="true">Выше при сильном Enterprise</div><div class="econ-lbl">Upside при глубоком проникновении в крупные счета</div></div>
+        </div>
+        <div class="note">
+          <strong>Базовый сценарий ROI:</strong> консервативный. Он основан на скромном проникновении и не учитывает Enterprise-upside и региональный рост.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SLIDE 15: CLOSING ─── -->
+<div class="slide" data-slide="15">
+  <div class="mesh">
+    <div class="blob" style="width:500px;height:500px;top:-130px;right:-90px;background:#28db6a;opacity:.13"></div>
+    <div class="blob" style="width:340px;height:340px;bottom:-90px;left:-70px;background:#52a6ff;opacity:.11"></div>
+    <div class="blob" style="width:200px;height:200px;top:40%;left:22%;background:#ffbe42;opacity:.07"></div>
+  </div>
+  <canvas id="particles2" style="position:absolute;inset:0;z-index:1;pointer-events:none"></canvas>
+  <div class="content" style="text-align:center;align-items:center">
+    <div style="font-size:56px;line-height:1;margin-bottom:14px" class="rev">🌾</div>
+    <div class="h2 rev" style="font-size:clamp(26px,3.2vw,38px);margin-bottom:16px">
+      <span class="grad">Создаём региональный программный слой<br>для селекции и семян</span>
+    </div>
+    <div class="close-map rev">
+      <div class="cmap" style="background:var(--gsoft);border:1px solid var(--gsoft2);color:var(--green)">🇷🇺 Россия</div>
+      <div style="color:var(--muted);align-self:center;font-weight:900">→</div>
+      <div class="cmap" style="background:var(--bsoft);border:1px solid rgba(82,166,255,.28);color:var(--blue)">🇰🇿 Казахстан</div>
+      <div style="color:var(--muted);align-self:center;font-weight:900">→</div>
+      <div class="cmap" style="background:var(--bsoft);border:1px solid rgba(82,166,255,.28);color:var(--blue)">🇧🇾 Беларусь</div>
+      <div style="color:var(--muted);align-self:center;font-weight:900">→</div>
+      <div class="cmap" style="background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--muted)">Весь ЕАЭС</div>
+    </div>
+    <div class="lead rev" style="font-size:16px;max-width:680px;margin:0 auto 16px" contenteditable="true">
+      SelectiOS начинает в России и масштабируется по ЕАЭС. Открыты к инвестициям, пилотным партнёрствам и стратегическому диалогу с отраслью.
+    </div>
+    <div class="contact-card rev">
+      <div class="contact-grid">
+        <div class="cit" contenteditable="true" data-placeholder="Имя основателя">👤 <span>Кузнецов Никита / Бойцова Маргарита</span></div>
+        <div class="cit" contenteditable="true" data-placeholder="email@selectios.ru">✉️ <span>email@selectios.ru</span></div>
+        <div class="cit" contenteditable="true" data-placeholder="+7 (XXX) XXX-XX-XX">📱 <span>+7 (XXX) XXX-XX-XX · @handle</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /deck -->
+
+<!-- NAV -->
+<div class="nav">
+  <button class="nav-btn" onclick="changeSlide(-1)">&#8249;</button>
+  <div class="dots" id="dots"></div>
+  <button class="nav-btn" onclick="changeSlide(1)">&#8250;</button>
+  <span class="ctr" id="ctr">1 / 15</span>
+</div>
+
+<script>
+let cur = 1;
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+const dotsEl = document.getElementById('dots');
+const ctrEl = document.getElementById('ctr');
+for (let i = 1; i <= total; i++) {
+  const d = document.createElement('div');
+  d.className = 'dot' + (i === 1 ? ' active' : '');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+}
+function goTo(n) {
+  const prev = document.querySelector('.slide.active');
+  const next = document.querySelector(`.slide[data-slide="${n}"]`);
+  if (prev) prev.classList.remove('active');
+  if (next) { next.classList.add('active'); animateSlide(next); }
+  cur = n; updateNav();
+}
+function changeSlide(dir) {
+  let n = cur + dir;
+  if (n < 1) n = total;
+  if (n > total) n = 1;
+  goTo(n);
+}
+function updateNav() {
+  document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i + 1 === cur));
+  ctrEl.textContent = cur + ' / ' + total;
+}
+document.addEventListener('keydown', e => {
+  if (['ArrowRight', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); changeSlide(1); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); changeSlide(-1); }
+});
+let tx = 0;
+document.addEventListener('touchstart', e => tx = e.touches[0].clientX, {passive:true});
+document.addEventListener('touchend', e => {
+  const dx = tx - e.changedTouches[0].clientX;
+  if (Math.abs(dx) > 48) changeSlide(dx > 0 ? 1 : -1);
+});
+function animateSlide(slide) {
+  slide.querySelectorAll('.rev').forEach((el, i) => {
+    el.style.transition = 'none';
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(14px)';
+    void el.offsetHeight;
+    const delay = i * 0.07;
+    el.style.transition = `opacity .38s ease ${delay}s, transform .38s ease ${delay}s`;
+    el.style.opacity = '1';
+    el.style.transform = 'translateY(0)';
+  });
+  // bar fills
+  slide.querySelectorAll('.bfill:not(.filled)').forEach(b => {
+    b.classList.add('filled');
+    b.style.width = '0';
+    void b.offsetHeight;
+    b.style.width = b.dataset.width + '%';
+  });
+}
+// first slide
+animateSlide(document.querySelector('.slide.active'));
+
+// particles
+function initParticles(canvas) {
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W = canvas.width = canvas.offsetWidth;
+  let H = canvas.height = canvas.offsetHeight;
+  let mx = -1000, my = -1000;
+  const pts = Array.from({length:55}, () => ({
+    x: Math.random()*W, y: Math.random()*H,
+    vx:(Math.random()-.5)*.3, vy:(Math.random()-.5)*.3,
+    r: Math.random()*2+.8, a: Math.random()*.3+.08
+  }));
+  canvas.addEventListener('mousemove', e => {
+    const r = canvas.getBoundingClientRect();
+    mx = e.clientX - r.left; my = e.clientY - r.top;
+  });
+  canvas.addEventListener('mouseleave', () => { mx=-1000; my=-1000; });
+  (function tick(){
+    ctx.clearRect(0,0,W,H);
+    pts.forEach(p => {
+      const dx=p.x-mx, dy=p.y-my, d=Math.sqrt(dx*dx+dy*dy);
+      if(d<110){const f=(110-d)/110*2; p.vx+=(dx/d)*f*.1; p.vy+=(dy/d)*f*.1;}
+      p.vx*=.98; p.vy*=.98; p.x+=p.vx; p.y+=p.vy;
+      if(p.x<0)p.x=W; if(p.x>W)p.x=0;
+      if(p.y<0)p.y=H; if(p.y>H)p.y=0;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(40,219,106,${p.a})`; ctx.fill();
+    });
+    requestAnimationFrame(tick);
+  })();
+}
+initParticles(document.getElementById('particles'));
+initParticles(document.getElementById('particles2'));
+</script>
+</body>
+</html>
