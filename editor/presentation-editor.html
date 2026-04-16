@@ -834,14 +834,25 @@
         color: #ffffff;
       }
 
-      #topbarCommandCluster #exportPptxBtn {
+      #topbarCommandCluster #presentBtn {
         border: 1px solid var(--shell-accent);
         background: transparent;
         color: var(--shell-accent);
+        font-weight: 600;
+      }
+
+      #topbarCommandCluster #presentBtn:hover:not(:disabled) {
+        background: color-mix(in srgb, var(--shell-accent) 12%, transparent 88%);
+      }
+
+      #topbarCommandCluster #exportPptxBtn {
+        border: 1px solid var(--shell-border);
+        background: transparent;
+        color: var(--shell-fg);
       }
 
       #topbarCommandCluster #exportPptxBtn:hover:not(:disabled) {
-        background: color-mix(in srgb, var(--shell-accent) 12%, transparent 88%);
+        background: var(--shell-field-bg);
       }
 
       body[data-editor-workflow="empty"] #topbarStateCluster,
@@ -2982,6 +2993,36 @@
         border-left: 0;
       }
 
+      /* Align buttons use text symbols — keep them monospace-width */
+      #ftAlignLeftBtn, #ftAlignCenterBtn, #ftAlignRightBtn {
+        font-size: 13px;
+        letter-spacing: 0;
+      }
+      #ftAlignLeftBtn::before   { content: "⬅"; display:none; }
+      /* Cleaner text symbols for alignment */
+      #ftAlignLeftBtn   { font-family: monospace; }
+      #ftAlignCenterBtn { font-family: monospace; }
+      #ftAlignRightBtn  { font-family: monospace; }
+
+      /* Show active state on align buttons */
+      #ftAlignGroup button.is-active {
+        background: var(--shell-accent);
+        color: #fff;
+        border-radius: 4px;
+      }
+
+      /* Font family select — slightly wider than font-size */
+      #ftFontFamilySelect {
+        max-width: 110px;
+        font-size: 12px;
+      }
+
+      /* Underline button visual */
+      #ftUnderlineBtn {
+        text-decoration: underline;
+        font-family: inherit;
+      }
+
       .toolbar-handle {
         cursor: grab;
         user-select: none;
@@ -3801,6 +3842,7 @@
         #undoBtn,
         #redoBtn,
         #openHtmlBtn,
+        #presentBtn,
         #exportBtn,
         #exportPptxBtn {
           min-height: 44px;
@@ -3988,9 +4030,10 @@
             </button>
             <button id="undoBtn" disabled>Отменить</button>
             <button id="redoBtn" disabled>Повторить</button>
-          <button id="openHtmlBtn" class="primary-btn">Открыть HTML</button>
-            <button id="exportBtn" disabled>Экспорт HTML</button>
-            <button id="exportPptxBtn" disabled>Экспорт PPTX</button>
+          <button id="openHtmlBtn" class="primary-btn" title="Открыть HTML-файл презентации">Открыть HTML</button>
+            <button id="presentBtn" disabled title="Открыть презентацию на весь экран (▶ F5)">▶ Показать</button>
+            <button id="exportBtn" disabled title="Скачать чистый HTML-файл">Экспорт HTML</button>
+            <button id="exportPptxBtn" disabled title="Скачать файл PowerPoint (.pptx)">Экспорт PPTX</button>
           </div>
           <button
             id="topbarOverflowBtn"
@@ -4504,7 +4547,7 @@
                     id="ftEditTextBtn"
                     class="compact"
                     aria-label="Редактировать текст"
-                    title="Редактировать текст"
+                    title="Редактировать текст (двойной клик)"
                   >
                     ✎
                   </button>
@@ -4512,8 +4555,8 @@
                     type="button"
                     id="ftBoldBtn"
                     class="compact"
-                    aria-label="Сделать текст жирным"
-                    title="Жирный"
+                    aria-label="Жирный"
+                    title="Жирный (Ctrl+B)"
                   >
                     <strong>B</strong>
                   </button>
@@ -4521,21 +4564,60 @@
                     type="button"
                     id="ftItalicBtn"
                     class="compact"
-                    aria-label="Сделать текст курсивом"
-                    title="Курсив"
+                    aria-label="Курсив"
+                    title="Курсив (Ctrl+I)"
                   >
                     <em>I</em>
                   </button>
+                  <button
+                    type="button"
+                    id="ftUnderlineBtn"
+                    class="compact"
+                    aria-label="Подчёркнутый"
+                    title="Подчёркнутый (Ctrl+U)"
+                    style="text-decoration:underline"
+                  >
+                    U
+                  </button>
                   <input id="ftColorInput" type="color" title="Цвет текста" />
-                  <select id="ftFontSizeSelect" title="Размер шрифта">
+                  <select id="ftFontFamilySelect" title="Шрифт" aria-label="Шрифт">
+                    <option value="">— шрифт —</option>
+                    <option value="Inter, sans-serif">Inter</option>
+                    <option value="'Segoe UI', sans-serif">Segoe UI</option>
+                    <option value="Arial, sans-serif">Arial</option>
+                    <option value="Helvetica, sans-serif">Helvetica</option>
+                    <option value="Georgia, serif">Georgia</option>
+                    <option value="'Times New Roman', serif">Times New Roman</option>
+                    <option value="'Courier New', monospace">Courier New</option>
+                    <option value="monospace">monospace</option>
+                    <option value="Impact, sans-serif">Impact</option>
+                    <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                    <option value="Verdana, sans-serif">Verdana</option>
+                  </select>
+                  <select id="ftFontSizeSelect" title="Размер шрифта" aria-label="Размер шрифта">
                     <option value="">Px</option>
+                    <option value="10">10</option>
+                    <option value="12">12</option>
                     <option value="14">14</option>
                     <option value="16">16</option>
+                    <option value="18">18</option>
                     <option value="20">20</option>
                     <option value="24">24</option>
+                    <option value="28">28</option>
                     <option value="32">32</option>
+                    <option value="36">36</option>
+                    <option value="40">40</option>
                     <option value="48">48</option>
+                    <option value="56">56</option>
+                    <option value="64">64</option>
+                    <option value="72">72</option>
+                    <option value="96">96</option>
                   </select>
+                </div>
+                <div id="ftAlignGroup" class="floating-toolbar-group">
+                  <button type="button" id="ftAlignLeftBtn"   class="compact" data-ft-align="left"    aria-label="По левому краю"  title="По левому краю">⬡</button>
+                  <button type="button" id="ftAlignCenterBtn" class="compact" data-ft-align="center"  aria-label="По центру"       title="По центру">≡</button>
+                  <button type="button" id="ftAlignRightBtn"  class="compact" data-ft-align="right"   aria-label="По правому краю" title="По правому краю">⬢</button>
                 </div>
                 <div id="ftMediaGroup" class="floating-toolbar-group">
                   <button
@@ -6014,6 +6096,7 @@
         topbar: document.getElementById("topbar"),
         openHtmlBtn: document.getElementById("openHtmlBtn"),
         showSlideHtmlBtn: document.getElementById("showSlideHtmlBtn"),
+        presentBtn: document.getElementById("presentBtn"),
         exportBtn: document.getElementById("exportBtn"),
         exportPptxBtn: document.getElementById("exportPptxBtn"),
         undoBtn: document.getElementById("undoBtn"),
@@ -6108,7 +6191,13 @@
         ftFitImageBtn: document.getElementById("ftFitImageBtn"),
         ftBoldBtn: document.getElementById("ftBoldBtn"),
         ftItalicBtn: document.getElementById("ftItalicBtn"),
+        ftUnderlineBtn: document.getElementById("ftUnderlineBtn"),
+        ftAlignGroup: document.getElementById("ftAlignGroup"),
+        ftAlignLeftBtn: document.getElementById("ftAlignLeftBtn"),
+        ftAlignCenterBtn: document.getElementById("ftAlignCenterBtn"),
+        ftAlignRightBtn: document.getElementById("ftAlignRightBtn"),
         ftColorInput: document.getElementById("ftColorInput"),
+        ftFontFamilySelect: document.getElementById("ftFontFamilySelect"),
         ftFontSizeSelect: document.getElementById("ftFontSizeSelect"),
         selectedNodeBadge: document.getElementById("selectedNodeBadge"),
         selectedSlideBadge: document.getElementById("selectedSlideBadge"),
@@ -6699,9 +6788,26 @@
         els.ftItalicBtn.addEventListener("click", () =>
           toggleStyleOnSelected("fontStyle", "italic", "normal", "italic"),
         );
+        els.ftUnderlineBtn?.addEventListener("click", () =>
+          toggleStyleOnSelected("textDecoration", "underline", "none", "underline"),
+        );
+        [els.ftAlignLeftBtn, els.ftAlignCenterBtn, els.ftAlignRightBtn].forEach((btn) => {
+          btn?.addEventListener("click", () => {
+            const align = btn.dataset.ftAlign || "left";
+            applyStyle("textAlign", align);
+            // Update active state immediately for responsiveness
+            [els.ftAlignLeftBtn, els.ftAlignCenterBtn, els.ftAlignRightBtn].forEach(
+              (b) => b?.classList.toggle("is-active", b === btn),
+            );
+          });
+        });
         els.ftColorInput.addEventListener("input", () =>
           applyStyle("color", els.ftColorInput.value),
         );
+        els.ftFontFamilySelect?.addEventListener("change", () => {
+          const val = els.ftFontFamilySelect.value;
+          if (val) applyStyle("fontFamily", val);
+        });
         els.ftFontSizeSelect.addEventListener("change", () =>
           applyStyle("fontSize", toCssSize(els.ftFontSizeSelect.value)),
         );
@@ -13783,6 +13889,42 @@ ${doc.documentElement.outerHTML}`;
         }
       }
 
+      // ── Presentation play mode ─────────────────────────────────────────────
+      // Opens the current deck in a new fullscreen window using the same clean
+      // export snapshot used for HTML export. No modelDoc mutation.
+      function presentDeck() {
+        if (!state.modelDoc) return;
+        const pack = buildCleanExportPackage();
+        if (!pack) return;
+        const url = URL.createObjectURL(pack.blob);
+        const win = window.open(url, "_blank", "noopener,noreferrer");
+        if (!win) {
+          showToast(
+            "Браузер заблокировал новое окно. Разреши pop-up для этого сайта.",
+            "warning",
+            { title: "Режим презентации" },
+          );
+          // Revoke immediately since we can't track when popup cleans up
+          setTimeout(() => revokeEditorObjectUrl(url, "present-popup-blocked"), 0);
+          return;
+        }
+        // Attempt fullscreen after load — best-effort, browser may deny
+        win.addEventListener("load", () => {
+          try {
+            if (win.document?.documentElement?.requestFullscreen) {
+              void win.document.documentElement.requestFullscreen();
+            }
+          } catch (_) { /* ignore — fullscreen is non-critical */ }
+        });
+        // Revoke blob URL after the window has had time to load it
+        setTimeout(() => revokeEditorObjectUrl(url, "present-url-revoke-failed"), 10000);
+        showToast(
+          "Презентация открыта в новом окне. Нажми F11 для полного экрана.",
+          "success",
+          { title: "Режим презентации", ttl: 4000 },
+        );
+      }
+
       function collectEditorArtifactResidue(root) {
         if (!root?.querySelectorAll) return [];
         const residue = [];
@@ -17586,14 +17728,16 @@ ${exportDoc.documentElement.outerHTML}`;
         els.ftFitImageBtn.disabled =
           !hasSelection || !policy.canEditStyles || !state.selectedFlags.isImage;
         els.ftEditTextBtn.disabled = !canStartPlainTextEditing;
-        els.ftBoldBtn.disabled =
-          !canEditRichTextStyles;
-        els.ftItalicBtn.disabled =
-          !canEditRichTextStyles;
-        els.ftColorInput.disabled =
-          !canEditRichTextStyles;
-        els.ftFontSizeSelect.disabled =
-          !canEditRichTextStyles;
+        els.ftBoldBtn.disabled = !canEditRichTextStyles;
+        els.ftItalicBtn.disabled = !canEditRichTextStyles;
+        if (els.ftUnderlineBtn) els.ftUnderlineBtn.disabled = !canEditRichTextStyles;
+        if (els.ftColorInput) els.ftColorInput.disabled = !canEditRichTextStyles;
+        if (els.ftFontFamilySelect) els.ftFontFamilySelect.disabled = !canEditRichTextStyles;
+        if (els.ftFontSizeSelect) els.ftFontSizeSelect.disabled = !canEditRichTextStyles;
+        if (els.ftAlignGroup) els.ftAlignGroup.hidden = !canEditRichTextStyles;
+        [els.ftAlignLeftBtn, els.ftAlignCenterBtn, els.ftAlignRightBtn].forEach(
+          (b) => { if (b) b.disabled = !canEditRichTextStyles; },
+        );
         els.ftDeleteBtn.disabled = !hasSelection || !policy.canDelete;
         els.ftDuplicateBtn.disabled = !hasSelection || !policy.canDuplicate;
       }
@@ -18924,7 +19068,12 @@ ${exportDoc.documentElement.outerHTML}`;
             els.underlineBtn,
             els.ftBoldBtn,
             els.ftItalicBtn,
-          ].forEach((button) => button.classList.remove("is-active"));
+            els.ftUnderlineBtn,
+            els.ftAlignLeftBtn,
+            els.ftAlignCenterBtn,
+            els.ftAlignRightBtn,
+          ].forEach((button) => button?.classList.remove("is-active"));
+          if (els.ftFontFamilySelect) els.ftFontFamilySelect.value = "";
           if (els.selectionPolicyText) {
             els.selectionPolicyText.textContent =
               "Выбери элемент, чтобы увидеть ограничения редактирования.";
@@ -18968,10 +19117,8 @@ ${exportDoc.documentElement.outerHTML}`;
         els.resetStylesBtn.disabled = !hasSelection || !selectionPolicy.canEditStyles;
         els.pasteStyleBtn.disabled = !hasSelection || !selectionPolicy.canEditStyles;
         const fontSize = parseInt(state.selectedComputed.fontSize, 10);
-        const supportedSizes = ["12", "14", "16", "20", "24", "32", "48"];
-        const normalizedSize = supportedSizes.includes(String(fontSize))
-          ? String(fontSize)
-          : "";
+        const supportedSizes = ["10","12","14","16","18","20","24","28","32","36","40","48","56","64","72","96"];
+        const normalizedSize = supportedSizes.includes(String(fontSize)) ? String(fontSize) : "";
         els.fontSizeSelect.value = normalizedSize;
         els.ftFontSizeSelect.value = normalizedSize;
         els.textColorInput.value = rgbToHex(
@@ -19021,20 +19168,34 @@ ${exportDoc.documentElement.outerHTML}`;
           state.selectedComputed.fontWeight,
         );
         const italicActive = state.selectedComputed.fontStyle === "italic";
+        const underlineActive = (state.selectedComputed.textDecorationLine || "").includes("underline");
         els.boldBtn.classList.toggle("is-active", boldActive);
         els.ftBoldBtn.classList.toggle("is-active", boldActive);
         els.italicBtn.classList.toggle("is-active", italicActive);
         els.ftItalicBtn.classList.toggle("is-active", italicActive);
-        els.underlineBtn.classList.toggle(
-          "is-active",
-          (state.selectedComputed.textDecorationLine || "").includes(
-            "underline",
-          ),
-        );
+        els.underlineBtn.classList.toggle("is-active", underlineActive);
+        els.ftUnderlineBtn?.classList.toggle("is-active", underlineActive);
+        const ftAlignment = state.selectedComputed.textAlign || "left";
+        els.ftAlignLeftBtn?.classList.toggle("is-active",   ftAlignment === "left");
+        els.ftAlignCenterBtn?.classList.toggle("is-active", ftAlignment === "center");
+        els.ftAlignRightBtn?.classList.toggle("is-active",  ftAlignment === "right");
+        if (els.ftFontFamilySelect) {
+          const rawFamily = (state.selectedComputed.fontFamily || "").trim();
+          let matched = "";
+          Array.from(els.ftFontFamilySelect.options).forEach((opt) => {
+            if (opt.value && rawFamily.replace(/['"]/g,"").startsWith(opt.value.split(",")[0].replace(/['"]/g,"").trim())) matched = opt.value;
+          });
+          els.ftFontFamilySelect.value = matched;
+        }
         [
           els.boldBtn,
           els.italicBtn,
           els.underlineBtn,
+          els.ftUnderlineBtn,
+          els.ftAlignLeftBtn,
+          els.ftAlignCenterBtn,
+          els.ftAlignRightBtn,
+          els.ftFontFamilySelect,
           els.fontSizeSelect,
           els.textColorInput,
           ...els.alignButtons,
@@ -19576,7 +19737,12 @@ ${exportDoc.documentElement.outerHTML}`;
             els.underlineBtn,
             els.ftBoldBtn,
             els.ftItalicBtn,
-          ].forEach((button) => button.classList.remove("is-active"));
+            els.ftUnderlineBtn,
+            els.ftAlignLeftBtn,
+            els.ftAlignCenterBtn,
+            els.ftAlignRightBtn,
+          ].forEach((button) => button?.classList.remove("is-active"));
+          if (els.ftFontFamilySelect) els.ftFontFamilySelect.value = "";
           if (els.selectionPolicyText) {
             els.selectionPolicyText.textContent =
               "Выберите элемент, чтобы увидеть ограничения редактирования.";
@@ -19635,10 +19801,8 @@ ${exportDoc.documentElement.outerHTML}`;
         els.pasteStyleBtn.disabled = !hasSelection || !selectionPolicy.canEditStyles;
 
         const fontSize = parseInt(state.selectedComputed.fontSize, 10);
-        const supportedSizes = ["12", "14", "16", "20", "24", "32", "48"];
-        const normalizedSize = supportedSizes.includes(String(fontSize))
-          ? String(fontSize)
-          : "";
+        const supportedSizes = ["10","12","14","16","18","20","24","28","32","36","40","48","56","64","72","96"];
+        const normalizedSize = supportedSizes.includes(String(fontSize)) ? String(fontSize) : "";
         els.fontSizeSelect.value = normalizedSize;
         els.ftFontSizeSelect.value = normalizedSize;
         els.textColorInput.value = rgbToHex(
@@ -19689,21 +19853,27 @@ ${exportDoc.documentElement.outerHTML}`;
           state.selectedComputed.fontWeight,
         );
         const italicActive = state.selectedComputed.fontStyle === "italic";
+        const underlineActive = (state.selectedComputed.textDecorationLine || "").includes("underline");
         els.boldBtn.classList.toggle("is-active", boldActive);
         els.ftBoldBtn.classList.toggle("is-active", boldActive);
         els.italicBtn.classList.toggle("is-active", italicActive);
         els.ftItalicBtn.classList.toggle("is-active", italicActive);
-        els.underlineBtn.classList.toggle(
-          "is-active",
-          (state.selectedComputed.textDecorationLine || "").includes(
-            "underline",
-          ),
-        );
+        els.underlineBtn.classList.toggle("is-active", underlineActive);
+        els.ftUnderlineBtn?.classList.toggle("is-active", underlineActive);
+        const ftAlignment2 = state.selectedComputed.textAlign || "left";
+        els.ftAlignLeftBtn?.classList.toggle("is-active",   ftAlignment2 === "left");
+        els.ftAlignCenterBtn?.classList.toggle("is-active", ftAlignment2 === "center");
+        els.ftAlignRightBtn?.classList.toggle("is-active",  ftAlignment2 === "right");
 
         [
           els.boldBtn,
           els.italicBtn,
           els.underlineBtn,
+          els.ftUnderlineBtn,
+          els.ftAlignLeftBtn,
+          els.ftAlignCenterBtn,
+          els.ftAlignRightBtn,
+          els.ftFontFamilySelect,
           els.fontSizeSelect,
           els.textColorInput,
           ...els.alignButtons,
@@ -21089,6 +21259,7 @@ ${exportDoc.documentElement.outerHTML}`;
         els.zoomOutBtn?.addEventListener("click", () => stepZoom(-1));
         els.zoomInBtn?.addEventListener("click", () => stepZoom(1));
         els.zoomResetBtn?.addEventListener("click", () => setPreviewZoom(1.0, true));
+        els.presentBtn?.addEventListener("click", presentDeck);
         els.exportBtn?.addEventListener("click", exportHtml);
         els.exportPptxBtn?.addEventListener("click", () => { void exportPptx(); });
         els.themeToggleBtn?.addEventListener("click", toggleTheme);
@@ -22608,6 +22779,7 @@ ${exportDoc.documentElement.outerHTML}`;
         canInsertNow,
       ) {
         const workflow = state.editorWorkflow || getEditorWorkflowState();
+        if (els.presentBtn)    els.presentBtn.disabled    = !hasPresentation;
         els.exportBtn.disabled = !hasPresentation;
         if (els.exportPptxBtn) els.exportPptxBtn.disabled = !hasPresentation;
         els.undoBtn.disabled = state.historyIndex <= 0;

@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## 0.20.1 - PowerPoint-parity UX: rich-text toolbar & presentation mode - 2026-04-16
+
+### Floating toolbar — полный набор форматирования текста
+- **Подчёркивание** (`ftUnderlineBtn`): Ctrl+U-семантика, активное состояние синхронизировано с computed styles
+- **Выравнивание текста** (`ftAlignLeftBtn/CenterBtn/RightBtn`): три кнопки L/C/R в отдельной группе `#ftAlignGroup`; active-state отражает реальный `textAlign` выбранного элемента
+- **Шрифт** (`ftFontFamilySelect`): выпадающий список 11 распространённых семейств (Inter, Segoe UI, Arial, Georgia, Times New Roman, Courier New, Impact и др.)
+- **Размер шрифта** расширен: 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72, 96 px
+- Все новые контролы disabled при отсутствии текстового элемента, скрыты для нетекстовых сущностей
+- Оба пути синхронизации (primary + legacy) обновлены
+
+### Режим презентации
+- Кнопка **▶ Показать** в topbar (outlined accent): открывает чистый экспорт в новом окне, запрашивает fullscreen после загрузки
+- Tooltip-подсказка «Нажми F11 для полного экрана» в toast-уведомлении
+- Кнопка disabled при отсутствии загруженной презентации
+
+### UX-polish
+- Tooltips (`title=`) добавлены на все кнопки topbar: Открыть HTML, ▶ Показать, Экспорт HTML, Экспорт PPTX
+- Кнопка «Экспорт PPTX» переоформлена в нейтральный стиль (border/ghost), «▶ Показать» — в accent-outlined
+
 ## 0.20.0 - PPTX export and PowerPoint-parity UX - 2026-04-16
 - **Export PPTX**: added "Экспорт PPTX" button to the topbar (outlined accent style, next to "Экспорт HTML")
 - PptxGenJS loaded lazily from CDN on first use — no npm runtime dependency added
