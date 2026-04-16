@@ -1,0 +1,165 @@
+      @layer modal {
+/* ======================================================================
+       [STYLE 07] Modal / recovery / drawers
+       ====================================================================== */
+      .restore-banner {
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin: 14px 16px 0;
+        padding: 12px 14px;
+        border: 1px solid var(--restore-accent-border);
+        border-radius: 12px;
+        background: var(--restore-accent-bg);
+        color: var(--shell-text);
+      }
+
+      .restore-banner.is-visible {
+        display: flex;
+      }
+
+      .upload-box {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px;
+        border: 1px dashed var(--shell-border-strong);
+        border-radius: 12px;
+        background: var(--shell-panel-soft);
+      }
+
+      .upload-box h4 {
+        margin: 0;
+        font-size: 14px;
+      }
+
+      .upload-box p {
+        margin: 0;
+        color: var(--shell-text-muted);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .asset-status-inline {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .asset-status-inline strong {
+        color: var(--shell-text);
+      }
+
+      .hidden-file-input {
+        display: none !important;
+      }
+
+      .modal {
+        position: fixed;
+        inset: 0;
+        z-index: var(--z-modal);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: var(--shell-modal-backdrop);
+      }
+
+      .modal.is-open {
+        display: flex;
+      }
+
+      .modal-card--wide {
+        width: min(760px, 98%);
+      }
+      .shortcuts-modal-body {
+        flex-direction: row;
+        gap: 24px;
+        padding: 20px;
+      }
+      .shortcuts-col {
+        flex: 1 1 0;
+        min-width: 0;
+      }
+      .shortcuts-col h4 {
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--shell-text-muted);
+        margin: 0 0 8px;
+      }
+      .shortcuts-col + .shortcuts-col {
+        border-left: 1px solid var(--shell-border);
+        padding-left: 24px;
+      }
+      .shortcuts-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 18px;
+        font-size: 13px;
+      }
+      .shortcuts-table tr + tr td {
+        border-top: 1px solid var(--shell-border);
+      }
+      .shortcuts-table td {
+        padding: 5px 4px;
+        vertical-align: middle;
+      }
+      .shortcuts-table td:first-child {
+        white-space: nowrap;
+        padding-right: 12px;
+      }
+      .shortcuts-table kbd {
+        display: inline-block;
+        padding: 2px 6px;
+        background: var(--shell-field-muted);
+        border: 1px solid var(--shell-border);
+        border-radius: 4px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 11px;
+        line-height: 1.5;
+        color: var(--shell-text);
+      }
+      .modal-card {
+        width: min(520px, 100%);
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border: 1px solid var(--shell-border);
+        border-radius: var(--radius-lg);
+        background: var(--shell-panel);
+        box-shadow: var(--shell-modal-shadow);
+      }
+
+      .modal-body {
+        padding: 16px;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      /* Two-column override for shortcuts modal */
+      .shortcuts-modal-body {
+        flex-direction: row;
+      }
+
+      .modal textarea {
+        width: 100%;
+        min-height: 380px;
+        resize: vertical;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        padding: 12px 14px;
+        background: var(--shell-field-muted);
+        color: var(--shell-text);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 13px;
+        line-height: 1.55;
+      }
+      }
