@@ -689,7 +689,7 @@
         letter-spacing: 0.08em;
         text-transform: uppercase;
         font-weight: 600;
-        color: #8e8e93;
+        color: var(--shell-text-muted);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -1171,8 +1171,8 @@
         width: 10px;
         height: 10px;
         border-radius: 999px;
-        border: 1px solid rgba(29, 29, 31, 0.12);
-        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid var(--shell-border-strong);
+        background: var(--shell-panel-elevated);
         z-index: 1;
       }
 
@@ -1978,7 +1978,7 @@
         line-height: 1.2;
         letter-spacing: 0.08em;
         text-transform: uppercase;
-        color: #8e8e93;
+        color: var(--shell-text-muted);
       }
 
       .inspector-section-header {
@@ -1998,13 +1998,12 @@
         padding: 0;
         border: 0;
         background: transparent;
-        color: inherit;
         text-align: left;
         font-weight: 600;
         font-size: 11px;
         letter-spacing: 0.08em;
         text-transform: uppercase;
-        color: #8e8e93;
+        color: var(--shell-text-muted);
       }
 
       .section-toggle:hover:not(:disabled) {
@@ -2576,7 +2575,7 @@
         display: none;
         min-width: 260px;
         max-width: min(360px, calc(100vw - 24px));
-        border: 1px solid rgba(29, 29, 31, 0.12);
+        border: 1px solid var(--shell-border-strong);
         border-radius: 14px;
         background: var(--shell-panel-elevated);
         box-shadow: var(--shadow-lg);
@@ -2941,9 +2940,9 @@
         gap: 4px;
         max-width: calc(100% - 16px);
         padding: 6px 8px;
-        border: 1px solid var(--shell-border);
-        border-radius: 12px;
-        background: var(--shell-field-bg);
+        border: 1px solid var(--shell-border-strong);
+        border-radius: var(--radius-md);
+        background: var(--shell-panel-elevated);
         box-shadow: var(--shadow-md);
         opacity: 0;
         pointer-events: none;
@@ -3004,11 +3003,11 @@
       #ftAlignCenterBtn { font-family: monospace; }
       #ftAlignRightBtn  { font-family: monospace; }
 
-      /* Show active state on align buttons */
+      /* Show active state on align buttons — matches .toolbar-row button.is-active */
       #ftAlignGroup button.is-active {
-        background: var(--shell-accent);
-        color: #fff;
-        border-radius: 4px;
+        border-color: var(--shell-accent);
+        background: var(--shell-accent-soft);
+        color: var(--shell-accent);
       }
 
       /* Font family select — slightly wider than font-size */
@@ -3071,8 +3070,8 @@
         display: none;
         min-width: 210px;
         max-width: min(320px, calc(100vw - 16px));
-        border: 1px solid rgba(29, 29, 31, 0.12);
-        border-radius: 12px;
+        border: 1px solid var(--shell-border-strong);
+        border-radius: var(--radius-md);
         background: var(--shell-panel-elevated);
         box-shadow: var(--shadow-lg);
         overflow: hidden;
@@ -3130,7 +3129,7 @@
         padding: 8px 12px 6px;
         font-size: 11px;
         font-weight: 700;
-        color: #8e8e93;
+        color: var(--shell-text-muted);
         text-transform: uppercase;
         letter-spacing: 0.04em;
         border-top: 1px solid var(--menu-divider);

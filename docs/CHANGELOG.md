@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## 0.21.0 - design system polish: token consistency & dark-mode fixes - 2026-04-16
+
+### CSS design system (Phase 5)
+- **Hardcoded colors replaced** — все четыре вхождения `#8e8e93` заменены на `var(--shell-text-muted)`: `.topbar-eyebrow`, `.inspector-section h3`, `.section-toggle`, `.context-menu-section-title`
+- **Dark-mode border bug fixed** — `rgba(29, 29, 31, 0.12)` заменены на `var(--shell-border-strong)` в трёх местах: `.slide-item::before`, `.layer-picker`, `.context-menu`; в тёмной теме эти бордеры теперь корректно отображаются белыми (не невидимыми)
+- **Floating toolbar** — фон изменён с `var(--shell-field-bg)` на `var(--shell-panel-elevated)`, бордер — с `var(--shell-border)` на `var(--shell-border-strong)`; теперь панель визуально выделяется как плавающий попап, а не просто поле ввода
+- **Align button active state** — `#ftAlignGroup button.is-active` теперь использует `var(--shell-accent-soft)` + `color: var(--shell-accent)` вместо плотного синего фона `var(--shell-accent)` — соответствует стилю `.toolbar-row button.is-active`
+- **Token normalization** — `.floating-toolbar` и `.context-menu` используют `var(--radius-md)` вместо хардкода `12px`
+- **`.section-toggle` cleanup** — удалено избыточное `color: inherit` (перекрывалось следующей `color:` декларацией)
+
+### Git semver tags
+- Применены теги `v0.20.0` – `v0.20.5` на исторические коммиты
+
 ## 0.20.5 - internal code structure: 21 navigable zone headers - 2026-04-16
 
 ### Внутренние улучшения (Phase 4)
