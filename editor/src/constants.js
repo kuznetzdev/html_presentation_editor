@@ -1,3 +1,7 @@
+// constants.js
+// Layer: Data & Constants
+// Slide selectors, editor attribute names, storage keys, tag sets.
+
       /* ======================================================================
        HTML Presentation Editor — normalized shell script
        Edit map:

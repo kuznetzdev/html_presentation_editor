@@ -15,6 +15,10 @@ const REFERENCE_FAMILIES = Object.freeze({
       "/references_pres/html-presentation-examples_v2/examples/",
     ),
   },
+  v3: {
+    dir: path.join(REFERENCE_ROOT, "html-presentation-examples_v3"),
+    manualBaseUrl: toTestServerUrl("/references_pres/html-presentation-examples_v3/"),
+  },
 });
 
 const REFERENCE_DECK_CASES = Object.freeze(
@@ -150,6 +154,49 @@ const REFERENCE_DECK_CASES = Object.freeze(
       family: "v2",
       relativePath: "07-relative-assets-multi-file.html",
       capabilities: ["asset-parity", "multi-file", "relative-assets"],
+    },
+    // ── v3 real-world pitch decks ──────────────────────────────────────────
+    {
+      id: "v3-basic-minimal",
+      family: "v3",
+      relativePath: "01_basic_minimal.html",
+      capabilities: ["css-variables", "minimal", "text"],
+    },
+    {
+      id: "v3-cards-columns",
+      family: "v3",
+      relativePath: "02_cards_columns_comparison.html",
+      capabilities: ["css-variables", "layout-containers", "text"],
+    },
+    {
+      id: "v3-tables-metrics",
+      family: "v3",
+      relativePath: "03_tables_metrics.html",
+      capabilities: ["css-variables", "dense-content", "tables"],
+    },
+    {
+      id: "v3-visual-storytelling",
+      family: "v3",
+      relativePath: "04_visual_storytelling.html",
+      capabilities: ["css-variables", "inline-styles", "svg"],
+    },
+    {
+      id: "v3-complex-stress",
+      family: "v3",
+      relativePath: "05_complex_mixed_stress_test.html",
+      capabilities: ["css-variables", "dense-content", "nested-dom", "stress-layout", "tables"],
+    },
+    {
+      id: "v3-prepodovai-pitch",
+      family: "v3",
+      relativePath: "prepodovai_pitch_v2.html",
+      capabilities: ["absolute", "css-variables", "inline-styles", "stress-layout", "tables"],
+    },
+    {
+      id: "v3-selectios-pitch",
+      family: "v3",
+      relativePath: "selectios_pitch_v2_final.html",
+      capabilities: ["absolute", "css-variables", "dense-content", "stress-layout", "tables"],
     },
   ].map((deckCase) => {
     const family = REFERENCE_FAMILIES[deckCase.family];

@@ -1,5 +1,57 @@
 # CHANGELOG
 
+## 0.23.0 - layer separation: bridge-script, shell-overlays, boot extracted + v3 reference decks - 2026-04-16
+
+### Разделение слоёв v2 — новые выделенные модули
+
+Два оставшихся «толстых» файла разбиты по архитектурным слоям:
+
+#### `preview.js` (4 275 строк) → 3 файла
+| Файл | Строк | Слой | Содержание |
+|------|------:|------|-----------|
+| `bridge-script.js` | 3 424 | Bridge | `buildBridgeScript()` — самодостаточный мини-апп для iframe |
+| `preview.js` | 34 | Rendering | `buildPreviewPackage()`, `injectBridge()` — только оркестрация |
+| `bridge-commands.js` | 832 | Bridge | Обработчики `postMessage` из iframe (select, update, activate…) |
+
+#### `inspector-sync.js` (4 156 строк) → 3 файла
+| Файл | Строк | Слой | Содержание |
+|------|------:|------|-----------|
+| `inspector-sync.js` | 1 390 | View | `updateInspectorFromSelection()` — только чтение и синхронизация UI |
+| `shell-overlays.js` | 818 | View | Модальные окна, палитра вставки, оверфлоу, выбор слоя, `setMode()` |
+| `boot.js` | 1 962 | Bootstrap | `init()`, тема, все `bind*()` — единая точка входа приложения |
+
+#### Итог: 25 JS-модулей, 18 288 строк кода
+- Gate-A: **55 passed / 5 skipped / 0 failed**
+- Скрипты `scripts/extract-layers-v2.js` и `scripts/extract-modules.js` повторяемы
+
+### Тестирование реальных презентаций (v3 reference decks)
+
+Добавлено 7 новых reference-deck кейсов в семейство `v3`:
+- `v3-basic-minimal`, `v3-cards-columns`, `v3-tables-metrics`, `v3-visual-storytelling`, `v3-complex-stress`
+- **`v3-prepodovai-pitch`** — питч ПреподовAI (Tailwind CDN, Google Fonts, animated slides)
+- **`v3-selectios-pitch`** — питч SelectiOS (15 слайдов, тёмная тема, таблицы, absolute layout)
+
+Все 7 прошли полный deep validation matrix (base, shell surfaces, text edit, slide structure,
+table ops, drag/resize). Исправлен `verifyTableCapability` — теперь использует `finalizeEditCommit`
+с многоуровневым fallback для JS-анимированных слайдов.
+
+---
+
+## 0.22.1 - HIG design pass (CSS polish) - 2026-04-16
+
+### CSS de-indent + дизайн-токены
+- **CSS de-indent**: все 8 файлов `editor/styles/*.css` очищены от 6-пробельного отступа HTML (`scripts/deindent-css.js`)
+- **27 новых токенов** в `tokens.css`:
+  - Spacing: `--space-1` (4px) → `--space-12` (48px)
+  - Typography: `--text-2xs` (10px) → `--text-2xl` (22px)
+  - Line-height: `--leading-tight` (1.2) → `--leading-loose` (1.7)
+- **Font smoothing**: `-webkit-font-smoothing: antialiased` + `line-height: var(--leading-normal)` в `base.css`
+- **Inspector**: высота инпутов 28→30px, focus-visible кольца, `letter-spacing` подтянут, dashed→solid рамки
+- **Overlays**: border-radius у пунктов контекстного меню, переходы для тостов
+- Gate-A: 55/5/0 maintained
+
+---
+
 ## 0.22.0 - architecture: split monolith into 8 CSS layers + 21 JS modules - 2026-04-16
 
 ### Архитектурный рефакторинг — разделение монолита

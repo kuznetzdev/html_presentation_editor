@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="slides-format" content="viewport">
+    <title>ПреподовAI — Питч v2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style type="text/tailwindcss">
+        @theme {
+            --color-bg: #F0F2F7;
+            --color-bg-dark: #2B2B2B;
+            --color-bg-blue: #1A6FD4;
+            --color-surface: #FFFFFF;
+            --color-surface-dark: #383838;
+            --color-text: #1E293B;
+            --color-text-secondary: #64748B;
+            --color-text-muted: #94A3B8;
+            --color-text-white: #FFFFFF;
+            --color-accent-1: #1B6FDE;
+            --color-accent-2: #5B5BD6;
+            --color-accent-3: #F59E0B;
+            --color-accent-4: #22C55E;
+            --color-accent-5: #A855F7;
+            --color-glass-bg: rgba(255,255,255,0.06);
+            --color-glass-border: rgba(255,255,255,0.10);
+            --font-body: 'Manrope', sans-serif;
+        }
+    </style>
+    <style>
+        :root {
+            --color-bg: #F0F2F7;
+            --color-text: #1E293B;
+        }
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { margin: 0; font-family: 'Manrope', sans-serif; overflow: hidden; height: 100vh; width: 100vw; }
+        body { background: var(--color-bg); color: var(--color-text); }
+
+        /* DECK SYSTEM */
+        .deck { width: 100vw; height: 100vh; position: relative; }
+        .slide {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            opacity: 0; transform: scale(0.97); transition: opacity 0.6s ease, transform 0.6s ease;
+            pointer-events: none; overflow: hidden;
+        }
+        .slide.active { opacity: 1; transform: scale(1); pointer-events: all; }
+        .slide > .content {
+            position: relative; z-index: 2; width: 100%; max-width: 1180px;
+            padding: clamp(1.5rem, 3.5vw, 3.5rem);
+        }
+
+        /* SLIDE THEMES */
+        .theme-light { background: #F0F2F7; color: #1E293B; }
+        .theme-dark { background: #2B2B2B; color: #FFFFFF; }
+        .theme-blue { background: #1B6FDE; color: #FFFFFF; }
+
+        /* SLIDE COUNTER */
+        .slide-num {
+            position: absolute; top: 1.5rem; right: 2rem; z-index: 10;
+            font-size: 0.78rem; font-weight: 500; letter-spacing: 0.03em;
+        }
+        .theme-light .slide-num { color: #94A3B8; }
+        .theme-dark .slide-num { color: #888; }
+        .theme-blue .slide-num { color: rgba(255,255,255,0.55); }
+
+        /* CATEGORY LABEL */
+        .cat-label {
+            font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em;
+            text-transform: uppercase; margin-bottom: 0.6rem;
+        }
+        .theme-light .cat-label { color: #1B6FDE; }
+        .theme-dark .cat-label { color: #FFFFFF; }
+        .theme-blue .cat-label { color: rgba(255,255,255,0.75); }
+
+        /* HEADINGS */
+        .slide-title {
+            font-size: clamp(1.7rem, 3.5vw, 2.9rem);
+            font-weight: 800; line-height: 1.15; margin: 0 0 1.2rem 0;
+        }
+        .theme-light .slide-title { color: #1E293B; }
+        .theme-dark .slide-title { color: #FFFFFF; }
+        .theme-blue .slide-title { color: #FFFFFF; }
+
+        /* CARDS - Light theme */
+        .card-light {
+            background: #FFFFFF; border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 2px 12px rgba(0,0,0,0.04);
+            padding: 1.1rem 1.3rem;
+        }
+        /* CARDS - Dark theme */
+        .card-dark {
+            background: #383838; border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+            padding: 1.1rem 1.3rem;
+        }
+        /* CARDS - Blue theme */
+        .card-blue {
+            background: rgba(255,255,255,0.15); border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 1.2rem 1.4rem;
+        }
+
+        /* NUMBERED BLOCKS */
+        .numbered-block { display: flex; align-items: flex-start; gap: 1rem; }
+        .num-big { font-size: clamp(2.5rem, 5vw, 3.8rem); font-weight: 800; line-height: 1; color: #CBD5E1; min-width: 3.5rem; }
+
+        /* REVEAL ANIMATION */
+        .reveal { opacity: 0; transform: translateY(18px); }
+
+        /* NAVIGATION */
+        .nav-controls {
+            position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+            display: flex; align-items: center; gap: 12px; z-index: 100;
+            background: rgba(255,255,255,0.85); backdrop-filter: blur(10px);
+            padding: 8px 20px; border-radius: 40px;
+            border: 1px solid rgba(0,0,0,0.08);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+        }
+        .nav-btn {
+            width: 34px; height: 34px; border: none;
+            background: #1B6FDE; color: #fff; border-radius: 50%;
+            font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s; font-weight: 700;
+        }
+        .nav-btn:hover { background: #1558C0; }
+        .slide-dots { display: flex; gap: 6px; }
+        .slide-dots .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #CBD5E1; cursor: pointer;
+            transition: background 0.3s, transform 0.3s;
+        }
+        .slide-dots .dot.active { background: #1B6FDE; transform: scale(1.35); }
+        .slide-counter { font-size: 0.75rem; color: #94A3B8; min-width: 36px; text-align: center; font-weight: 600; }
+
+        /* COLORED TOP-BORDER CARDS */
+        .card-top-blue { border-top: 4px solid #1B6FDE; }
+        .card-top-green { border-top: 4px solid #22C55E; }
+        .card-top-orange { border-top: 4px solid #F59E0B; }
+        .card-top-purple { border-top: 4px solid #A855F7; }
+
+        /* BLUE BANNER BUTTON */
+        .blue-banner {
+            background: #1B6FDE; color: #fff; border-radius: 8px;
+            padding: 0.9rem 1.5rem; text-align: center;
+            font-weight: 700; font-size: 1rem; width: 100%;
+        }
+
+        /* STAT BIG */
+        .stat-big { font-size: clamp(1.8rem, 3vw, 2.6rem); font-weight: 800; color: #1B6FDE; }
+        .stat-label { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: #64748B; margin-top: 0.2rem; }
+
+        /* WATERMARK LETTER */
+        .watermark-letter {
+            position: absolute; right: -0.5rem; bottom: -1rem;
+            font-size: 9rem; font-weight: 800; opacity: 0.08;
+            color: #fff; line-height: 1; user-select: none; pointer-events: none;
+        }
+
+        /* QUOTE BLOCK */
+        .quote-block {
+            border-left: 4px solid #1B6FDE;
+            padding: 0.8rem 1.2rem;
+            font-style: italic;
+            font-size: 1.05rem;
+            line-height: 1.55;
+        }
+        .theme-dark .quote-block { color: #E2E8F0; }
+
+        /* TIMELINE */
+        .timeline-track { position: relative; padding-left: 2.2rem; }
+        .timeline-track::before {
+            content: ''; position: absolute; left: 0.55rem; top: 0.5rem; bottom: 0.5rem;
+            width: 3px; background: #1B6FDE; border-radius: 2px;
+        }
+        .timeline-dot {
+            position: absolute; left: 0; top: 0.9rem;
+            width: 16px; height: 16px; background: #1B6FDE; border-radius: 50%;
+            border: 3px solid #F0F2F7; box-shadow: 0 0 0 2px #1B6FDE;
+        }
+
+        /* TABLE */
+        .rice-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.82rem; }
+        .rice-table th {
+            background: #1B6FDE; color: #fff;
+            padding: 0.55rem 0.7rem; font-weight: 700; font-size: 0.73rem;
+            text-transform: uppercase; letter-spacing: 0.06em;
+        }
+        .rice-table th:first-child { border-radius: 8px 0 0 0; }
+        .rice-table th:last-child { border-radius: 0 8px 0 0; }
+        .rice-table td { padding: 0.5rem 0.7rem; background: #fff; border-bottom: 1px solid #EEF2F7; color: #1E293B; }
+        .rice-table tr:last-child td { border-bottom: none; }
+        .rice-table tr:last-child td:first-child { border-radius: 0 0 0 8px; }
+        .rice-table tr:last-child td:last-child { border-radius: 0 0 8px 0; }
+        .rice-table td.rice-score { font-weight: 800; color: #1B6FDE; }
+        .rice-table tbody tr:hover td { background: #F8FAFF; }
+
+        /* TRACTION BARS */
+        .traction-bar-track {
+            height: 18px; background: #E2E8F0; border-radius: 9px; overflow: hidden; flex: 1;
+        }
+        .traction-bar-fill {
+            height: 100%; border-radius: 9px;
+            background: linear-gradient(90deg, #1B6FDE, #5B5BD6);
+            width: 0%; transition: width 0.8s ease;
+        }
+
+        /* STEP CIRCLES */
+        .step-circle {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: #1B6FDE; color: #fff;
+            font-weight: 800; font-size: 0.85rem;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.2s !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="deck">
+
+<!-- ══════════════════════ SLIDE 1 — TITLE ══════════════════════ -->
+<div class="slide theme-dark active" data-slide="1">
+    <div class="slide-num">01 / 08</div>
+    <div class="content" style="max-width:900px; text-align:center;">
+        <div class="cat-label reveal" style="color:rgba(255,255,255,0.6); margin-bottom:1rem;">ПИТЧ-ДЕНЬ · 2026</div>
+        <div class="reveal" style="font-size:clamp(2.6rem,5.5vw,4.4rem); font-weight:800; line-height:1.1; color:#5BA8FF; margin-bottom:0.7rem;">ПреподовAI</div>
+        <div class="reveal" style="font-size:clamp(1rem,2vw,1.5rem); font-weight:700; color:#fff; margin-bottom:2rem; line-height:1.35;">
+            ИИ-ассистент преподавателя для подготовки курса,<br>проверки работ и развивающей обратной связи
+        </div>
+        <div class="card-dark reveal" style="margin-bottom:1rem; text-align:left; color:#D1D5DB; font-size:0.95rem; line-height:1.65;">
+            Продукт снимает рутину с подготовки дисциплины и проверки работ, помогает держать критерии
+            и качество обратной связи и <strong style="color:#fff;">оставляет преподавателю финальное решение.</strong>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:0.8rem;">
+            <div class="card-dark reveal" style="text-align:center; padding:1rem;">
+                <div class="stat-big" style="color:#5BA8FF; font-size:2.2rem;">8</div>
+                <div class="stat-label" style="color:#888;">интервью с начала курса</div>
+            </div>
+            <div class="card-dark reveal" style="text-align:center; padding:1rem;">
+                <div class="stat-big" style="color:#5BA8FF; font-size:2.2rem;">6</div>
+                <div class="stat-label" style="color:#888;">интервью с прошлого занятия</div>
+            </div>
+            <div class="card-dark reveal" style="text-align:center; padding:1rem;">
+                <div style="font-size:1.2rem;">🎯</div>
+                <div class="stat-label" style="color:#888; margin-top:0.2rem;">Фокус пилота: first pass + черновик feedback</div>
+            </div>
+        </div>
+        <div class="card-dark reveal" style="margin-top:0.8rem; text-align:center; padding:0.7rem; background:#383838;">
+            <span style="color:#D1D5DB; font-weight:600; font-size:0.88rem;">
+                Блохин Георгий · Бойцова Маргарита · Кузнецов Никита · Рафф Антон · Шавлуков Дамадан
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════ SLIDE 2 — RICE ══════════════════════ -->
+<div class="slide theme-light" data-slide="2">
+    <div class="slide-num">02 / 08</div>
+    <div class="content">
+        <div class="cat-label reveal">Приоритизация</div>
+        <div class="slide-title reveal">Приоритизация фичей: что берём в MVP</div>
+        <div class="reveal" style="margin-bottom:1rem; overflow:hidden; border-radius:10px; box-shadow:0 2px 12px rgba(0,0,0,0.06);">
+            <table class="rice-table">
+                <thead>
+                    <tr>
+                        <th style="text-align:left;">Фича</th>
+                        <th>Reach</th>
+                        <th>Impact</th>
+                        <th>Conf.</th>
+                        <th>Effort</th>
+                        <th>RICE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Формирование структуры курса из материалов</td><td style="text-align:center;">9</td><td style="text-align:center;">3.0</td><td style="text-align:center;">0.85</td><td style="text-align:center;">2.5</td><td class="rice-score" style="text-align:center;">9.18</td></tr>
+                    <tr><td>AI-проверка работы + черновик ОС с ручным утверждением</td><td style="text-align:center;">8</td><td style="text-align:center;">3.0</td><td style="text-align:center;">0.90</td><td style="text-align:center;">2.5</td><td class="rice-score" style="text-align:center;">8.64</td></tr>
+                    <tr style="background:#FFFAF0;"><td>Создание задания с рубрикой оценивания</td><td style="text-align:center;">8</td><td style="text-align:center;">2.5</td><td style="text-align:center;">0.85</td><td style="text-align:center;">2.0</td><td class="rice-score" style="text-align:center;">8.50</td></tr>
+                    <tr><td>Загрузка и извлечение учебных материалов</td><td style="text-align:center;">9</td><td style="text-align:center;">2.0</td><td style="text-align:center;">0.90</td><td style="text-align:center;">2.0</td><td class="rice-score" style="text-align:center;">8.10</td></tr>
+                    <tr><td>Очередь работ студентов</td><td style="text-align:center;">7</td><td style="text-align:center;">2.0</td><td style="text-align:center;">0.80</td><td style="text-align:center;">2.0</td><td class="rice-score" style="text-align:center;">5.60</td></tr>
+                    <tr><td>Базовая аналитика по проверкам</td><td style="text-align:center;">6</td><td style="text-align:center;">1.0</td><td style="text-align:center;">0.75</td><td style="text-align:center;">1.5</td><td class="rice-score" style="text-align:center;">3.00</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div style="display:grid; grid-template-columns:2fr 1fr; gap:0.8rem; align-items:start;">
+            <div class="card-light reveal" style="border-left:4px solid #1B6FDE;">
+                <div style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#1B6FDE; margin-bottom:0.4rem;">Core Value</div>
+                <div style="font-size:0.88rem; color:#1E293B; line-height:1.5;">ПреподовAI помогает преподавателю быстрее проверять работы, готовить ОС под своим контролем и выстраивать управляемый учебный процесс.</div>
+            </div>
+            <div class="card-light reveal" style="border-left:4px solid #F59E0B;">
+                <div style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#F59E0B; margin-bottom:0.4rem;">Топ-3 для прототипа</div>
+                <div style="font-size:0.85rem; color:#1E293B; line-height:1.6;">
+                    1. AI-проверка + черновик ОС<br>
+                    2. Структура курса из материалов<br>
+                    3. Задание с рубрикой оценивания
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════ SLIDE 3 — ПРОТОТИП ч.1 ══════════════════════ -->
+<div class="slide theme-light" data-slide="3">
+    <div class="slide-num">03 / 08</div>
+    <div class="content">
+        <div class="cat-label reveal">Лёгкий прототип · часть 1</div>
+        <div class="slide-title reveal">От загрузки материалов к структуре курса</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.2rem;">
+            <div class="card-light reveal" style="border-top:4px solid #1B6FDE;">
+                <div style="font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#1B6FDE; margin-bottom:0.5rem;">Экран 1</div>
+                <div style="background:#F8FAFF; border-radius:8px; height:160px; display:flex; align-items:center; justify-content:center; border:2px dashed #BFDBFE; margin-bottom:0.7rem;">
+                    <div style="text-align:center; color:#93C5FD;">
+                        <div style="font-size:2.5rem;">📁</div>
+                        <div style="font-size:0.8rem; font-weight:600; margin-top:0.3rem; color:#64748B;">Загрузка учебного плана<br>и извлечение текста</div>
+                    </div>
+                </div>
+                <div style="font-size:0.82rem; color:#64748B; line-height:1.5;">Загрузка учебного плана и извлечение текста из материалов.</div>
+            </div>
+            <div class="card-light reveal" style="border-top:4px solid #22C55E;">
+                <div style="font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#22C55E; margin-bottom:0.5rem;">Экран 2</div>
+                <div style="background:#F0FDF4; border-radius:8px; height:160px; display:flex; align-items:center; justify-content:center; border:2px dashed #86EFAC; margin-bottom:0.7rem;">
+                    <div style="text-align:center;">
+                        <div style="font-size:2.5rem;">🗂️</div>
+                        <div style="font-size:0.8rem; font-weight:600; margin-top:0.3rem; color:#64748B;">Генерация черновика<br>структуры курса</div>
+                    </div>
+                </div>
+                <div style="font-size:0.82rem; color:#64748B; line-height:1.5;">Генерация черновика структуры: модули, темы, lecture/practice, часы.</div>
+            </div>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:0.8rem; margin-top:0.9rem;">
+            <div class="card-light reveal" style="display:flex; align-items:center; gap:0.6rem; padding:0.7rem 1rem;">
+                <span style="color:#1B6FDE; font-size:1.2rem;">📝</span>
+                <span style="font-size:0.82rem; color:#1E293B; font-weight:500;">Не начинает с пустого листа</span>
+            </div>
+            <div class="card-light reveal" style="display:flex; align-items:center; gap:0.6rem; padding:0.7rem 1rem;">
+                <span style="color:#22C55E; font-size:1.2rem;">⚡</span>
+                <span style="font-size:0.82rem; color:#1E293B; font-weight:500;">Материалы превращаются в каркас курса</span>
+            </div>
+            <div class="card-light reveal" style="display:flex; align-items:center; gap:0.6rem; padding:0.7rem 1rem;">
+                <span style="color:#F59E0B; font-size:1.2rem;">🎛️</span>
+                <span style="font-size:0.82rem; color:#1E293B; font-weight:500;">Основа дисциплины для дальнейшей настройки</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════ SLIDE 4 — ПРОТОТИП ч.2 ══════════════════════ -->
+<div class="slide theme-dark" data-slide="4">
+    <div class="slide-num">04 / 08</div>
+    <div class="content">
+        <div class="cat-label reveal">Прототип · часть 2 + обратная связь</div>
+        <div class="slide-title reveal">Очередь работ, аналитика и что сказали пользователи</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; align-items:start;">
+            <div style="display:flex; flex-direction:column; gap:0.8rem;">
+                <div class="card-dark reveal" style="border-top:3px solid #5BA8FF;">
+                    <div style="font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#5BA8FF; margin-bottom:0.5rem;">Экран 3</div>
+                    <div style="background:rgba(91,168,255,0.08); border-radius:8px; height:100px; display:flex; align-items:center; justify-content:center; border:1px dashed rgba(91,168,255,0.3); margin-bottom:0.5rem;">
+                        <div style="text-align:center; color:#7DBCFF;">
+                            <div style="font-size:2rem;">📋</div>
+                            <div style="font-size:0.75rem; font-weight:600; color:#888; margin-top:0.2rem;">Очередь работ студентов</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-dark reveal" style="border-top:3px solid #22C55E;">
+                    <div style="font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#22C55E; margin-bottom:0.5rem;">Экран 4</div>
+                    <div style="background:rgba(34,197,94,0.07); border-radius:8px; height:100px; display:flex; align-items:center; justify-content:center; border:1px dashed rgba(34,197,94,0.25); margin-bottom:0.5rem;">
+                        <div style="text-align:center;">
+                            <div style="font-size:2rem;">📊</div>
+                            <div style="font-size:0.75rem; font-weight:600; color:#888; margin-top:0.2rem;">Аналитика / что умеет MVP</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="reveal">
+                <div class="card-dark" style="margin-bottom:0.8rem; border-left:3px solid #5BA8FF;">
+                    <div style="font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#5BA8FF; margin-bottom:0.5rem;">Обратная связь</div>
+                    <div style="display:flex; flex-direction:column; gap:0.5rem;">
+                        <div style="display:flex; gap:0.6rem; align-items:flex-start; font-size:0.85rem; color:#D1D5DB; line-height:1.4;">
+                            <span style="color:#5BA8FF; font-weight:800; flex-shrink:0;">1.</span>
+                            Нужен первый проход, а не автосудья
+                        </div>
+                        <div style="display:flex; gap:0.6rem; align-items:flex-start; font-size:0.85rem; color:#D1D5DB; line-height:1.4;">
+                            <span style="color:#5BA8FF; font-weight:800; flex-shrink:0;">2.</span>
+                            Нужна связь с критериями и материалами курса
+                        </div>
+                        <div style="display:flex; gap:0.6rem; align-items:flex-start; font-size:0.85rem; color:#D1D5DB; line-height:1.4;">
+                            <span style="color:#5BA8FF; font-weight:800; flex-shrink:0;">3.</span>
+                            MVP должен быть узким: один тип задания, понятная рубрика, ручное утверждение
+                        </div>
+                    </div>
+                </div>
+                <div class="card-dark" style="border-left:3px solid #F59E0B; font-style:italic; color:#E2E8F0; font-size:0.95rem; line-height:1.55;">
+                    <div style="font-size:1.5rem; color:#F59E0B; margin-bottom:0.3rem;">"</div>
+                    Чтобы он не вместо меня решал, а просто первым проходом подсвечивал дыры.
+                    <div style="font-size:1.5rem; color:#F59E0B; text-align:right; margin-top:0.2rem;">"</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════ SLIDE 5 — ТЕСТИРОВАНИЕ ══════════════════════ -->
+<div class="slide theme-light" data-slide="5">
+    <div class="slide-num">05 / 08</div>
+    <div class="content">
+        <div class="cat-label reveal">Тестирование прототипа</div>
+        <div class="slide-title reveal">Тестирование прототипа на реальных пользователях</div>
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:1rem;">
+            <div class="card-light reveal" style="border-top:4px solid #1B6FDE; font-size:0.88rem; color:#1E293B; line-height:1.55;">
+                <div style="font-size:1.5rem; color:#1B6FDE; margin-bottom:0.4rem;">"</div>
+                При потоке работ такая штука правда может разгрузить. Особенно когда нужно всем дать более-менее одинаковую обратную связь.
+                <div style="font-size:1.5rem; color:#1B6FDE; text-align:right; margin-top:0.3rem;">"</div>
+            </div>
+            <div class="card-light reveal" style="border-top:4px solid #22C55E; font-size:0.88rem; color:#1E293B; line-height:1.55;">
+                <div style="font-size:1.5rem; color:#22C55E; margin-bottom:0.4rem;">"</div>
+                Мне нравится, что он опирается на задание и критерии. Тогда это не просто "что-то сгенерировал", а более рабочая история.
+                <div style="font-size:1.5rem; color:#22C55E; text-align:right; margin-top:0.3rem;">"</div>
+            </div>
+            <div class="card-light reveal" style="border-top:4px solid #A855F7; font-size:0.88rem; color:#1E293B; line-height:1.55;">
+                <div style="font-size:1.5rem; color:#A855F7; margin-bottom:0.4rem;">"</div>
+                О, ну это прикольно. Комментарий уже есть, не надо с нуля каждому писать.
+                <div style="font-size:1.5rem; color:#A855F7; text-align:right; margin-top:0.3rem;">"</div>
+            </div>
+        </div>
+        <div class="card-light reveal" style="border-left:4px solid #1B6FDE; background:#F0F7FF;">
+            <div style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#1B6FDE; margin-bottom:0.4rem;">Главный вывод</div>
+            <div style="font-size:0.9rem; color:#1E293B; line-height:1.6;">
+                Преподаватели воспринимают ПреподовAI как полезный инструмент для <strong>первого прохода по работам</strong>,
+                подготовки <strong>черновика обратной связи</strong> и снижения рутинной нагрузки
+                при сохранении <strong>контроля со стороны преподавателя</strong>.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════ SLIDE 6 — ЮНИТ-ЭКОНОМИКА ══════════════════════ -->
+<div class="slide theme-blue" data-slide="6">
+    <div class="slide-num">06 / 08</div>
+    <div class="content">
+        <div class="cat-label reveal">Юнит-экономика</div>
+        <div class="slide-title reveal">Модель сходится, но без большого запаса</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; align-items:start;">
+            <div>
+                <div class="cat-label reveal" style="color:rgba(255,255,255,0.65); font-size:0.7rem; margin-bottom:0.5rem;">Assumptions</div>
+                <div style="display:flex; flex-direction:column; gap:0.5rem;">
+                    <div class="card-blue reveal" style="display:flex; justify-content:space-between; align-items:center; padding:0.65rem 1rem;">
+                        <span style="font-size:0.85rem; color:rgba(255,255,255,0.8);">ARPU</span>
+                        <span style="font-weight:800; color:#fff; font-size:1rem;">2 800 ₽/мес</span>
+                    </div>
+                    <div class="card-blue reveal" style="display:flex; justify-content:space-between; align-items:center; padding:0.65rem 1rem;">
+                        <span style="font-size:0.85rem; color:rgba(255,255,255,0.8);">Churn</span>
+                        <span style="font-weight:800; color:#fff; font-size:1rem;">9,5% / мес</span>
+                    </div>
+                    <div class="card-blue reveal" style="display:flex; justify-content:space-between; align-items:center; padding:0.65rem 1rem;">
+                        <span style="font-size:0.85rem; color:rgba(255,255,255,0.8);">Lifetime</span>
+                        <span style="font-weight:800; color:#fff; font-size:1rem;">≈ 10,5 мес</span>
+                    </div>
+                    <div class="card-blue reveal" style="display:flex; justify-content:space-between; align-items:center; padding:0.65rem 1rem;">
+                        <span style="font-size:0.85rem; color:rgba(255,255,255,0.8);">CAC</span>
+                        <span style="font-weight:800; color:#fff; font-size:1rem;">9 167 ₽</span>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="cat-label reveal" style="color:rgba(255,255,255,0.65); font-size:0.7rem; margin-bottom:0.5rem;">Результаты</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.7rem; margin-bottom:0.8rem;">
+                    <div class="card-blue reveal" style="text-align:center; padding:1rem 0.7rem; position:relative;">
+                        <div style="font-size:1.9rem; font-weight:800; color:#fff;">28 000 ₽</div>
+                        <div style="font-size:0.68rem; text-transform:uppercase; letter-spacing:0.1em; color:rgba(255,255,255,0.65); margin-top:0.2rem;">LTV</div>
+                    </div>
+                    <div class="card-blue reveal" style="text-align:center; padding:1rem 0.7rem;">
+                        <div style="font-size:1.9rem; font-weight:800; color:#fff;">3,05×</div>
+                        <div style="font-size:0.68rem; text-transform:uppercase; letter-spacing:0.1em; color:rgba(255,255,255,0.65); margin-top:0.2rem;">LTV / CAC</div>
+                    </div>
+                </div>
+                <div class="card-blue reveal" style="padding:1rem; margin-bottom:0.6rem;">
+                    <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.1em; color:rgba(255,255,255,0.65); margin-bottom:0.4rem;">Формулы</div>
+                    <div style="font-size:0.82rem; color:rgba(255,255,255,0.9); line-height:1.65; font-family:monospace;">
+                        LTV = 2 800 × (1/0.095) ≈ 29 474 ₽<br>
+                        LTV/CAC = 28 000 / 9 167 = <strong style="color:#fff;">3,05</strong><br>
+                        Break-even = 9 167 / 2 800 ≈ <strong style="color:#fff;">3,3 мес</strong>
+                    </div>
+                </div>
+                <div class="card-blue reveal" style="border-left:3px solid rgba(255,255,255,0.5); padding:0.7rem 1rem; font-size:0.82rem; color:rgba(255,255,255,0.85); line-height:1.5;">
+                    LTV/CAC &gt; 3 → экономика сходится. Задача — аккуратно работать с CAC и удержанием.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════ SLIDE 7 — ТРЕКШН ══════════════════════ -->
+<div class="slide theme-light" data-slide="7">
+    <div class="slide-num">07 / 08</div>
+    <div class="content">
+        <div class="cat-label reveal">Трекшн</div>
+        <div class="slide-title reveal">Откуда берём первых платящих клиентов</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; align-items:start;">
+            <div>
+                <div style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#1B6FDE; margin-bottom:0.6rem;" class="reveal">Цели по платящим клиентам</div>
+                <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:0.5rem; margin-bottom:0.9rem;">
+                    <div class="card-light reveal" style="text-align:center; padding:0.7rem 0.4rem;">
+                        <div style="font-size:1.4rem; font-weight:800; color:#1B6FDE;">5</div>
+                        <div style="font-size:0.68rem; color:#64748B; font-weight:600;">1 мес</div>
+                    </div>
+                    <div class="card-light reveal" style="text-align:center; padding:0.7rem 0.4rem;">
+                        <div style="font-size:1.4rem; font-weight:800; color:#1B6FDE;">18</div>
+                        <div style="font-size:0.68rem; color:#64748B; font-weight:600;">3 мес</div>
+                    </div>
+                    <div class="card-light reveal" style="text-align:center; padding:0.7rem 0.4rem;">
+                        <div style="font-size:1.4rem; font-weight:800; color:#1B6FDE;">43</div>
+                        <div style="font-size:0.68rem; color:#64748B; font-weight:600;">6 мес</div>
+                    </div>
+                    <div class="card-light reveal" style="text-align:center; padding:0.7rem 0.4rem;">
+                        <div style="font-size:1.4rem; font-weight:800; color:#1B6FDE;">110</div>
+                        <div style="font-size:0.68rem; color:#64748B; font-weight:600;">12 мес</div>
+                    </div>
+                </div>
+                <div style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#1B6FDE; margin-bottom:0.6rem;" class="reveal">Каналы на 12 месяцев</div>
+                <div style="display:flex; flex-direction:column; gap:0.5rem;">
+                    <div class="reveal" style="display:flex; align-items:center; gap:0.7rem;">
+                        <div style="width:100px; font-size:0.78rem; color:#64748B; flex-shrink:0;">Тёплые контакты</div>
+                        <div class="traction-bar-track"><div class="traction-bar-fill" data-width="22" style="background:linear-gradient(90deg,#1B6FDE,#5B5BD6);"></div></div>
+                        <div style="font-size:0.82rem; font-weight:700; color:#1B6FDE; min-width:32px;">24</div>
+                    </div>
+                    <div class="reveal" style="display:flex; align-items:center; gap:0.7rem;">
+                        <div style="width:100px; font-size:0.78rem; color:#64748B; flex-shrink:0;">Сообщества</div>
+                        <div class="traction-bar-track"><div class="traction-bar-fill" data-width="24" style="background:linear-gradient(90deg,#22C55E,#10B981);"></div></div>
+                        <div style="font-size:0.82rem; font-weight:700; color:#22C55E; min-width:32px;">26</div>
+                    </div>
+                    <div class="reveal" style="display:flex; align-items:center; gap:0.7rem;">
+                        <div style="width:100px; font-size:0.78rem; color:#64748B; flex-shrink:0;">Платный канал</div>
+                        <div class="traction-bar-track"><div class="traction-bar-fill" data-width="55" style="background:linear-gradient(90deg,#F59E0B,#EF4444);"></div></div>
+                        <div style="font-size:0.82rem; font-weight:700; color:#F59E0B; min-width:32px;">60</div>
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.7rem;">
+                <div class="card-light reveal" style="border-top:4px solid #1B6FDE;">
+                    <div style="font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#1B6FDE; margin-bottom:0.3rem;">Бюджет платного канала</div>
+                    <div style="font-size:1.3rem; font-weight:800; color:#1E293B;">≈ 550 тыс. ₽</div>
+                    <div style="font-size:0.78rem; color:#64748B; margin-top:0.1rem;">60 клиентов × 9 167 ₽ CAC</div>
+                </div>
+                <div class="card-light reveal" style="border-top:4px solid #22C55E;">
+                    <div style="font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#22C55E; margin-bottom:0.3rem;">MRR к концу года</div>
+                    <div style="font-size:1.3rem; font-weight:800; color:#1E293B;">200+ тыс. ₽</div>
+                    <div style="font-size:0.78rem; color:#64748B; margin-top:0.1rem;">при ARPU 2 800 ₽ и активной базе</div>
+                </div>
+                <div class="card-light reveal" style="border-top:4px solid #F59E0B;">
+                    <div style="font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#F59E0B; margin-bottom:0.3rem;">Break-even на клиента</div>
+                    <div style="font-size:1.3rem; font-weight:800; color:#1E293B;">3,3 месяца</div>
+                    <div style="font-size:0.78rem; color:#64748B; margin-top:0.1rem;">меньше среднего lifetime (10,5 мес)</div>
+                </div>
+                <div class="card-light reveal" style="border-left:4px solid #1B6FDE; background:#F0F7FF; font-size:0.82rem; color:#1E293B; line-height:1.5;">
+                    <strong>Bottom-up логика:</strong> сначала — тёплые контакты и пилоты, платный канал подключаем как масштабирование.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════ SLIDE 8 — СЛЕДУЮЩИЕ ШАГИ ══════════════════════ -->
+<div class="slide theme-dark" data-slide="8">
+    <div class="slide-num">08 / 08</div>
+    <div class="content">
+        <div class="cat-label reveal">Дальнейшие шаги</div>
+        <div class="slide-title reveal">Что делаем дальше</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.1rem; align-items:start;">
+            <div style="display:flex; flex-direction:column; gap:0.6rem;">
+                <div class="card-dark reveal" style="display:flex; gap:0.8rem; align-items:flex-start;">
+                    <div class="step-circle">1</div>
+                    <div style="font-size:0.87rem; color:#D1D5DB; line-height:1.45;">Добрать ещё <strong style="color:#fff;">5–7 тестов прототипа</strong> в смежных дисциплинах</div>
+                </div>
+                <div class="card-dark reveal" style="display:flex; gap:0.8rem; align-items:flex-start;">
+                    <div class="step-circle">2</div>
+                    <div style="font-size:0.87rem; color:#D1D5DB; line-height:1.45;">Зафиксировать <strong style="color:#fff;">один тип задания</strong> для пилота</div>
+                </div>
+                <div class="card-dark reveal" style="display:flex; gap:0.8rem; align-items:flex-start;">
+                    <div class="step-circle">3</div>
+                    <div style="font-size:0.87rem; color:#D1D5DB; line-height:1.45;">Собрать <strong style="color:#fff;">полный путь преподавателя:</strong> материалы → рубрика → first pass → черновик feedback → ручное утверждение</div>
+                </div>
+                <div class="card-dark reveal" style="display:flex; gap:0.8rem; align-items:flex-start;">
+                    <div class="step-circle">5</div>
+                    <div style="font-size:0.87rem; color:#D1D5DB; line-height:1.45;">Запустить <strong style="color:#fff;">первые пилоты</strong> через кафедры, интервью и тёплые контакты</div>
+                </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.7rem;">
+                <div class="card-dark reveal" style="border-left:3px solid #5BA8FF;">
+                    <div style="font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#5BA8FF; margin-bottom:0.5rem;">4 метрики пилота</div>
+                    <div style="display:flex; flex-direction:column; gap:0.35rem;">
+                        <div style="display:flex; gap:0.5rem; align-items:center; font-size:0.83rem; color:#D1D5DB;">
+                            <span style="color:#5BA8FF;">⏱</span> Время проверки до/после
+                        </div>
+                        <div style="display:flex; gap:0.5rem; align-items:center; font-size:0.83rem; color:#D1D5DB;">
+                            <span style="color:#22C55E;">✏️</span> Доля правок в AI-черновике
+                        </div>
+                        <div style="display:flex; gap:0.5rem; align-items:center; font-size:0.83rem; color:#D1D5DB;">
+                            <span style="color:#F59E0B;">💬</span> Полезность комментария
+                        </div>
+                        <div style="display:flex; gap:0.5rem; align-items:center; font-size:0.83rem; color:#D1D5DB;">
+                            <span style="color:#A855F7;">🔄</span> Готовность использовать в реальном процессе
+                        </div>
+                    </div>
+                </div>
+                <div class="card-dark reveal" style="border-left:3px solid #F59E0B; font-size:0.88rem; color:#E2E8F0; line-height:1.55;">
+                    <strong style="color:#F59E0B;">Главное:</strong> не расширять функциональность — доказать полезность <strong style="color:#fff;">узкого сценария</strong> в реальной практике.
+                </div>
+                <div class="card-dark reveal" style="background:#1B6FDE; border:none; text-align:center; padding:0.9rem;">
+                    <div style="font-weight:700; color:#fff; font-size:0.92rem;">ПреподовAI — предметный ИИ-ассистент для преподавателя</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div><!-- /deck -->
+
+<!-- NAVIGATION -->
+<div class="nav-controls">
+    <button class="nav-btn" onclick="changeSlide(-1)">&#8249;</button>
+    <div class="slide-dots" id="dots"></div>
+    <button class="nav-btn" onclick="changeSlide(1)">&#8250;</button>
+    <span class="slide-counter" id="counter">1 / 8</span>
+</div>
+
+<script>
+    let current = 1;
+    const total = document.querySelectorAll('.slide').length;
+    const dotsContainer = document.getElementById('dots');
+    const counter = document.getElementById('counter');
+    for (let i = 1; i <= total; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'dot' + (i === 1 ? ' active' : '');
+        dot.onclick = () => goToSlide(i);
+        dotsContainer.appendChild(dot);
+    }
+    function goToSlide(n) {
+        const prev = document.querySelector('.slide.active');
+        const next = document.querySelector('.slide[data-slide="' + n + '"]');
+        if (prev) prev.classList.remove('active');
+        if (next) { next.classList.add('active'); animateSlide(next); }
+        current = n; updateNav();
+    }
+    function changeSlide(dir) { let n = current + dir; if (n < 1) n = total; if (n > total) n = 1; goToSlide(n); }
+    function updateNav() {
+        document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i + 1 === current));
+        counter.textContent = current + ' / ' + total;
+    }
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); changeSlide(1); }
+        if (e.key === 'ArrowLeft') { e.preventDefault(); changeSlide(-1); }
+    });
+    let touchStartX = 0;
+    document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
+    document.addEventListener('touchend', (e) => { const diff = touchStartX - e.changedTouches[0].clientX; if (Math.abs(diff) > 50) changeSlide(diff > 0 ? 1 : -1); });
+
+    function animateSlide(slide) {
+        slide.querySelectorAll('.reveal').forEach((el, i) => {
+            el.style.transition = 'none';
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(18px)';
+            el.offsetHeight;
+            const delay = i * 0.07;
+            el.style.transition = 'opacity 0.35s ease ' + delay + 's, transform 0.35s ease ' + delay + 's';
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0px)';
+        });
+        // Bar fills
+        slide.querySelectorAll('.traction-bar-fill:not(.fill-init)').forEach((bar, i) => {
+            bar.classList.add('fill-init');
+            bar.style.width = '0%';
+            setTimeout(() => { bar.style.width = bar.dataset.width + '%'; }, 400 + i * 100);
+        });
+    }
+
+    try { animateSlide(document.querySelector('.slide.active')); } catch(e) {}
+</script>
+</body>
+</html>

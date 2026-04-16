@@ -1,3 +1,7 @@
+// state.js
+// Layer: Data & Constants
+// SelectionPolicy factory, PreviewLifecycle helpers, and the app state singleton.
+
       // ZONE: Selection Policy
       // createDefaultSelectionPolicy, normalizeSelectionPolicy — entity edit-permission models
       // =====================================================================

@@ -1,3 +1,7 @@
+// selection.js
+// Layer: Domain Logic
+// Selection overlay rendering, direct manipulation (drag/resize), selection state.
+
       // ZONE: Selection Overlay & Direct Manipulation
       // Selection frame, resize handles, keyboard nudge, drag-to-move
       // =====================================================================

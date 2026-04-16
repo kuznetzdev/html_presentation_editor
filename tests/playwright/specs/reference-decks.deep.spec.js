@@ -1048,15 +1048,9 @@ async function verifyTableCapability(page, deckCase, logs) {
   const cell = previewLocator(page, selector);
   await cell.press(process.platform === "darwin" ? "Meta+A" : "Control+A");
   await cell.type(`Reviewed ${deckCase.id}`);
-  if (commitTarget) {
-    await clickPreview(page, previewNodeSelector(commitTarget), { force: true });
-  } else if (inventory.slideIds.length > 1) {
-    const currentSlideIndex = inventory.slideIds.indexOf(cellCandidate.slideId);
-    const fallbackSlideIndex = currentSlideIndex > 0 ? currentSlideIndex - 1 : 1;
-    await activateSlideByIndex(page, fallbackSlideIndex);
-  } else {
-    throw new Error("Unable to find a commit target for table cell editing.");
-  }
+  // Use the same robust commit strategy as verifyTextEditingFlow so presentations
+  // with JS-animated slide overlays (e.g. absolute-positioned decks) can commit.
+  await finalizeEditCommit(page, inventory, cellCandidate, commitTarget);
   await expect.poll(() => evaluateEditor(page, "state.interactionMode")).toBe("select");
   await expect
     .poll(() =>
@@ -1405,7 +1399,16 @@ test.describe("Reference deck deep validation @references", () => {
         !isTargetProject(testInfo.project.name),
         "Reference validation matrix runs only on target chromium projects.",
       );
-      test.slow();
+      // Stress-layout and dense-content decks exercise many slides; give them 5 min.
+      if (
+        deckCase.capabilities.some((c) =>
+          ["stress-layout", "dense-content", "nested-dom"].includes(c),
+        )
+      ) {
+        test.setTimeout(300_000);
+      } else {
+        test.slow();
+      }
 
       const logs = [];
       const summary = {

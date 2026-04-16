@@ -1,3 +1,7 @@
+// slides.js
+// Layer: Domain Logic
+// Slide registry, navigation, slide model read/write.
+
       // ZONE: Slide Registry & Navigation
       // Slide index, activation requests, pending-selection restore
       // =====================================================================
