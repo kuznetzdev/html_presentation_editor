@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 0.20.5 - internal code structure: 21 navigable zone headers - 2026-04-16
+
+### Внутренние улучшения (Phase 4)
+- Добавлены **21 zone-header** с форматом `// ZONE: <Name>` по всему файлу `editor/presentation-editor.html` (~23 400 строк)
+- Зоны: Selection Policy, Preview Lifecycle, Application State, Shell Onboarding, Inspector Wiring, Bridge Message Dispatch, Global Shortcuts & Window Events, Clipboard & Drag-Drop, Document Loading & Import Pipeline, Slide Registry & Navigation, Preview Build & Bridge Bootstrap, Slide Rail Rendering, Style Application, Export & Assets, History: Undo / Redo, Feedback & Notifications, Selection Overlay & Direct Manipulation, Floating Toolbar, Context Menu, Inspector Sync, Primary Action Sync
+- Навигация по зонам: `grep "// ZONE:" editor/presentation-editor.html`
+- Никакой рабочий код не изменён — только комментарии вставлены перед функциями
+
 ## 0.20.4 - element Ctrl+C/X/V, shortcut cheat-sheet modal - 2026-04-16
 
 ### Копирование, вырезание и вставка элементов
