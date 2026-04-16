@@ -5897,6 +5897,10 @@
         "data-index-f",
       ];
 
+      // =====================================================================
+      // ZONE: Selection Policy
+      // createDefaultSelectionPolicy, normalizeSelectionPolicy — entity edit-permission models
+      // =====================================================================
       function createDefaultSelectionPolicy(flags = {}) {
         const policy = {
           kind: "free",
@@ -6027,6 +6031,10 @@
         };
       }
 
+      // =====================================================================
+      // ZONE: Preview Lifecycle
+      // getPreviewLifecycleMeta, setPreviewLifecycleState — iframe preview state machine
+      // =====================================================================
       function getPreviewLifecycleMeta(
         lifecycle = state?.previewLifecycle || "idle",
       ) {
@@ -6109,6 +6117,10 @@
         state.previewLifecycleChangedAt = Date.now();
       }
 
+      // =====================================================================
+      // ZONE: Application State
+      // Single source of truth for all shell state: model, UI, history, selection
+      // =====================================================================
       // state — единый источник состояния shell-редактора. Внутри iframe живёт
       // только runtime-состояние bridge, а здесь — модель документа, UI и история.
       // ====================================================================
@@ -6546,6 +6558,10 @@
           "После сохранения изменится и модель, и живое превью.",
       });
 
+      // =====================================================================
+      // ZONE: Shell Onboarding
+      // Novice empty-state UX, starter deck, first-time guidance surfaces
+      // =====================================================================
       function ensureNoviceShellOnboardingUi() {
         if (els.topbarOverflowBtn) {
           els.topbarOverflowBtn.setAttribute("aria-label", "Дополнительные команды");
@@ -6712,6 +6728,10 @@
       // bindInspectorActions — связывает правую панель, floating toolbar и общие
       // действия над элементом. Почти все операции делегируются в bridge, чтобы
       // сначала изменялся живой DOM iframe, а затем модель синхронизировалась обратно.
+      // =====================================================================
+      // ZONE: Inspector Wiring
+      // Event listeners for all inspector fields — typography, geometry, appearance, media
+      // =====================================================================
       /* ======================================================================
        [SCRIPT 04] selection + inspector + editing + media
        ====================================================================== */
@@ -7068,6 +7088,10 @@
 
       // bindMessages — родительское окно принимает сообщения только от текущего
       // bridgeToken. Это защищает от сообщений старых preview URL и случайных iframe.
+      // =====================================================================
+      // ZONE: Bridge Message Dispatch
+      // Handles all postMessage events from the bridge iframe → shell
+      // =====================================================================
       /* ======================================================================
        [SCRIPT 03] preview build + iframe bridge + sync
        ====================================================================== */
@@ -7196,6 +7220,10 @@
         });
       }
 
+      // =====================================================================
+      // ZONE: Global Shortcuts & Window Events
+      // Keyboard shortcuts, resize, scroll, blur, pointer-down handling
+      // =====================================================================
       // bindGlobalShortcuts — единое место для shell-hotkeys. Важно: если фокус
       // находится в input/textarea/select, обычный ввод не перехватываем.
       function bindGlobalShortcuts() {
@@ -7411,6 +7439,10 @@
         window.addEventListener("scroll", scheduleShellPopoverLayout, true);
       }
 
+      // =====================================================================
+      // ZONE: Clipboard & Drag-Drop
+      // Image paste from OS clipboard, file drag-drop onto preview stage
+      // =====================================================================
       // ====================================================================
       // Clipboard + Drag&Drop
       // Обрабатываем вставку картинок из буфера и drop файлов в preview-stage.
@@ -7524,6 +7556,10 @@
         return fallback === "edit" ? "edit" : "preview";
       }
 
+      // =====================================================================
+      // ZONE: Document Loading & Import Pipeline
+      // loadHtmlString → runUnifiedImportPipeline → model, identity resolution
+      // =====================================================================
       // ====================================================================
       // loadHtmlString
       // 1) сбрасывает runtime-состояние,
@@ -8294,6 +8330,10 @@
         return { key: "ready", label: "ready" };
       }
 
+      // =====================================================================
+      // ZONE: Slide Registry & Navigation
+      // Slide index, activation requests, pending-selection restore
+      // =====================================================================
       function syncSlideRegistry(options = {}) {
         const modelSlides = getStaticSlideModelNodes()
           .map((slide, index) => createModelSlideRegistryEntry(slide, index))
@@ -8778,6 +8818,10 @@
         };
       }
 
+      // =====================================================================
+      // ZONE: Preview Build & Bridge Bootstrap
+      // buildPreviewPackage, injectBridge, buildBridgeScript — creates iframe blob URL
+      // =====================================================================
       function buildPreviewPackage() {
         return buildRenderedOutputPackage({
           renderMode: "preview",
@@ -13049,6 +13093,10 @@
         rebuildPreviewKeepingContext(nextActiveId);
       }
 
+      // =====================================================================
+      // ZONE: Slide Rail Rendering
+      // Renders the left-panel slide thumbnails and handles rail interactions
+      // =====================================================================
       function renderSlidesList() {
         els.slidesList.innerHTML = "";
         const slides = state.slides;
@@ -13528,6 +13576,10 @@
         closeContextMenu();
       }
 
+      // =====================================================================
+      // ZONE: Style Application
+      // applyStyle, toggleStyleOnSelected — send apply-style to bridge
+      // =====================================================================
       function applyStyle(styleName, value) {
         if (!state.selectedNodeId || !state.selectedPolicy.canEditStyles) return;
         sendToBridge("apply-style", {
@@ -13813,6 +13865,10 @@ ${doc.documentElement.outerHTML}`;
         });
       }
 
+      // =====================================================================
+      // ZONE: Export & Assets
+      // exportHtml (clean snapshot), exportPptx (PptxGenJS CDN), presentDeck
+      // =====================================================================
       // exportHtml
       // Клонирует modelDoc, очищает editor-artifacts и выгружает готовый HTML-файл.
       // Принцип: в экспорт не должны утечь bridge, служебные атрибуты и helper-CSS.
@@ -14434,6 +14490,10 @@ ${exportDoc.documentElement.outerHTML}`;
         state.historyMuted = false;
       }
 
+      // =====================================================================
+      // ZONE: History: Undo / Redo
+      // undo(), redo(), recordHistoryChange, commitChange
+      // =====================================================================
       function undo() {
         if (state.historyIndex <= 0) return;
         state.historyIndex -= 1;
@@ -15255,6 +15315,10 @@ ${exportDoc.documentElement.outerHTML}`;
         }
       }
 
+      // =====================================================================
+      // ZONE: Feedback & Notifications
+      // Toast notifications, flash, diagnostics surface
+      // =====================================================================
       function showToast(message, type = "info", options = {}) {
         if (!els.toastContainer) return;
         state.activeToastId += 1;
@@ -16175,6 +16239,10 @@ ${exportDoc.documentElement.outerHTML}`;
         return _kindLbl || "Переместить";
       }
 
+      // =====================================================================
+      // ZONE: Selection Overlay & Direct Manipulation
+      // Selection frame, resize handles, keyboard nudge, drag-to-move
+      // =====================================================================
       function renderSelectionOverlay() {
         if (!els.selectionOverlay || !els.selectionFrame) return;
         const visible = shouldShowSelectionOverlay();
@@ -18009,6 +18077,10 @@ ${exportDoc.documentElement.outerHTML}`;
         els.floatingToolbar.style.bottom = "auto";
       }
 
+      // =====================================================================
+      // ZONE: Floating Toolbar
+      // Context-sensitive floating toolbar: show/hide, position, disable/enable controls
+      // =====================================================================
       function updateFloatingToolbarContext() {
         const hasSelection = Boolean(
           state.selectedNodeId && state.mode === "edit",
@@ -18157,6 +18229,10 @@ ${exportDoc.documentElement.outerHTML}`;
         });
       }
 
+      // =====================================================================
+      // ZONE: Context Menu
+      // Dynamic right-click menu: buildContextMenuItems, renderContextMenu, handleContextMenuAction
+      // =====================================================================
       // buildContextMenuItems
       // Меню строится динамически под текущий тип элемента: текст, картинка,
       // video/iframe, контейнер. Это уменьшает шум и делает меню «человечным».
@@ -19057,6 +19133,10 @@ ${exportDoc.documentElement.outerHTML}`;
         setElementInertState(element, !visible);
       }
 
+      // =====================================================================
+      // ZONE: Inspector Sync
+      // Primary + legacy paths that read state.selectedComputed → populate all inspector fields
+      // =====================================================================
       function syncInspectorEntitySections(hasSelection) {
         const kind = getSelectedEntityKindForUi();
         const selectionPolicyVisible =
@@ -23209,6 +23289,10 @@ ${exportDoc.documentElement.outerHTML}`;
         if (handled && action !== "video") closeInsertPalette();
       }
 
+      // =====================================================================
+      // ZONE: Primary Action Sync
+      // syncPrimaryActionUi — enables/disables topbar buttons and insert palette
+      // =====================================================================
       function syncPrimaryActionUi(
         hasPresentation,
         hasSelection,
