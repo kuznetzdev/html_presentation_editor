@@ -3375,6 +3375,58 @@
         display: flex;
       }
 
+      .modal-card--wide {
+        width: min(760px, 98%);
+      }
+      .shortcuts-modal-body {
+        flex-direction: row;
+        gap: 24px;
+        padding: 20px;
+      }
+      .shortcuts-col {
+        flex: 1 1 0;
+        min-width: 0;
+      }
+      .shortcuts-col h4 {
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--shell-text-muted);
+        margin: 0 0 8px;
+      }
+      .shortcuts-col + .shortcuts-col {
+        border-left: 1px solid var(--shell-border);
+        padding-left: 24px;
+      }
+      .shortcuts-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 18px;
+        font-size: 13px;
+      }
+      .shortcuts-table tr + tr td {
+        border-top: 1px solid var(--shell-border);
+      }
+      .shortcuts-table td {
+        padding: 5px 4px;
+        vertical-align: middle;
+      }
+      .shortcuts-table td:first-child {
+        white-space: nowrap;
+        padding-right: 12px;
+      }
+      .shortcuts-table kbd {
+        display: inline-block;
+        padding: 2px 6px;
+        background: var(--shell-field-muted);
+        border: 1px solid var(--shell-border);
+        border-radius: 4px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 11px;
+        line-height: 1.5;
+        color: var(--shell-text);
+      }
       .modal-card {
         width: min(520px, 100%);
         max-height: 80vh;
@@ -4057,6 +4109,16 @@
       aria-label="Дополнительные команды topbar"
     >
       <div class="topbar-overflow-menu-inner">
+        <button
+          id="topbarOverflowShortcutsBtn"
+          type="button"
+          class="ghost-btn"
+          data-topbar-overflow-action="shortcuts"
+          role="menuitem"
+          title="Список горячих клавиш (?)"
+        >
+          ⌨ Справка
+        </button>
         <button
           id="topbarOverflowThemeBtn"
           type="button"
@@ -4940,18 +5002,24 @@
           >
             <h3>Частые действия</h3>
             <div class="inspector-actions">
-              <button type="button" id="duplicateElementBtn">
+              <button type="button" id="copyElementBtn" title="Скопировать элемент (Ctrl+C)">
+                Копировать
+              </button>
+              <button type="button" id="pasteElementBtn" title="Вставить элемент (Ctrl+V)">
+                Вставить
+              </button>
+              <button type="button" id="duplicateElementBtn" title="Дублировать (Ctrl+D)">
                 Дублировать
               </button>
-              <button type="button" id="deleteElementBtn">Удалить</button>
+              <button type="button" id="deleteElementBtn" title="Удалить (Delete)">Удалить</button>
               <button type="button" id="moveElementUpBtn">
                 Сдвинуть вверх
               </button>
               <button type="button" id="moveElementDownBtn">
                 Сдвинуть вниз
               </button>
-              <button type="button" id="copyStyleBtn">Копировать стиль</button>
-              <button type="button" id="pasteStyleBtn">Вставить стиль</button>
+              <button type="button" id="copyStyleBtn" title="Копировать стиль (Ctrl+Shift+C)">Копировать стиль</button>
+              <button type="button" id="pasteStyleBtn" title="Вставить стиль (Ctrl+Shift+V)">Вставить стиль</button>
               <button type="button" id="resetStylesBtn">Сбросить стили</button>
               <button
                 type="button"
@@ -5549,6 +5617,61 @@
       </div>
     </div>
 
+    <!-- Keyboard shortcuts reference modal -->
+    <div class="modal" id="shortcutsModal" aria-hidden="true">
+      <div class="modal-card modal-card--wide">
+        <div class="modal-header">
+          <h3>⌨ Горячие клавиши</h3>
+          <button type="button" class="ghost-btn" data-close-modal="shortcutsModal">Закрыть</button>
+        </div>
+        <div class="modal-body shortcuts-modal-body">
+          <div class="shortcuts-col">
+            <h4>Редактирование текста</h4>
+            <table class="shortcuts-table">
+              <tr><td><kbd>Ctrl+B</kbd></td><td>Жирный</td></tr>
+              <tr><td><kbd>Ctrl+I</kbd></td><td>Курсив</td></tr>
+              <tr><td><kbd>Ctrl+U</kbd></td><td>Подчёркнутый</td></tr>
+              <tr><td><kbd>Ctrl+L</kbd></td><td>По левому краю</td></tr>
+              <tr><td><kbd>Ctrl+E</kbd></td><td>По центру</td></tr>
+              <tr><td><kbd>Ctrl+R</kbd></td><td>По правому краю</td></tr>
+            </table>
+            <h4>Элементы</h4>
+            <table class="shortcuts-table">
+              <tr><td><kbd>Ctrl+C</kbd></td><td>Копировать элемент</td></tr>
+              <tr><td><kbd>Ctrl+X</kbd></td><td>Вырезать элемент</td></tr>
+              <tr><td><kbd>Ctrl+V</kbd></td><td>Вставить элемент</td></tr>
+              <tr><td><kbd>Ctrl+D</kbd></td><td>Дублировать</td></tr>
+              <tr><td><kbd>Delete</kbd></td><td>Удалить элемент</td></tr>
+              <tr><td><kbd>Ctrl+Shift+C</kbd></td><td>Копировать стиль</td></tr>
+              <tr><td><kbd>Ctrl+Shift+V</kbd></td><td>Вставить стиль</td></tr>
+            </table>
+          </div>
+          <div class="shortcuts-col">
+            <h4>Навигация и выделение</h4>
+            <table class="shortcuts-table">
+              <tr><td><kbd>↑ ↓ ← →</kbd></td><td>Сдвинуть элемент на 1 px</td></tr>
+              <tr><td><kbd>Shift+стрелки</kbd></td><td>Сдвинуть на 10 px</td></tr>
+              <tr><td><kbd>Ctrl+Click</kbd></td><td>Глубокое выделение</td></tr>
+              <tr><td><kbd>Alt+Click</kbd></td><td>Выделить родителя</td></tr>
+              <tr><td><kbd>Shift+Enter</kbd></td><td>Перейти к родителю</td></tr>
+              <tr><td><kbd>Enter</kbd></td><td>Войти в контейнер</td></tr>
+              <tr><td><kbd>Escape</kbd></td><td>Сбросить выделение</td></tr>
+            </table>
+            <h4>Вид и экспорт</h4>
+            <table class="shortcuts-table">
+              <tr><td><kbd>Ctrl++</kbd></td><td>Увеличить масштаб</td></tr>
+              <tr><td><kbd>Ctrl+–</kbd></td><td>Уменьшить масштаб</td></tr>
+              <tr><td><kbd>Ctrl+0</kbd></td><td>Масштаб 100%</td></tr>
+              <tr><td><kbd>Ctrl+Z</kbd></td><td>Отменить</td></tr>
+              <tr><td><kbd>Ctrl+Y</kbd></td><td>Повторить</td></tr>
+              <tr><td><kbd>Ctrl+F</kbd></td><td>Найти элемент</td></tr>
+              <tr><td><kbd>?</kbd></td><td>Эта справка</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Context menu
        Кастомное меню редактора. Строится динамически под тип элемента и никогда
        не использует системное browser-menu внутри iframe в edit-режиме. -->
@@ -6094,6 +6217,7 @@
         },
         restorePayload: null,
         copiedStyle: null,
+        copiedElementHtml: null,   // internal element clipboard (Ctrl+C / Ctrl+V)
         theme: "light",
         themePreference: "system",
         complexityMode: "basic",
@@ -6329,6 +6453,8 @@
         fontSizeSelect: document.getElementById("fontSizeSelect"),
         textColorInput: document.getElementById("textColorInput"),
         showElementHtmlBtn: document.getElementById("showElementHtmlBtn"),
+        copyElementBtn: document.getElementById("copyElementBtn"),
+        pasteElementBtn: document.getElementById("pasteElementBtn"),
         duplicateElementBtn: document.getElementById("duplicateElementBtn"),
         deleteElementBtn: document.getElementById("deleteElementBtn"),
         moveElementUpBtn: document.getElementById("moveElementUpBtn"),
@@ -6378,6 +6504,7 @@
         diagnosticsBox: document.getElementById("diagnosticsBox"),
         alignButtons: Array.from(document.querySelectorAll("[data-align]")),
         openHtmlModal: document.getElementById("openHtmlModal"),
+        shortcutsModal: document.getElementById("shortcutsModal"),
         htmlEditorModal: document.getElementById("htmlEditorModal"),
         fileInput: document.getElementById("fileInput"),
         pasteHtmlTextarea: document.getElementById("pasteHtmlTextarea"),
@@ -6725,6 +6852,8 @@
         // Inspector actions.
         els.showElementHtmlBtn.addEventListener("click", openElementHtmlEditor);
         els.saveHtmlEditorBtn.addEventListener("click", saveHtmlEditorChanges);
+        els.copyElementBtn.addEventListener("click", copySelectedElement);
+        els.pasteElementBtn.addEventListener("click", pasteSelectedElement);
         els.duplicateElementBtn.addEventListener(
           "click",
           duplicateSelectedElement,
@@ -7085,11 +7214,19 @@
               closeModal(els.htmlEditorModal);
             if (els.videoInsertModal?.classList.contains("is-open"))
               closeModal(els.videoInsertModal);
+            if (els.shortcutsModal?.classList.contains("is-open"))
+              closeModal(els.shortcutsModal);
             return;
           }
           if (isActiveTextEditingContext(event)) return;
           if (shouldIgnoreGlobalShortcut(event)) return;
           const isMod = event.ctrlKey || event.metaKey;
+          // "?" — keyboard shortcut cheat sheet (Shift+/ on most keyboards)
+          if (!isMod && event.key === "?") {
+            event.preventDefault();
+            openModal(els.shortcutsModal);
+            return;
+          }
           if (isMod && event.key.toLowerCase() === "z" && !event.shiftKey) {
             event.preventDefault();
             undo();
@@ -7146,6 +7283,24 @@
                 return;
               }
             }
+          }
+          // Ctrl+C — copy selected element to internal clipboard
+          if (isMod && !event.shiftKey && event.key.toLowerCase() === "c" && state.mode === "edit" && state.selectedNodeId) {
+            event.preventDefault();
+            copySelectedElement();
+            return;
+          }
+          // Ctrl+X — cut selected element (copy + delete)
+          if (isMod && !event.shiftKey && event.key.toLowerCase() === "x" && state.mode === "edit" && state.selectedNodeId) {
+            event.preventDefault();
+            cutSelectedElement();
+            return;
+          }
+          // Ctrl+V — paste element from internal clipboard (takes priority over image paste)
+          if (isMod && !event.shiftKey && event.key.toLowerCase() === "v" && state.mode === "edit" && state.copiedElementHtml) {
+            event.preventDefault();
+            pasteSelectedElement();
+            return;
           }
           if (isMod && event.shiftKey && event.key.toLowerCase() === "c") {
             event.preventDefault();
@@ -7270,6 +7425,8 @@
             )
           )
             return;
+          // Internal element clipboard takes priority — keydown handler already handled it
+          if (state.copiedElementHtml) return;
           const file = extractImageFromClipboardEvent(event);
           if (!file) return;
           event.preventDefault();
@@ -16788,6 +16945,49 @@ ${exportDoc.documentElement.outerHTML}`;
         closeContextMenu();
       }
 
+      // ====================================================================
+      // Element clipboard — internal Ctrl+C / Ctrl+V (not OS clipboard)
+      // Copies the selected element's HTML into state.copiedElementHtml,
+      // strips data-editor-node-id so the bridge's assignIdsDeep gives
+      // the pasted clone entirely fresh IDs (no ID collision).
+      // ====================================================================
+      function copySelectedElement() {
+        if (!state.modelDoc || !state.selectedNodeId) return;
+        const el = state.modelDoc.querySelector(
+          `[data-editor-node-id="${cssEscape(state.selectedNodeId)}"]`,
+        );
+        if (!el) return;
+        const clone = el.cloneNode(true);
+        // Strip all editor-node IDs so the pasted clone gets fresh ones
+        clone.removeAttribute("data-editor-node-id");
+        clone.querySelectorAll("[data-editor-node-id]").forEach((node) => {
+          node.removeAttribute("data-editor-node-id");
+        });
+        state.copiedElementHtml = clone.outerHTML;
+        showToast("Элемент скопирован — Ctrl+V для вставки.", "success", {
+          title: "Копировать",
+        });
+        closeContextMenu();
+      }
+
+      function pasteSelectedElement() {
+        if (!state.copiedElementHtml) return;
+        if (!state.modelDoc) return;
+        insertHtmlViaBridge(state.copiedElementHtml, { focusText: false });
+        showToast("Элемент вставлен.", "success", { title: "Вставить" });
+      }
+
+      function cutSelectedElement() {
+        if (!state.modelDoc || !state.selectedNodeId) return;
+        if (!guardSelectionAction("delete", "Вырезать")) return;
+        if (!guardProtectedSelection("Вырезать")) return;
+        copySelectedElement();   // copies to buffer — shows toast
+        sendToBridge("delete-element", { nodeId: state.selectedNodeId });
+        showToast("Элемент вырезан — Ctrl+V для вставки.", "success", { title: "Вырезать" });
+        closeContextMenu();
+        hideFloatingToolbar();
+      }
+
       function fitSelectedImageToWidth() {
         if (!state.selectedFlags.isImage || !state.selectedNodeId) return;
         if (!guardSelectionAction("editStyles", "Медиа")) return;
@@ -18251,6 +18451,30 @@ ${exportDoc.documentElement.outerHTML}`;
             hint: "",
           });
         }
+        // Copy / Cut / Paste element
+        items.push({
+          section: "structure",
+          action: "copy-element",
+          icon: "📋",
+          label: "Копировать",
+          hint: "Ctrl+C",
+        });
+        if (policy.canDelete)
+          items.push({
+            section: "structure",
+            action: "cut-element",
+            icon: "✂",
+            label: "Вырезать",
+            hint: "Ctrl+X",
+          });
+        if (state.copiedElementHtml)
+          items.push({
+            section: "structure",
+            action: "paste-element",
+            icon: "📌",
+            label: "Вставить",
+            hint: "Ctrl+V",
+          });
         if (policy.canDuplicate)
           items.push({
             section: "structure",
@@ -18583,6 +18807,15 @@ ${exportDoc.documentElement.outerHTML}`;
             break;
           case "wrap-div":
             wrapSelectedInDiv();
+            break;
+          case "copy-element":
+            copySelectedElement();
+            break;
+          case "cut-element":
+            cutSelectedElement();
+            break;
+          case "paste-element":
+            pasteSelectedElement();
             break;
           case "copy-style":
             copySelectedStyle();
@@ -19063,6 +19296,10 @@ ${exportDoc.documentElement.outerHTML}`;
           els.selectionPolicyText.textContent =
             "Выбери элемент, чтобы увидеть ограничения редактирования.";
         }
+        // pasteElementBtn is always available when the internal clipboard has content
+        if (els.pasteElementBtn) {
+          els.pasteElementBtn.disabled = !state.copiedElementHtml || !state.modelDoc || state.mode !== "edit";
+        }
         const controls = [
           els.boldBtn,
           els.italicBtn,
@@ -19070,6 +19307,7 @@ ${exportDoc.documentElement.outerHTML}`;
           els.fontSizeSelect,
           els.textColorInput,
           els.showElementHtmlBtn,
+          els.copyElementBtn,
           els.duplicateElementBtn,
           els.deleteElementBtn,
           els.moveElementUpBtn,
@@ -19765,7 +20003,10 @@ ${exportDoc.documentElement.outerHTML}`;
           els.selectionPolicyText.textContent =
             "Выберите элемент, чтобы увидеть ограничения редактирования.";
         }
-
+        // pasteElementBtn: enabled as long as internal clipboard has content and editor is loaded
+        if (els.pasteElementBtn) {
+          els.pasteElementBtn.disabled = !state.copiedElementHtml || !state.modelDoc || state.mode !== "edit";
+        }
         const controls = [
           els.boldBtn,
           els.italicBtn,
@@ -19773,6 +20014,7 @@ ${exportDoc.documentElement.outerHTML}`;
           els.fontSizeSelect,
           els.textColorInput,
           els.showElementHtmlBtn,
+          els.copyElementBtn,
           els.duplicateElementBtn,
           els.deleteElementBtn,
           els.moveElementUpBtn,
@@ -21466,6 +21708,10 @@ ${exportDoc.documentElement.outerHTML}`;
             ),
           );
         });
+        document.getElementById("topbarOverflowShortcutsBtn")?.addEventListener("click", () => {
+          closeTopbarOverflow();
+          openModal(els.shortcutsModal);
+        });
         els.topbarOverflowThemeBtn?.addEventListener("click", () => {
           toggleTheme();
           closeTopbarOverflow();
@@ -21601,7 +21847,7 @@ ${exportDoc.documentElement.outerHTML}`;
           });
         });
 
-        [els.openHtmlModal, els.htmlEditorModal, els.videoInsertModal].forEach(
+        [els.openHtmlModal, els.htmlEditorModal, els.videoInsertModal, els.shortcutsModal].forEach(
           (modal, index) => {
             if (!modal) return;
             modal.setAttribute("role", "dialog");
