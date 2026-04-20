@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## Unreleased
+
+### Security
+- `parseSingleRoot` now sanitizes tag allow-list (`ALLOWED_HTML_TAGS`), attribute filter (`BLOCKED_ATTR_NAMES` + `/^on/i`), URL protocol check (`javascript:`/`vbscript:`/`data:` non-image), `srcdoc` strip, and size guard (>256 KB rejected) in `replace-node-html` and `replace-slide-html` (AUDIT-D-02, P0-02). New gate: `bridge-sanitize.spec.js` (5 scenarios).
+
+---
+
 ## 0.25.0 - click UX: layer picker for all modes + stack depth badge — 2026-04-20
 
 ### UX: Слои доступны всем, badge показывает прогресс cycling
