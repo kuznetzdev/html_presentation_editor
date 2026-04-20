@@ -1,4 +1,4 @@
-# ROADMAP NEXT — v0.25.0 → v0.28.1
+# ROADMAP NEXT — v0.25.0 → v1.0.0
 
 > **Baseline**: v0.24.0 shipped (Gate-A: 55 passed / 5 skipped / 0 failed).
 > Architecture: 25 JS modules + 8 CSS @layers. parent shell + iframe bridge + modelDoc stays fixed.
@@ -328,6 +328,39 @@ Currently there are no visual regression tests. Snapshots would catch layout dri
 
 ---
 
+## Extended Roadmap — v0.29.0 → v1.0.0
+
+> Detailed window-by-window plan: see [`EXECUTION_PLAN_v0.26-v1.0.md`](EXECUTION_PLAN_v0.26-v1.0.md).
+> Driving findings: see [`audit/PAIN-MAP.md`](audit/PAIN-MAP.md) + 5 audit docs.
+> 10 new ADRs (011–020): see `docs/ADR-011..ADR-020`.
+
+| Version | Focus | Key ADRs | PAIN-MAP items |
+|---------|-------|----------|----------------|
+| v0.26.1 | Security quick wins | — | P0-02, P0-03, P1-13, P1-15 |
+| v0.27.2 | Undo-chain honesty + transform resolve | — | P0-06, P0-07 |
+| v0.28.1 | Telemetry scaffold + types bootstrap | ADR-011, ADR-020 | P1-18 |
+| **v0.29.0** | Error boundaries + bridge v2 handshake | ADR-012, ADR-014 | P0-01 Trust Banner, P1-01 unify banners |
+| v0.29.1 | Bridge v2 — schema validation + contract tests | ADR-012 | P0-02 final, P0-10, P0-13 |
+| **v0.30.0** | Observable store (ui + selection slices) | ADR-013 | P0-09 partial |
+| v0.30.1 | History → patch-based snapshots | ADR-013, ADR-017 | P0-07 final, P0-11 (memory) |
+| v0.30.2 | Render coalescing (RAF batch) | ADR-013 | P0-12 |
+| **v0.31.0** | Split selection.js, boot.js, feedback.js | — | P1-06, P1-07, P1-08, P1-09 |
+| v0.31.1 | Design tokens v2 (semantic layer) | ADR-019 | — |
+| **v0.32.0** | Entity-kind registry externalized | ADR-016 L1 | P2-05 |
+| v0.32.1 | Tablet honest-block + gate-D depth | ADR-018 | — |
+| v0.33.0 | Telemetry full (viewer + export log) | ADR-020 | — |
+| v0.34.0 | Contract tests complete | ADR-012 | P0-13 final |
+| v0.35.0 | Flake elimination + gate rebalance | — | P1-16, P1-17, P1-19 |
+| v0.36.0 | Shortcut declarative table + polish | — | P2-04, P2-08, P2-09 |
+| v0.37.0 | Release candidate — bug triage only | — | All P0 resolved |
+| **v1.0.0** | Release | All 20 ADRs Accepted | Release criteria met |
+
+**Total calendar:** ~14–18 weeks with 3 parallel agents per window. See EXECUTION_PLAN for agent ownership map per window.
+
+**Release criteria for v1.0:** see EXECUTION_PLAN §"Release criteria for v1.0.0".
+
+---
+
 ## Architectural Invariants (Never Violate)
 
 - No `type="module"` in `<script>` — breaks `file://` protocol
@@ -337,10 +370,11 @@ Currently there are no visual regression tests. Snapshots would catch layout dri
 - Bridge changes require full understanding of both shell and iframe sides
 - Gate-A must be 55/5/0 before any merge to main
 
-## Deferred (Out of Scope)
+## Deferred (Out of Scope for v1.0)
 
-- Zoom UX polish (low — desktop+mouse users unaffected)
+- Live collaboration / multi-user transport — readiness-only per ADR-017
+- Full plugin API (Layer 2) — ADR-016 L1 only in v1.0, L2 post-1.0
+- Touch-native direct manipulation on tablet — ADR-018 (review-only in v1.0)
+- Cloud analytics / cloud sync (different product entirely)
 - Per-deck zoom persistence (very low — global default is fine)
-- Mobile/tablet touch conflicts (low — desktop is primary target)
-- Cross-browser zoom regression (nice-to-have post-Phase 1)
-- Online collaboration / multi-user (different product entirely)
+- Cross-browser zoom regression beyond gate-C coverage (nice-to-have)
