@@ -1739,11 +1739,21 @@
           return STATE.clickThroughState;
         }
 
-        function trySelectFromClickThroughState(clientX, clientY) {
+        // [v0.24.0] Click-through timeout: cycling state expires after 2 s of inactivity
+        // so a "stale" selection doesn't surprise the user when they re-click the overlay.
+        const CLICK_THROUGH_TTL_MS = 2000;
+
+        // options.ttl: max age in ms for the cycling state to be valid.
+        // Defaults to Infinity for direct iframe clicks (no staleness limit),
+        // but proxy-select-at-point passes CLICK_THROUGH_TTL_MS so stale overlay
+        // clicks (e.g. user clicked overlay 3 s later) don't surprise the user.
+        function trySelectFromClickThroughState(clientX, clientY, options = {}) {
           const cts = STATE.clickThroughState;
           const dx = clientX - cts.x;
           const dy = clientY - cts.y;
-          if (!(cts.candidates.length > 1 && Math.hypot(dx, dy) < 6)) {
+          const ttl = typeof options.ttl === 'number' ? options.ttl : Infinity;
+          const age = Date.now() - cts.timestamp;
+          if (!(cts.candidates.length > 1 && Math.hypot(dx, dy) < 6 && age < ttl)) {
             return false;
           }
           cts.index = (cts.index + 1) % cts.candidates.length;
@@ -3218,7 +3228,7 @@
                 const cycleAncestors = Boolean(payload.cycleAncestors);
                 const deepSelect = Boolean(payload.deepSelect);
                 const containerMode = Boolean(payload.containerMode);
-                if (!cycleAncestors && !deepSelect && trySelectFromClickThroughState(clientX, clientY)) {
+                if (!cycleAncestors && !deepSelect && trySelectFromClickThroughState(clientX, clientY, { ttl: CLICK_THROUGH_TTL_MS })) {
                   break;
                 }
                 const rawTarget = document.elementFromPoint(clientX, clientY);

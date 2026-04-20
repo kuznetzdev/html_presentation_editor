@@ -439,8 +439,10 @@
         event.preventDefault();
         const deltaX = event.clientX - session.startClientX;
         const deltaY = event.clientY - session.startClientY;
+        const dist = Math.hypot(deltaX, deltaY);
+        if (dist > session.maxMovement) session.maxMovement = dist;
         if (!session.started) {
-          if (Math.hypot(deltaX, deltaY) < DIRECT_MANIP_THRESHOLD_PX) return;
+          if (dist < DIRECT_MANIP_THRESHOLD_PX) return;
           session.started = true;
           setInteractionMode(session.kind === "resize" ? "resize" : "drag");
         }
@@ -457,7 +459,11 @@
         if (!session) return;
         if (event.pointerId !== session.pointerId) return;
         event.preventDefault();
-        state.pendingOverlayClickProxy = !session.started;
+        // Only proxy the click through to the bridge when it was a truly clean click
+        // (max hand movement < 2px). If the pointer jittered 2–5px (below drag threshold
+        // but enough to indicate the user wasn't trying to click-through), do nothing.
+        const isCleanClick = !session.started && session.maxMovement < 2;
+        state.pendingOverlayClickProxy = isCleanClick;
         finishActiveManipulation();
       }
 
@@ -512,6 +518,7 @@
           pointerId: event.pointerId,
           sourceEl,
           started: false,
+          maxMovement: 0,
           bridgeBegun: false,
           bridgeRafId: 0,
           pendingBridgePayload: null,

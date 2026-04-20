@@ -184,10 +184,10 @@
 
 .selection-handle {
   position: absolute;
-  width: 16px;
-  height: 16px;
-  min-width: 16px;
-  min-height: 16px;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
   padding: 0;
   border: 1.5px solid color-mix(in srgb, var(--shell-accent) 88%, white 12%);
   border-radius: 999px;
