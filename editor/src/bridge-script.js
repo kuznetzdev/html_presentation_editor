@@ -62,6 +62,103 @@
         const BLOCKED_ATTR_NAMES = new Set([EDITOR_MARKER, SLIDE_MARKER, 'contenteditable', 'spellcheck']);
         const VALID_ATTR_NAME = /^[^\\s"'<>\\/=]+$/;
         const UNSAFE_ATTR_NAME = /^on/i;
+
+        // ── Sanitization constants (AUDIT-D-02 / ADR-012 §7) ─────────────────────
+        // MAX_HTML_BYTES: 256 KB hard cap on parseSingleRoot HTML input.
+        const MAX_HTML_BYTES = 262144;
+
+        // UNSAFE_URL_PROTOCOLS: matched against href/src/action/etc. attributes.
+        // Data URIs for text/html or application/* are rejected; javascript:/vbscript:
+        // are always rejected. data:image/* is intentionally NOT blocked (deck images).
+        // NOTE: RegExp constructor used (not literal) because a regex literal with /
+        //       inside a template literal string would be prematurely terminated.
+        const UNSAFE_URL_PROTOCOLS = new RegExp('^(?:javascript|vbscript|data:(?!image/))', 'i');
+
+        // ALLOWED_HTML_TAGS: explicit allow-list for parseSingleRoot fragment walking.
+        // Tags not in this set are removed by sanitizeFragment().
+        // SVG structural/graphical elements are included as uppercase.
+        // BUTTON and CANVAS are included because reference decks v3 use them.
+        const ALLOWED_HTML_TAGS = new Set([
+          'A','ARTICLE','ASIDE','B','BLOCKQUOTE','BR','BUTTON',
+          'CANVAS',
+          'CAPTION','CIRCLE','CODE','COL','COLGROUP',
+          'DEFS','DETAILS','DIALOG','DIV',
+          'EM','FIGCAPTION','FIGURE','FOOTER',
+          'G',
+          'H1','H2','H3','H4','H5','H6','HEADER','HR',
+          'I','IMG',
+          'LABEL','LI','LINE',
+          'MAIN','MARK',
+          'NAV',
+          'OL',
+          'P','PATH','POLYGON','POLYLINE','PRE',
+          'RECT',
+          'S','SECTION','SMALL','SOURCE','SPAN','STRONG','SUB','SUP','SVG',
+          'TABLE','TBODY','TD','TEXT','TEXTAREA','TFOOT','TH','THEAD','TIME','TR','TRACK','TSPAN',
+          'U','UL',
+          'USE',
+          'VIDEO',
+          'SYMBOL',
+        ]);
+
+        // sanitizeFragment: walks all elements in root, removes disallowed tags and
+        // dangerous attributes. Returns counts of removed items for logging.
+        // NOTE: Only called from parseSingleRoot — buildModelDocument is NOT affected.
+        function sanitizeFragment(root) {
+          var removedTags = 0;
+          var removedAttrs = 0;
+          // URL attributes that must be checked against UNSAFE_URL_PROTOCOLS.
+          var URL_ATTRS = new Set(['href','src','action','formaction','poster','background']);
+          // Collect elements to process via TreeWalker (avoids live mutation during walk).
+          var walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, null, false);
+          var els = [];
+          var node = walker.nextNode();
+          while (node) {
+            els.push(node);
+            node = walker.nextNode();
+          }
+          // Process in reverse so removing a parent doesn't leave dangling references.
+          for (var i = els.length - 1; i >= 0; i--) {
+            var el = els[i];
+            if (!el.parentNode) continue; // already removed by ancestor removal
+            // (a) Tag allow-list check.
+            if (!ALLOWED_HTML_TAGS.has(el.tagName.toUpperCase())) {
+              el.remove();
+              removedTags++;
+              continue;
+            }
+            // (b) Attribute filter — iterate in reverse to allow safe splice.
+            var attrs = Array.from(el.attributes);
+            for (var j = attrs.length - 1; j >= 0; j--) {
+              var attr = attrs[j];
+              var name = attr.name;
+              var value = attr.value;
+              // Remove editor marker attrs, blocked names, on* handlers, invalid names.
+              if (BLOCKED_ATTR_NAMES.has(name) || UNSAFE_ATTR_NAME.test(name) || !VALID_ATTR_NAME.test(name)) {
+                el.removeAttribute(name);
+                removedAttrs++;
+                continue;
+              }
+              // (c) URL attribute: strip dangerous protocols.
+              if (URL_ATTRS.has(name.toLowerCase())) {
+                var trimmed = String(value || '').replace(/[\\t\\n\\r ]/g, '').toLowerCase();
+                if (UNSAFE_URL_PROTOCOLS.test(trimmed)) {
+                  el.removeAttribute(name);
+                  removedAttrs++;
+                  continue;
+                }
+              }
+              // (d) Strip srcdoc wholesale — avoids embedded document injection.
+              if (name.toLowerCase() === 'srcdoc') {
+                el.removeAttribute(name);
+                removedAttrs++;
+              }
+            }
+          }
+          return { removedTags: removedTags, removedAttrs: removedAttrs };
+        }
+        // ─────────────────────────────────────────────────────────────────────────
+
         const STATE = {
           engine: 'unknown',
           slides: [],
@@ -2330,12 +2427,33 @@
         }
 
         function parseSingleRoot(html) {
+          // [AUDIT-D-02 / ADR-012 §7] Length guard: reject oversized payloads before
+          // any DOMParser work to prevent memory exhaustion and storage DoS.
+          if (typeof html !== 'string' || html.length > MAX_HTML_BYTES) return null;
+
           const parser = new DOMParser();
           const doc = parser.parseFromString('<body>' + html + '</body>', 'text/html');
           const elements = Array.from(doc.body.children);
           const nonEmptyText = Array.from(doc.body.childNodes).filter((node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
           if (elements.length !== 1 || nonEmptyText.length > 0) return null;
-          return document.importNode(elements[0], true);
+
+          // [AUDIT-D-02] Sanitize before importNode: walk the parsed fragment and
+          // strip disallowed tags, on* handlers, javascript: URLs, and srcdoc.
+          // sanitizeFragment operates on the DOMParser doc, not the live preview DOM.
+          const stats = sanitizeFragment(doc.body);
+          if (stats.removedTags + stats.removedAttrs > 0) {
+            post('runtime-log', {
+              message: 'sanitize: removed ' + stats.removedTags + ' tags, ' + stats.removedAttrs + ' attrs',
+              source: 'parseSingleRoot',
+            });
+          }
+
+          // Re-check structure after sanitization: the fragment may now be empty or
+          // have changed shape if the root element itself was removed.
+          const sanitizedElements = Array.from(doc.body.children);
+          if (sanitizedElements.length !== 1) return null;
+
+          return document.importNode(sanitizedElements[0], true);
         }
 
         function findNodeById(nodeId) {
