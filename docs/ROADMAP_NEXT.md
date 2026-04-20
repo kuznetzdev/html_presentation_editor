@@ -1,298 +1,346 @@
-﻿# ROADMAP NEXT
+# ROADMAP NEXT — v0.25.0 → v0.28.1
 
-## Post-0.18.4 priorities вЂ” user-research-driven replan
-
-Previous roadmap prioritized smart layer resolution first. User research
-(April 2026) showed the primary pain is **lack of honest system feedback**,
-not missing intelligence. Users report:
-
-- wrong layer selected and unclear how to reach the right one
-- elements become unmovable with no explanation why
-- editing path feels like guessing instead of a tool-guided workflow
-- precise positioning (snap, nudge) is missing for fine work
-
-Target audience: **all skill levels**, desktop, keyboard + mouse.
-Primary scenarios: edit existing presentations, add slides matching style,
-position small elements precisely, maintain auto-numbering.
-
-The architecture (`parent shell + iframe + bridge + modelDoc`) stays fixed.
+> **Baseline**: v0.24.0 shipped (Gate-A: 55 passed / 5 skipped / 0 failed).
+> Architecture: 25 JS modules + 8 CSS @layers. parent shell + iframe bridge + modelDoc stays fixed.
+> User research driver: _lack of honest feedback, invisible layers, no precision, no onboarding path_.
 
 ---
 
-## Phase 1: Honest feedback вЂ” `v0.20.0`
+## Shipped
+
+| Version | Focus | Gate-A |
+|---------|-------|--------|
+| v0.23.0 | Layer separation (bridge-script / shell-overlays / boot) | 55/5/0 ✓ |
+| v0.23.1 | JSDoc + reference decks + GitHub release | 55/5/0 ✓ |
+| v0.24.0 | Click ergonomics (drag threshold, handles, clean-click, TTL) | 55/5/0 ✓ |
+
+---
+
+## Phase 1 — Honest Feedback · `v0.25.0`
 
 > **Goal**: the user always knows WHY something happened and WHAT to do next.
 > No guessing, no silent failures.
 
-### ADR-001: Block reason protocol
+**Status**: Proposed
 
-**Status**: Proposed  
-**Context**: `hasBlockedDirectManipulationContext()` returns a boolean.
-Users see "Р§РµСЂРµР· РёРЅСЃРїРµРєС‚РѕСЂ" tooltip but never learn if the cause is zoom,
-lock, container policy, or transform. The existing
-`getDirectManipulationTooltipMessage()` resolves some transform reasons but
-the logic is scattered and the UX output is inconsistent.
+### ADR-001: Block Reason Protocol
 
-**Decision**: Replace the boolean blocker with a reason enum returned from a
-new `getBlockReason()` function:
+**Context**: `hasBlockedDirectManipulationContext()` returns a boolean. Users see a generic tooltip
+but never learn if the cause is zoom, lock, container policy, or CSS transform. Feedback is scattered
+across `getDirectManipulationTooltipMessage()` and 12 call sites with no unified contract.
+
+**Decision**: Replace boolean with a reason enum from a new `getBlockReason()` function:
 
 ```
-type BlockReason =
-  | "none"
-  | "zoom"            // previewZoom !== 1
-  | "locked"          // element has editor lock
-  | "container"       // entity kind is container/slide-root
-  | "own-transform"   // element uses CSS transform
-  | "parent-transform"// ancestor uses CSS transform
-  | "slide-transform" // slide root uses CSS transform
-  | "hidden"          // element is visibility-toggled off
+BlockReason = "none" | "zoom" | "locked" | "container" |
+              "own-transform" | "parent-transform" | "slide-transform" | "hidden"
 ```
 
-Shell renders reason as:
-- inline banner below selection overlay (not tooltip, not modal)
-- banner includes one-click resolution action where applicable
+Shell renders reason as an **inline banner** below the selection overlay (not tooltip, not modal).
+Banner includes a one-click resolution action where applicable.
 
-**Consequences**: `hasBlockedDirectManipulationContext()` becomes a thin
-wrapper over `getBlockReason() !== "none"`. All 12 call sites keep working.
-Bridge protocol unchanged вЂ” reason lives in shell state, not in iframe.
+**ADR-ref**: `docs/ADR-001-block-reason-protocol.md`
 
-### ADR-002: Stack depth indicator
+### ADR-002: Stack Depth Indicator
 
-**Status**: Proposed  
-**Context**: `updateClickThroughState()` already collects all candidates under
-cursor with scores. Users don't know candidates exist until they click
-repeatedly.
+**Context**: `updateClickThroughState()` already collects all candidates under cursor.
+Users don't know overlapping candidates exist until they click-cycle blindly.
 
 **Decision**: Show a lightweight badge `1/N` in the breadcrumb bar when
-`clickThroughState.candidates.length > 1`. No new bridge messages needed вЂ”
-the candidate list is already shell-side state.
+`clickThroughState.candidates.length > 1`. No bridge changes — data is already shell-side.
 
-**Consequences**: Zero bridge changes. Breadcrumb render function reads
-`STATE.clickThroughState.candidates.length` and appends a counter.
+**ADR-ref**: `docs/ADR-002-stack-depth-indicator.md`
 
 ### Substeps
 
-1. **Block reason enum** вЂ” extract `getBlockReason()` from existing
-   `hasBlockedDirectManipulationContext()` + `getDirectManipulationTooltipMessage()`
-2. **Block reason banner** вЂ” inline banner below selection overlay with
-   human-readable message and action button:
-   - `zoom` в†’ "РњР°СЃС€С‚Р°Р± в‰  100%" + РєРЅРѕРїРєР° В«РЎР±СЂРѕСЃРёС‚СЊВ»
-   - `locked` в†’ "Р­Р»РµРјРµРЅС‚ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ рџ”’" + РєРЅРѕРїРєР° В«Р Р°Р·Р±Р»РѕРєРёСЂРѕРІР°С‚СЊВ»
-   - `container` в†’ "Р­С‚Рѕ РєРѕРЅС‚РµР№РЅРµСЂ вЂ” РІС‹Р±РµСЂРёС‚Рµ РґРѕС‡РµСЂРЅРёР№ СЌР»РµРјРµРЅС‚" + visual hint
-   - `own-transform` / `parent-transform` / `slide-transform` в†’ "РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ transform вЂ” РїРµСЂРµРјРµС‰РµРЅРёРµ С‡РµСЂРµР· РёРЅСЃРїРµРєС‚РѕСЂ"
-   - `hidden` в†’ "Р­Р»РµРјРµРЅС‚ СЃРєСЂС‹С‚" + РєРЅРѕРїРєР° В«РџРѕРєР°Р·Р°С‚СЊВ»
-3. **Stack depth badge** вЂ” `1/N` counter in breadcrumb bar when multiple
-   candidates exist under cursor
-4. **Action hint on first select** вЂ” when user selects an element in basic
-   mode, inspector summary card shows 1-2 obvious available actions
-   (edit text / replace image / resize / move) instead of empty state
-5. **Playwright coverage** вЂ” new `honest-feedback.spec.js`:
-   - block banner appears for each reason and disappears on resolution
-   - stack badge shows correct count on overlap stacks
-   - action hint displays correct actions per entity kind
+1. Extract `getBlockReason()` from existing `hasBlockedDirectManipulationContext()` + `getDirectManipulationTooltipMessage()`
+2. Inline banner below selection overlay: reason → human text + resolution action
+   - `zoom` → "Масштаб ≠ 100%" + кнопка «Сбросить»
+   - `locked` → "Элемент заблокирован 🔒" + кнопка «Разблокировать»
+   - `container` → "Это контейнер — выберите дочерний элемент" + visual hint
+   - `own-transform` / `parent-transform` / `slide-transform` → "Используется transform — перемещение через инспектор"
+   - `hidden` → "Элемент скрыт" + кнопка «Показать»
+3. Stack depth badge `1/N` in breadcrumb bar
+4. Action hint on first select: inspector summary card shows 1-2 obvious available actions
+5. New CSS: `editor/styles/banner.css` (new @layer slot in tokens.css declaration)
+6. Playwright: `honest-feedback.spec.js` covers all block reasons + badge + action hints
 
-### Test plan
+### Test Plan
 
 | Scenario | Gate | Method |
-|----------|------|--------|
+|---|---|---|
 | Block banner per reason | A | `honest-feedback.spec.js` |
-| Banner action resolves block | B | same spec |
-| Stack badge on 03-absolute-positioned.html | B | same spec |
-| No banner on clean selection | A | regression in `shell.smoke` |
-| Export cleanliness after banner interaction | B | `asset-parity.spec.js` |
+| Banner action resolves block | A | same spec |
+| Stack badge on overlap deck | A | same spec |
+| No banner on clean selection | A | `shell.smoke` regression |
+| Export clean after banner | A | `asset-parity.spec.js` |
 
 ---
 
-## Phase 2: Visual layer picker вЂ” `v0.20.1`
+## Phase 2 — Visual Layer Picker · `v0.25.1`
 
 > **Goal**: user can SEE all layers under cursor and PICK the one they need
 > without blind click-cycling.
 
-### ADR-003: Layer picker popup
+**Status**: Proposed
 
-**Status**: Proposed  
-**Context**: Click-through cycling (`trySelectFromClickThroughState`) works but
-is invisible вЂ” user must click repeatedly and guess when the right element is
-highlighted. Context menu already has "Select layer" items but requires
-right-click and DOM literacy.
+### ADR-003: Layer Picker Popup
 
-**Decision**: When clicking on a point with 2+ candidates, show a compact
-floating popup listing candidates with:
-- entity kind icon + human label (not tag name)
-- hover on row в†’ highlight-ghost in preview (reuse overlap ghost infrastructure)
-- click on row в†’ select that element
-- Escape / click-outside в†’ dismiss
+**Context**: Click-through cycling works but is invisible. Context menu has "Select layer"
+but requires right-click and DOM literacy. No progressive disclosure path.
 
-Trigger: plain click on an already-selected point where `candidates.length > 1`.
-First click still selects topmost (no behavior change). Second click on same
-point opens picker instead of blind cycling.
+**Decision**: Second plain click on an already-selected point where `candidates.length > 1`
+opens a compact floating popup listing candidates:
+- entity kind icon + human label (not raw tag name)
+- hover on row → highlight-ghost in preview (reuse overlap ghost infrastructure)
+- click on row → select that element; Escape / click-outside → dismiss
+First click still selects topmost (no behavior change).
 
-**Consequences**: Replaces invisible click-through cycling with a visual list.
-`updateClickThroughState` stays as the data source. New shell surface follows
-existing transient-surface mutual exclusion (context menu, insert palette,
-topbar overflow).
+New surface follows existing transient-surface mutual exclusion (context menu / insert palette / topbar overflow).
+
+**ADR-ref**: `docs/ADR-003-layer-picker-popup.md`
 
 ### Substeps
 
-1. **Layer picker panel** вЂ” floating popup positioned near cursor,
-   built from `STATE.clickThroughState.candidates[]`
-2. **Candidate labels** вЂ” use entity kind + truncated text content or
-   `data-node-id` as human label (not raw tag names)
-3. **Hover preview** вЂ” reuse `clearOverlapGhostHighlight()` /
-   ghost highlight infrastructure for hover-on-row feedback
-4. **Keyboard navigation** вЂ” Arrow Up/Down to move between candidates,
-   Enter to select, Escape to dismiss
-5. **Mutual exclusion** вЂ” layer picker closes when context menu, insert
-   palette, or topbar overflow opens (and vice versa)
-6. **Playwright coverage** вЂ” new `layer-picker.spec.js`:
-   - picker opens on second click at same point
-   - correct candidate count matches stack depth badge
-   - hover highlights correct element in preview
-   - keyboard navigation works
-   - picker closes on Escape / outside click
-   - export stays clean
+1. Layer picker panel — floating popup near cursor, built from `STATE.clickThroughState.candidates[]`
+2. Candidate labels — entity kind + truncated text content (not raw tag names)
+3. Hover preview — reuse `clearOverlapGhostHighlight()` / ghost infrastructure
+4. Keyboard navigation — Arrow Up/Down, Enter to select, Escape to dismiss
+5. Mutual exclusion — closes when context menu / insert palette / topbar overflow opens
+6. New files: `editor/src/layer-picker.js`, `editor/styles/layer-picker.css`
+7. Playwright: `layer-picker.spec.js`
 
-### Test plan
+### Test Plan
 
 | Scenario | Gate | Method |
-|----------|------|--------|
-| Picker opens on 03-absolute-positioned.html | A | `layer-picker.spec.js` |
-| Hover highlights correct candidate | B | same spec |
-| Keyboard picks correct layer | B | same spec |
-| Picker + context menu mutual exclusion | B | same spec |
+|---|---|---|
+| Picker opens on 2nd click (overlap deck) | A | `layer-picker.spec.js` |
+| Hover highlights correct candidate | A | same spec |
+| Keyboard picks correct layer | A | same spec |
+| Mutual exclusion with context menu | A | same spec |
 | No picker on single-candidate points | A | regression guard |
 
 ---
 
-## Phase 3: Precision editing вЂ” `v0.20.2`
+## Phase 3 — Precision Editing · `v0.26.0`
 
 > **Goal**: user can place and align elements precisely without pixel-guessing.
 
-### ADR-004: Snap and nudge system
+**Status**: Proposed
 
-**Status**: Proposed  
-**Context**: Direct manipulation (drag/resize) moves elements freely with no
-alignment assistance. Users need to position small elements and align them
-evenly. Currently the only precision path is typing numbers in inspector.
+### ADR-004: Snap and Nudge System
 
-**Decision**: Add three precision subsystems:
+**Context**: Direct manipulation moves freely with no alignment assistance.
+The only precision path is typing numbers in inspector. Arrow keys do nothing when element selected.
 
-1. **Arrow key nudge**: selected element moves 1px per arrow press,
-   10px with Shift held. Works at zoom = 100% only (same gate as drag).
-2. **Snap-to-siblings**: during drag, snap lines appear at edges and
-   centers of sibling elements within the same slide. Threshold: 5px.
-3. **Smart guides**: visual guide lines drawn on the preview overlay
-   when the dragged element aligns with a sibling edge or center.
+**Decision**: Three precision subsystems:
+
+1. **Arrow key nudge**: 1px per arrow, 10px with Shift. Works at zoom = 100% only (same gate as drag).
+2. **Snap-to-siblings**: during drag, snap lines appear at edges and centers of siblings. Threshold: 5px.
+3. **Smart guides**: visual dashed guide lines on preview overlay when dragged element aligns with sibling.
 
 All coordinate math goes through existing `toStageRect()` / `toStageAxisValue()`.
-Snap targets are computed from sibling bounding rects inside the active slide.
-Guide lines are shell-owned overlay elements (`data-editor-ui="true"`),
-stripped on export.
+Guide lines are shell-owned overlay elements (`data-editor-ui="true"`), stripped on export.
 
-**Consequences**: Extends direct manipulation without changing the architecture.
-Nudge is a shell keyboard handler. Snap and guides are shell overlay logic
-reading iframe geometry through the bridge.
+**ADR-ref**: `docs/ADR-004-snap-nudge-system.md`
 
 ### Substeps
 
-1. **Arrow key nudge** вЂ” register in unified keyboard handler:
-   - Arrow keys when element selected + not text-editing в†’ move 1px
-   - Shift + Arrow в†’ move 10px
-   - Blocked when `getBlockReason() !== "none"` (reuses Phase 1)
-   - Commits position through same `commit-direct-manipulation` bridge command
-2. **Snap engine** вЂ” during drag, compute snap targets from sibling rects:
-   - Snap axes: left, right, center-x, top, bottom, center-y
-   - Snap threshold: 5px (configurable via constant)
-   - Snap magnetism: position snaps to nearest target within threshold
-3. **Smart guide lines** вЂ” shell overlay lines showing alignment:
-   - Rendered as absolutely positioned divs in selection overlay container
-   - Appear when snap engages, disappear on drag end
-   - Styled: 1px dashed, theme-aware color (blue/cyan)
-4. **Playwright coverage** вЂ” extend `editor.regression.spec.js`:
-   - arrow nudge moves element by expected pixels
-   - shift+arrow nudge moves by 10px
-   - nudge blocked when locked / zoom в‰  100%
-   - snap guide appears on alignment (visual or DOM check)
+1. Arrow key nudge — register in unified keyboard handler; commits via existing `commit-direct-manipulation`
+2. Snap engine — compute snap targets from sibling rects; snap axes: left/right/center-x/top/bottom/center-y
+3. Smart guide lines — shell overlay divs; appear when snap engages, disappear on drag end
+4. New files: `editor/src/precision.js`, `editor/styles/precision.css`
+5. `bridge-script.js` edit: expose sibling bounding rects via new bridge message `get-sibling-rects`
+6. Playwright: extend `editor.regression.spec.js` + new `precision.spec.js`
 
-### Test plan
+### Test Plan
 
 | Scenario | Gate | Method |
-|----------|------|--------|
-| Arrow nudge 1px movement | A | `editor.regression.spec.js` |
-| Shift+Arrow nudge 10px | A | same spec |
-| Nudge blocked by lock | B | same spec |
-| Snap guide appears on sibling alignment | B | new `precision.spec.js` |
-| Guide lines stripped from export | B | `asset-parity.spec.js` |
+|---|---|---|
+| Arrow nudge 1px | A | `precision.spec.js` |
+| Shift+Arrow 10px | A | same spec |
+| Nudge blocked at zoom ≠ 100% | A | same spec |
+| Nudge blocked when locked | A | same spec |
+| Snap guide appears on sibling alignment | A | same spec |
+| Guide lines absent from export | A | `asset-parity.spec.js` |
 
 ---
 
-## Phase 4: Internal zoning вЂ” `v0.21.0`
+## Phase 4 — Onboarding-First · `v0.27.0`
 
-> **Goal**: reduce blast radius inside the editor file without
-> architecture rewrite.
+> **Goal**: a first-time user opens the editor and immediately knows what to do.
+> Blank state is onboarding, not a broken editing surface.
+
+**Status**: Proposed
+
+### ADR-005: Onboarding Starter-Deck
+
+**Context**: Empty state shows "Open HTML" + "Paste HTML" but no preview of what the editor does.
+Users with no existing presentation have no entry point. The bundled `basic-deck.html` exists but is
+only accessible via the STARTER_DECKS constant — not surfaced in empty state.
+
+**Decision**: Empty state card gets a third CTA: "Try starter example →" that loads `basic-deck.html`
+directly into the editor (no file dialog). This surfaces the existing STARTER_DECKS["basic"] entry.
+Action hints appear on first selection: a contextual tooltip-banner showing 1-2 most relevant actions
+for the selected entity kind (edit text / replace image / resize).
+
+**ADR-ref**: `docs/ADR-005-onboarding-starter-deck.md`
 
 ### Substeps
 
-1. Carve responsibility zones with clear section comments for:
-   - preview lifecycle
-   - slide flow and navigation
-   - selection engine (resolve, score, path, click-through)
-   - overlap recovery
-   - direct manipulation + precision (nudge, snap, guides)
-   - feedback layer (block reason, stack badge, layer picker)
-   - export and assets
-   - shell layout and responsive behavior
-2. Keep refactors contiguous and responsibility-based before any file splits
-3. Preserve `parent shell + iframe + bridge + modelDoc`
-4. Avoid override-style cleanup that hides ownership problems
+1. Add "Try starter example" button to empty-state card (uses existing `STARTER_DECKS.basic` constant)
+2. Action hint banner: entity-kind-aware tooltip on first select per session (`sessionStorage` flag)
+3. Update `editor/src/onboarding.js` (existing module)
+4. Playwright: `onboarding.spec.js` — starter deck loads, first-select hint appears, hint dismisses
 
-### Validation
+### Test Plan
 
-- All existing Gate B tests must pass without changes
-- No line-count growth beyond section headers and comments
+| Scenario | Gate | Method |
+|---|---|---|
+| Starter deck button loads pilot deck | A | `onboarding.spec.js` |
+| Action hint appears on first element select | A | same spec |
+| Hint does not repeat after dismiss | A | same spec |
+| Blank state hides all editing chrome | A | `shell.smoke` regression |
 
 ---
 
-## Phase 5: System polish вЂ” `v0.21.x`
+## Phase 5 — Accessibility CI Gate · `v0.27.1`
 
-> **Goal**: visual and interaction consistency after correctness.
+> **Goal**: shell passes axe-core, keyboard-only navigation, and WCAG AA contrast in CI.
+
+**Status**: Proposed
+
+### ADR-006: Accessibility CI Gate
+
+**Context**: No automated a11y checks exist. Inspector, topbar, and rail have never been audited.
+Keyboard focus order is untested. Light/dark contrast ratios may violate WCAG AA on new surfaces.
+
+**Decision**: Add `axe-playwright` (Deque) to devDependencies. New gate `test:gate-a11y`:
+- axe scan on shell in `empty`, `loaded-preview`, `loaded-edit` workflow states
+- keyboard-only navigation test: Tab through topbar, rail, inspector, floating toolbar
+- contrast ratio assertions for design tokens in both light and dark themes
+
+All violations are surfaced as test failures. Gate runs as optional CI step (not blocking Gate-A baseline).
+
+**ADR-ref**: `docs/ADR-006-accessibility-ci-gate.md`
 
 ### Substeps
 
-1. Normalize controls, spacing, radius, and shadow language across
-   surfaces added in v0.17вЂ“v0.19 (overlap banners, layers rows,
-   block reason banners, layer picker, smart guides)
-2. Audit topbar, rail, inspector, and new surfaces against the product
-   rule "presentation tool first, HTML editor second"
-3. Light/dark parity check on all new surfaces
-4. Avoid shell drift, focus-order regressions, and overlay conflicts
+1. `npm install --save-dev @axe-core/playwright`
+2. `tests/a11y/shell-a11y.spec.js` — axe scans per workflow state
+3. `tests/a11y/keyboard-nav.spec.js` — Tab/Shift+Tab + Enter/Space/Escape coverage
+4. `tests/a11y/contrast.spec.js` — token contrast assertions
+5. `package.json` script: `"test:gate-a11y": "playwright test tests/a11y/"`
+6. Zero violations on axe scan before merge
+
+### Test Plan
+
+| Scenario | Gate | Method |
+|---|---|---|
+| axe: zero violations in empty state | a11y | `shell-a11y.spec.js` |
+| axe: zero violations in loaded-edit | a11y | same spec |
+| Tab navigation reaches all interactive controls | a11y | `keyboard-nav.spec.js` |
+| Contrast passes WCAG AA (light + dark) | a11y | `contrast.spec.js` |
 
 ---
 
-## Version path summary
+## Phase 6 — Visual Regression CI Gate · `v0.28.0`
 
-| Version | Focus | Key deliverable |
-|---------|-------|-----------------|
-| **v0.20.0** | Honest feedback | Block reason banners, stack badge, action hints |
-| **v0.20.1** | Layer picker | Visual candidate list, hover preview, keyboard nav |
-| **v0.20.2** | Precision editing | Arrow nudge, snap-to-siblings, smart guides |
-| **v0.21.0** | Internal zoning | Responsibility zones, no architecture change |
-| **v0.21.x** | System polish | Visual consistency, light/dark parity |
+> **Goal**: shell appearance is locked via pixel snapshots — no accidental regressions.
 
-## Deferred (not in scope)
+**Status**: Proposed
 
-- Zoom UX polish (Low вЂ” desktop+mouse users unaffected)
-- Per-deck zoom persistence (Very Low вЂ” global default is fine)
-- Mobile/tablet touch conflicts (Low вЂ” desktop is primary target)
-- Cross-browser zoom testing on Firefox/WebKit (nice-to-have after Phase 1)
+### ADR-007: Visual Regression CI Gate
 
-## Architectural decisions index
+**Context**: CSS changes (overlay.css, inspector.css) can silently change appearance.
+Currently there are no visual regression tests. Snapshots would catch layout drift, color changes, and new surfaces appearing unexpectedly.
 
-| ADR | Title | Phase | Status |
-|-----|-------|-------|--------|
-| ADR-001 | Block reason protocol | v0.20.0 | Proposed |
-| ADR-002 | Stack depth indicator | v0.20.0 | Proposed |
-| ADR-003 | Layer picker popup | v0.20.1 | Proposed |
-| ADR-004 | Snap and nudge system | v0.20.2 | Proposed |
+**Decision**: Use Playwright's built-in `toHaveScreenshot()`. New gate `test:gate-visual`:
+- Snapshot surfaces: empty state / loaded-preview / loaded-edit / element selected / floating toolbar
+- Both light and dark themes (2 × N screenshots)
+- Tolerances calibrated for sub-pixel rendering differences (1% pixel diff threshold)
+- Snapshots committed to repo under `tests/visual/__snapshots__/`
+- Separate CI job; not blocking Gate-A
 
+**ADR-ref**: `docs/ADR-007-visual-regression-ci-gate.md`
 
+### Substeps
+
+1. `tests/visual/shell-visual.spec.js` — snapshot suite with theme variants
+2. Playwright project config: `chromium-visual` with fixed viewport 1440×900
+3. `package.json` script: `"test:gate-visual": "playwright test tests/visual/ --update-snapshots=false"`
+4. Initial snapshot generation: `npm run test:gate-visual -- --update-snapshots`
+5. CI: run `test:gate-visual` on PR; fail on diff > 1%
+
+### Test Plan
+
+| Scenario | Gate | Method |
+|---|---|---|
+| Empty state stable (light + dark) | visual | `shell-visual.spec.js` |
+| Loaded-edit stable (light + dark) | visual | same spec |
+| Selection overlay stable | visual | same spec |
+| Floating toolbar stable | visual | same spec |
+
+---
+
+## Phase 7 — Local Task Telemetry · `v0.28.1`
+
+> **Goal**: understand which editing actions succeed vs. fail without sending data to a server.
+
+**Status**: Proposed (scope minimal)
+
+### Approach
+
+- `editor/src/telemetry.js` (new, ~80 lines): wraps `localStorage` only, opt-in via `localStorage['editor:telemetry:enabled'] = 'true'`
+- Records: action type, success/fail, entity kind, session ID (UUID, reset on page load)
+- Diagnostic panel (advanced mode only) reads and displays the log
+- Zero network calls; zero data sent anywhere
+- Export strips telemetry log entries
+
+---
+
+## Architectural Decisions Index
+
+| ADR | Title | Phase | Status | docs/ file |
+|-----|-------|-------|--------|------------|
+| ADR-001 | Block Reason Protocol | v0.25.0 | Proposed | `docs/ADR-001-block-reason-protocol.md` |
+| ADR-002 | Stack Depth Indicator | v0.25.0 | Proposed | `docs/ADR-002-stack-depth-indicator.md` |
+| ADR-003 | Layer Picker Popup | v0.25.1 | Proposed | `docs/ADR-003-layer-picker-popup.md` |
+| ADR-004 | Snap and Nudge System | v0.26.0 | Proposed | `docs/ADR-004-snap-nudge-system.md` |
+| ADR-005 | Onboarding Starter-Deck | v0.27.0 | Proposed | `docs/ADR-005-onboarding-starter-deck.md` |
+| ADR-006 | Accessibility CI Gate | v0.27.1 | Proposed | `docs/ADR-006-accessibility-ci-gate.md` |
+| ADR-007 | Visual Regression CI Gate | v0.28.0 | Proposed | `docs/ADR-007-visual-regression-ci-gate.md` |
+
+---
+
+## Version Path Summary
+
+| Version | Focus | Key Deliverable | Status |
+|---------|-------|-----------------|--------|
+| **v0.24.0** | Click ergonomics | Drag threshold, handles, clean-click, TTL | **Shipped** |
+| **v0.25.0** | Honest feedback | BlockReason enum, inline-banner, stack-depth badge | Proposed |
+| **v0.25.1** | Visual layer picker | Popup, hover-ghost, keyboard-nav | Proposed |
+| **v0.26.0** | Precision editing | Arrow-nudge, snap-to-siblings, smart guides | Proposed |
+| **v0.27.0** | Onboarding-first | Starter-deck CTA, action-hints on first select | Proposed |
+| **v0.27.1** | Accessibility gate | axe-core + keyboard + contrast in CI | Proposed |
+| **v0.28.0** | Visual regression gate | Playwright snapshots light/dark | Proposed |
+| **v0.28.1** | Local telemetry | opt-in localStorage task-success log | Proposed |
+
+---
+
+## Architectural Invariants (Never Violate)
+
+- No `type="module"` in `<script>` — breaks `file://` protocol
+- No bundler (Vite/Webpack) — no build step is a feature
+- `init()` only as last line of `main.js`
+- New `@layer` must be declared in `tokens.css` first
+- Bridge changes require full understanding of both shell and iframe sides
+- Gate-A must be 55/5/0 before any merge to main
+
+## Deferred (Out of Scope)
+
+- Zoom UX polish (low — desktop+mouse users unaffected)
+- Per-deck zoom persistence (very low — global default is fine)
+- Mobile/tablet touch conflicts (low — desktop is primary target)
+- Cross-browser zoom regression (nice-to-have post-Phase 1)
+- Online collaboration / multi-user (different product entirely)
