@@ -1,5 +1,29 @@
 # CHANGELOG
 
+## 0.24.0 - click interaction ergonomics — 2026-04-20
+
+### UX: Click-to-edit без лишних движений
+
+Четыре точечных изменения, которые делают редактирование интуитивным:
+
+| Проблема | Решение |
+|---|---|
+| Случайные перетаскивания при клике | Drag threshold 4px → **6px** |
+| Маленькие ручки resize — промахи | Selection handles 16px → **20px** |
+| Микро-джиттер руки вызывал click-through | Proxy только при maxMovement < **2px** |
+| «Стайл» клик-through после паузы | TTL **2000ms** только для shell proxy clicks |
+
+**Gate-A: 55 passed / 5 skipped / 0 failed ✓**
+
+#### Технические детали
+- `constants.js`: `DIRECT_MANIP_THRESHOLD_PX` 4 → 6
+- `overlay.css`: `.selection-handle` width/height 16px → 20px
+- `selection.js`: отслеживание `maxMovement` в сессии манипуляции; `pendingOverlayClickProxy = maxMovement < 2`
+- `bridge-script.js`: `trySelectFromClickThroughState(x, y, options)` — параметр `options.ttl`;
+  TTL передаётся только из `proxy-select-at-point` (2000ms); прямые клики по iframe — без TTL (Infinity)
+
+---
+
 ## 0.23.0 - layer separation: bridge-script, shell-overlays, boot extracted + v3 reference decks - 2026-04-16
 
 ### Разделение слоёв v2 — новые выделенные модули
