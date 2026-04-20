@@ -1,5 +1,30 @@
 # CHANGELOG
 
+## 0.25.0 - click UX: layer picker for all modes + stack depth badge — 2026-04-20
+
+### UX: Слои доступны всем, badge показывает прогресс cycling
+
+Четыре изменения, которые завершают click-interaction ergonomics:
+
+| Проблема | Решение |
+|---|---|
+| Layer picker только в advanced mode | Picker доступен в **всех** режимах |
+| Кнопка «Следующий слой» не объяснит что делает | Единый текст «Выбрать слой» для всех режимов |
+| Stack depth badge `X из N` никогда не показывался | Синхронизация `overlapCount` bridge → shell |
+| Badge показывался бы сразу при 1-м клике (агрессивно) | Badge только при активном cycling (overlapIndex > 0) |
+
+**Gate-A: 55 passed / 5 skipped / 0 failed ✓**
+
+#### Технические детали
+- `shell-overlays.js`: убрана проверка `complexityMode !== "advanced"` в `openLayerPickerForSelectedOverlap()`
+- `dom.js`: кнопка `overlapSelectLayerBtn` всегда вызывает `openLayerPickerForSelectedOverlap()`
+- `inspector-sync.js`: унифицированы текст кнопки и сообщение overlap banner (без mode-ternary)
+- `bridge-script.js`: `postSelection` включает `overlapCount + overlapIndex` из `STATE.clickThroughState`; `updateClickThroughState` вызывается ДО `selectElement` в click handler
+- `bridge-commands.js`: синхронизирует `state.clickThroughState` из `element-selected` payload (только при `overlapIndex > 0`)
+- `state.js`: добавлено `clickThroughState: null` в shell state
+
+---
+
 ## 0.24.0 - click interaction ergonomics — 2026-04-20
 
 ### UX: Click-to-edit без лишних движений

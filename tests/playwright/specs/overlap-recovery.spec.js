@@ -182,15 +182,17 @@ test.describe("N1 overlap detection", () => {
 });
 
 test.describe("N5 magic select", () => {
-  test("basic overlap banner cycles to the next layer without opening the picker @stage-n", async ({ page }, testInfo) => {
+  // [v0.25.0] Layer picker is now available in all complexity modes (was advanced-only)
+  test("basic overlap banner opens layer picker (all modes) @stage-n", async ({ page }, testInfo) => {
     test.skip(!isChromiumOnlyProject(testInfo.project.name));
 
     await loadOverlapDeck(page);
-    const initialNodeId = await selectFirstCoveredCard(page);
+    await selectFirstCoveredCard(page);
     await triggerAndWaitForOverlapDetection(page);
 
-    const cycleButton = await ensureOverlapMagicButtonVisible(page);
-    await expect(cycleButton).toContainText(/Следующий слой/i);
+    const pickerButton = await ensureOverlapMagicButtonVisible(page);
+    // Button now shows "Выбрать слой" in all modes
+    await expect(pickerButton).toContainText(/Выбрать слой/i);
 
     const candidateIds = JSON.parse(
       await evaluateEditor(
@@ -199,18 +201,20 @@ test.describe("N5 magic select", () => {
       ),
     );
     expect(candidateIds.length).toBeGreaterThanOrEqual(2);
-    const initialIndex = candidateIds.indexOf(initialNodeId);
-    expect(initialIndex).toBeGreaterThanOrEqual(0);
-    const expectedNodeId = candidateIds[(initialIndex + 1) % candidateIds.length];
 
-    await cycleButton.click();
+    await pickerButton.click();
 
+    // Picker opens instead of cycling
+    await expect(page.locator("#layerPicker")).toBeVisible({ timeout: 6000 });
     await expect
-      .poll(() => evaluateEditor(page, "state.selectedNodeId || ''"), {
-        timeout: 6000,
-      })
-      .toBe(expectedNodeId);
-    await expect(page.locator("#layerPicker")).toBeHidden();
+      .poll(
+        async () => {
+          const text = await page.locator("#layerPickerTitle").textContent();
+          return String(text || "").trim().length;
+        },
+        { timeout: 6000 },
+      )
+      .toBeGreaterThan(0);
   });
 
   test("advanced overlap banner opens layer picker and keyboard selection works @stage-n", async ({ page }, testInfo) => {

@@ -644,8 +644,8 @@
         return true;
       }
 
+      // [v0.25.0] Layer picker available in all complexity modes (previously advanced-only)
       function openLayerPickerForSelectedOverlap() {
-        if (state.complexityMode !== "advanced") return false;
         const payload = buildSelectedOverlapLayerPickerPayload();
         if (!payload) {
           showToast("Под курсором должно быть хотя бы два authored-слоя, чтобы открыть выбор.", "info", {

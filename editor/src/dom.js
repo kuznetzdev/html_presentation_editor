@@ -161,12 +161,9 @@
         els.overlapMoveTopBtn?.addEventListener("click", () => {
           moveSelectedLayerByOrder("layer-front");
         });
+        // [v0.25.0] Layer picker is now available in all complexity modes
         els.overlapSelectLayerBtn?.addEventListener("click", () => {
-          if (state.complexityMode === "advanced") {
-            openLayerPickerForSelectedOverlap();
-            return;
-          }
-          selectNextOverlapLayer();
+          openLayerPickerForSelectedOverlap();
         });
         els.normalizeLayersBtn?.addEventListener("click", () =>
           normalizeLayersForCurrentScope(),

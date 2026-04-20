@@ -163,7 +163,17 @@ test.describe("Honest feedback and transient shell routing", () => {
 
   test("stack depth badge reflects click-through progress only when needed @stage-f", async ({ page }) => {
     await closeCompactShellPanels(page);
-    await clickPreview(page, "#hero-title");
+    // Select via bridge directly (not canvas click) so clickThroughState stays null,
+    // which is the "no active cycling" baseline that should keep the badge hidden.
+    await evaluateEditor(
+      page,
+      `(() => {
+        const node = state.modelDoc?.querySelector?.("#hero-title");
+        const nodeId = node?.getAttribute?.("data-editor-node-id");
+        if (nodeId) sendToBridge("select-element", { nodeId });
+      })()`,
+    );
+    await expect.poll(() => evaluateEditor(page, "state.selectedNodeId || ''"), { timeout: 6000 }).toBeTruthy();
     await ensureShellPanelVisible(page, "inspector");
 
     await expect(page.locator("#stackDepthBadge")).toBeHidden();

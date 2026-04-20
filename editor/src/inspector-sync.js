@@ -853,10 +853,9 @@
           );
         }
         if (els.overlapRecoveryText) {
+          // [v0.25.0] Unified message — picker available in all modes
           els.overlapRecoveryText.textContent = showOverlapBanner
-            ? state.complexityMode === "advanced"
-              ? `Под курсором несколько слоёв. Перекрытие около ${overlapWarning.coveredPercent}%. Выберите нужный или поднимите текущий.`
-              : `Под курсором несколько слоёв. Перекрытие около ${overlapWarning.coveredPercent}%. Поднимите текущий, чтобы он оказался сверху.`
+            ? `Под курсором несколько слоёв. Перекрытие около ${overlapWarning.coveredPercent}%. Выберите нужный или поднимите текущий.`
             : "Под курсором несколько слоёв. Выберите нужный или поднимите текущий.";
         }
         if (els.overlapMoveTopBtn) {
@@ -870,14 +869,9 @@
             showOverlapBanner ? "false" : "true",
           );
           setElementInertState(els.overlapSelectLayerBtn, !showOverlapBanner);
-          els.overlapSelectLayerBtn.textContent =
-            state.complexityMode === "advanced"
-              ? "Выбрать слой"
-              : "Следующий слой";
-          els.overlapSelectLayerBtn.setAttribute(
-            "data-ui-level",
-            state.complexityMode === "advanced" ? "advanced" : "basic",
-          );
+          // [v0.25.0] Picker in all modes — always show "Выбрать слой"
+          els.overlapSelectLayerBtn.textContent = "Выбрать слой";
+          els.overlapSelectLayerBtn.setAttribute("data-ui-level", "advanced");
         }
         // [v0.18.0] Lock banner (advanced mode only)
         const isLocked = hasSelection && state.modelDoc

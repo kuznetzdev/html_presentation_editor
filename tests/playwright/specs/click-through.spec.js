@@ -86,34 +86,29 @@ test(
     test.skip(!isChromiumOnlyProject(testInfo.project.name));
 
     await loadOverlapDeck(page);
+    await ensureShellPanelVisible(page, "inspector");
+    const badge = page.locator("#stackDepthBadge");
 
-    // First click on the middle overlapping card
+    // First click — no cycling yet, badge must be hidden
     await overlapCard(page).click({ force: true });
     await waitForAnySelection(page);
+    await expect(badge).toBeHidden();
 
-    // Read candidate count from the editor state and assert badge accordingly
-    const candidateCount = await evaluateEditor(page, `state.clickThroughState?.candidates?.length || 0`);
-    const badge = page.locator("#stackDepthBadge");
-    if (candidateCount > 1) {
-      await ensureShellPanelVisible(page, "inspector");
-      await expect(badge).toBeVisible();
-      const badgeText1 = await badge.textContent();
-      expect(badgeText1).toMatch(/^1\s*\/\s*\d+/);
+    // Second click on same card — cycling begins (overlapIndex becomes 1)
+    const firstNodeId = await evaluateEditor(page, "state.selectedNodeId || ''");
+    expect(firstNodeId).toBeTruthy();
+    await overlapCard(page).click({ force: true });
+    await waitForSelectionChange(page, firstNodeId);
 
-      // Second click cycles to next candidate
-      await overlapCard(page).click({ force: true });
-      await waitForAnySelection(page);
-      const badgeText2 = await badge.textContent();
-      expect(badgeText2).toMatch(/^2\s*\/\s*\d+/);
+    // Badge now shows "2 из N" (Russian "из" = "of")
+    await expect(badge).toBeVisible({ timeout: 6000 });
+    const badgeText = await badge.textContent();
+    expect(badgeText).toMatch(/^2\s*из\s*\d+/);
 
-      // Click elsewhere to reset
-      await isolatedCard(page).click({ force: true, position: { x: 10, y: 10 } });
-      await waitForAnySelection(page);
-      // Badge should be hidden (single candidate)
-      await expect(badge).toBeHidden();
-    } else {
-      await expect(badge).toBeHidden();
-    }
+    // Click elsewhere — new position resets cycling (overlapIndex=0), badge hidden again
+    await isolatedCard(page).click({ force: true, position: { x: 10, y: 10 } });
+    await waitForAnySelection(page);
+    await expect(badge).toBeHidden({ timeout: 6000 });
   },
 );
 

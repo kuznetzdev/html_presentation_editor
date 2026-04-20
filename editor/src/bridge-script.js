@@ -2253,6 +2253,10 @@
         function postSelection(el, options) {
           const payload = buildElementBridgePayload(el, options);
           if (!payload) return;
+          // [v0.25.0] Include candidate overlap count so shell can drive the stack depth badge
+          const cts = STATE.clickThroughState;
+          payload.overlapCount = cts.candidates.length;
+          payload.overlapIndex = cts.index;
           post('element-selected', payload);
         }
 
@@ -2956,16 +2960,16 @@
           if (event.target.closest('a[href]')) event.preventDefault();
           if (event.altKey) event.preventDefault();
           if (_isMod && !event.altKey) event.preventDefault();
+          // [v0.25.0] Update candidate stack BEFORE selectElement so overlapCount
+          // is current when postSelection emits element-selected to the shell.
+          if (!event.altKey && !_isMod) {
+            updateClickThroughState(event.target, event.clientX, event.clientY);
+          }
           selectElement(selection.selectedEl, {
             focusText: false,
             selectionLeafEl: selection.selectionLeafEl,
             selectionPathEntries: selection.pathEntries,
           });
-
-          // [CLICK-THROUGH] populate candidate stack for future cycling
-          if (!event.altKey && !_isMod) {
-            updateClickThroughState(event.target, event.clientX, event.clientY);
-          }
         }, true);
 
         document.addEventListener('dblclick', (event) => {

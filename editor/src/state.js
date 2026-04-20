@@ -378,6 +378,8 @@
         shellChromeObserver: null,
         leftPanelOpen: false,
         rightPanelOpen: false,
+        // [v0.25.0] Synced from bridge via element-selected payload; drives stack depth badge
+        clickThroughState: null,
       };
 
       // ====================================================================

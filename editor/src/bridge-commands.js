@@ -371,6 +371,18 @@
           nextFlags,
         );
         state.runtimeActiveSlideId = payload.slideId || state.runtimeActiveSlideId;
+        // [v0.25.0] Sync click-through overlap count for the stack depth badge.
+        // Badge shows only when actively cycling (overlapIndex > 0) so a first
+        // click on a multi-candidate element keeps the badge hidden.
+        const overlapIndex = typeof payload.overlapIndex === 'number' ? payload.overlapIndex : 0;
+        if (typeof payload.overlapCount === 'number' && overlapIndex > 0) {
+          state.clickThroughState = {
+            candidates: { length: payload.overlapCount },
+            index: overlapIndex,
+          };
+        } else {
+          state.clickThroughState = null;
+        }
         if (
           state.contextMenuNodeId &&
           (state.contextMenuNodeId !== state.selectedNodeId ||
