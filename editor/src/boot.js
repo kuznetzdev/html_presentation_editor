@@ -90,6 +90,8 @@
           document.documentElement.dataset.themeTransition = "locked";
         }
         state.theme = theme === "dark" ? "dark" : "light";
+        // [WO-16] Sync resolved theme into the observable store ui slice.
+        if (window.store) window.store.update("ui", { theme: state.theme });
         syncThemeDatasets(state.theme);
         if (els.themeToggleBtn) {
           const buttonLabel = getThemePreferenceLabel();
@@ -128,6 +130,8 @@
           });
         }
         state.themePreference = savedPreference;
+        // [WO-16] Sync initial preference into the observable store ui slice.
+        if (window.store) window.store.update("ui", { themePreference: savedPreference });
         applyResolvedTheme(
           state.themePreference === "system"
             ? resolveSystemTheme()
@@ -163,6 +167,8 @@
           ? preference
           : "system";
         state.themePreference = nextPreference;
+        // [WO-16] Sync theme preference into the observable store ui slice.
+        if (window.store) window.store.update("ui", { themePreference: nextPreference });
         applyResolvedTheme(
           nextPreference === "system" ? resolveSystemTheme() : nextPreference,
           { suppressTransitions: true },
@@ -206,6 +212,8 @@
 
       function setComplexityMode(mode, persist = true) {
         state.complexityMode = mode === "advanced" ? "advanced" : "basic";
+        // [WO-16] Sync complexity mode into the observable store ui slice.
+        if (window.store) window.store.update("ui", { complexityMode: state.complexityMode });
         if (persist) {
           try {
             localStorage.setItem(
@@ -277,6 +285,8 @@
       function setPreviewZoom(zoom, persist = true) {
         const clamped = Math.max(0.25, Math.min(2.0, zoom));
         state.previewZoom = clamped;
+        // [WO-16] Sync preview zoom into the observable store ui slice.
+        if (window.store) window.store.update("ui", { previewZoom: clamped });
         if (persist) {
           try {
             localStorage.setItem(PREVIEW_ZOOM_STORAGE_KEY, String(clamped));

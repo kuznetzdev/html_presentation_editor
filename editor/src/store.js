@@ -338,3 +338,9 @@ function createStore(initialSlices) {
 if (typeof window !== "undefined") {
   window.store = createStore();
 }
+
+// CommonJS export for Node test runner — no-op in browser contexts.
+// Allows `const { createStore } = require('./store.js')` in tests.
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { createStore: createStore };
+}

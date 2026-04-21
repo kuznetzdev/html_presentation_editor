@@ -1,6 +1,6 @@
 # ADR-013: Observable Store — slice-typed state with subscribe-per-slice
 
-**Status**: Proposed
+**Status**: Accepted (phase 1 — 2026-04-21)
 **Phase**: v0.28.x–v0.32.x (gradual migration)
 **Owner**: Architecture · State layer
 **Depends on**: ADR-011 (JSDoc types)
@@ -125,7 +125,8 @@ Writes outside the owner → ESLint rule (new, lightweight).
 
 ## Applied In
 
-- v0.28.x — `store.js` module scaffold + `ui` slice migration (complexityMode, previewZoom, theme)
+- v0.28.3 — `store.js` module scaffold + `ui` slice bootstrap (`defineSlice("ui", ...)`) ✓
+- v0.28.4 — `boot.js` rewired: `applyResolvedTheme`, `setThemePreference`, `setComplexityMode`, `setPreviewZoom` sync writes to `store.update("ui", ...)` ✓
 - v0.29.x — `selection` slice migration (biggest surface)
 - v0.30.x — `history` slice + slim-snapshot storage (addresses PAIN-MAP P0-11)
 - v0.31.x — `model` slice + `bridge` slice; `window.state` shim removed

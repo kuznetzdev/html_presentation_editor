@@ -4,6 +4,23 @@
 
 ---
 
+## [v0.28.4] — 2026-04-21 — W3 Bridge v2+Store batch 2: WO-16 Observable Store
+
+### State
+- feat(state): observable store bootstrap + ui slice migration — ADR-013 phase 1 — PAIN-MAP P0-09 start. `store.js` (+340 LOC): hand-rolled `createStore()` IIFE factory on `window.store`; API: `defineSlice/get/select/update/subscribe/batch`. `Object.freeze` slices in dev, `queueMicrotask`-based notification, microtask coalescing — subscribers fire exactly once per batch. `@typedef UISlice` + `@typedef Store` per ADR-011. `window.store.defineSlice("ui", {complexityMode,previewZoom,theme,themePreference})` in `state.js` before state literal. `window.stateProxy` Proxy shim: `get` reads ui keys from store; `set` writes ui keys through `store.update`. `boot.js` rewired: `applyResolvedTheme`/`setThemePreference`/`setComplexityMode`/`setPreviewZoom` each call `window.store.update("ui", {...})` to keep store in sync. Zero DOM references in `store.js`. Zero bundler deps. `test:unit` → 12/12 (`tests/unit/store.spec.js`). ADR-013 Status → Accepted (phase 1). Gate-A: 59/5/0. ADR-013. PAIN-MAP: P0-09.
+
+### Tests
+- test(state): store.spec.js — 12 unit cases (Node --test runner). Cases: get-frozen, update-identity, subscribe-next-prev, microtask-fire, batch-coalesce, path-subscribe, defineSlice+subscribe, sequential-coalesce, freeze-throw, unsubscribe, nested-batch, select-missing.
+
+---
+
+## [v0.28.3] — 2026-04-21 — W3 Bridge v2+Store batch 2: WO-13 Schema Validators
+
+### Bridge
+- feat(bridge): per-message schema validators + KNOWN_ENTITY_KINDS injection — ADR-012 §2 — PAIN-MAP P2-05. `bridge-schema.js` (+694 LOC): validators for all ~30 message types; `validateMessage()` public entry. `sendToBridge` in `bridge-commands.js` gates every outgoing message through `BRIDGE_SCHEMA.validateMessage` — invalid payloads dropped with diagnostic. `CANONICAL_ENTITY_KINDS_ARR` in `constants.js` is now single source of truth for entity kind strings (P2-05 closed): `bridge-script.js` KNOWN_ENTITY_KINDS injected via `${JSON.stringify(CANONICAL_ENTITY_KINDS_ARR)}` in template literal; `bridge-commands.js` CANONICAL_ENTITY_KINDS built from same constant. `BRIDGE_MAX_PAYLOAD_BYTES = 262144` added to constants. `bridge-script.js`: `postAck(refSeq, ok, code, msg)` function + ack emissions inside replace-node-html/replace-slide-html handlers. `bridge.js` case `"ack"` collects structured acks in `state.bridgeAcks` Map keyed by refSeq. Direction fix: `slide-rail.js` `navigateSelectedTableCell` changed from `"next"/"previous"` to `"tab"/"shift-tab"`; `bridge-schema.js` VALID_DIRECTIONS updated to include `"shift-tab"`; `bridge-script.js` `navigateTableCellByDirection` step handles both `"previous"` and `"shift-tab"`. Fixes Gate-A regression in S9 Tab/Shift+Tab table navigation. WO-16 foundation bundled (store.js + state.js store guard). gate-contract: 152/0. Gate-A: 59/5/0. ADR-012. PAIN-MAP: P2-05.
+
+---
+
 ## [v0.28.2] — 2026-04-21 — W3 Bridge v2+Store batch 1: WO-15 Telemetry
 
 ### Telemetry
