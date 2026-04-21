@@ -40,6 +40,7 @@
         }
         startBridgeWatchdog();
         updateAssetDirectoryStatus();
+        bindTelemetryToggleUi();
         refreshUi();
       }
 

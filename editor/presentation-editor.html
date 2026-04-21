@@ -1415,6 +1415,14 @@
           >
             Диагностика ещё не собрана.
           </div>
+          <div class="diagnostics-telemetry-row" data-ui-level="advanced">
+            <label class="diagnostics-telemetry-toggle">
+              <input type="checkbox" id="telemetryToggle" />
+              <span>Записывать действия в локальный журнал для себя</span>
+            </label>
+            <button type="button" id="telemetryExportBtn" class="ghost-btn" disabled>Экспорт журнала</button>
+            <button type="button" id="telemetryClearBtn" class="ghost-btn" disabled>Очистить</button>
+          </div>
         </div>
       </aside>
     </main>
@@ -1776,6 +1784,7 @@
        только bridge-скрипт и работает с реальным DOM презентации.
        ==================================================================== -->
     <script src="src/constants.js"></script>
+    <script src="src/telemetry.js"></script>
     <script src="src/state.js"></script>
     <script src="src/onboarding.js"></script>
     <script src="src/dom.js"></script>
