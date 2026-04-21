@@ -4,7 +4,45 @@
       /* ======================================================================
        [SCRIPT 03] preview build + iframe bridge + sync
        ====================================================================== */
+
+      // Classic-script globals: functions and objects defined in other <script> tags.
+      // Declared here so tsc --noEmit can type-check this file in isolation.
+      /* global state, els, addDiagnostic, setPreviewLoading, dispatchPendingSlideActivation */
+      /* global flushPendingPreviewSelection, showToast, refreshUi, applyRuntimeMetadata */
+      /* global applySlideActivationFromBridge, applyElementSelection, applyElementUpdateFromBridge */
+      /* global applySelectionGeometry, applySlideUpdateFromBridge, applySlideRemovedFromBridge */
+      /* global openContextMenuFromBridge, handleBridgeShortcut, applyDocumentSyncFromBridge */
+      /* global cleanupExportValidationUrl, getAllowedBridgeOrigins, setPreviewLifecycleState */
+      /* global BRIDGE_PROTOCOL_VERSION */
+
+      /**
+       * Shape of the `data` property on postMessage events sent by the bridge iframe.
+       * @typedef {Object} BridgeMessageEvent
+       * @property {true} __presentationEditor - Marker that identifies bridge messages
+       * @property {string} token - Shared secret matching state.bridgeToken
+       * @property {string} type - Message type (e.g. 'bridge-ready', 'element-selected', ...)
+       * @property {number} [seq] - Optional monotonic sequence number for ordered delivery
+       * @property {any} [payload] - Message-type-specific payload (typed per ADR-012 / WO-13)
+       */
+
+      /**
+       * Payload stub types — filled by ADR-012 / WO-13
+       * @typedef {any} BridgeReadyPayload        // filled by ADR-012 / WO-13
+       * @typedef {any} RuntimeMetadataPayload    // filled by ADR-012 / WO-13
+       * @typedef {any} SlideActivationPayload    // filled by ADR-012 / WO-13
+       * @typedef {any} ElementSelectedPayload    // filled by ADR-012 / WO-13
+       * @typedef {any} ElementUpdatedPayload     // filled by ADR-012 / WO-13
+       * @typedef {any} SelectionGeometryPayload  // filled by ADR-012 / WO-13
+       * @typedef {any} SlideUpdatedPayload       // filled by ADR-012 / WO-13
+       * @typedef {any} SlideRemovedPayload       // filled by ADR-012 / WO-13
+       * @typedef {any} ContextMenuPayload        // filled by ADR-012 / WO-13
+       * @typedef {any} ShortcutPayload           // filled by ADR-012 / WO-13
+       * @typedef {any} RuntimeErrorPayload       // filled by ADR-012 / WO-13
+       * @typedef {any} DocumentSyncPayload       // filled by ADR-012 / WO-13
+       */
+
       function bindMessages() {
+        /** @param {MessageEvent<BridgeMessageEvent>} event */
         window.addEventListener("message", (event) => {
           // AUDIT-D-04: Assert postMessage origin before processing any message.
           // Under file:// protocol event.origin is the string "null" — that is
@@ -17,9 +55,10 @@
           const data = event.data;
           if (!data || data.__presentationEditor !== true) return;
           if (data.token !== state.bridgeToken) return;
+          const _previewFrame = /** @type {HTMLIFrameElement|null} */ (els.previewFrame);
           if (
-            els.previewFrame.contentWindow &&
-            event.source !== els.previewFrame.contentWindow
+            _previewFrame && _previewFrame.contentWindow &&
+            event.source !== _previewFrame.contentWindow
           )
             return;
 
@@ -146,7 +185,7 @@
             }
           } catch (error) {
             addDiagnostic(
-              `parent-message-error:${data.type || "unknown"}:${error.message}`,
+              `parent-message-error:${data.type || "unknown"}:${error instanceof Error ? error.message : String(error)}`,
             );
           }
         });
