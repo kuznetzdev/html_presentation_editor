@@ -123,6 +123,14 @@
               runBrokenAssetProbeAndReport();
             }
           }, 200);
+          // [WO-07] Show trust banner if scan detected executable code and user
+          // has not yet made a trust decision for this import session.
+          // dismissible: false — user must choose an action (banner persists).
+          // Non-blocking: no modal focus-trap; editing and navigation continue.
+          // OWASP A03:2021 Injection — CWE-79, CWE-1021, AUDIT-D-01.
+          window.setTimeout(function() {
+            maybeShowTrustBanner();
+          }, 250);
         };
 
         if (options.resetHistory) {
@@ -550,10 +558,73 @@
         return claimUniqueImportedIdentity(generatedId, usedNodeIds, "node");
       }
 
+      // =====================================================================
+      // scanTrustSignals — scan-only, no DOM mutation (WO-07, AUDIT-D-01)
+      // Returns a signals object describing executable-code patterns found in doc.
+      // The scan never strips; stripping is opt-in via neutralizeAndReload().
+      //
+      // Returns:
+      //   { scriptCount, inlineHandlerCount, jsUrlCount, remoteIframeCount,
+      //     metaRefreshCount, objectEmbedCount, totalFindings,
+      //     samples: { scripts[], inlineHandlers[], jsUrls[], remoteIframes[],
+      //                metaRefresh[], objectEmbed[] }  (max 5 per kind, 120 chars) }
+      //
+      // OWASP A03:2021 Injection — CWE-79, CWE-1021
+      function scanTrustSignals(doc) {
+        if (!doc) {
+          return {
+            scriptCount: 0, inlineHandlerCount: 0, jsUrlCount: 0,
+            remoteIframeCount: 0, metaRefreshCount: 0, objectEmbedCount: 0,
+            totalFindings: 0, samples: {},
+          };
+        }
+        function collectSamples(els) {
+          return Array.from(els).slice(0, 5).map(function (el) {
+            return (el.outerHTML || '').slice(0, 120);
+          });
+        }
+        var scripts       = doc.querySelectorAll(TRUST_DETECTION_SELECTORS.scripts);
+        var handlers      = doc.querySelectorAll(TRUST_DETECTION_SELECTORS.inlineHandlers);
+        var jsUrls        = doc.querySelectorAll(TRUST_DETECTION_SELECTORS.jsUrls);
+        var remoteIframes = doc.querySelectorAll(TRUST_DETECTION_SELECTORS.remoteIframes);
+        var metaRefresh   = doc.querySelectorAll(TRUST_DETECTION_SELECTORS.metaRefresh);
+        var objectEmbed   = doc.querySelectorAll(TRUST_DETECTION_SELECTORS.objectEmbed);
+        var scriptCount        = scripts.length;
+        var inlineHandlerCount = handlers.length;
+        var jsUrlCount         = jsUrls.length;
+        var remoteIframeCount  = remoteIframes.length;
+        var metaRefreshCount   = metaRefresh.length;
+        var objectEmbedCount   = objectEmbed.length;
+        var totalFindings = scriptCount + inlineHandlerCount + jsUrlCount +
+                            remoteIframeCount + metaRefreshCount + objectEmbedCount;
+        return {
+          scriptCount: scriptCount,
+          inlineHandlerCount: inlineHandlerCount,
+          jsUrlCount: jsUrlCount,
+          remoteIframeCount: remoteIframeCount,
+          metaRefreshCount: metaRefreshCount,
+          objectEmbedCount: objectEmbedCount,
+          totalFindings: totalFindings,
+          samples: {
+            scripts:       collectSamples(scripts),
+            inlineHandlers:collectSamples(handlers),
+            jsUrls:        collectSamples(jsUrls),
+            remoteIframes: collectSamples(remoteIframes),
+            metaRefresh:   collectSamples(metaRefresh),
+            objectEmbed:   collectSamples(objectEmbed),
+          },
+        };
+      }
+
       function buildModelDocument(htmlString) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlString, "text/html");
         runUnifiedImportPipeline(doc);
+        // [WO-07] Persist raw source and scan for trust signals after import pipeline.
+        // lastImportedRawHtml is needed by neutralizeAndReload() to re-parse
+        // from the original (un-annotated) source. trustSignals drive the banner.
+        state.lastImportedRawHtml = htmlString;
+        state.trustSignals = scanTrustSignals(doc);
         return doc;
       }
 
@@ -818,5 +889,160 @@
         }
         return { key: "ready", label: "ready" };
       }
+
+      // =====================================================================
+      // Trust-Banner + neutralize-scripts (WO-07, ADR-014 §Layer 1, AUDIT-D-01)
+      //
+      // maybeShowTrustBanner()  — called after iframe onload; shows banner if
+      //   findings > 0 AND trustDecision is still PENDING.
+      // acceptTrustDecision()   — "Оставить как есть"; persists ACCEPT so the
+      //   banner never re-fires for this session-import.
+      // neutralizeAndReload()   — "Нейтрализовать скрипты"; strips all detected
+      //   patterns from a fresh re-parse of lastImportedRawHtml and rebuilds
+      //   the preview in SCRIPTS_ONLY sandbox mode.
+      //
+      // Security invariants:
+      //   - Scan-only by default (never strips without user consent).
+      //   - NEUTRALIZE preserves style, class, id, data-* attributes.
+      //   - Only strips: <script>, <object>, <embed>, on* attrs, javascript: hrefs,
+      //     <meta http-equiv="refresh">, remote <iframe src="http(s)://">.
+      //   - lastImportedRawHtml re-parsed fresh; annotated modelDoc not used.
+      //   - No external network calls added.
+      //
+      // OWASP A03:2021 Injection — CWE-79, CWE-1021, AUDIT-D-01.
+      // =====================================================================
+
+      function maybeShowTrustBanner() {
+        if (!window.shellBoundary) return;
+        var signals = state.trustSignals;
+        if (!signals || signals.totalFindings === 0) return;
+        // If user already made a decision for this import, don't re-show.
+        if (state.trustDecision !== TRUST_DECISION_KEYS.PENDING) return;
+        var count = signals.totalFindings;
+        // Russian UI copy — verbatim per spec.
+        var message = 'Презентация содержит исполняемый код (' + count + ' элементов). Скрипты будут запущены.';
+        window.shellBoundary.report(
+          TRUST_BANNER_CODE,
+          message,
+          [
+            { label: 'Нейтрализовать скрипты', action: 'trust-neutralize' },
+            { label: 'Оставить как есть',       action: 'trust-accept'     },
+          ]
+        );
+      }
+
+      function acceptTrustDecision() {
+        // User chose "Оставить как есть" — scripts remain, banner dismissed.
+        // Persist decision so banner does not re-fire on subsequent reloads
+        // within the same session import.
+        state.trustDecision = TRUST_DECISION_KEYS.ACCEPT;
+        if (window.shellBoundary) window.shellBoundary.clear(TRUST_BANNER_CODE);
+        addDiagnostic('[trust] User accepted executable code in deck (scripts not neutralized).');
+      }
+
+      // neutralizeAndReload — strips executable patterns from a fresh re-parse
+      // of lastImportedRawHtml and rebuilds preview in SCRIPTS_ONLY sandbox mode.
+      //
+      // Patterns stripped:
+      //   <script>     — removed entirely (innerText content discarded)
+      //   <object>     — removed entirely
+      //   <embed>      — removed entirely
+      //   <meta http-equiv="refresh"> — removed
+      //   <iframe src="http://">, <iframe src="https://"> — src cleared, removed
+      //   on* attributes — removed from every element
+      //   <a href="javascript:"> / <a href="vbscript:"> — href cleared
+      //
+      // Preserved: style, class, id, data-* and all other non-executable attributes.
+      function neutralizeAndReload() {
+        var rawHtml = state.lastImportedRawHtml;
+        if (typeof rawHtml !== 'string' || !rawHtml) {
+          showToast('Исходный HTML недоступен для нейтрализации.', 'error', {
+            title: 'Режим доверия',
+          });
+          return;
+        }
+        // Re-parse from raw source so we strip the original, not the annotated copy.
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(rawHtml, 'text/html');
+        // Remove <script>, <object>, <embed> entirely.
+        doc.querySelectorAll('script, object, embed').forEach(function (el) {
+          if (el.parentNode) el.parentNode.removeChild(el);
+        });
+        // Remove <meta http-equiv="refresh">.
+        doc.querySelectorAll('meta[http-equiv]').forEach(function (el) {
+          var equiv = (el.getAttribute('http-equiv') || '').toLowerCase().trim();
+          if (equiv === 'refresh' && el.parentNode) el.parentNode.removeChild(el);
+        });
+        // Remove remote iframes (keep local iframes intact).
+        doc.querySelectorAll('iframe[src]').forEach(function (el) {
+          var src = (el.getAttribute('src') || '').trim();
+          if (/^https?:\/\//i.test(src) && el.parentNode) {
+            el.parentNode.removeChild(el);
+          }
+        });
+        // Strip on* event handler attributes from every element.
+        // Preserve style, class, id, data-* and all other safe attributes.
+        var ON_ATTR_RE = /^on/i;
+        doc.querySelectorAll('*').forEach(function (el) {
+          // Collect attribute names first (live NamedNodeMap mutates on removal).
+          var toRemove = [];
+          for (var i = 0; i < el.attributes.length; i++) {
+            var name = el.attributes[i].name;
+            if (ON_ATTR_RE.test(name)) toRemove.push(name);
+          }
+          toRemove.forEach(function (name) { el.removeAttribute(name); });
+          // Clear javascript: / vbscript: hrefs.
+          if (el.tagName === 'A') {
+            var href = (el.getAttribute('href') || '').trim().toLowerCase();
+            if (href.startsWith('javascript:') || href.startsWith('vbscript:')) {
+              el.removeAttribute('href');
+            }
+          }
+        });
+        // Serialize the sanitized document back to HTML.
+        var sanitizedHtml = doc.documentElement.outerHTML;
+        // Prefix with doctype so the preview renders correctly.
+        var dt = state.doctypeString || '<!DOCTYPE html>';
+        if (!sanitizedHtml.toLowerCase().startsWith('<!doctype')) {
+          sanitizedHtml = dt + '\n' + sanitizedHtml;
+        }
+        // Switch sandbox mode to SCRIPTS_ONLY before reload so the iframe
+        // attribute is applied by loadHtmlString's sandbox-mode switch block.
+        state.sandboxMode = SANDBOX_MODES.SCRIPTS_ONLY;
+        // Mark decision BEFORE loadHtmlString so resetRuntimeState does not
+        // overwrite it (resetRuntimeState resets to PENDING then we restore below).
+        // After loadHtmlString completes, forcibly set the decision to NEUTRALIZE.
+        var sourceLabel = state.sourceLabel || 'Нейтрализованный документ';
+        var loaded = loadHtmlString(sanitizedHtml, sourceLabel, {
+          mode: state.mode,
+          manualBaseUrl: state.manualBaseUrl,
+          resetHistory: false,
+        });
+        if (loaded) {
+          // loadHtmlString → resetRuntimeState resets trustDecision to PENDING.
+          // Override it immediately to NEUTRALIZE so maybeShowTrustBanner() will
+          // skip re-showing the banner for this (now-clean) document.
+          state.trustDecision = TRUST_DECISION_KEYS.NEUTRALIZE;
+          // Toast with Russian UI copy per spec.
+          showToast(
+            'Скрипты нейтрализованы. Превью пересобрано в режиме sandbox.',
+            'success',
+            { title: 'Режим доверия', ttl: 4000 }
+          );
+          addDiagnostic('[trust] Scripts neutralized; preview rebuilt in sandbox mode.');
+        }
+      }
+
+      // Wire shellBannerAction events for trust-banner action buttons (WO-07).
+      // This listener is idempotent — registered once at module-parse time.
+      window.addEventListener('shellBannerAction', function (evt) {
+        if (!evt || !evt.detail) return;
+        var action = evt.detail.action;
+        if (action === 'trust-neutralize') {
+          neutralizeAndReload();
+        } else if (action === 'trust-accept') {
+          acceptTrustDecision();
+        }
+      });
 
       // =====================================================================

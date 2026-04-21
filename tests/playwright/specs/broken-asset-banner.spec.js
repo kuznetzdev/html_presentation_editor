@@ -107,13 +107,16 @@ test.describe("broken-asset-banner: shellBoundary + sandbox-mode @security", () 
     // Wait briefly for the probe to run (onload + 200 ms defer + probe).
     await page.waitForTimeout(800);
 
-    // The #shellBanner region must not be showing a broken-assets item.
-    const itemCount = await getBannerItemCount(page);
-    expect(itemCount).toBe(0);
-
-    // The region itself must be hidden (display:none) when empty.
-    const bannerVisible = await isShellBannerVisible(page);
-    expect(bannerVisible).toBe(false);
+    // The broken-asset probe must NOT fire on a clean reference deck.
+    // Note: other banners (e.g. trust-banner for deck scripts) may legitimately
+    // be present — this test only asserts the broken-assets probe does not
+    // false-positive on a reference deck with no missing resources.
+    const brokenAssetsItemCount = await page.evaluate(() => {
+      const banner = document.getElementById("shellBanner");
+      if (!banner) return 0;
+      return banner.querySelectorAll('[data-banner-key="broken-assets"]').length;
+    });
+    expect(brokenAssetsItemCount).toBe(0);
   });
 
   // ── Test BA2 ─────────────────────────────────────────────────────────────

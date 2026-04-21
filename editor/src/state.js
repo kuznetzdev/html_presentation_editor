@@ -382,6 +382,17 @@
         clickThroughState: null,
         // [WO-06] sandbox mode — one of SANDBOX_MODES values; default OFF
         sandboxMode: DEFAULT_SANDBOX_MODE,
+        // [WO-07] Trust-Banner slices (ADR-014 §Layer 1, AUDIT-D-01)
+        // trustDecision — PENDING until user explicitly chooses an action.
+        //   Reset to PENDING on every fresh import (loadHtmlString → resetRuntimeState).
+        trustDecision: 'pending',
+        // trustSignals — result of scanTrustSignals(doc) after buildModelDocument.
+        //   Null until the first import of a document. Cleared on fresh import.
+        trustSignals: null,
+        // lastImportedRawHtml — verbatim htmlString passed to buildModelDocument.
+        //   Preserved so neutralizeAndReload() can re-parse from the original source
+        //   rather than from the (already-annotated) modelDoc serialization.
+        lastImportedRawHtml: null,
       };
 
       // ====================================================================

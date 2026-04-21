@@ -562,6 +562,13 @@
           baseUrlDependent: 0,
         };
         state.lastExportValidationAudit = null;
+        // [WO-07] Reset trust-decision to PENDING on every fresh import.
+        // lastImportedRawHtml is intentionally NOT cleared here — it is written
+        // inside buildModelDocument (import.js) after the new HTML arrives and
+        // cleared only once import fully succeeds.
+        state.trustDecision = 'pending';
+        state.trustSignals = null;
+        if (window.shellBoundary) window.shellBoundary.clear(TRUST_BANNER_CODE);
         updateDiagnostics();
       }
 

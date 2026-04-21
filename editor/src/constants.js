@@ -201,8 +201,42 @@
         FULL: "full",
       });
       // DEFAULT_SANDBOX_MODE = OFF preserves the product promise: deck-engine JS
-      // (reveal.js, Shower, etc.) keeps running. WO-07 will add user-facing toggle.
+      // (reveal.js, Shower, etc.) keeps running. WO-07 adds user-facing toggle.
       const DEFAULT_SANDBOX_MODE = SANDBOX_MODES.OFF;
+      // =====================================================================
+      // Trust-signal detection selectors (AUDIT-D-01, ADR-014 §Layer 1, WO-07)
+      // scanTrustSignals() in import.js uses these to enumerate executable-code
+      // patterns in the imported document. The scan is read-only and never strips.
+      // Stripping only happens when the user explicitly clicks "Нейтрализовать".
+      //
+      // Selector groups:
+      //   scripts          — any <script> element (inline or external)
+      //   inlineHandlers   — elements with on* event-handler attributes
+      //   jsUrls           — <a href="javascript:"> or <a href="vbscript:">
+      //   remoteIframes    — iframes pointing at http(s):// origins
+      //   metaRefresh      — <meta http-equiv="refresh"> redirect / auto-reload
+      //   objectEmbed      — <object> and <embed> plugin elements
+      //
+      // OWASP A03:2021 Injection — CWE-79, CWE-1021 (iframe restriction)
+      const TRUST_DETECTION_SELECTORS = Object.freeze({
+        scripts: 'script',
+        inlineHandlers: '[onclick],[onload],[onerror],[onmouseover],[onchange],[onsubmit],[onkeydown],[onkeyup],[onfocus],[onblur]',
+        jsUrls: 'a[href^="javascript:"], a[href^="vbscript:"]',
+        remoteIframes: 'iframe[src^="http://"], iframe[src^="https://"]',
+        metaRefresh: 'meta[http-equiv="refresh"]',
+        objectEmbed: 'object, embed',
+      });
+      // Stable banner key used by shellBoundary.report / .clear for trust notices.
+      const TRUST_BANNER_CODE = 'deck-scripts-detected';
+      // Trust decision values for state.trustDecision slice (WO-07).
+      //   PENDING   — not yet decided (default; banner shown when findings > 0)
+      //   NEUTRALIZE — user clicked "Нейтрализовать скрипты"; scripts were stripped
+      //   ACCEPT    — user clicked "Оставить как есть"; scripts kept, no re-banner
+      const TRUST_DECISION_KEYS = Object.freeze({
+        NEUTRALIZE: 'neutralize',
+        ACCEPT: 'accept',
+        PENDING: 'pending',
+      });
       // =====================================================================
       // Bridge origin allow-list (AUDIT-D-04, ADR-012 §4)
       // Under file:// protocol the browser reports event.origin === "null"
