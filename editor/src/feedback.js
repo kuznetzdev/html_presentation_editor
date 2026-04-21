@@ -1208,3 +1208,53 @@
       });
 
       // =====================================================================
+      // Telemetry toggle UI wiring (ADR-020, WO-15)
+      // Binds #telemetryToggle / #telemetryExportBtn / #telemetryClearBtn.
+      // Called from init() in boot.js after the DOM is ready.
+      // =====================================================================
+      function _updateTelemetryButtons(enabled) {
+        const exportBtn = document.getElementById("telemetryExportBtn");
+        const clearBtn = document.getElementById("telemetryClearBtn");
+        const toggle = document.getElementById("telemetryToggle");
+        if (toggle instanceof HTMLInputElement) toggle.checked = Boolean(enabled);
+        if (exportBtn instanceof HTMLButtonElement) exportBtn.disabled = !enabled;
+        if (clearBtn instanceof HTMLButtonElement) clearBtn.disabled = !enabled;
+      }
+
+      function bindTelemetryToggleUi() {
+        const toggle = document.getElementById("telemetryToggle");
+        const exportBtn = document.getElementById("telemetryExportBtn");
+        const clearBtn = document.getElementById("telemetryClearBtn");
+
+        if (!toggle || !exportBtn || !clearBtn) return;
+        if (!window.telemetry) return;
+
+        // Sync initial state from localStorage
+        _updateTelemetryButtons(window.telemetry.isEnabled());
+
+        toggle.addEventListener("change", function () {
+          window.telemetry.setEnabled(this.checked);
+          _updateTelemetryButtons(this.checked);
+        });
+
+        exportBtn.addEventListener("click", function () {
+          const log = window.telemetry.exportLogJson();
+          const json = JSON.stringify(log, null, 2);
+          const blob = new Blob([json], { type: "application/json" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "telemetry-log.json";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        });
+
+        clearBtn.addEventListener("click", function () {
+          window.telemetry.clearLog();
+          showToast("Журнал очищен", "info");
+        });
+      }
+
+      // =====================================================================

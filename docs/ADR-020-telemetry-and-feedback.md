@@ -1,6 +1,6 @@
 # ADR-020: Telemetry & Feedback Loop — opt-in, local-only, zero network
 
-**Status**: Proposed
+**Status**: Accepted (scaffold — v0.28.2; call-sites per §Applied In in v0.29.x–v0.32.x)
 **Phase**: v0.28.1 (existing skeleton in ROADMAP_NEXT) — v0.32.x full implementation
 **Owner**: Architecture · Observability
 **Depends on**: ADR-014 (error codes — feeds telemetry taxonomy)

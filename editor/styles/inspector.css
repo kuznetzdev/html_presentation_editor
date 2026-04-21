@@ -733,3 +733,37 @@ textarea {
   flex-wrap: wrap;
   gap: 6px;
 }
+
+/* [WO-15 / ADR-020] Telemetry toggle row — advanced-mode diagnostics panel */
+.diagnostics-telemetry-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.diagnostics-telemetry-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  cursor: pointer;
+  color: var(--shell-text-muted);
+  line-height: 1.4;
+  user-select: none;
+}
+
+.diagnostics-telemetry-toggle input[type="checkbox"] {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  accent-color: var(--shell-accent);
+  cursor: pointer;
+}
+
+.diagnostics-telemetry-row .ghost-btn {
+  flex: 0 0 auto;
+}
