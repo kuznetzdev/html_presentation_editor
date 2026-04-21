@@ -90,6 +90,33 @@
         els.topInput.addEventListener("change", () =>
           applyStyle("top", normalizeCssInput(els.topInput.value)),
         );
+        // [WO-26] Transform input: validate + write-through via applyStyle
+        {
+          const transformEl = document.getElementById("transformInput");
+          const resetBtn = document.getElementById("resetTransformBtn");
+          const TRANSFORM_REGEX = /^([a-zA-Z]+\([^)]*\)\s*)*$/;
+          if (transformEl) {
+            transformEl.addEventListener("change", () => {
+              const raw = transformEl.value.trim();
+              if (raw === "" || TRANSFORM_REGEX.test(raw)) {
+                applyStyle("transform", raw);
+                if (resetBtn) resetBtn.disabled = !raw;
+              } else {
+                showToast("Некорректный transform — оставлено как есть", "error");
+                const node = getSelectedModelNode ? getSelectedModelNode() : null;
+                transformEl.value = (node instanceof HTMLElement) ? (node.style.transform || "") : "";
+              }
+            });
+          }
+          if (resetBtn) {
+            resetBtn.addEventListener("click", () => {
+              applyStyle("transform", "");
+              if (transformEl) transformEl.value = "";
+              resetBtn.disabled = true;
+              showToast("Transform убран", "success");
+            });
+          }
+        }
         els.bgColorInput.addEventListener("input", () =>
           applyStyle("backgroundColor", els.bgColorInput.value),
         );
@@ -186,6 +213,21 @@
             if (nodeId) toggleLayerLock(nodeId);
           } else if (action === "show") {
             restoreSelectedElementVisibility();
+          } else if (action === "resolve-transform") {
+            // [WO-26] Scroll to and focus #transformInput; switch to advanced if needed
+            if (state.complexityMode !== "advanced") {
+              setComplexityMode("advanced");
+            }
+            const transformEl = document.getElementById("transformInput");
+            const transformRow = transformEl ? transformEl.closest(".inspector-row--transform") : null;
+            if (transformEl) {
+              transformEl.scrollIntoView({ block: "center", behavior: "smooth" });
+              setTimeout(() => transformEl.focus(), 180);
+            }
+            if (transformRow) {
+              transformRow.classList.add("is-resolving");
+              setTimeout(() => transformRow.classList.remove("is-resolving"), 1200);
+            }
           }
         });
         els.selectedElementQuickActions?.addEventListener(

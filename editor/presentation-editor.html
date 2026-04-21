@@ -1311,6 +1311,27 @@
                 <input id="topInput" type="text" placeholder="20px" />
               </div>
             </div>
+            <div class="inspector-row inspector-row--transform" data-ui-level="advanced">
+              <label for="transformInput" class="inspector-label">
+                Transform
+              </label>
+              <div class="inspector-row-controls">
+                <input
+                  type="text"
+                  id="transformInput"
+                  class="inspector-input inspector-input--mono"
+                  placeholder="rotate(5deg) scale(1.1)"
+                  spellcheck="false"
+                  autocomplete="off"
+                />
+                <button type="button" id="resetTransformBtn" class="ghost-btn" title="Убрать transform">
+                  Убрать
+                </button>
+              </div>
+              <p class="inspector-hint" id="transformHint">
+                CSS transform элемента. Пустая строка — без трансформации.
+              </p>
+            </div>
           </div>
 
           <div
