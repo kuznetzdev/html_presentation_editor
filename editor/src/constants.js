@@ -136,9 +136,9 @@
       const STARTER_DECKS = Object.freeze({
         basic: Object.freeze({
           key: "basic",
-          href: "/tests/fixtures/playwright/basic-deck.html",
+          href: "/editor/fixtures/basic-deck.html",
           label: "Starter Example",
-          manualBasePath: "/tests/fixtures/playwright/",
+          manualBasePath: "editor/fixtures/",
         }),
       });
       // =====================================================================

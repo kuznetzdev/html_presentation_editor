@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Playwright Basic Deck</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: "Segoe UI", Arial, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at top, rgba(14, 165, 233, 0.16), transparent 32%),
+          linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+        color: #0f172a;
+      }
+
+      .slide {
+        position: relative;
+        min-height: 720px;
+        padding: 56px;
+        overflow: hidden;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.12);
+      }
+
+      .stack {
+        display: grid;
+        gap: 18px;
+        max-width: 760px;
+      }
+
+      .hero-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
+        gap: 28px;
+        align-items: start;
+      }
+
+      .box {
+        padding: 18px 20px;
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.85);
+        border: 1px solid rgba(14, 165, 233, 0.28);
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+      }
+
+      #palette-dropzone {
+        min-height: 124px;
+        border-style: dashed;
+        background: rgba(224, 242, 254, 0.58);
+      }
+
+      #hero-image,
+      #nested-image {
+        display: block;
+        width: 100%;
+        max-width: 340px;
+        border-radius: 28px;
+        background: rgba(255, 255, 255, 0.85);
+        padding: 14px;
+        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.14);
+      }
+
+      #absolute-card {
+        position: absolute;
+        top: 72px;
+        right: 24px;
+        width: min(220px, calc(100vw - 96px));
+      }
+
+      #fixed-badge {
+        position: fixed;
+        left: 16px;
+        top: 16px;
+        width: 180px;
+        z-index: 4;
+      }
+
+      #nested-position-root {
+        position: relative;
+        width: 420px;
+        height: 280px;
+        margin-top: 220px;
+        border-radius: 32px;
+        border: 2px dashed rgba(15, 23, 42, 0.2);
+        background: rgba(255, 255, 255, 0.58);
+      }
+
+      #nested-image-wrap {
+        position: absolute;
+        inset: 28px 32px auto auto;
+        width: 180px;
+      }
+
+      #unsafe-transform-root {
+        position: absolute;
+        right: 96px;
+        bottom: 96px;
+        transform: translate3d(0, 0, 0) rotate(1deg);
+      }
+
+      #unsafe-box {
+        width: 220px;
+      }
+
+      #demo-video {
+        display: block;
+        width: min(680px, 100%);
+        border-radius: 28px;
+        background: #0f172a;
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+      }
+
+      @media (max-width: 820px) {
+        .slide {
+          min-height: 640px;
+          padding: 28px;
+        }
+
+        .hero-grid {
+          grid-template-columns: 1fr;
+        }
+
+        #absolute-card {
+          top: 28px;
+          right: 28px;
+          width: min(180px, calc(100vw - 56px));
+        }
+
+        #fixed-badge {
+          left: 12px;
+          top: 12px;
+          width: min(160px, calc(100vw - 32px));
+        }
+
+        #unsafe-transform-root {
+          position: static;
+          width: auto;
+          margin-top: 24px;
+        }
+
+        #nested-position-root {
+          width: 100%;
+          margin-top: 96px;
+        }
+
+        #nested-image-wrap {
+          inset: auto 20px 20px auto;
+          width: 132px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <section class="slide" data-slide-title="Hero">
+      <div class="hero-grid">
+        <div id="hero-stack" class="stack">
+          <p id="hero-kicker">Regression harness deck</p>
+          <h1 id="hero-title">Stable editing baseline</h1>
+          <p id="hero-copy">
+            This fixture exercises text editing, selection, duplication, export
+            validation, and theme switching without relying on framework code.
+          </p>
+          <div id="cta-box" class="box">
+            Compact callout container used for selection and layout checks.
+          </div>
+          <div id="palette-dropzone" class="box" aria-label="Palette dropzone"></div>
+        </div>
+        <img
+          id="hero-image"
+          src="../export-asset-parity/assets/images/hero.svg"
+          alt="Hero illustration"
+        />
+      </div>
+    </section>
+
+    <section class="slide" data-slide-title="Positioning">
+      <div id="absolute-card" class="box">
+        Absolute positioned card for coordinate-space checks.
+      </div>
+
+      <div id="fixed-badge" class="box">
+        Fixed positioned badge for viewport-relative checks.
+      </div>
+
+      <div id="nested-position-root">
+        <div
+          id="nested-absolute-card"
+          class="box"
+          style="position: absolute; top: 28px; left: 32px; width: 208px"
+        >
+          Nested absolute card for positioned-context checks.
+        </div>
+        <div id="nested-image-wrap">
+          <img
+            id="nested-image"
+            src="../export-asset-parity/assets/images/pattern.svg"
+            alt="Nested asset"
+          />
+        </div>
+      </div>
+
+      <div id="unsafe-transform-root">
+        <div id="unsafe-box" class="box">
+          Transform root should route unsafe direct manipulation to a safe
+          fallback path.
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-slide-title="Media">
+      <div class="stack">
+        <h2 id="media-heading">Media slide</h2>
+        <p id="media-copy">
+          Video and inserted blocks land here during regression scenarios.
+        </p>
+        <video
+          id="demo-video"
+          controls
+          poster="../export-asset-parity/assets/images/poster.svg"
+        >
+          <source
+            src="../export-asset-parity/assets/video/clip.mp4"
+            type="video/mp4"
+          />
+          <source
+            src="../export-asset-parity/assets/video/clip.webm"
+            type="video/webm"
+          />
+        </video>
+      </div>
+    </section>
+  </body>
+</html>

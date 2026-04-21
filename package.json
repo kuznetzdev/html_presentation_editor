@@ -1,6 +1,6 @@
 {
   "name": "html-presentation-editor",
-  "version": "0.30.0",
+  "version": "0.30.1",
   "description": "Local HTML presentation editor with Playwright regression coverage.",
   "private": true,
   "scripts": {

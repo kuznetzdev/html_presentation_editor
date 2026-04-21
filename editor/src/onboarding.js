@@ -33,29 +33,21 @@
             els.emptyStateFootnote.textContent =
               "Если в презентации есть картинки, CSS или видео с относительными путями — подключите папку проекта.";
           }
-          const actions =
-            els.emptyState.querySelector(".empty-state-actions") || els.emptyState;
-          let emptyPasteBtn =
-            actions.querySelector("#emptyPasteBtn") ||
+          const emptyPasteBtn =
             document.getElementById("emptyPasteBtn");
-          if (!(emptyPasteBtn instanceof HTMLButtonElement)) {
-            emptyPasteBtn = document.createElement("button");
-            emptyPasteBtn.type = "button";
-            emptyPasteBtn.id = "emptyPasteBtn";
-            emptyPasteBtn.className = "ghost-btn";
-            emptyPasteBtn.textContent = "Вставить из буфера";
-            actions.appendChild(emptyPasteBtn);
-          } else {
+          if (emptyPasteBtn instanceof HTMLButtonElement) {
             emptyPasteBtn.textContent = "Вставить из буфера";
           }
+          els.emptyPasteBtn = emptyPasteBtn || els.emptyPasteBtn;
           if (els.emptyOpenBtn) {
             els.emptyOpenBtn.textContent = "Открыть HTML";
           }
           if (els.emptyStarterDeckBtn) {
-            els.emptyStarterDeckBtn.textContent = "Открыть стартовый пример";
+            els.emptyStarterDeckBtn.textContent = "Попробовать на примере";
+            els.emptyStarterDeckBtn.setAttribute("aria-label", "Открыть стартовый пример");
           }
-          els.emptyPasteBtn = emptyPasteBtn;
         }
+        bindEmptyStateDisclosure();
         if (els.openHtmlModal) {
           const warning = els.openHtmlModal.querySelector(".warning-box");
           if (warning) {
@@ -97,6 +89,31 @@
             els.loadPastedHtmlBtn.className = "ghost-btn";
           }
         }
+      }
+
+      function bindEmptyStateDisclosure() {
+        const toggleBtn = document.getElementById("emptyMoreToggleBtn");
+        const panel = document.getElementById("emptyMorePanel");
+        const pasteBtn = document.getElementById("emptyPasteBtn");
+        if (!(toggleBtn instanceof HTMLButtonElement) || !(panel instanceof HTMLElement)) {
+          return;
+        }
+        toggleBtn.addEventListener("click", function handleDisclosureToggle() {
+          const isExpanded = toggleBtn.getAttribute("aria-expanded") === "true";
+          const nowExpanded = !isExpanded;
+          if (nowExpanded) {
+            panel.removeAttribute("hidden");
+            toggleBtn.setAttribute("aria-expanded", "true");
+            toggleBtn.textContent = "Дополнительно ▴";
+            if (pasteBtn instanceof HTMLButtonElement) {
+              pasteBtn.focus();
+            }
+          } else {
+            panel.setAttribute("hidden", "");
+            toggleBtn.setAttribute("aria-expanded", "false");
+            toggleBtn.textContent = "Дополнительно ▾";
+          }
+        });
       }
 
       function ensureNoviceSummaryStructure() {
