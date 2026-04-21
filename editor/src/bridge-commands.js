@@ -352,40 +352,80 @@
       function applyElementSelection(payload) {
         const previousNodeId = state.selectedNodeId;
         const nextSelectionPath = normaliseSelectionPath(payload);
-        state.selectedNodeId = payload.nodeId || null;
-        state.selectionLeafNodeId =
-          String(
-            payload.selectionLeafNodeId || nextSelectionPath[0]?.nodeId || "",
-          ).trim() || null;
-        state.selectionPath = nextSelectionPath;
-        state.selectedTag = payload.tag || null;
-        state.selectedComputed = payload.computed || null;
-        state.selectedHtml = payload.html || "";
-        state.selectedRect = payload.rect || null;
-        state.liveSelectionRect = null;
-        state.selectedAttrs = payload.attrs || {};
-        state.manipulationContext = payload.manipulationContext || null;
-        state.selectedEntityKind = getEntityKindFromPayload(payload);
+
+        // --- Phase 1: compute all derived values ---
+        const nextNodeId      = payload.nodeId || null;
+        const nextLeafNodeId  = String(
+          payload.selectionLeafNodeId || nextSelectionPath[0]?.nodeId || "",
+        ).trim() || null;
+        const nextTag         = payload.tag || null;
+        const nextComputed    = payload.computed || null;
+        const nextHtml        = payload.html || "";
+        const nextRect        = payload.rect || null;
+        const nextAttrs       = payload.attrs || {};
+        const nextManipCtx    = payload.manipulationContext || null;
+        const nextEntityKind  = getEntityKindFromPayload(payload);
         clearOverlapGhostHighlight();
-        const nextFlags = deriveSelectedFlagsFromPayload(payload);
-        state.selectedFlags = nextFlags;
-        state.selectedPolicy = normalizeSelectionPolicy(
+        const nextFlags       = deriveSelectedFlagsFromPayload(payload);
+        const nextPolicy      = normalizeSelectionPolicy(
           payload.protectionPolicy || {},
           nextFlags,
         );
-        state.runtimeActiveSlideId = payload.slideId || state.runtimeActiveSlideId;
+        const nextRuntimeSlideId = payload.slideId || state.runtimeActiveSlideId;
+
         // [v0.25.0] Sync click-through overlap count for the stack depth badge.
         // Badge shows only when actively cycling (overlapIndex > 0) so a first
         // click on a multi-candidate element keeps the badge hidden.
-        const overlapIndex = typeof payload.overlapIndex === 'number' ? payload.overlapIndex : 0;
-        if (typeof payload.overlapCount === 'number' && overlapIndex > 0) {
-          state.clickThroughState = {
-            candidates: { length: payload.overlapCount },
-            index: overlapIndex,
-          };
-        } else {
-          state.clickThroughState = null;
+        const nextOverlapIndex = typeof payload.overlapIndex === 'number' ? payload.overlapIndex : 0;
+        const nextClickThrough = (typeof payload.overlapCount === 'number' && nextOverlapIndex > 0)
+          ? { candidates: { length: payload.overlapCount }, index: nextOverlapIndex }
+          : null;
+
+        // --- Phase 2: dual-write — raw state fields (backward compat) + store slice ---
+        // Raw state writes keep all existing modules that read `state.selectedNodeId` etc.
+        // working without modification. The store.update call notifies store subscribers.
+        state.selectedNodeId      = nextNodeId;
+        state.selectionLeafNodeId = nextLeafNodeId;
+        state.selectionPath       = nextSelectionPath;
+        state.selectedTag         = nextTag;
+        state.selectedComputed    = nextComputed;
+        state.selectedHtml        = nextHtml;
+        state.selectedRect        = nextRect;
+        state.liveSelectionRect   = null;
+        state.selectedAttrs       = nextAttrs;
+        state.manipulationContext = nextManipCtx;
+        state.selectedEntityKind  = nextEntityKind;
+        state.selectedFlags       = nextFlags;
+        state.selectedPolicy      = nextPolicy;
+        state.runtimeActiveSlideId = nextRuntimeSlideId;
+        state.clickThroughState   = nextClickThrough;
+
+        // Sync store 'selection' slice in a single batch → ONE microtask notification.
+        if (typeof window !== "undefined" && window.store) {
+          window.store.batch(function () {
+            window.store.update("selection", {
+              activeNodeId:         nextNodeId,
+              activeSlideId:        payload.slideId || null,
+              selectionPath:        nextSelectionPath,
+              leafNodeId:           nextLeafNodeId,
+              tag:                  nextTag,
+              computed:             nextComputed,
+              html:                 nextHtml,
+              rect:                 nextRect,
+              attrs:                nextAttrs,
+              entityKind:           nextEntityKind,
+              flags:                nextFlags,
+              policy:               nextPolicy,
+              liveRect:             null,
+              manipulationContext:  nextManipCtx,
+              clickThroughState:    nextClickThrough,
+              runtimeActiveSlideId: nextRuntimeSlideId,
+              overlapIndex:         nextOverlapIndex,
+            });
+          });
         }
+
+        // --- Phase 3: side effects — IDENTICAL order to pre-WO-17 ---
         if (
           state.contextMenuNodeId &&
           (state.contextMenuNodeId !== state.selectedNodeId ||

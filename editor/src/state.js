@@ -43,11 +43,119 @@
        * @property {boolean} canReplaceMedia
        */
 
+      // =====================================================================
+      // ZONE: Selection Policy Table (P2-07 — WO-17 refactor)
+      // Table-lookup replaces 6-branch if-chain. Priority order is preserved:
+      // isSlideRoot > isProtected > isTable > isCodeBlock > isSvg > isFragment.
+      // Output shape is byte-identical to the previous if-chain for every flag combo.
+      // =====================================================================
+
+      /**
+       * Priority-ordered policy table entry.
+       * Each entry: { flag, kind, reason, overrides }
+       * where overrides are applied on top of the base 'free' policy.
+       */
+      var SELECTION_POLICY_TABLE = [
+        {
+          flag: "isSlideRoot",
+          kind: "slide-root",
+          reason: "Корневой контейнер слайда редактируется только в безопасном режиме.",
+          overrides: {
+            canEditText: false,
+            canEditAttributes: false,
+            canEditHtml: false,
+            canEditSlideHtml: true,
+            canMove: false,
+            canResize: false,
+            canNudge: false,
+            canReorder: false,
+            canDelete: false,
+            canDuplicate: false,
+            canWrap: false,
+            canAddChild: true,
+            canReplaceMedia: false,
+          },
+        },
+        {
+          flag: "isProtected",
+          kind: "critical-structure",
+          reason: "Системный контейнер deck защищён от прямого редактирования и structural-операций.",
+          overrides: {
+            canEditText: false,
+            canEditStyles: false,
+            canEditAttributes: false,
+            canEditHtml: false,
+            canEditSlideHtml: false,
+            canMove: false,
+            canResize: false,
+            canNudge: false,
+            canReorder: false,
+            canDelete: false,
+            canDuplicate: false,
+            canWrap: false,
+            canAddChild: false,
+            canReplaceMedia: false,
+          },
+        },
+        {
+          flag: "isTable",
+          kind: "structured-table",
+          reason: "Таблица импортирована как структурированный DOM-блок: безопаснее редактировать ячейки, а не сырой HTML.",
+          overrides: {
+            canEditText: false,
+            canEditAttributes: false,
+            canEditHtml: false,
+            canDelete: false,
+            canWrap: false,
+            canAddChild: false,
+            canReplaceMedia: false,
+          },
+        },
+        {
+          flag: "isCodeBlock",
+          kind: "plain-text-block",
+          reason: "Code block сохраняет пробелы и переносы строк. Избегайте raw HTML replacement.",
+          overrides: {
+            canEditAttributes: false,
+            canEditHtml: false,
+            canAddChild: false,
+            canReplaceMedia: false,
+          },
+        },
+        {
+          flag: "isSvg",
+          kind: "svg-object",
+          reason: "Inline SVG импортирован как object-level блок. Внутреннюю векторную структуру нужно сохранять.",
+          overrides: {
+            canEditText: false,
+            canEditAttributes: false,
+            canEditHtml: false,
+            canDelete: false,
+            canWrap: false,
+            canAddChild: false,
+            canReplaceMedia: false,
+          },
+        },
+        {
+          flag: "isFragment",
+          kind: "stateful-wrapper",
+          reason: "Stateful wrapper сохраняет fragment/state classes и data-* атрибуты.",
+          overrides: {
+            canEditAttributes: false,
+            canEditHtml: false,
+            canWrap: false,
+            canAddChild: false,
+            canReplaceMedia: false,
+          },
+        },
+      ];
+
       /**
        * @param {SelectionFlags} [flags]
        * @returns {SelectionPolicy}
        */
       function createDefaultSelectionPolicy(flags = {}) {
+        // Base 'free' policy — built from flags that affect the default shape.
         const policy = {
           kind: "free",
           reason: "",
@@ -66,104 +174,20 @@
           canAddChild: Boolean(flags.isContainer),
           canReplaceMedia: Boolean(flags.isImage || flags.isVideo),
         };
-        if (flags.isSlideRoot) {
-          return {
-            ...policy,
-            kind: "slide-root",
-            reason:
-              "Корневой контейнер слайда редактируется только в безопасном режиме.",
-            canEditText: false,
-            canEditAttributes: false,
-            canEditHtml: false,
-            canEditSlideHtml: true,
-            canMove: false,
-            canResize: false,
-            canNudge: false,
-            canReorder: false,
-            canDelete: false,
-            canDuplicate: false,
-            canWrap: false,
-            canAddChild: true,
-            canReplaceMedia: false,
-          };
+
+        // Priority-order table lookup: first matching flag wins.
+        for (var i = 0; i < SELECTION_POLICY_TABLE.length; i++) {
+          var entry = SELECTION_POLICY_TABLE[i];
+          if (flags[entry.flag]) {
+            return {
+              ...policy,
+              kind: entry.kind,
+              reason: entry.reason,
+              ...entry.overrides,
+            };
+          }
         }
-        if (flags.isProtected) {
-          return {
-            ...policy,
-            kind: "critical-structure",
-            reason:
-              "Системный контейнер deck защищён от прямого редактирования и structural-операций.",
-            canEditText: false,
-            canEditStyles: false,
-            canEditAttributes: false,
-            canEditHtml: false,
-            canEditSlideHtml: false,
-            canMove: false,
-            canResize: false,
-            canNudge: false,
-            canReorder: false,
-            canDelete: false,
-            canDuplicate: false,
-            canWrap: false,
-            canAddChild: false,
-            canReplaceMedia: false,
-          };
-        }
-        if (flags.isTable) {
-          return {
-            ...policy,
-            kind: "structured-table",
-            reason:
-              "Таблица импортирована как структурированный DOM-блок: безопаснее редактировать ячейки, а не сырой HTML.",
-            canEditText: false,
-            canEditAttributes: false,
-            canEditHtml: false,
-            canDelete: false,
-            canWrap: false,
-            canAddChild: false,
-            canReplaceMedia: false,
-          };
-        }
-        if (flags.isCodeBlock) {
-          return {
-            ...policy,
-            kind: "plain-text-block",
-            reason:
-              "Code block сохраняет пробелы и переносы строк. Избегайте raw HTML replacement.",
-            canEditAttributes: false,
-            canEditHtml: false,
-            canAddChild: false,
-            canReplaceMedia: false,
-          };
-        }
-        if (flags.isSvg) {
-          return {
-            ...policy,
-            kind: "svg-object",
-            reason:
-              "Inline SVG импортирован как object-level блок. Внутреннюю векторную структуру нужно сохранять.",
-            canEditText: false,
-            canEditAttributes: false,
-            canEditHtml: false,
-            canDelete: false,
-            canWrap: false,
-            canAddChild: false,
-            canReplaceMedia: false,
-          };
-        }
-        if (flags.isFragment) {
-          return {
-            ...policy,
-            kind: "stateful-wrapper",
-            reason:
-              "Stateful wrapper сохраняет fragment/state classes и data-* атрибуты.",
-            canEditAttributes: false,
-            canEditHtml: false,
-            canWrap: false,
-            canAddChild: false,
-            canReplaceMedia: false,
-          };
-        }
+
         return policy;
       }
 
@@ -540,6 +564,37 @@
         themePreference: "system",
       });
 
+      // Register the 'selection' slice — WO-17 (ADR-013 phase 2).
+      // Migrated fields: all 16 selection fields from window.state.
+      // Dual-write: state raw fields + store slice kept in sync by applyElementSelection.
+      window.store.defineSlice("selection", {
+        activeNodeId: null,
+        activeSlideId: null,
+        selectionPath: [],
+        leafNodeId: null,
+        tag: null,
+        computed: null,
+        html: "",
+        rect: null,
+        attrs: {},
+        entityKind: "none",
+        flags: {
+          canEditText: false,
+          isImage: false,
+          isVideo: false,
+          isContainer: false,
+          isSlideRoot: false,
+          isProtected: false,
+          isTextEditing: false,
+        },
+        policy: createDefaultSelectionPolicy(),
+        liveRect: null,
+        manipulationContext: null,
+        clickThroughState: null,
+        runtimeActiveSlideId: null,
+        overlapIndex: 0,
+      });
+
       /** @type {State} */
       const state = {
         sourceLabel: "",
@@ -726,6 +781,36 @@
       /** @type {Set<string>} */
       var _UI_SLICE_KEYS = new Set(["complexityMode", "previewZoom", "theme", "themePreference"]);
 
+      // Selection fields mapped from legacy state key → store 'selection' slice key.
+      // READ:  state.selectedNodeId      → store.get('selection').activeNodeId
+      // WRITE: state.selectedNodeId = x  → store.update('selection', {activeNodeId: x})
+      //         + also updates raw state for backward compat (other modules read raw state).
+      // NOTE: applyElementSelection in bridge-commands.js performs dual-write
+      //       (raw state + store.update) for the full selection batch — that is the
+      //       canonical write path. The Proxy setter here catches isolated single-field
+      //       writes from other code paths.
+      /** @type {Object.<string, string>} */
+      var _SELECTION_STATE_TO_SLICE = {
+        selectedNodeId:       "activeNodeId",
+        activeSlideId:        "activeSlideId",
+        selectionPath:        "selectionPath",
+        selectionLeafNodeId:  "leafNodeId",
+        selectedTag:          "tag",
+        selectedComputed:     "computed",
+        selectedHtml:         "html",
+        selectedRect:         "rect",
+        selectedAttrs:        "attrs",
+        selectedEntityKind:   "entityKind",
+        selectedFlags:        "flags",
+        selectedPolicy:       "policy",
+        liveSelectionRect:    "liveRect",
+        manipulationContext:  "manipulationContext",
+        clickThroughState:    "clickThroughState",
+        runtimeActiveSlideId: "runtimeActiveSlideId",
+      };
+      /** @type {Set<string>} */
+      var _SELECTION_STATE_KEYS = new Set(Object.keys(_SELECTION_STATE_TO_SLICE));
+
       // Install Proxy if the runtime supports it (ES6+). Falls back to direct
       // state access for very old environments (not expected for this project).
       if (typeof Proxy !== "undefined") {
@@ -734,6 +819,10 @@
           get: function (target, prop) {
             if (_UI_SLICE_KEYS.has(String(prop))) {
               return window.store.get("ui")[prop];
+            }
+            if (_SELECTION_STATE_KEYS.has(String(prop))) {
+              var sliceKey = _SELECTION_STATE_TO_SLICE[String(prop)];
+              return window.store.get("selection")[sliceKey];
             }
             return target[prop];
           },
@@ -746,6 +835,18 @@
                 return patch;
               }()));
               // Also mirror to the raw state so JSON serialisation / spread still works
+              target[prop] = value;
+              return true;
+            }
+            if (_SELECTION_STATE_KEYS.has(String(prop))) {
+              // Write to selection store slice (triggers notification)
+              var sliceKey = _SELECTION_STATE_TO_SLICE[String(prop)];
+              window.store.update("selection", (function () {
+                var patch = {};
+                patch[sliceKey] = value;
+                return patch;
+              }()));
+              // Mirror to raw state for backward compat
               target[prop] = value;
               return true;
             }
