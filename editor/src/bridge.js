@@ -172,16 +172,27 @@
               case "document-sync":
                 applyDocumentSyncFromBridge(data.payload || {}, bridgeSeq);
                 break;
-              // [v0.18.0] Multi-select support
-              case "multi-select-add":
-                if (state.complexityMode === "advanced" && data.payload?.nodeId) {
-                  const nodeId = data.payload.nodeId;
-                  if (!state.multiSelectNodeIds.includes(nodeId)) {
-                    state.multiSelectNodeIds.push(nodeId);
-                    showToast(`Добавлено в выделение: ${nodeId}`, "info", { duration: 1500 });
+              // [v0.18.0] Multi-select support — [WO-31] mode-gate + basic-mode honesty toast
+              case "multi-select-add": {
+                const nodeId = data.payload?.nodeId;
+                if (!nodeId) break;
+                if (state.complexityMode !== "advanced") {
+                  // Basic mode: show a toast once per session explaining the current state.
+                  if (!sessionStorage.getItem("editor:multi-select-toast-shown")) {
+                    showToast(
+                      "Мульти-выбор — в разработке. Временно доступно в продвинутом режиме: Правка → Группировать.",
+                      "info",
+                      { ttl: 5500 }
+                    );
+                    sessionStorage.setItem("editor:multi-select-toast-shown", "1");
                   }
+                  break; // do not mutate state.multiSelectNodeIds in basic mode
+                }
+                if (!state.multiSelectNodeIds.includes(nodeId)) {
+                  state.multiSelectNodeIds.push(nodeId);
                 }
                 break;
+              }
               // [WO-13] ADR-012 §5 — structured ack from iframe after mutation
               case "ack": {
                 const _ackPayload = data.payload || {};

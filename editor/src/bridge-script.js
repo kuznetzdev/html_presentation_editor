@@ -3073,6 +3073,9 @@
           if (!STATE.editMode) return;
           const _isMod = event.ctrlKey || event.metaKey;
 
+          // [WO-31] Shift+click dispatches multi-select-add.
+          // Shell routes basic-mode to toast stub; advanced-mode to grouping pipeline.
+          // Full multi-select UX (align/distribute, combined overlay) is P3 / post-v1.0.
           // [v0.18.0] Shift+Click for multi-select
           if (event.shiftKey && !event.altKey && !_isMod) {
             const selection = resolveSelectionFromTarget(event.target, {
