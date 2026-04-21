@@ -142,9 +142,10 @@ test.describe('BRIDGE_SCHEMA.validateMessage — inline acceptance', () => {
   });
 
   test('valid hello returns ok:true with empty errors', () => {
+    // WO-12: protocol is now numeric 2, not a string
     const result = SCHEMA.validateMessage({
       type: 'hello',
-      protocol: 'v2',
+      protocol: 2,
       build: '1',
       capabilities: [],
     });
@@ -193,10 +194,11 @@ test.describe('BRIDGE_SCHEMA.validateMessage — fixture corpus', () => {
 // ---------------------------------------------------------------------------
 
 test.describe('validateHello', () => {
-  test('valid hello passes', () => {
+  // WO-12: protocol is now numeric 2 (Bridge Protocol v2), not a string.
+  test('valid hello passes (numeric protocol 2)', () => {
     const r = SCHEMA.validateHello({
       type: 'hello',
-      protocol: 'v2',
+      protocol: 2,
       build: 'deadbeef',
       capabilities: ['select'],
     });
@@ -204,10 +206,32 @@ test.describe('validateHello', () => {
     expect(r.errors).toEqual([]);
   });
 
-  test('missing build fails with build error', () => {
+  test('string protocol "v2" fails — must be numeric 2', () => {
     const r = SCHEMA.validateHello({
       type: 'hello',
       protocol: 'v2',
+      build: 'deadbeef',
+      capabilities: ['select'],
+    });
+    expect(r.ok).toBe(false);
+    expect(r.errors.join(' ')).toContain('protocol');
+  });
+
+  test('protocol:1 fails — wrong version', () => {
+    const r = SCHEMA.validateHello({
+      type: 'hello',
+      protocol: 1,
+      build: 'deadbeef',
+      capabilities: ['select'],
+    });
+    expect(r.ok).toBe(false);
+    expect(r.errors.join(' ')).toContain('protocol');
+  });
+
+  test('missing build fails with build error', () => {
+    const r = SCHEMA.validateHello({
+      type: 'hello',
+      protocol: 2,
       capabilities: [],
     });
     expect(r.ok).toBe(false);
@@ -217,7 +241,7 @@ test.describe('validateHello', () => {
   test('capabilities as string (not array) fails', () => {
     const r = SCHEMA.validateHello({
       type: 'hello',
-      protocol: 'v2',
+      protocol: 2,
       build: 'abc',
       capabilities: 'select',
     });

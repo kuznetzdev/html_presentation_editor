@@ -1,6 +1,6 @@
 # ADR-012: Bridge Protocol v2 — schema registry + version negotiation
 
-**Status**: Proposed
+**Status**: Accepted (partial — hello handshake shipped; per-message validators pending WO-13)
 **Phase**: v0.27.x–v0.30.x
 **Owner**: Architecture · Bridge layer
 **Depends on**: ADR-011 (JSDoc), ADR-014 (error boundaries)

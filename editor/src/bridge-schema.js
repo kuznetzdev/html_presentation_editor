@@ -94,10 +94,14 @@
   // ---------------------------------------------------------------------------
 
   /**
-   * Validate { type: 'hello', protocol: string, build: string, capabilities: string[] }
+   * Validate { type: 'hello', protocol: number, build: string, capabilities: string[] }
    *
-   * Sent by iframe → shell as the first handshake message after bridge-ready.
-   * ADR-012 §1 version handshake.
+   * Sent by iframe → shell as the first handshake message before bridge-ready.
+   * ADR-012 §1 version handshake — WO-12.
+   *
+   * protocol must be the numeric value 2 (Bridge Protocol v2).
+   * Passing a string (v1 behaviour) is intentionally rejected so the shell can
+   * degrade to read-only and surface the mismatch banner.
    *
    * @param {unknown} payload
    * @returns {{ ok: boolean, errors: string[] }}
@@ -108,8 +112,8 @@
       errors.push('hello payload must be an object');
       return { ok: false, errors: errors };
     }
-    if (typeof payload.protocol !== 'string' || payload.protocol.length === 0) {
-      errors.push('hello.protocol must be a non-empty string');
+    if (typeof payload.protocol !== 'number' || payload.protocol !== 2) {
+      errors.push('hello.protocol must be the numeric value 2');
     }
     if (typeof payload.build !== 'string' || payload.build.length === 0) {
       errors.push('hello.build must be a non-empty string');

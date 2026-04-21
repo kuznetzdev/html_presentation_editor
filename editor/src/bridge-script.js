@@ -3561,6 +3561,21 @@
           STATE.slides = collectSlides();
           attachEngineHooks();
           ensureHelperStyles();
+          // ADR-012 §1 — Bridge v2 hello handshake (WO-12).
+          // Emitted BEFORE bridge-ready so shell can validate protocol before
+          // acting on any subsequent messages. SHELL_BUILD is substituted at
+          // build time (template literal in buildBridgeScript, shell scope).
+          post('hello', {
+            protocol: 2,
+            build: ${JSON.stringify(SHELL_BUILD)},
+            capabilities: [
+              'replace-node-html','replace-slide-html','insert-element',
+              'apply-style','apply-styles','update-attributes',
+              'replace-image-src','reset-inline-styles','delete-element',
+              'duplicate-element','move-element','nudge-element',
+              'commit-direct-manipulation'
+            ]
+          });
           post('bridge-ready', { engine: STATE.engine });
           emitRuntimeMetadata();
           emitSlideActivation({ strategy: 'boot', success: true });

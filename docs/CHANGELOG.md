@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## Unreleased
+
+### Bridge
+- feat(bridge): v2 hello handshake + mismatch banner — ADR-012 partial — P0-10 start. `bridge-schema.js` `validateHello` updated: `protocol` is now a numeric `2` (not a string). `bridge.js` case `"hello"` added before `case "bridge-ready"`: validates payload via `BRIDGE_SCHEMA.validateMessage`, sets `state.bridgeProtocolVersion=2` and `state.bridgeBuild` on success, or sets `state.editingSupported=false` and shows Russian error toast "Несовместимый bridge: shell ожидает протокол v2, iframe прислал vN. Превью переведено в режим только для чтения." on protocol mismatch. `bridge-script.js` now emits `post('hello', {protocol:2, build:SHELL_BUILD, capabilities:[...]})` before `post('bridge-ready')`. `constants.js` gains `BRIDGE_PROTOCOL_VERSION=2` and `SHELL_BUILD='v0.28.0'`. Existing fixture F-01/F-02 updated to numeric protocol. 3-test contract spec green. Gate-A: 59/5/0. ADR-012. PAIN-MAP: P0-10.
+
+---
+
 ## [v0.27.5] — 2026-04-21 — W2 Sandbox+A11y CLOSED (WO-06..11)
 
 ### Accessibility
