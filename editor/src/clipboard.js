@@ -98,6 +98,17 @@
           state.restorePayload = payload;
           els.restoreBannerText.textContent = `Источник: ${payload.sourceLabel || "без названия"} • сохранено ${new Date(payload.savedAt || Date.now()).toLocaleString()}`;
           els.restoreBanner.classList.add("is-visible");
+          // Light-snapshot notice (AUDIT-D-05, WO-04): if the stored payload was
+          // produced by the fail-tier fallback (data-URIs stripped), surface a
+          // clear warning so the user is never silently surprised by missing
+          // images after restore.
+          if (payload.autosaveTag === AUTOSAVE_LIGHT_TAG) {
+            showToast(
+              'Восстановлен облегчённый снимок — изображения отсутствуют.',
+              'warning',
+              { title: 'Автовосстановление', ttl: 6000 },
+            );
+          }
         } catch (error) {
           reportShellWarning("restore-draft-load-failed", error, {
             once: true,

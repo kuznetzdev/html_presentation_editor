@@ -644,6 +644,37 @@
       /* ======================================================================
        [SCRIPT 06] history + autosave + export + diagnostics
        ====================================================================== */
+
+      // stripHeavyDataUris(str) — replaces inline data:image/... URIs whose
+      // encoded length exceeds 1024 characters with the sentinel string
+      // '[data-uri-stripped]'.  All HTML structure, text, and non-image
+      // attributes are preserved intact.  Used by the light-snapshot fallback
+      // so that structural autosave survives even when base64 images would push
+      // the payload beyond the sessionStorage quota.
+      // (AUDIT-D-05, WO-04)
+      function stripHeavyDataUris(str) {
+        // Matches data:image/... URIs inside attribute values (quoted) or plain
+        // text.  The regex is intentionally conservative: it captures only the
+        // image/* subtype to avoid stripping SVG/font data URIs that are part
+        // of the deck structure.
+        return str.replace(
+          /data:image\/[^;,\s"']{0,64};base64,[A-Za-z0-9+/=]{1024,}/g,
+          '[data-uri-stripped]',
+        );
+      }
+
+      // isStorageQuotaError(err) — returns true only for DOMException quota
+      // errors.  Non-quota errors (e.g., "Access is denied" in private mode,
+      // test-injected forced throws) are NOT quota errors and must bubble to
+      // the outer catch so addDiagnostic('autosave-failed:') fires normally.
+      // (AUDIT-D-05, WO-04)
+      function isStorageQuotaError(err) {
+        if (!(err instanceof DOMException)) return false;
+        // Standard name: 'QuotaExceededError' (Chrome, Firefox, Safari).
+        // Legacy code: 22 (QUOTA_EXCEEDED_ERR in older specs).
+        return err.name === 'QuotaExceededError' || err.code === 22;
+      }
+
       function saveProjectToLocalStorage() {
         if (!state.modelDoc) return;
         try {
@@ -661,9 +692,116 @@
             ),
             html: serializeCurrentProject(),
           };
-          getAutosaveStorage().setItem(STORAGE_KEY, JSON.stringify(payload));
-          state.lastSavedAt = payload.savedAt;
-          refreshUi();
+
+          // --- Size-tier logic (AUDIT-D-05, WO-04) -------------------------
+          // Serialize the payload once to measure its size before writing to
+          // sessionStorage.  This avoids double-serialization on the happy
+          // path: we reuse the string for the actual setItem call.
+          const raw = JSON.stringify(payload);
+
+          if (raw.length > AUTOSAVE_FAIL_BYTES) {
+            // Fail-tier: strip heavy inline data-URIs, tag as light snapshot.
+            const lightPayload = Object.assign({}, payload, {
+              html: stripHeavyDataUris(payload.html),
+              autosaveTag: AUTOSAVE_LIGHT_TAG,
+            });
+            const lightRaw = JSON.stringify(lightPayload);
+            try {
+              getAutosaveStorage().setItem(STORAGE_KEY, lightRaw);
+              state.lastSavedAt = payload.savedAt;
+              showToast(
+                'Автосохранение: изображения временно пропущены из-за размера.',
+                'warning',
+                { title: 'Автосохранение' },
+              );
+              refreshUi();
+            } catch (innerErr) {
+              if (!isStorageQuotaError(innerErr)) throw innerErr;
+              // Double-fail: even the stripped payload exceeds quota.
+              addDiagnostic('autosave-quota-exceeded');
+              showToast(
+                'Автосохранение недоступно — хранилище переполнено.',
+                'error',
+                { title: 'Автосохранение' },
+              );
+            }
+            return;
+          }
+
+          if (raw.length > AUTOSAVE_WARN_BYTES) {
+            // Warn-tier: write normally but surface a heads-up toast.
+            try {
+              getAutosaveStorage().setItem(STORAGE_KEY, raw);
+              state.lastSavedAt = payload.savedAt;
+              showToast(
+                'Автосохранение близко к лимиту хранилища.',
+                'warning',
+                { title: 'Автосохранение' },
+              );
+              refreshUi();
+            } catch (innerErr) {
+              if (!isStorageQuotaError(innerErr)) throw innerErr;
+              // Quota hit despite raw.length being in the warn zone (browser
+              // quota varies); fall back to light snapshot.
+              const lightPayload = Object.assign({}, payload, {
+                html: stripHeavyDataUris(payload.html),
+                autosaveTag: AUTOSAVE_LIGHT_TAG,
+              });
+              try {
+                getAutosaveStorage().setItem(STORAGE_KEY, JSON.stringify(lightPayload));
+                state.lastSavedAt = payload.savedAt;
+                showToast(
+                  'Автосохранение: изображения временно пропущены из-за размера.',
+                  'warning',
+                  { title: 'Автосохранение' },
+                );
+                refreshUi();
+              } catch (doubleErr) {
+                if (!isStorageQuotaError(doubleErr)) throw doubleErr;
+                addDiagnostic('autosave-quota-exceeded');
+                showToast(
+                  'Автосохранение недоступно — хранилище переполнено.',
+                  'error',
+                  { title: 'Автосохранение' },
+                );
+              }
+            }
+            return;
+          }
+
+          // Normal-tier: no size concerns.
+          try {
+            getAutosaveStorage().setItem(STORAGE_KEY, raw);
+            state.lastSavedAt = payload.savedAt;
+            refreshUi();
+          } catch (innerErr) {
+            if (!isStorageQuotaError(innerErr)) throw innerErr;
+            // Unexpected quota hit (very small deck but storage already full).
+            // Retry with light snapshot before giving up.
+            const lightPayload = Object.assign({}, payload, {
+              html: stripHeavyDataUris(payload.html),
+              autosaveTag: AUTOSAVE_LIGHT_TAG,
+            });
+            try {
+              getAutosaveStorage().setItem(STORAGE_KEY, JSON.stringify(lightPayload));
+              state.lastSavedAt = payload.savedAt;
+              showToast(
+                'Автосохранение: изображения временно пропущены из-за размера.',
+                'warning',
+                { title: 'Автосохранение' },
+              );
+              refreshUi();
+            } catch (doubleErr) {
+              if (!isStorageQuotaError(doubleErr)) throw doubleErr;
+              addDiagnostic('autosave-quota-exceeded');
+              showToast(
+                'Автосохранение недоступно — хранилище переполнено.',
+                'error',
+                { title: 'Автосохранение' },
+              );
+            }
+          }
+          // ------------------------------------------------------------------
         } catch (error) {
           addDiagnostic(`autosave-failed: ${error.message}`);
         }
