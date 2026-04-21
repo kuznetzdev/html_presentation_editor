@@ -733,7 +733,33 @@
       }
 
       function createBridgeToken() {
-        return `pe-${Math.random().toString(36).slice(2)}-${Date.now()}`;
+        // Security: use crypto.getRandomValues for 192 bits of entropy (CWE-338, AUDIT-D-15).
+        // This replaces the former Math.random approach (~52 bits) while preserving the
+        // "pe-" prefix for back-compat log-grep and the Date.now() suffix for uniqueness.
+        // Fallback branch handles sandboxed contexts where crypto.getRandomValues is absent.
+        const ts = Date.now();
+        try {
+          const bytes = new Uint8Array(24); // 24 bytes = 192 bits = 48 hex chars
+          crypto.getRandomValues(bytes);
+          let hex = "";
+          for (let i = 0; i < bytes.length; i++) {
+            hex += bytes[i].toString(16).padStart(2, "0");
+          }
+          return `pe-${hex}-${ts}`;
+        } catch (_cryptoErr) {
+          // Fallback: crypto.getRandomValues unavailable (sandboxed iframe, some CI envs).
+          // Emit a diagnostic if the shell function is reachable; swallow any errors.
+          try { addDiagnostic("bridge-token-fallback-nosubtle"); } catch (e) { /* noop */ }
+          const fallbackBytes = new Uint8Array(24);
+          for (let i = 0; i < fallbackBytes.length; i++) {
+            fallbackBytes[i] = Math.floor(Math.random() * 256);
+          }
+          let fallbackHex = "";
+          for (let i = 0; i < fallbackBytes.length; i++) {
+            fallbackHex += fallbackBytes[i].toString(16).padStart(2, "0");
+          }
+          return `pe-${fallbackHex}-${ts}`;
+        }
       }
 
       function resolveSlideRegistryActiveId(slides, options = {}) {
