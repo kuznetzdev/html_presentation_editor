@@ -206,7 +206,7 @@ When touching `presentation-editor.html`:
 
 ## JS Module Inventory (editor/src/)
 
-26 modules total (as of v0.29.2):
+27 modules total (as of v0.29.3):
 
 - `boot.js` — Bootstrap, theme resolution, init sequence
 - `bridge-commands.js` — Bridge command handlers (shell side)
@@ -218,6 +218,7 @@ When touching `presentation-editor.html`:
 - `dom.js` — DOM utilities and direct manipulation
 - `export.js` — HTML/PPTX export
 - `feedback.js` — Toast, diagnostics, telemetry UI binding
+- `floating-toolbar.js` — Floating toolbar position/drag/collapse (v0.29.3)
 - `history.js` — Undo/redo, patch-based snapshots
 - `inspector-sync.js` — Inspector panel sync and rendering
 - `layers-panel.js` — Advanced-mode layers panel: render + drag-drop + lock/visibility + grouping
@@ -229,4 +230,4 @@ When touching `presentation-editor.html`:
 - `state.js` — Shared mutable state, store slices
 - `store.js` — Observable store (window.store)
 - `telemetry.js` — Opt-in local telemetry scaffold
-- `toolbar.js` — Floating toolbar rendering and binding
+- `toolbar.js` — Inspector-init helpers (initInspectorSections, addInspectorHelpBadges, slugify)

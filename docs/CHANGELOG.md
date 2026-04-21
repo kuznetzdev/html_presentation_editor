@@ -4,6 +4,13 @@
 
 ---
 
+## [v0.29.3] — 2026-04-21 — W4 batch 4: WO-21 selection.js split → floating-toolbar.js
+
+### Refactor
+- refactor(arch): split selection.js → floating-toolbar.js (198 LOC extracted) + toolbar.js (54 LOC extracted); **PAIN-MAP P1-06 CLOSED**. `floating-toolbar.js` (267 LOC): 6 functions moved verbatim from selection.js (`toggleFloatingToolbarCollapsed`, `persistToolbarSession`, `initFloatingToolbarState`, `clampToolbarPosition`, `positionFloatingToolbar`, `hideFloatingToolbar`) + 1 function moved verbatim from toolbar.js (`updateFloatingToolbarContext`). Runtime guard: throws if `getSelectionInteractionRect` not yet defined (enforces load order). Script load order: `selection.js` → `layers-panel.js` → `floating-toolbar.js` → `toolbar.js`. `toolbar.js` retains only inspector-init helpers (`initInspectorSections`, `addInspectorHelpBadges`, `slugify`). selection.js now ~1171 LOC. toolbar.js now 96 LOC (was 152). Module count: 26 → 27. Gate-A: 59/5/0. test:unit: 43/43. PAIN-MAP: P1-06 (final closure).
+
+---
+
 ## [v0.29.2] — 2026-04-21 — W4 batch 3: WO-20 selection.js split → layers-panel.js
 
 ### Refactor
