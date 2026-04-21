@@ -380,6 +380,8 @@
         rightPanelOpen: false,
         // [v0.25.0] Synced from bridge via element-selected payload; drives stack depth badge
         clickThroughState: null,
+        // [WO-06] sandbox mode — one of SANDBOX_MODES values; default OFF
+        sandboxMode: DEFAULT_SANDBOX_MODE,
       };
 
       // ====================================================================
@@ -515,6 +517,8 @@
         // [v0.19.0] Block reason banner
         blockReasonBanner: document.getElementById("blockReasonBanner"),
         blockReasonText: document.getElementById("blockReasonText"),
+        // [WO-06] Shell-level banner region for non-blocking notifications
+        shellBanner: document.getElementById("shellBanner"),
         blockReasonActionBtn: document.getElementById("blockReasonActionBtn"),
         // [v0.19.0] Stack depth badge
         stackDepthBadge: document.getElementById("stackDepthBadge"),

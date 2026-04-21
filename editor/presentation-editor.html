@@ -34,6 +34,7 @@
       })();
     </script>
     <link rel="stylesheet" href="styles/tokens.css" />
+    <link rel="stylesheet" href="styles/banners.css" />
     <link rel="stylesheet" href="styles/base.css" />
     <link rel="stylesheet" href="styles/layout.css" />
     <link rel="stylesheet" href="styles/preview.css" />
@@ -138,6 +139,22 @@
           </button>
         </div>
     </header>
+
+    <!-- ====================================================================
+       Shell banner region (ADR-014 §Layer 1, WO-06)
+       Persistent, non-blocking notification bar for shell-level warnings.
+       Individual items are injected by shellBoundary.report(key, message, actions).
+       role=region + aria-live=polite: screen readers announce new items without
+       stealing focus. display:none when empty (set by shellBoundary API).
+       ==================================================================== -->
+    <div
+      id="shellBanner"
+      data-editor-ui="true"
+      role="region"
+      aria-live="polite"
+      aria-label="Уведомления редактора"
+      style="display:none"
+    ></div>
 
     <div
       id="topbarOverflowMenu"
@@ -1762,6 +1779,7 @@
     <script src="src/state.js"></script>
     <script src="src/onboarding.js"></script>
     <script src="src/dom.js"></script>
+    <script src="src/bridge-schema.js"></script>
     <script src="src/bridge.js"></script>
     <script src="src/shortcuts.js"></script>
     <script src="src/clipboard.js"></script>

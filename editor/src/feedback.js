@@ -922,3 +922,289 @@
       }
 
       // =====================================================================
+      // shellBoundary — Shell-level notification API (ADR-014 §Layer 1, WO-06)
+      // Provides a non-blocking banner region (#shellBanner) for persistent
+      // notifications (e.g. broken assets, sandbox warnings).
+      //
+      // API:
+      //   window.shellBoundary.report(key, message, actions)
+      //     key     — unique string key; calling report() again with same key replaces.
+      //     message — plain text notification message (no HTML).
+      //     actions — array of { label, action } objects for action buttons (optional).
+      //   window.shellBoundary.clear(key)
+      //     Removes the banner item for the given key. Hides region if empty.
+      //
+      // Actions are dispatched as CustomEvent("shellBannerAction", {detail:{action}}).
+      // Dismiss button always available; calls clear(key).
+      //
+      // OWASP A05:2021 — Security Misconfiguration: surfacing broken-asset
+      //   warnings enables users to make informed decisions before editing or
+      //   exporting, reducing risk of incomplete/corrupted presentations.
+      // =====================================================================
+      window.shellBoundary = (function () {
+        // keyed map of active banner items: key -> DOM element
+        const _items = new Map();
+
+        function _getRegion() {
+          // Use els cache if available, otherwise fall back to getElementById.
+          if (typeof els !== "undefined" && els.shellBanner) {
+            return els.shellBanner;
+          }
+          return document.getElementById("shellBanner");
+        }
+
+        function _syncRegionVisibility() {
+          const region = _getRegion();
+          if (!region) return;
+          if (_items.size === 0) {
+            region.style.display = "none";
+          } else {
+            // Remove inline display:none so CSS flex layout takes over.
+            region.style.display = "";
+          }
+        }
+
+        function report(key, message, actions) {
+          if (typeof key !== "string" || !key) return;
+          if (typeof message !== "string") return;
+          const region = _getRegion();
+          if (!region) return;
+
+          // Remove existing item for this key if present (replace pattern).
+          if (_items.has(key)) {
+            const old = _items.get(key);
+            if (old.parentNode) old.parentNode.removeChild(old);
+            _items.delete(key);
+          }
+
+          // Build banner item.
+          const item = document.createElement("div");
+          item.className = "shell-banner-item";
+          item.dataset.bannerKey = key;
+
+          // Message span — textContent only, no innerHTML (input validation).
+          const msgEl = document.createElement("span");
+          msgEl.className = "shell-banner-message";
+          msgEl.textContent = message;
+          item.appendChild(msgEl);
+
+          // Action buttons.
+          if (Array.isArray(actions) && actions.length > 0) {
+            const actionsEl = document.createElement("span");
+            actionsEl.className = "shell-banner-actions";
+            actions.forEach(function (def) {
+              if (!def || typeof def.label !== "string") return;
+              const btn = document.createElement("button");
+              btn.type = "button";
+              btn.className = "shell-banner-action-btn";
+              btn.textContent = def.label;
+              btn.setAttribute("data-banner-action", def.action || "");
+              btn.addEventListener("click", function () {
+                window.dispatchEvent(
+                  new CustomEvent("shellBannerAction", {
+                    detail: { action: def.action, key: key },
+                  })
+                );
+              });
+              actionsEl.appendChild(btn);
+            });
+            item.appendChild(actionsEl);
+          }
+
+          // Dismiss button.
+          const dismissBtn = document.createElement("button");
+          dismissBtn.type = "button";
+          dismissBtn.className = "shell-banner-dismiss";
+          dismissBtn.setAttribute("aria-label", "Закрыть уведомление");
+          dismissBtn.textContent = "×";
+          dismissBtn.addEventListener("click", function () {
+            clear(key);
+          });
+          item.appendChild(dismissBtn);
+
+          region.appendChild(item);
+          _items.set(key, item);
+          _syncRegionVisibility();
+        }
+
+        function clear(key) {
+          if (!_items.has(key)) return;
+          const item = _items.get(key);
+          if (item.parentNode) item.parentNode.removeChild(item);
+          _items.delete(key);
+          _syncRegionVisibility();
+        }
+
+        return { report: report, clear: clear };
+      })();
+
+      // =====================================================================
+      // Broken-asset probe — WO-06, AUDIT-D-04
+      // Collects asset URLs from the loaded presentation document and probes
+      // them for 404/network errors. Surfaces a shell banner when broken
+      // assets are found so the user can reconnect the asset folder.
+      //
+      // Two probe strategies:
+      //   localhost/http(s): fetch HEAD requests (cross-origin safe for same-origin).
+      //   file://: onerror inspection (fetch is blocked for file:// resources).
+      //
+      // OWASP A06:2021 — Vulnerable and Outdated Components: broken asset
+      //   detection prevents silent failures during presentation editing/export.
+      // =====================================================================
+      var BROKEN_ASSET_PROBE_LIMIT = 50;
+
+      function collectAssetUrls(doc) {
+        if (!doc) return [];
+        var urls = [];
+        var seen = new Set();
+
+        // Base URL for resolving relative paths — use deck's manualBaseUrl if set.
+        var baseUrl = null;
+        try {
+          if (typeof state !== "undefined" && state.manualBaseUrl) {
+            baseUrl = state.manualBaseUrl;
+          } else if (typeof window !== "undefined" && window.location) {
+            baseUrl = window.location.href;
+          }
+        } catch (_) { /* ignore */ }
+
+        function add(rawUrl) {
+          if (!rawUrl || typeof rawUrl !== "string") return;
+          rawUrl = rawUrl.trim();
+          // Skip data URIs, blob URLs, fragment-only refs, and empty strings.
+          if (!rawUrl || rawUrl.startsWith("data:") || rawUrl.startsWith("blob:") || rawUrl.startsWith("#")) return;
+
+          // Resolve relative URLs to absolute using the deck base path.
+          var resolved = rawUrl;
+          if (!/^https?:\/\//i.test(rawUrl) && !rawUrl.startsWith("//")) {
+            if (baseUrl) {
+              try {
+                resolved = new URL(rawUrl, baseUrl).href;
+              } catch (_) {
+                // Can't resolve — skip this URL entirely to avoid false positives.
+                return;
+              }
+            } else {
+              // No base URL available to resolve against — skip to avoid false positives.
+              return;
+            }
+          }
+
+          if (seen.has(resolved)) return;
+          seen.add(resolved);
+          urls.push(resolved);
+        }
+
+        doc.querySelectorAll("img[src]").forEach(function (el) { add(el.getAttribute("src")); });
+        doc.querySelectorAll("link[rel='stylesheet'][href], link[rel='icon'][href]").forEach(function (el) { add(el.getAttribute("href")); });
+        doc.querySelectorAll("video[src]").forEach(function (el) { add(el.getAttribute("src")); });
+        doc.querySelectorAll("source[src]").forEach(function (el) { add(el.getAttribute("src")); });
+
+        return urls.slice(0, BROKEN_ASSET_PROBE_LIMIT);
+      }
+
+      function probeBrokenAssetsViaHead(urls, callback) {
+        // HEAD probes via fetch — works for http(s) same-origin.
+        if (!urls || urls.length === 0) { callback([]); return; }
+        var broken = [];
+        var pending = urls.length;
+
+        urls.forEach(function (url) {
+          fetch(url, { method: "HEAD", cache: "no-store" })
+            .then(function (res) {
+              if (res.status >= 400) broken.push(url);
+            })
+            .catch(function () {
+              broken.push(url);
+            })
+            .finally(function () {
+              pending -= 1;
+              if (pending === 0) callback(broken);
+            });
+        });
+      }
+
+      function probeBrokenAssetsViaOnerror(frameWindow, urls, callback) {
+        // For file:// we inspect already-loaded resources via naturalWidth/sheet.
+        // No network requests — purely examines load state of existing DOM nodes.
+        if (!frameWindow || !frameWindow.document) { callback([]); return; }
+        var doc = frameWindow.document;
+        var broken = [];
+
+        urls.forEach(function (url) {
+          // Images: naturalWidth === 0 means load failed (or unloaded).
+          var imgs = doc.querySelectorAll("img[src]");
+          imgs.forEach(function (img) {
+            if (img.getAttribute("src") === url && img.naturalWidth === 0 && !img.complete) {
+              broken.push(url);
+            }
+          });
+          // Stylesheets: sheet === null means load failed.
+          var links = doc.querySelectorAll("link[rel='stylesheet'][href]");
+          links.forEach(function (link) {
+            if (link.getAttribute("href") === url) {
+              try {
+                if (link.sheet === null) broken.push(url);
+              } catch (_) {
+                broken.push(url);
+              }
+            }
+          });
+        });
+
+        // De-duplicate.
+        var uniqueBroken = broken.filter(function (u, i, a) { return a.indexOf(u) === i; });
+        callback(uniqueBroken);
+      }
+
+      function probeBrokenAssets(doc, frameWindow, callback) {
+        var urls = collectAssetUrls(doc);
+        if (urls.length === 0) { callback([]); return; }
+
+        var protocol = (typeof window !== "undefined" && window.location) ? window.location.protocol : "file:";
+        if (protocol === "file:") {
+          probeBrokenAssetsViaOnerror(frameWindow, urls, callback);
+        } else {
+          probeBrokenAssetsViaHead(urls, callback);
+        }
+      }
+
+      function runBrokenAssetProbeAndReport() {
+        // Guard: needs a loaded model document and an accessible iframe.
+        if (!state.modelDoc) return;
+        var frame = (typeof els !== "undefined") ? els.previewFrame : document.getElementById("previewFrame");
+        var frameWindow = null;
+        try {
+          frameWindow = frame && frame.contentWindow;
+        } catch (_) {
+          return;
+        }
+
+        probeBrokenAssets(state.modelDoc, frameWindow, function (brokenUrls) {
+          if (!brokenUrls || brokenUrls.length === 0) {
+            // No broken assets found — clear any stale banner from a previous probe.
+            if (window.shellBoundary) window.shellBoundary.clear("broken-assets");
+            return;
+          }
+          var count = brokenUrls.length;
+          var plural = count === 1 ? "файл" : (count < 5 ? "файла" : "файлов");
+          var msg = "Некоторые ресурсы не найдены. " + count + " " + plural + " недоступно.";
+          if (window.shellBoundary) {
+            window.shellBoundary.report("broken-assets", msg, [
+              { label: "Подключить папку ресурсов", action: "pick-asset-folder" },
+            ]);
+          }
+        });
+      }
+
+      // Handle shellBannerAction events (e.g. pick-asset-folder clears the banner).
+      window.addEventListener("shellBannerAction", function (evt) {
+        if (!evt || !evt.detail) return;
+        if (evt.detail.action === "pick-asset-folder") {
+          // Clear the broken-assets banner; the actual folder picker is wired
+          // by the asset-folder module. WO-07 will integrate the full flow.
+          if (window.shellBoundary) window.shellBoundary.clear("broken-assets");
+        }
+      });
+
+      // =====================================================================
