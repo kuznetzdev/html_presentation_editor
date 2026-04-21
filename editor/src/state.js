@@ -1193,3 +1193,168 @@
       });
 
       // =====================================================================
+      // ZONE: RAF-coalesced selection render scheduler (WO-19, v0.29.1)
+      //
+      // Replaces the synchronous 7-function fan-out inside applyElementSelection
+      // with a single requestAnimationFrame gate. Multiple calls within the same
+      // JS task coalesce to exactly ONE RAF callback, eliminating repeated forced
+      // layouts (AUDIT-C §Quick-win #1, PAIN-MAP P0-12).
+      //
+      // Usage:
+      //   scheduleSelectionRender('all')                  — all 8 sub-renders
+      //   scheduleSelectionRender(['inspector','overlay']) — subset
+      //   scheduleSelectionRender('all', { previousNodeId: 'n5' })
+      //
+      // Sub-render order (deterministic):
+      //   1 inspector · 2 shellSurface · 3 floatingToolbar · 4 overlay
+      //   5 slideRail  · 6 refreshUi   · 7 overlapDetection · 8 focusKeyboard
+      // =====================================================================
+
+      /** Frozen key-set for the 8 selection sub-renders. */
+      var SELECTION_RENDER_KEYS = Object.freeze({
+        inspector:        "inspector",
+        shellSurface:     "shellSurface",
+        floatingToolbar:  "floatingToolbar",
+        overlay:          "overlay",
+        slideRail:        "slideRail",
+        refreshUi:        "refreshUi",
+        overlapDetection: "overlapDetection",
+        focusKeyboard:    "focusKeyboard",
+      });
+
+      // Pending dirty flags — zeroed BEFORE sub-renders execute (prevents double-flush race).
+      state.selectionRenderPending = {
+        inspector:        false,
+        shellSurface:     false,
+        floatingToolbar:  false,
+        overlay:          false,
+        slideRail:        false,
+        refreshUi:        false,
+        overlapDetection: false,
+        focusKeyboard:    false,
+      };
+
+      /** RAF id; 0 means no frame is queued. */
+      state.selectionRenderRafId = 0;
+
+      /**
+       * Options stored for the next flush (focusKeyboard guard).
+       * @type {{ previousNodeId?: string|null }}
+       */
+      state.selectionRenderOptions = {};
+
+      /**
+       * Schedule one or more selection sub-renders for the next animation frame.
+       * Multiple calls in the same synchronous task produce exactly one RAF.
+       *
+       * @param {string[]|'all'} keys - Array of SELECTION_RENDER_KEYS values OR 'all'.
+       * @param {{ previousNodeId?: string|null }} [options]
+       */
+      function scheduleSelectionRender(keys, options) {
+        var pending = state.selectionRenderPending;
+        if (keys === "all") {
+          pending.inspector        = true;
+          pending.shellSurface     = true;
+          pending.floatingToolbar  = true;
+          pending.overlay          = true;
+          pending.slideRail        = true;
+          pending.refreshUi        = true;
+          pending.overlapDetection = true;
+          pending.focusKeyboard    = true;
+        } else if (Array.isArray(keys)) {
+          for (var i = 0; i < keys.length; i++) {
+            if (SELECTION_RENDER_KEYS[keys[i]] !== undefined) {
+              pending[keys[i]] = true;
+            }
+          }
+        }
+        // Merge options (previousNodeId from most recent call wins)
+        if (options && typeof options === "object") {
+          if ("previousNodeId" in options) {
+            state.selectionRenderOptions.previousNodeId = options.previousNodeId;
+          }
+        }
+        if (state.selectionRenderRafId === 0) {
+          state.selectionRenderRafId = requestAnimationFrame(flushSelectionRender);
+        }
+      }
+
+      /**
+       * RAF callback — snapshot dirty flags, zero them, run sub-renders.
+       * Errors in individual sub-renders are caught so others still execute.
+       */
+      function flushSelectionRender() {
+        // Snapshot + zero BEFORE executing sub-renders (prevents re-entrant double-flush)
+        var snap = {
+          inspector:        state.selectionRenderPending.inspector,
+          shellSurface:     state.selectionRenderPending.shellSurface,
+          floatingToolbar:  state.selectionRenderPending.floatingToolbar,
+          overlay:          state.selectionRenderPending.overlay,
+          slideRail:        state.selectionRenderPending.slideRail,
+          refreshUi:        state.selectionRenderPending.refreshUi,
+          overlapDetection: state.selectionRenderPending.overlapDetection,
+          focusKeyboard:    state.selectionRenderPending.focusKeyboard,
+        };
+        var opts = state.selectionRenderOptions;
+        // Zero before executing
+        state.selectionRenderPending.inspector        = false;
+        state.selectionRenderPending.shellSurface     = false;
+        state.selectionRenderPending.floatingToolbar  = false;
+        state.selectionRenderPending.overlay          = false;
+        state.selectionRenderPending.slideRail        = false;
+        state.selectionRenderPending.refreshUi        = false;
+        state.selectionRenderPending.overlapDetection = false;
+        state.selectionRenderPending.focusKeyboard    = false;
+        state.selectionRenderRafId = 0;
+        state.selectionRenderOptions = {};
+
+        // 1. inspector
+        if (snap.inspector) {
+          try { updateInspectorFromSelection(); }
+          catch (e) { if (typeof reportShellWarning === "function") reportShellWarning("flushSelectionRender:inspector", e); }
+        }
+        // 2. shellSurface
+        if (snap.shellSurface) {
+          try { syncSelectionShellSurface(); }
+          catch (e) { if (typeof reportShellWarning === "function") reportShellWarning("flushSelectionRender:shellSurface", e); }
+        }
+        // 3. floatingToolbar
+        if (snap.floatingToolbar) {
+          try { positionFloatingToolbar(); }
+          catch (e) { if (typeof reportShellWarning === "function") reportShellWarning("flushSelectionRender:floatingToolbar", e); }
+        }
+        // 4. overlay
+        if (snap.overlay) {
+          try { renderSelectionOverlay(); }
+          catch (e) { if (typeof reportShellWarning === "function") reportShellWarning("flushSelectionRender:overlay", e); }
+        }
+        // 5. slideRail
+        if (snap.slideRail) {
+          try { renderSlidesList(); }
+          catch (e) { if (typeof reportShellWarning === "function") reportShellWarning("flushSelectionRender:slideRail", e); }
+        }
+        // 6. refreshUi
+        if (snap.refreshUi) {
+          try { refreshUi(); }
+          catch (e) { if (typeof reportShellWarning === "function") reportShellWarning("flushSelectionRender:refreshUi", e); }
+        }
+        // 7. overlapDetection (calls directly — not double-scheduled)
+        if (snap.overlapDetection) {
+          try { scheduleOverlapDetection("selection-change"); }
+          catch (e) { if (typeof reportShellWarning === "function") reportShellWarning("flushSelectionRender:overlapDetection", e); }
+        }
+        // 8. focusKeyboard — only if node changed
+        if (snap.focusKeyboard) {
+          try {
+            var prevId = opts.previousNodeId !== undefined ? opts.previousNodeId : undefined;
+            var nodeChanged = prevId === undefined || prevId !== state.selectedNodeId;
+            if (nodeChanged || !state.selectedFlags.isTextEditing) {
+              focusSelectionFrameForKeyboard();
+            }
+          } catch (e) {
+            if (typeof reportShellWarning === "function") reportShellWarning("flushSelectionRender:focusKeyboard", e);
+          }
+        }
+      }
+
+      // =====================================================================

@@ -452,25 +452,17 @@
             setInteractionMode("select");
           }
         }
-        updateInspectorFromSelection();
-        syncSelectionShellSurface();
-        positionFloatingToolbar();
-        renderSelectionOverlay();
-        renderSlidesList();
-        refreshUi();
-        scheduleOverlapDetection("selection-change");
-        if (previousNodeId !== state.selectedNodeId || !state.selectedFlags.isTextEditing) {
-          focusSelectionFrameForKeyboard();
-        }
+        // [WO-19] RAF-coalesce all 7 sub-renders into one animation frame.
+        // Multiple applyElementSelection calls in the same microtask produce 1 RAF.
+        scheduleSelectionRender("all", { previousNodeId: previousNodeId });
       }
 
       function applySelectionGeometry(payload) {
         if (!payload || payload.nodeId !== state.selectedNodeId) return;
         state.selectedRect = payload.rect || state.selectedRect;
         state.selectedComputed = payload.computed || state.selectedComputed;
-        positionFloatingToolbar();
-        updateInspectorFromSelection();
-        renderSelectionOverlay();
+        // [WO-19] RAF-coalesce the 3 geometry sub-renders.
+        scheduleSelectionRender(["floatingToolbar", "inspector", "overlay"]);
       }
 
       function clearSelectedElementState() {
@@ -492,8 +484,8 @@
         if (state.mode === "preview") setInteractionMode("preview");
         else setInteractionMode("select");
         hideFloatingToolbar();
-        updateInspectorFromSelection();
-        renderSelectionOverlay();
+        // [WO-19] RAF-coalesce the 2 clear-selection sub-renders.
+        scheduleSelectionRender(["inspector", "overlay"]);
       }
 
       function focusSelectionFrameForKeyboard() {
@@ -621,15 +613,12 @@
               ? "text-edit-commit"
               : "element-updated";
         commitChange(reason, { snapshotMode });
-        renderSlidesList();
+        // [WO-19] RAF-coalesce element-update sub-renders.
         if (isCurrentSelection) {
-          updateInspectorFromSelection();
-          syncSelectionShellSurface();
-          positionFloatingToolbar();
-          focusSelectionFrameForKeyboard();
+          scheduleSelectionRender("all");
+        } else {
+          scheduleSelectionRender(["slideRail", "refreshUi", "overlapDetection"]);
         }
-        refreshUi();
-        scheduleOverlapDetection("element-update");
       }
 
       function applySlideUpdateFromBridge(payload, seq = 0) {

@@ -1,6 +1,6 @@
 {
   "name": "html-presentation-editor",
-  "version": "0.29.0",
+  "version": "0.29.1",
   "description": "Local HTML presentation editor with Playwright regression coverage.",
   "private": true,
   "scripts": {
@@ -18,7 +18,7 @@
     "test:pw:update": "playwright test --update-snapshots",
     "test:asset-parity": "node scripts/validate-export-asset-parity.js",
     "test:gate-a": "playwright test tests/playwright/specs/shell.smoke.spec.js tests/playwright/specs/click-through.spec.js tests/playwright/specs/selection-engine-v2.spec.js tests/playwright/specs/honest-feedback.spec.js tests/playwright/specs/broken-asset-banner.spec.js --project=chromium-desktop",
-    "test:gate-b": "playwright test tests/playwright/specs/shell.smoke.spec.js tests/playwright/specs/click-through.spec.js tests/playwright/specs/selection-engine-v2.spec.js tests/playwright/specs/layer-navigation.spec.js tests/playwright/specs/overlap-recovery.spec.js tests/playwright/specs/stage-o-layers-lock-group.spec.js tests/playwright/specs/editor.regression.spec.js tests/playwright/specs/asset-parity.spec.js tests/playwright/specs/honest-feedback.spec.js tests/playwright/specs/visual.spec.js --project=chromium-desktop && playwright test tests/playwright/specs/shell.smoke.spec.js tests/playwright/specs/editor.regression.spec.js tests/playwright/specs/asset-parity.spec.js tests/playwright/specs/visual.spec.js --project=chromium-shell-1100",
+    "test:gate-b": "playwright test tests/playwright/specs/shell.smoke.spec.js tests/playwright/specs/click-through.spec.js tests/playwright/specs/selection-engine-v2.spec.js tests/playwright/specs/layer-navigation.spec.js tests/playwright/specs/overlap-recovery.spec.js tests/playwright/specs/stage-o-layers-lock-group.spec.js tests/playwright/specs/editor.regression.spec.js tests/playwright/specs/asset-parity.spec.js tests/playwright/specs/honest-feedback.spec.js tests/playwright/specs/visual.spec.js tests/playwright/selection-perf.spec.js --project=chromium-desktop && playwright test tests/playwright/specs/shell.smoke.spec.js tests/playwright/specs/editor.regression.spec.js tests/playwright/specs/asset-parity.spec.js tests/playwright/specs/visual.spec.js --project=chromium-shell-1100",
     "test:gate-c": "playwright test tests/playwright/specs/shell.smoke.spec.js tests/playwright/specs/editor.regression.spec.js tests/playwright/specs/click-through.spec.js tests/playwright/specs/selection-engine-v2.spec.js --project=firefox-desktop --project=webkit-desktop",
     "test:gate-d": "playwright test tests/playwright/specs/shell.smoke.spec.js tests/playwright/specs/editor.regression.spec.js --project=chromium-mobile-390 --project=chromium-mobile-640 --project=chromium-tablet-820",
     "test:gate-e": "npm run test:asset-parity && playwright test tests/playwright/specs/asset-parity.spec.js --project=chromium-desktop",
@@ -27,7 +27,7 @@
     "test:gate-a11y": "PLAYWRIGHT_TEST_SERVER_PORT=41735 npx playwright test tests/a11y/ --project=chromium-desktop --config playwright.a11y.config.js",
     "typecheck": "tsc --noEmit",
     "test:gate-types": "tsc --noEmit",
-    "test:unit": "node --test tests/unit/store.spec.js tests/unit/selection-slice.spec.js tests/unit/history-patches.spec.js"
+    "test:unit": "node --test tests/unit/store.spec.js tests/unit/selection-slice.spec.js tests/unit/history-patches.spec.js tests/unit/schedule-selection-render.spec.js"
   },
   "repository": {
     "type": "git",

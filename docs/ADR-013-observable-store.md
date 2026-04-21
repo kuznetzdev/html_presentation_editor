@@ -129,10 +129,9 @@ Writes outside the owner → ESLint rule (new, lightweight).
 - v0.28.4 — `boot.js` rewired: `applyResolvedTheme`, `setThemePreference`, `setComplexityMode`, `setPreviewZoom` sync writes to `store.update("ui", ...)` ✓
 - v0.28.5 — selection slice migration: 16 fields migrated (`defineSlice("selection", ...)`), `applyElementSelection` batched via `store.batch`, `createDefaultSelectionPolicy` refactored to table-lookup (P2-07), Proxy shim extended with 16 selection mappings ✓
 - v0.29.0 — `history` slice + patch-based snapshots: `defineSlice("history", ...)`, `captureHistorySnapshot` / `undo` / `redo` all use `store.batch` + `store.update`, FNV-1a 32-bit hash dedup, periodic baseline roll (every 10 deltas), HISTORY_LIMIT=20 with overflow toast, history budget chip UI, CommonJS exports for Node test runner, 12 unit cases ✓
+- v0.29.1 — render coalescing wired (PAIN-MAP P0-12, P1-12): `scheduleSelectionRender` + `flushSelectionRender` in `state.js`; `applyElementSelection` / `applySelectionGeometry` / `clearSelectedElementState` in `bridge-commands.js` use scheduler; P1-12 `renderLayersPanel` guard in `inspector-sync.js`. Pre: 7 synchronous render passes per click. Post: 1 RAF per click. 11 unit cases (43/43 test:unit). Gate-A: 59/5/0 ✓
 - v0.30.x — `model` slice; `window.state` shim shrinks further
 - v0.31.x — `bridge` slice; `window.state` shim removed
-- v0.31.x — `model` slice + `bridge` slice; `window.state` shim removed
-- v0.32.x — render coalescing wired (PAIN-MAP P0-12)
 
 ## Links
 - [ADR-011 Type System Strategy](ADR-011-type-system-strategy.md)

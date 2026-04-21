@@ -900,7 +900,11 @@
           }
         }
         // [v0.18.0] Render layers panel (advanced mode only)
-        renderLayersPanel();
+        // [WO-19/P1-12] Skip renderLayersPanel in basic mode or when section is hidden
+        // to avoid unnecessary DOM work on every selection change.
+        if (state.complexityMode === "advanced" && els.layersInspectorSection && !els.layersInspectorSection.hidden) {
+          renderLayersPanel();
+        }
         // [v0.19.0] Block reason banner
         const blockReason = hasSelection ? getBlockReason() : "none";
         const effectiveBlockReason = isLocked ? "locked" : blockReason;

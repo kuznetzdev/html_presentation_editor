@@ -4,6 +4,18 @@
 
 ---
 
+## [v0.29.1] — 2026-04-21 — W4 batch 2: WO-19 RAF-coalesce selection fan-out
+
+### Performance
+- perf(render): RAF-coalesce selection fan-out — ADR-013 §Render coalescing — PAIN-MAP P0-12, P1-12. `state.js` (+180 LOC): `SELECTION_RENDER_KEYS` frozen object (8 keys: inspector, shellSurface, floatingToolbar, overlay, slideRail, refreshUi, overlapDetection, focusKeyboard); `state.selectionRenderPending` dirty-flag map (all false by default); `state.selectionRenderRafId` (0 = no frame queued); `state.selectionRenderOptions` (previousNodeId guard). `scheduleSelectionRender(keys, options)`: accepts `'all'` or `string[]` of key names; marks dirty flags; enqueues exactly 1 `requestAnimationFrame(flushSelectionRender)` if not already queued — N synchronous calls → 1 RAF. `flushSelectionRender()`: snapshots all 8 flags, zeros them BEFORE sub-renders execute (prevents double-flush race), zeros `selectionRenderRafId`, runs sub-renders in deterministic order (1-inspector, 2-shellSurface, 3-floatingToolbar, 4-overlay, 5-slideRail, 6-refreshUi, 7-overlapDetection, 8-focusKeyboard), each wrapped in try/catch → `reportShellWarning` so a throwing sub-render does not block others. focusKeyboard gated: only fires when previousNodeId !== selectedNodeId OR !isTextEditing. `bridge-commands.js`: `applyElementSelection` — 7 synchronous sub-render calls replaced with `scheduleSelectionRender('all', {previousNodeId})` inside existing `store.batch`. `applySelectionGeometry` — 3 synchronous calls replaced with `scheduleSelectionRender(['floatingToolbar','inspector','overlay'])`. `clearSelectedElementState` — 2-call cluster replaced with `scheduleSelectionRender(['inspector','overlay'])`. Element-update block — 4-call cluster replaced with `scheduleSelectionRender('all')` or `scheduleSelectionRender(['slideRail','refreshUi','overlapDetection'])` based on `isCurrentSelection`. `inspector-sync.js` P1-12: `renderLayersPanel()` wrapped: `if (state.complexityMode==='advanced' && els.layersInspectorSection && !els.layersInspectorSection.hidden)` — basic mode and hidden section skip renderLayersPanel entirely. Pre-WO-19 baseline: 7 synchronous render passes per click, multiple `getBoundingClientRect` + style-write interleaves. Post-WO-19: 1 RAF per click coalescing all 7-8 renders into one animation frame. Gate-A: 59/5/0. ADR-013. PAIN-MAP: P0-12, P1-12.
+
+### Tests
+- test(render): schedule-selection-render.spec.js — 11 unit cases (Node --test runner). Cases: (a) two calls → 1 RAF, (b) flush calls 8 sub-renders in documented order, (c) subset key schedules only that sub-render, (d) re-scheduling during flush enqueues new RAF, (e) dirty flags zeroed before sub-renders execute, (f) focusKeyboard fires when not text-editing even if same node, (f2) focusKeyboard NOT called when same node + isTextEditing, (g) throwing sub-render does not block others, (h) rafId zeroed after flush, (i) 3 combined calls coalesce to 1 RAF with union of keys, (j) P1-12 renderLayersPanel guard. test:unit → 43/43 (32 existing + 11 new).
+- test(render): selection-perf.spec.js — 3 Playwright gate-B cases on perf-100elem.html fixture (100 deterministic elements, 2 slides). (A) N scheduleSelectionRender calls → exactly 1 RAF enqueued; (B) flushSelectionRender executes within 2 animation frames (< 200 ms E2E budget); (C) 5 synchronous schedule calls → 1 pending RAF with combined dirty flags.
+- fixture: tests/fixtures/perf-100elem.html — 100 deterministic elements (elem-001..elem-100), 2 slides (50 elements each), absolute-positioned grid layout, no random data.
+
+---
+
 ## [v0.29.0] — 2026-04-21 — W3 Bridge v2+Store batch 3: WO-18 History Slice + Patch Engine
 
 ### History
