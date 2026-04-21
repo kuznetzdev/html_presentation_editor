@@ -4,6 +4,13 @@
 
 ---
 
+## [v0.29.2] — 2026-04-21 — W4 batch 3: WO-20 selection.js split → layers-panel.js
+
+### Refactor
+- refactor(arch): split selection.js → layers-panel.js (449 LOC extracted; PAIN-MAP P1-06 phase 1/2). Do NOT claim P1-06 closed — WO-21 is next. 18 functions moved verbatim (zero body edits): `toggleLayerLock`, `toggleLayerVisibility`, `reorderLayers`, `getEntityKindIcon`, `getLayerLabel`, `getPreviewLayerNode`, `isLayerSessionHidden`, `setLayerSessionVisibility`, `clearSessionOnlyVisibilityFromModelNode`, `stripSessionOnlyVisibilityFromReplacement`, `getRussianPlural`, `formatLayerStackHint`, `buildLayerStatusChipHtml`, `buildLayerStatusChipsHtml`, `renderLayersPanel`, `bindLayersPanelActions`, `groupSelectedElements`, `ungroupSelectedElement`. `layers-panel.js` runtime guard: throws if `renderSelectionOverlay` not yet defined (enforces load order). All call sites in `bridge-commands.js`, `context-menu.js`, `dom.js`, `feedback.js`, `history.js`, `inspector-sync.js`, `shell-overlays.js` resolve via shared global scope — no imports added. Script load order: `selection.js` → `layers-panel.js` → `toolbar.js`. Module count: 25 → 26. Gate-A: 59/5/0. test:unit: 43/43. PAIN-MAP: P1-06 (phase 1/2).
+
+---
+
 ## [v0.29.1] — 2026-04-21 — W4 batch 2: WO-19 RAF-coalesce selection fan-out
 
 ### Performance

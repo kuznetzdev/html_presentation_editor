@@ -203,3 +203,30 @@ When touching `presentation-editor.html`:
   component-local dark selectors
 - for shell chrome, keep context menu, floating toolbar, and drawer routing
   mutually exclusive
+
+## JS Module Inventory (editor/src/)
+
+26 modules total (as of v0.29.2):
+
+- `boot.js` — Bootstrap, theme resolution, init sequence
+- `bridge-commands.js` — Bridge command handlers (shell side)
+- `bridge-schema.js` — Per-message schema validators
+- `bridge-script.js` — Bridge script injected into iframe
+- `bridge.js` — Bridge bootstrap and transport
+- `constants.js` — Shared constants (entity kinds, keys, limits)
+- `context-menu.js` — Context menu rendering and actions
+- `dom.js` — DOM utilities and direct manipulation
+- `export.js` — HTML/PPTX export
+- `feedback.js` — Toast, diagnostics, telemetry UI binding
+- `history.js` — Undo/redo, patch-based snapshots
+- `inspector-sync.js` — Inspector panel sync and rendering
+- `layers-panel.js` — Advanced-mode layers panel: render + drag-drop + lock/visibility + grouping
+- `main.js` — Entry point, orchestrates init
+- `primary-action.js` — Primary action button and history budget chip
+- `selection.js` — Selection overlay, direct manipulation (drag/resize), selection state
+- `shell-overlays.js` — Shell overlay elements (breadcrumb, context-menu layer picker)
+- `slide-rail.js` — Slide rail rendering and navigation
+- `state.js` — Shared mutable state, store slices
+- `store.js` — Observable store (window.store)
+- `telemetry.js` — Opt-in local telemetry scaffold
+- `toolbar.js` — Floating toolbar rendering and binding
