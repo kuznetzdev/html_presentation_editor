@@ -34,9 +34,9 @@
 | **v0.28.1** (telemetry scaffold + types) | 55/5/0 invariant | +telemetry scaffold spec | unchanged | unchanged | unchanged | includes all above | 0 violations | 15/0/0 | — | **NEW optional** `tsc --noEmit` (WO-14) |
 | **v0.29.0** (error boundaries + bridge v2 hello) | 55/5/0 invariant | +error-boundary spec | unchanged | unchanged | unchanged | includes all above | 0 violations | 15/0/0 | — | optional |
 | **v0.29.1** (bridge v2 schema validation) | 55/5/0 invariant | unchanged | unchanged | unchanged | unchanged | includes all above | 0 violations | 15/0/0 | **NEW 100% schemas** (WO-13) | optional |
-| **v0.30.0** (observable store — ui + selection) | 55/5/0 invariant | +store slice specs | unchanged | unchanged | unchanged | includes all above | 0 violations | 15/0/0 | 100% schemas | optional |
-| **v0.30.1** (history patch-based) | 55/5/0 invariant | +history-stress spec | unchanged | unchanged | unchanged | includes all above | 0 violations | 15/0/0 | 100% schemas | optional |
-| **v0.30.2** (render coalescing) | 55/5/0 invariant | unchanged | unchanged | unchanged | unchanged | includes all above | 0 violations | 15/0/0 | 100% schemas | optional |
+| **v0.30.0** (WO-24 broken-asset recovery banner — W5) | **65/5/0** ✅ live since v0.30.0 (baseline +6 from broken-asset-banner.spec.js) | +broken-asset-banner 6 specs (WO-24) — P0-04 CLOSED | unchanged | unchanged | unchanged | includes all above | 0 violations | 15/0/0 | 152/0 | optional |
+| **v0.30.1** (WO-25 empty-state rehome + starter-deck — W5) | 65/5/0 ✅ | +onboarding 4 specs (WO-25) — P0-15 CLOSED | unchanged | unchanged | unchanged | includes all above | 0 violations | 15/0/0 | 152/0 | optional |
+| **v0.30.2** (WO-26 transform resolve + inspector field — W5 CLOSED) | 65/5/0 ✅ | +transform-resolve 5 specs (WO-26) — P0-06 CLOSED | unchanged | unchanged | unchanged | includes all above | 0 violations | 15/0/0 | 152/0 | optional |
 | **v0.31.0** (selection/boot split) | 55/5/0 invariant | unchanged | unchanged | unchanged | unchanged | includes all above | 0 violations | 15/0/0 | 100% schemas | optional |
 | **v0.31.1** (tokens v2 semantic) | 55/5/0 invariant | unchanged | unchanged | unchanged | unchanged | includes all above | 0 violations (re-verified) | 15/0/0 (baselines regenerated under new tokens) | 100% schemas | optional |
 | **v0.32.0** (entity-kind registry) | 55/5/0 invariant | +entity-kinds-registry (WO-35) | unchanged | unchanged | unchanged | includes all above | 0 violations | 15/0/0 | 100% schemas | optional |
