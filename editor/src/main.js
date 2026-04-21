@@ -1,12 +1,3 @@
-// main.js — entry point
-// All module scripts have been evaluated at this point.
-// Execute the two module-level bootstraps that kick off the shell.
-
-      if (
-        els.slideTemplateBar &&
-        els.slideTemplateBar.parentElement !== document.body
-      ) {
-        document.body.appendChild(els.slideTemplateBar);
-      }
-
-      init();
+// main.js — entry point. CLAUDE.md §8: init() is the last and only statement.
+// No DOM mutation before init(). PAIN-MAP P1-08 closed v0.29.4.
+init();

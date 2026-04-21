@@ -1,7 +1,8 @@
 // boot.js
 // Layer: Application Bootstrap
-// Contains init() — the app entry point called by main.js — plus all theme,
-// complexity, zoom and binding functions that run once at startup.
+// Contains init() — the app entry point called by main.js — plus complexity,
+// selection mode, slide template, and binding functions that run once at startup.
+// Theme functions: theme.js | Zoom functions: zoom.js | Shell layout: shell-layout.js
 //
       /* ======================================================================
        vNext overrides: system-theme default, responsive shell drawers,
@@ -9,7 +10,18 @@
        and stricter no-dead-end states.
        ====================================================================== */
 
+      // P1-08: Absorbs the orphan DOM reparent that was in main.js (WO-22).
+      function ensureSlideTemplateBarRoot() {
+        if (
+          els.slideTemplateBar &&
+          els.slideTemplateBar.parentElement !== document.body
+        ) {
+          document.body.appendChild(els.slideTemplateBar);
+        }
+      }
+
       function init() {
+        ensureSlideTemplateBarRoot(); // P1-08: DOM reparent absorbed from main.js (WO-22)
         initTheme();
         initInspectorSections();
         initComplexityMode();
@@ -47,155 +59,7 @@
       /* ======================================================================
        [SCRIPT 02] boot + shell layout + theme
        ====================================================================== */
-      function resolveSystemTheme() {
-        return window.matchMedia &&
-          window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
-      }
-
-      function getThemePreferenceLabel(preference = state.themePreference) {
-        switch (preference) {
-          case "light":
-            return "☀ Светлая";
-          case "dark":
-            return "🌙 Тёмная";
-          default:
-            return "🖥 Система";
-        }
-      }
-
-      function queueThemeTransitionUnlock() {
-        window.requestAnimationFrame(() => {
-          window.requestAnimationFrame(() => {
-            delete document.documentElement.dataset.themeTransition;
-            delete document.documentElement.dataset.themeBooting;
-          });
-        });
-      }
-
-      function syncThemeDatasets(theme) {
-        document.documentElement.dataset.theme = theme;
-        document.documentElement.dataset.themePreference = state.themePreference;
-        if (document.body) {
-          document.body.dataset.theme = theme;
-          document.body.dataset.themePreference = state.themePreference;
-        }
-        document.documentElement.style.colorScheme = theme;
-      }
-
-      function applyResolvedTheme(theme, options = {}) {
-        const suppressTransitions = options.suppressTransitions !== false;
-        if (suppressTransitions) {
-          document.documentElement.dataset.themeTransition = "locked";
-        }
-        state.theme = theme === "dark" ? "dark" : "light";
-        // [WO-16] Sync resolved theme into the observable store ui slice.
-        if (window.store) window.store.update("ui", { theme: state.theme });
-        syncThemeDatasets(state.theme);
-        if (els.themeToggleBtn) {
-          const buttonLabel = getThemePreferenceLabel();
-          const aria = `Тема редактора: ${buttonLabel}. Нажми, чтобы переключить режим темы.`;
-          els.themeToggleBtn.textContent = buttonLabel;
-          els.themeToggleBtn.setAttribute("aria-label", aria);
-          els.themeToggleBtn.title = aria;
-          if (els.topbarOverflowThemeBtn) {
-            els.topbarOverflowThemeBtn.textContent = buttonLabel;
-            els.topbarOverflowThemeBtn.setAttribute("aria-label", aria);
-            els.topbarOverflowThemeBtn.title = aria;
-          }
-        }
-        if (suppressTransitions) queueThemeTransitionUnlock();
-      }
-      /* ======================================================================
-       shell storage + preference persistence
-       ====================================================================== */
-
-      function initTheme() {
-        let savedPreference = "system";
-        try {
-          const raw = localStorage.getItem(THEME_STORAGE_KEY);
-          if (THEME_PREFERENCES.includes(raw)) savedPreference = raw;
-        } catch (error) {
-          reportShellWarning("theme-preference-load-failed", error, {
-            once: true,
-          });
-        }
-        try {
-          const rawStyle = localStorage.getItem(COPIED_STYLE_KEY);
-          if (rawStyle) state.copiedStyle = JSON.parse(rawStyle);
-        } catch (error) {
-          reportShellWarning("copied-style-load-failed", error, {
-            once: true,
-          });
-        }
-        state.themePreference = savedPreference;
-        // [WO-16] Sync initial preference into the observable store ui slice.
-        if (window.store) window.store.update("ui", { themePreference: savedPreference });
-        applyResolvedTheme(
-          state.themePreference === "system"
-            ? resolveSystemTheme()
-            : state.themePreference,
-          { suppressTransitions: true },
-        );
-
-        const media = window.matchMedia
-          ? window.matchMedia("(prefers-color-scheme: dark)")
-          : null;
-        if (media && !media.__presentationEditorThemeBound) {
-          const onChange = (event) => {
-            if (state.themePreference !== "system") return;
-            applyResolvedTheme(event.matches ? "dark" : "light", {
-              suppressTransitions: true,
-            });
-            showToast(
-              `Системная тема изменилась: ${event.matches ? "тёмная" : "светлая"}.`,
-              "success",
-              { title: "Оформление", ttl: 1800 },
-            );
-          };
-          if (typeof media.addEventListener === "function")
-            media.addEventListener("change", onChange);
-          else if (typeof media.addListener === "function")
-            media.addListener(onChange);
-          media.__presentationEditorThemeBound = true;
-        }
-      }
-
-      function setThemePreference(preference, persist = true) {
-        const nextPreference = THEME_PREFERENCES.includes(preference)
-          ? preference
-          : "system";
-        state.themePreference = nextPreference;
-        // [WO-16] Sync theme preference into the observable store ui slice.
-        if (window.store) window.store.update("ui", { themePreference: nextPreference });
-        applyResolvedTheme(
-          nextPreference === "system" ? resolveSystemTheme() : nextPreference,
-          { suppressTransitions: true },
-        );
-        if (persist) {
-          try {
-            localStorage.setItem(THEME_STORAGE_KEY, nextPreference);
-          } catch (error) {
-            reportShellWarning("theme-preference-save-failed", error, {
-              once: true,
-            });
-          }
-        }
-      }
-
-      function toggleTheme() {
-        const currentIndex = Math.max(
-          0,
-          THEME_PREFERENCES.indexOf(state.themePreference),
-        );
-        const nextPreference =
-          THEME_PREFERENCES[(currentIndex + 1) % THEME_PREFERENCES.length];
-        setThemePreference(nextPreference, true);
-        showToast(`Тема редактора: ${getThemePreferenceLabel(nextPreference)}.`, "success", {
-          title: "Оформление",
-        });
-      }
+      // Theme functions moved to theme.js (WO-22).
 
       function initComplexityMode() {
         let mode = "basic";
@@ -265,104 +129,7 @@
         setToggleButtonState(els.containerModeBtn, isContainer);
       }
 
-      // [v0.18.3] Preview zoom control
-      function initPreviewZoom() {
-        let zoom = 1.0;
-        try {
-          const raw = localStorage.getItem(PREVIEW_ZOOM_STORAGE_KEY);
-          const parsed = parseFloat(raw);
-          if (Number.isFinite(parsed) && parsed >= 0.25 && parsed <= 2.0) {
-            zoom = parsed;
-          }
-        } catch (error) {
-          reportShellWarning("preview-zoom-load-failed", error, {
-            once: true,
-          });
-        }
-        setPreviewZoom(zoom, false);
-      }
-
-      function setPreviewZoom(zoom, persist = true) {
-        const clamped = Math.max(0.25, Math.min(2.0, zoom));
-        state.previewZoom = clamped;
-        // [WO-16] Sync preview zoom into the observable store ui slice.
-        if (window.store) window.store.update("ui", { previewZoom: clamped });
-        if (persist) {
-          try {
-            localStorage.setItem(PREVIEW_ZOOM_STORAGE_KEY, String(clamped));
-          } catch (error) {
-            reportShellWarning("preview-zoom-save-failed", error, {
-              once: true,
-            });
-          }
-        }
-        applyPreviewZoom();
-      }
-
-      function applyPreviewZoom() {
-        const zoom = state.previewZoom ?? 1.0;
-        if (els.previewFrame) {
-          // Use CSS zoom property for quality-preserving scale (v0.18.3)
-          // CSS zoom triggers browser re-layout at target resolution (W3C Working Draft)
-          // Unlike transform:scale() which is post-render, zoom preserves text/vector
-          // crispness at all zoom levels while simplifying coordinate math
-          // Requires: Firefox 126+ (May 2024), Chrome 4+, Safari 4+, Edge 12+
-          if (zoom === 1.0) {
-            els.previewFrame.style.zoom = "";
-          } else {
-            els.previewFrame.style.zoom = String(zoom);
-          }
-        }
-        updatePreviewZoomUi();
-        renderSelectionOverlay();
-        positionFloatingToolbar();
-      }
-
-      function updatePreviewZoomUi() {
-        const zoom = state.previewZoom ?? 1.0;
-        const percent = Math.round(zoom * 100);
-        if (els.zoomLevelLabel) {
-          els.zoomLevelLabel.textContent = `${percent}%`;
-        }
-        if (els.zoomResetBtn) {
-          els.zoomResetBtn.hidden = zoom === 1.0;
-        }
-        if (els.zoomOutBtn) {
-          els.zoomOutBtn.disabled = zoom <= 0.25;
-        }
-        if (els.zoomInBtn) {
-          els.zoomInBtn.disabled = zoom >= 2.0;
-        }
-      }
-
-      function stepZoom(direction) {
-        const current = state.previewZoom ?? 1.0;
-        // Quality-first zoom steps: prefer whole/half fractions for sharper rendering
-        // Avoid fractional scales like 0.33, 0.67 that cause excessive blur on downscale
-        const steps = [0.25, 0.5, 0.75, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0];
-        let targetIndex = steps.findIndex(s => Math.abs(s - current) < 0.01);
-        if (targetIndex === -1) {
-          targetIndex = steps.findIndex(s => s > current);
-          if (targetIndex === -1) targetIndex = steps.length - 1;
-          if (direction < 0 && targetIndex > 0) targetIndex--;
-        } else {
-          targetIndex = Math.max(0, Math.min(steps.length - 1, targetIndex + direction));
-        }
-        setPreviewZoom(steps[targetIndex], true);
-      }
-
-      function setToggleButtonState(button, active) {
-        if (!button) return;
-        button.classList.toggle("is-active", Boolean(active));
-        button.setAttribute("aria-pressed", active ? "true" : "false");
-      }
-
-      function setDisclosureButtonState(button, expanded, controlsId = "") {
-        if (!button) return;
-        button.classList.toggle("is-active", Boolean(expanded));
-        if (controlsId) button.setAttribute("aria-controls", controlsId);
-        button.setAttribute("aria-expanded", expanded ? "true" : "false");
-      }
+      // Zoom functions moved to zoom.js (WO-22).
 
       function shouldForceBasicAdvancedControl(node) {
         return false;
@@ -645,196 +412,7 @@
         });
       }
 
-      function bindShellLayout() {
-        document.querySelectorAll("[data-close-panel]").forEach((button) => {
-          button.addEventListener("click", () =>
-            setShellPanelState(button.dataset.closePanel, false),
-          );
-        });
-        els.panelBackdrop?.addEventListener("click", () => closeShellPanels());
-        els.mobileSlidesBtn?.addEventListener("click", () =>
-          toggleShellPanel("left"),
-        );
-        els.mobileInspectorBtn?.addEventListener("click", () =>
-          toggleShellPanel("right"),
-        );
-        els.mobilePreviewBtn?.addEventListener("click", () => {
-          closeShellPanels();
-          setMode("preview");
-        });
-        els.mobileEditBtn?.addEventListener("click", () => {
-          closeShellPanels();
-          if (!state.modelDoc) {
-            openOpenHtmlModal();
-            return;
-          }
-          setMode("edit");
-        });
-        els.mobileInsertBtn?.addEventListener("click", () => {
-          closeShellPanels();
-          if (!state.modelDoc) {
-            openOpenHtmlModal();
-            return;
-          }
-          if (!state.previewReady) {
-            showToast("Сначала дождись полной загрузки превью.", "warning", {
-              title: "Превью ещё готовится",
-            });
-            return;
-          }
-          if (state.mode !== "edit") setMode("edit");
-          toggleInsertPalette();
-        });
-        const mq = window.matchMedia
-          ? window.matchMedia("(min-width: 1025px)")
-          : null;
-        const handleMqChange = () => {
-          if (mq && mq.matches) closeShellPanels();
-          else applyShellPanelState();
-        };
-        if (mq && !mq.__presentationEditorShellBound) {
-          if (typeof mq.addEventListener === "function")
-            mq.addEventListener("change", handleMqChange);
-          else if (typeof mq.addListener === "function")
-            mq.addListener(handleMqChange);
-          mq.__presentationEditorShellBound = true;
-        }
-        applyShellPanelState();
-      }
-
-      function isCompactShell() {
-        return window.matchMedia
-          ? window.matchMedia("(max-width: 1024px)").matches
-          : window.innerWidth <= 1024;
-      }
-
-      function syncShellPanelFocusableState(panel, shouldShow) {
-        if (!panel) return;
-        panel
-          .querySelectorAll(
-            'button, [href], input, select, textarea, [tabindex], [contenteditable="true"]',
-          )
-          .forEach((el) => {
-            if (!(el instanceof HTMLElement)) return;
-            if (shouldShow) {
-              if (!el.hasAttribute("data-shell-tabindex-restore")) return;
-              const prevTabIndex = el.getAttribute("data-shell-tabindex-restore");
-              el.removeAttribute("data-shell-tabindex-restore");
-              if (prevTabIndex === "") el.removeAttribute("tabindex");
-              else el.setAttribute("tabindex", prevTabIndex);
-              return;
-            }
-            if (!el.hasAttribute("data-shell-tabindex-restore")) {
-              el.setAttribute(
-                "data-shell-tabindex-restore",
-                el.getAttribute("tabindex") ?? "",
-              );
-            }
-            el.setAttribute("tabindex", "-1");
-          });
-      }
-
-      function setElementInertState(element, inert) {
-        if (!element || !("inert" in element)) return;
-        element.inert = inert;
-      }
-
-      function applyShellPanelState() {
-        const compact = isCompactShell();
-        const workflow = state.editorWorkflow || getEditorWorkflowState();
-        const shellPanelsEnabled = workflow !== "empty";
-        const leftOpen = compact && state.leftPanelOpen;
-        const rightOpen = compact && state.rightPanelOpen;
-        document.body.dataset.leftPanelOpen = leftOpen ? "true" : "false";
-        document.body.dataset.rightPanelOpen = rightOpen ? "true" : "false";
-        syncShellViewportLock();
-        if (els.panelBackdrop) {
-          const showBackdrop = shellPanelsEnabled && (leftOpen || rightOpen);
-          els.panelBackdrop.hidden = !showBackdrop;
-          els.panelBackdrop.setAttribute(
-            "aria-hidden",
-            showBackdrop ? "false" : "true",
-          );
-        }
-        syncShellPanelVisibility(
-          els.slidesPanel,
-          shellPanelsEnabled && (!compact || leftOpen),
-          {
-            returnFocusEl: els.mobileSlidesBtn,
-          },
-        );
-        syncShellPanelVisibility(
-          els.inspectorPanel,
-          shellPanelsEnabled && (!compact || rightOpen),
-          {
-            returnFocusEl: els.mobileInspectorBtn,
-          },
-        );
-        setDisclosureButtonState(els.mobileSlidesBtn, leftOpen, "slidesPanel");
-        setDisclosureButtonState(
-          els.mobileInspectorBtn,
-          rightOpen,
-          "inspectorPanel",
-        );
-      }
-
-      function syncShellPanelVisibility(panel, shouldShow, options = {}) {
-        if (!panel) return;
-        if (
-          !shouldShow &&
-          panel.contains(document.activeElement) &&
-          options.returnFocusEl instanceof HTMLElement
-        ) {
-          window.requestAnimationFrame(() =>
-            options.returnFocusEl.focus({ preventScroll: true }),
-          );
-        }
-        panel.hidden = !shouldShow;
-        panel.setAttribute("aria-hidden", shouldShow ? "false" : "true");
-        syncShellPanelFocusableState(panel, shouldShow);
-        setElementInertState(panel, !shouldShow);
-      }
-
-      function setShellPanelState(side, open) {
-        closeTransientShellUi();
-        if (side === "left") state.leftPanelOpen = Boolean(open);
-        if (side === "right") {
-          state.rightPanelOpen = Boolean(open);
-          state.rightPanelUserOpen = Boolean(open);
-        }
-        if (side === "left" && open) {
-          state.rightPanelOpen = false;
-          state.rightPanelUserOpen = false;
-        }
-        if (side === "right" && open) state.leftPanelOpen = false;
-        if (!isCompactShell()) {
-          state.leftPanelOpen = false;
-          state.rightPanelOpen = false;
-          state.rightPanelUserOpen = false;
-        }
-        applyShellPanelState();
-      }
-
-      function toggleShellPanel(side) {
-        closeTransientShellUi();
-        if (side === "left") setShellPanelState("left", !state.leftPanelOpen);
-        if (side === "right")
-          setShellPanelState("right", !state.rightPanelOpen);
-      }
-
-      function closeShellPanels(options = {}) {
-        const keep = normalizeShellSurfaceKeep(options.keep);
-        if (!keep.has("left-panel")) state.leftPanelOpen = false;
-        if (!keep.has("right-panel")) {
-          state.rightPanelOpen = false;
-          state.rightPanelUserOpen = false;
-        }
-        applyShellPanelState();
-        if (options.includeTransient !== false) {
-          closeTransientShellUi({ keep: Array.from(keep) });
-        }
-      }
-
+      // Shell layout functions moved to shell-layout.js (WO-22).
 
       function getSlideTemplateButtons() {
         return Array.from(

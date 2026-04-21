@@ -4,6 +4,13 @@
 
 ---
 
+## [v0.29.4] — 2026-04-21 — W4 batch 5: WO-22 boot.js split → theme + zoom + shell-layout
+
+### Refactor
+- refactor(arch): split boot.js → theme.js + zoom.js + shell-layout.js (~440 LOC extracted). main.js orphan DOM reparent absorbed into boot.js::ensureSlideTemplateBarRoot — **PAIN-MAP P1-08 CLOSED**. P1-07 partially closed (remaining boot.js concerns deferred post-v1.0). `theme.js` (~153 LOC): 8 functions moved verbatim (`resolveSystemTheme`, `getThemePreferenceLabel`, `queueThemeTransitionUnlock`, `syncThemeDatasets`, `applyResolvedTheme`, `initTheme`, `setThemePreference`, `toggleTheme`). Runtime guard: throws if `window.store.get` not a function. `zoom.js` (~89 LOC): 5 functions moved verbatim (`initPreviewZoom`, `setPreviewZoom`, `applyPreviewZoom`, `updatePreviewZoomUi`, `stepZoom`). Runtime guard: throws if `window.store.get` not a function. `shell-layout.js` (~206 LOC): 11 functions moved verbatim (`setToggleButtonState`, `setDisclosureButtonState`, `bindShellLayout`, `isCompactShell`, `syncShellPanelFocusableState`, `setElementInertState`, `applyShellPanelState`, `syncShellPanelVisibility`, `setShellPanelState`, `toggleShellPanel`, `closeShellPanels`). Runtime guard: throws if `state` or `els` not defined. Script load order: `shell-overlays.js` → `theme.js` → `zoom.js` → `shell-layout.js` → `boot.js` → `primary-action.js` → `main.js`. All callers in `boot.js`, `bridge-commands.js`, `context-menu.js`, `dom.js`, `feedback.js`, `floating-toolbar.js`, `primary-action.js`, `selection.js`, `shell-overlays.js`, `shortcuts.js` resolve via shared global scope. boot.js: ~1551 LOC (was 1973). main.js: 3 LOC (was 12). Module count: 27 → 30. Gate-A: 59/5/0. test:unit: 43/43. PAIN-MAP: P1-07 (partial), P1-08 (CLOSED).
+
+---
+
 ## [v0.29.3] — 2026-04-21 — W4 batch 4: WO-21 selection.js split → floating-toolbar.js
 
 ### Refactor
