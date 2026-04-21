@@ -5,6 +5,48 @@
       // ZONE: Selection Policy
       // createDefaultSelectionPolicy, normalizeSelectionPolicy — entity edit-permission models
       // =====================================================================
+
+      /**
+       * Flags describing the nature of a selected DOM node.
+       * @typedef {Object} SelectionFlags
+       * @property {boolean} [canEditText]
+       * @property {boolean} [isImage]
+       * @property {boolean} [isVideo]
+       * @property {boolean} [isContainer]
+       * @property {boolean} [isSlideRoot]
+       * @property {boolean} [isProtected]
+       * @property {boolean} [isTable]
+       * @property {boolean} [isCodeBlock]
+       * @property {boolean} [isSvg]
+       * @property {boolean} [isFragment]
+       * @property {boolean} [isTextEditing]
+       */
+
+      /**
+       * Policy object controlling which edit operations are permitted on the selected element.
+       * @typedef {Object} SelectionPolicy
+       * @property {string} kind - Policy kind identifier (e.g. 'free', 'slide-root', 'critical-structure')
+       * @property {string} reason - Human-readable reason displayed in the lock banner
+       * @property {boolean} canEditText
+       * @property {boolean} canEditStyles
+       * @property {boolean} canEditAttributes
+       * @property {boolean} canEditHtml
+       * @property {boolean} canEditSlideHtml
+       * @property {boolean} canMove
+       * @property {boolean} canResize
+       * @property {boolean} canNudge
+       * @property {boolean} canReorder
+       * @property {boolean} canDelete
+       * @property {boolean} canDuplicate
+       * @property {boolean} canWrap
+       * @property {boolean} canAddChild
+       * @property {boolean} canReplaceMedia
+       */
+
+      /**
+       * @param {SelectionFlags} [flags]
+       * @returns {SelectionPolicy}
+       */
       function createDefaultSelectionPolicy(flags = {}) {
         const policy = {
           kind: "free",
@@ -125,6 +167,11 @@
         return policy;
       }
 
+      /**
+       * @param {Partial<SelectionPolicy>} [policy]
+       * @param {SelectionFlags} [flags]
+       * @returns {SelectionPolicy}
+       */
       function normalizeSelectionPolicy(policy = {}, flags = {}) {
         const base = createDefaultSelectionPolicy(flags);
         return {
@@ -214,6 +261,11 @@
         }
       }
 
+      /**
+       * @param {string} nextLifecycle
+       * @param {{ reason?: string }} [options]
+       * @returns {void}
+       */
       function setPreviewLifecycleState(nextLifecycle, options = {}) {
         if (!nextLifecycle) return;
         state.previewLifecycle = nextLifecycle;
@@ -232,6 +284,240 @@
       // Здесь хранится модель документа, активный слайд, выбранный элемент,
       // история, автосохранение, runtime-состояние превью и UI-панелей.
       // ====================================================================
+
+      /**
+       * Drag state for the slide rail reorder interaction.
+       * @typedef {Object} SlideRailDrag
+       * @property {string|null} slideId - ID of the slide being dragged
+       * @property {number} hoverIndex - Current hover position index (-1 = none)
+       * @property {number} suppressClickUntil - Timestamp until which click events are suppressed
+       */
+
+      /**
+       * State of the layers panel drag-and-drop reorder.
+       * @typedef {Object} LayersPanelDragState
+       * @property {string|null} draggedNodeId
+       * @property {number} draggedIndex
+       * @property {number} dropTargetIndex
+       */
+
+      /**
+       * Toast notification display state.
+       * @typedef {Object} SelectionTooltip
+       * @property {string} message
+       * @property {number} visibleUntil
+       * @property {number} hideTimer
+       */
+
+      /**
+       * Snapped geometry rectangle for the selection overlay.
+       * @typedef {Object} SelectionRect
+       * @property {number} left
+       * @property {number} top
+       * @property {number} width
+       * @property {number} height
+       */
+
+      /**
+       * Active guides shown during drag / resize.
+       * @typedef {Object} ActiveGuides
+       * @property {number[]} vertical
+       * @property {number[]} horizontal
+       */
+
+      /**
+       * Per-asset audit counts populated by the preview asset resolver.
+       * @typedef {Object} PreviewAssetAuditCounts
+       * @property {number} resolved
+       * @property {number} unresolved
+       * @property {number} baseUrlDependent
+       */
+
+      /**
+       * Toolbar drag offset.
+       * @typedef {Object} ToolbarDragOffset
+       * @property {number} x
+       * @property {number} y
+       */
+
+      /**
+       * Canonical application state for the shell editor.
+       * All shell state is stored here; iframe runtime state lives only in bridge.
+       *
+       * @typedef {Object} State
+       *
+       * — Document model
+       * @property {string} sourceLabel - File name / label of the loaded document
+       * @property {string} sourceHtml - Original HTML source string as loaded
+       * @property {string} doctypeString - DOCTYPE declaration (default '<!DOCTYPE html>')
+       * @property {Document|null} modelDoc - Parsed DOM document model (canonical source of truth)
+       * @property {string|null} previewUrl - Object URL for the current preview blob
+       * @property {string} bridgeToken - Shared secret token for bridge postMessage authentication
+       * @property {string} manualBaseUrl - User-overridden base URL for asset resolution
+       * @property {boolean} dirty - Whether unsaved changes exist
+       *
+       * — Mode & workflow
+       * @property {string} mode - UI mode: 'preview' | 'edit'
+       * @property {string} editorWorkflow - Workflow state: 'empty' | 'loaded' | ...
+       * @property {string} interactionMode - Active interaction: 'preview' | 'select' | 'text-edit' | 'drag' | 'resize' | 'insert'
+       * @property {string} engine - Detected deck engine ('reveal' | 'shower' | 'unknown' | ...)
+       *
+       * — Preview lifecycle
+       * @property {boolean} previewReady - Whether the iframe bridge is ready
+       * @property {string} previewLifecycle - Lifecycle state: 'idle' | 'loading' | 'ready' | 'recovering' | 'bridge-degraded' | 'desync-suspected'
+       * @property {string} previewLifecycleReason - Reason for the last lifecycle transition
+       * @property {number} previewLifecycleChangedAt - Timestamp of the last lifecycle transition
+       * @property {string|null} staticSlideSelector - CSS selector matched for slides in static mode
+       *
+       * — Slides registry
+       * @property {any[]} slides - Slide descriptor array from modelDoc parse
+       * @property {any[]} runtimeSlides - Live slide descriptors from bridge runtime-metadata
+       * @property {Object.<string, any>} slideRegistryById - Slide descriptors keyed by slide ID
+       * @property {string[]} slideRegistryOrder - Ordered array of slide IDs
+       * @property {string|null} activeSlideId - Currently active slide ID in modelDoc
+       * @property {string|null} pendingActiveSlideId - Slide ID waiting for iframe activation
+       * @property {string|null} runtimeActiveSlideId - Active slide ID reported by iframe
+       * @property {string|null} requestedSlideActivation - Slide ID of the pending activation request
+       * @property {number} requestedSlideActivationSeq - Sequence number of the pending activation
+       *
+       * — Selection
+       * @property {string|null} pendingPreviewSelection - Node ID queued for selection after bridge-ready
+       * @property {string|null} selectedNodeId - Currently selected node ID
+       * @property {string|null} selectionLeafNodeId - Leaf node of the current selection path
+       * @property {string[]} selectionPath - DOM path from root to selected node
+       * @property {string|null} selectedTag - HTML tag name of the selected element
+       * @property {any} selectedComputed - Computed style object for the selected element
+       * @property {string} selectedHtml - Outer HTML of the selected element
+       * @property {SelectionRect|null} selectedRect - Bounding rect of the selected element in iframe coordinates
+       * @property {Object.<string, string>} selectedAttrs - Attribute map of the selected element
+       * @property {string} selectedEntityKind - Entity kind of the selected element (from IMPORT_ENTITY_KINDS)
+       * @property {SelectionFlags} selectedFlags - Feature flags for the selected element
+       * @property {SelectionPolicy} selectedPolicy - Edit-permission policy for the selected element
+       * @property {any} manipulationContext - Active direct-manipulation context (drag/resize payload)
+       * @property {boolean} rightPanelUserOpen - Whether the right panel was explicitly opened by the user
+       * @property {SelectionRect|null} liveSelectionRect - Live rect updated during manipulation
+       * @property {any} activeManipulation - Active manipulation descriptor
+       * @property {boolean} pendingOverlayClickProxy - Whether a click-proxy is pending
+       * @property {ActiveGuides} activeGuides - Active snap-guide lines
+       *
+       * — Overlap & warnings
+       * @property {number} overlapDetectionTimer - Timer ID for periodic overlap detection
+       * @property {Object.<string, any>} slideOverlapWarnings - Overlap warning descriptors keyed by slide ID
+       * @property {Object.<string, any>} overlapConflictsBySlide - Conflict groups keyed by slide ID
+       * @property {any} selectedOverlapWarning - Currently highlighted overlap warning
+       * @property {string|null} overlapHoverNodeId - Node ID currently hovered in overlap panel
+       * @property {Document|null} overlapHoverBoundDoc - Bound document for the hover node
+       *
+       * — Visibility & layers
+       * @property {Object.<string, boolean>} sessionVisibilityMap - Visibility overrides keyed by node ID
+       * @property {any} layerPickerPayload - Payload for the layer picker popup
+       * @property {string|null} layerPickerHighlightNodeId - Node ID highlighted in layer picker
+       * @property {number} layerPickerActiveIndex - Active index in the layer picker list
+       * @property {string[]} multiSelectNodeIds - Node IDs in the current multi-selection
+       * @property {LayersPanelDragState} layersPanelDragState - Drag state for the layers panel
+       *
+       * — UI panels & tooltips
+       * @property {SelectionTooltip} selectionTooltip - Tooltip for the selection frame
+       * @property {boolean} altSelectionPassthrough - Whether alt-click passes through to native selection
+       * @property {string[]} diagnostics - Array of diagnostic log entries
+       * @property {string|null} htmlEditorMode - Current HTML editor mode ('element' | 'slide' | null)
+       * @property {string|null} htmlEditorTargetId - Node ID targeted by the HTML editor
+       * @property {string|null} htmlEditorTargetType - Type of the HTML editor target
+       *
+       * — Bridge & sync
+       * @property {number} lastRuntimeMetadataAt - Timestamp of last runtime-metadata message
+       * @property {boolean} bridgeAlive - Whether a bridge heartbeat was received recently
+       * @property {boolean} editingSupported - Whether the iframe reports editing is supported
+       * @property {number} [bridgeProtocolVersion] - Negotiated bridge protocol version (set after hello)
+       * @property {string} [bridgeBuild] - Bridge build label received in hello payload
+       * @property {number} commandSeq - Monotonically increasing command sequence counter
+       * @property {number} lastAppliedSeq - Sequence of the last applied mutation
+       * @property {Object.<string, number>} lastAppliedSeqBySlide - Last applied seq keyed by slide ID
+       * @property {Object.<string, boolean>} slideSyncLocks - Active sync-lock flags keyed by slide ID
+       *
+       * — History
+       * @property {any[]} history - Undo/redo history stack
+       * @property {number} historyIndex - Current position in the history stack (-1 = empty)
+       * @property {boolean} historyMuted - Whether history recording is suspended
+       *
+       * — Autosave & timers
+       * @property {number|null} saveTimer - setTimeout ID for the pending autosave
+       * @property {number|null} snapshotTimer - setTimeout ID for the pending snapshot
+       * @property {number} lastSavedAt - Timestamp of the last successful autosave
+       *
+       * — Insert & clipboard
+       * @property {string|null} pendingReplaceTargetId - Node ID targeted for media replacement
+       * @property {string} pendingImageInsertMode - Insert mode: 'insert' | 'replace'
+       * @property {string} pendingInsertPosition - Insert position: 'before' | 'after' | 'inside'
+       * @property {any} copiedStyle - Copied inline-style object for paste-style
+       * @property {string|null} copiedElementHtml - Clipboard HTML for Ctrl+C / Ctrl+V
+       *
+       * — Context menu
+       * @property {string|null} contextMenuNodeId - Node ID at which the context menu was opened
+       * @property {any} contextMenuPayload - Payload from the bridge context-menu message
+       *
+       * — Slide rail
+       * @property {SlideRailDrag} slideRailDrag - Drag state for slide rail reorder
+       * @property {any} restorePayload - Draft restore payload from autosave
+       *
+       * — Theme & UI preferences
+       * @property {string} theme - Active theme: 'light' | 'dark'
+       * @property {string} themePreference - User preference: 'system' | 'light' | 'dark'
+       * @property {string} complexityMode - UI complexity: 'basic' | 'advanced'
+       * @property {string} selectionMode - Selection mode: 'smart' | 'container'
+       * @property {number} previewZoom - Preview scale factor (1.0 = 100%)
+       * @property {Object.<string, boolean>} inspectorSections - Open/closed state of inspector sections
+       *
+       * — Toolbar
+       * @property {boolean} toolbarPinned - Whether the floating toolbar is pinned
+       * @property {any} toolbarPos - Toolbar position {x, y} or null
+       * @property {boolean} toolbarCollapsed - Whether the toolbar is collapsed
+       * @property {ToolbarDragOffset} toolbarDragOffset - Offset during toolbar drag
+       * @property {boolean} toolbarDragActive - Whether toolbar drag is in progress
+       *
+       * — Loading & bridge watchdog
+       * @property {boolean} loadingPreview - Whether the preview iframe is loading
+       * @property {number|ReturnType<typeof setInterval>|null} bridgeWatchdogTimer - Interval ID for bridge watchdog
+       * @property {number|ReturnType<typeof setInterval>|null} modelSyncTimer - Interval ID for model sync
+       * @property {number} lastBridgeHeartbeatAt - Timestamp of last bridge heartbeat
+       *
+       * — Toasts
+       * @property {number} activeToastId - ID of the most recently shown toast
+       *
+       * — Asset resolver
+       * @property {Map<string,string>|null} assetResolverMap - Resolved asset URL map
+       * @property {string} assetResolverLabel - Label for the resolved asset directory
+       * @property {string[]} assetObjectUrls - Object URLs created for resolved assets
+       * @property {number} assetFileCount - Number of files in the resolved asset directory
+       * @property {any[]} resolvedPreviewAssets - Assets successfully resolved for preview
+       * @property {any[]} unresolvedPreviewAssets - Assets that could not be resolved
+       * @property {any[]} baseUrlDependentAssets - Assets requiring a base URL
+       * @property {PreviewAssetAuditCounts} previewAssetAuditCounts - Asset resolution counts
+       *
+       * — Export validation
+       * @property {any} lastExportValidationAudit - Most recent export validation audit result
+       * @property {string|null} lastExportValidationUrl - Object URL for the export validation page
+       * @property {number|null} slideActivationRetryTimer - setTimeout ID for slide activation retry
+       *
+       * — Top-bar & shell chrome
+       * @property {boolean} slideTemplateBarOpen - Whether the slide template bar is open
+       * @property {boolean} topbarOverflowOpen - Whether the topbar overflow menu is open
+       * @property {string} topbarCommandMode - Topbar command layout: 'inline' | 'overflow'
+       * @property {number} shellMetricsRaf - requestAnimationFrame ID for shell metrics
+       * @property {number} shellPopoverRaf - requestAnimationFrame ID for popover positioning
+       * @property {MutationObserver|null} shellChromeObserver - Observer for shell chrome mutations
+       * @property {boolean} leftPanelOpen - Whether the left (slides) panel is open on mobile
+       * @property {boolean} rightPanelOpen - Whether the right (inspector) panel is open on mobile
+       *
+       * — Click-through & sandbox (WO-06, WO-07)
+       * @property {any} clickThroughState - Stack depth / click-through state synced from bridge
+       * @property {string} sandboxMode - Sandbox mode: 'off' | 'scripts-only' | 'full'
+       * @property {string} trustDecision - Trust decision: 'pending' | 'neutralize' | 'accept'
+       * @property {any} trustSignals - Result of scanTrustSignals(doc); null until first import
+       * @property {string|null} lastImportedRawHtml - Verbatim HTML string passed to buildModelDocument
+       */
+
+      /** @type {State} */
       const state = {
         sourceLabel: "",
         sourceHtml: "",
