@@ -19,7 +19,11 @@
 |---------|--------|--------|--------|--------|--------|--------|-----------|-------------|---------------|------------|
 | **v0.25.0** (baseline) | 55/5/0 | existing (11 specs, 2 projects) | existing (4 specs × 2 browsers) | existing (2 specs × 3 viewports) | existing (asset-parity) | existing (all × all) | — | — | — | — |
 | **v0.26.0** (precision editing) | 55/5/0 invariant | unchanged | unchanged | unchanged | unchanged | unchanged | — | — | — | — |
-| **v0.26.1** (security quick wins) | 55/5/0 invariant | +sanitize-smoke (WO-01) | unchanged | unchanged | unchanged | includes sanitize | — | — | — | — |
+| **v0.26.1** (WO-01 parseSingleRoot sanitize) | 55/5/0 ✅ live since v0.26.1 | +bridge-sanitize 5 specs (WO-01) | unchanged | unchanged | unchanged | unchanged | — | — | — | — |
+| **v0.26.2** (WO-03 pptxgenjs vendor SRI) | 55/5/0 ✅ | +export-sri 2 specs (WO-03) | unchanged | unchanged | unchanged | unchanged | — | — | — | — |
+| **v0.26.3** (WO-05 crypto bridge token) | 55/5/0 ✅ | +bridge-token 2 specs (WO-05) | unchanged | unchanged | unchanged | unchanged | — | — | — | — |
+| **v0.26.4** (WO-02 bridge origin assertion) | 55/5/0 ✅ | +bridge-origin 2 specs (WO-02) | unchanged | unchanged | unchanged | unchanged | — | — | — | — |
+| **v0.26.5** (WO-04 autosave size cap) | 55/5/0 ✅ | +autosave-cap 3 specs (WO-04) — W1 Security CLOSED | unchanged | unchanged | unchanged | unchanged | — | — | — | — |
 | **v0.27.0** (onboarding + broken-asset) | 55/5/0 invariant | +trust-banner spec (WO-07) | unchanged | unchanged | unchanged | unchanged | — | — | — | — |
 | **v0.27.1** (a11y gate) | 55/5/0 invariant | +a11y integration smoke | +focus-order Firefox | includes new tab/rail kbd | unchanged | includes all above | **NEW 0 violations** (WO-09, WO-10, WO-11) | — | — | — |
 | **v0.27.2** (undo-chain, transform) | 55/5/0 invariant | +undo-chain ≥20 spec | unchanged | unchanged | unchanged | includes all above | 0 violations invariant | — | — | — |
