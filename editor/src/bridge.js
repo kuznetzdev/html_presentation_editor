@@ -4,7 +4,45 @@
       /* ======================================================================
        [SCRIPT 03] preview build + iframe bridge + sync
        ====================================================================== */
+
+      // Classic-script globals: functions and objects defined in other <script> tags.
+      // Declared here so tsc --noEmit can type-check this file in isolation.
+      /* global state, els, addDiagnostic, setPreviewLoading, dispatchPendingSlideActivation */
+      /* global flushPendingPreviewSelection, showToast, refreshUi, applyRuntimeMetadata */
+      /* global applySlideActivationFromBridge, applyElementSelection, applyElementUpdateFromBridge */
+      /* global applySelectionGeometry, applySlideUpdateFromBridge, applySlideRemovedFromBridge */
+      /* global openContextMenuFromBridge, handleBridgeShortcut, applyDocumentSyncFromBridge */
+      /* global cleanupExportValidationUrl, getAllowedBridgeOrigins, setPreviewLifecycleState */
+      /* global BRIDGE_PROTOCOL_VERSION */
+
+      /**
+       * Shape of the `data` property on postMessage events sent by the bridge iframe.
+       * @typedef {Object} BridgeMessageEvent
+       * @property {true} __presentationEditor - Marker that identifies bridge messages
+       * @property {string} token - Shared secret matching state.bridgeToken
+       * @property {string} type - Message type (e.g. 'bridge-ready', 'element-selected', ...)
+       * @property {number} [seq] - Optional monotonic sequence number for ordered delivery
+       * @property {any} [payload] - Message-type-specific payload (typed per ADR-012 / WO-13)
+       */
+
+      /**
+       * Payload stub types — filled by ADR-012 / WO-13
+       * @typedef {any} BridgeReadyPayload        // filled by ADR-012 / WO-13
+       * @typedef {any} RuntimeMetadataPayload    // filled by ADR-012 / WO-13
+       * @typedef {any} SlideActivationPayload    // filled by ADR-012 / WO-13
+       * @typedef {any} ElementSelectedPayload    // filled by ADR-012 / WO-13
+       * @typedef {any} ElementUpdatedPayload     // filled by ADR-012 / WO-13
+       * @typedef {any} SelectionGeometryPayload  // filled by ADR-012 / WO-13
+       * @typedef {any} SlideUpdatedPayload       // filled by ADR-012 / WO-13
+       * @typedef {any} SlideRemovedPayload       // filled by ADR-012 / WO-13
+       * @typedef {any} ContextMenuPayload        // filled by ADR-012 / WO-13
+       * @typedef {any} ShortcutPayload           // filled by ADR-012 / WO-13
+       * @typedef {any} RuntimeErrorPayload       // filled by ADR-012 / WO-13
+       * @typedef {any} DocumentSyncPayload       // filled by ADR-012 / WO-13
+       */
+
       function bindMessages() {
+        /** @param {MessageEvent<BridgeMessageEvent>} event */
         window.addEventListener("message", (event) => {
           // AUDIT-D-04: Assert postMessage origin before processing any message.
           // Under file:// protocol event.origin is the string "null" — that is
@@ -17,9 +55,10 @@
           const data = event.data;
           if (!data || data.__presentationEditor !== true) return;
           if (data.token !== state.bridgeToken) return;
+          const _previewFrame = /** @type {HTMLIFrameElement|null} */ (els.previewFrame);
           if (
-            els.previewFrame.contentWindow &&
-            event.source !== els.previewFrame.contentWindow
+            _previewFrame && _previewFrame.contentWindow &&
+            event.source !== _previewFrame.contentWindow
           )
             return;
 
@@ -28,6 +67,45 @@
           const bridgeSeq = Number(data.seq || data.payload?.seq || 0);
           try {
             switch (data.type) {
+              // ADR-012 §1 — Bridge v2 hello handshake (WO-12)
+              // Emitted by bridge-script.js BEFORE bridge-ready.
+              // Validates numeric protocol === 2; degrades to read-only on mismatch.
+              case "hello": {
+                const _helloPayload = data.payload || {};
+                const _vResult = window.BRIDGE_SCHEMA
+                  ? window.BRIDGE_SCHEMA.validateMessage({ type: 'hello', ..._helloPayload })
+                  : { ok: false, errors: ['BRIDGE_SCHEMA not loaded'] };
+                if (!_vResult.ok || _helloPayload.protocol !== BRIDGE_PROTOCOL_VERSION) {
+                  // Protocol mismatch — degrade to read-only preview.
+                  state.editingSupported = false;
+                  const _receivedProto = _helloPayload.protocol !== undefined
+                    ? _helloPayload.protocol
+                    : '?';
+                  addDiagnostic(
+                    `bridge-hello-mismatch: expected protocol ${BRIDGE_PROTOCOL_VERSION}, got ${_receivedProto}; errors: ${_vResult.errors.join(', ')}`
+                  );
+                  showToast(
+                    `Несовместимый bridge: shell ожидает протокол v${BRIDGE_PROTOCOL_VERSION}, iframe прислал v${_receivedProto}. Превью переведено в режим только для чтения.`,
+                    'error',
+                    { title: 'Bridge mismatch', ttl: 999999999 }
+                  );
+                } else {
+                  // Valid hello — record negotiated version and build.
+                  state.bridgeProtocolVersion = BRIDGE_PROTOCOL_VERSION;
+                  state.bridgeBuild = _helloPayload.build || '';
+                  addDiagnostic(
+                    `bridge-hello-ok: protocol=${BRIDGE_PROTOCOL_VERSION} build=${state.bridgeBuild}`
+                  );
+                  if (state.complexityMode === 'advanced') {
+                    showToast(
+                      `Bridge v${BRIDGE_PROTOCOL_VERSION} подключён: сборка ${state.bridgeBuild}`,
+                      'info',
+                      { ttl: 3000 }
+                    );
+                  }
+                }
+                break;
+              }
               case "bridge-ready":
                 state.bridgeAlive = true;
                 state.previewReady = true;
@@ -107,7 +185,7 @@
             }
           } catch (error) {
             addDiagnostic(
-              `parent-message-error:${data.type || "unknown"}:${error.message}`,
+              `parent-message-error:${data.type || "unknown"}:${error instanceof Error ? error.message : String(error)}`,
             );
           }
         });

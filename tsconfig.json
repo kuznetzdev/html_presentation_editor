@@ -1,0 +1,21 @@
+// Classic-script project (ADR-015). checkJs + noEmit. DO NOT add emit / module flags.
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "none",
+    "checkJs": true,
+    "allowJs": true,
+    "strict": true,
+    "noEmit": true,
+    "lib": ["DOM", "ES2022"],
+    "skipLibCheck": true
+  },
+  "include": [
+    "editor/src/state.js",
+    "editor/src/constants.js",
+    "editor/src/bridge.js"
+  ],
+  "files": [
+    "editor/src/globals.d.ts"
+  ]
+}

@@ -1,6 +1,6 @@
 # ADR-011: Type System Strategy — JSDoc over TypeScript, no compile step
 
-**Status**: Proposed
+**Status**: Accepted (partial — tsconfig + 3 files annotated in v0.28.1; module-by-module rollout continues)
 **Phase**: v0.26.x (foundational — unblocks ADR-012, ADR-013)
 **Owner**: Architecture
 **Date**: 2026-04-20

@@ -35,6 +35,7 @@
         ".slides",
         "main",
       ];
+      /** @type {Set<string>} */
       const SEMANTIC_SLIDE_TAGS = new Set(["SECTION", "ARTICLE", "DIV"]);
       const EDITOR_NODE_ID_ATTR = "data-editor-node-id";
       const EDITOR_SLIDE_ID_ATTR = "data-editor-slide-id";
@@ -46,6 +47,7 @@
       const AUTHOR_NODE_ID_ATTRS = ["data-node-id"];
       const AUTHOR_NODE_KIND_ATTRS = ["data-node-type"];
       const AUTHOR_EDITABLE_ATTRS = ["data-editable"];
+      /** @type {Set<string>} */
       const IMPORT_ENTITY_KINDS = new Set([
         "text",
         "image",
@@ -62,6 +64,7 @@
         "none",
       ]);
 
+      /** @type {Set<string>} */
       const TEXT_TAGS = new Set([
         "H1",
         "H2",
@@ -82,6 +85,7 @@
         "A",
         "SPAN",
       ]);
+      /** @type {Set<string>} */
       const EXCLUDED_TAGS = new Set([
         "SCRIPT",
         "STYLE",
@@ -115,6 +119,20 @@
       const PREVIEW_ZOOM_STORAGE_KEY = "presentation-editor:preview-zoom:v1";
       const MAX_VISIBLE_TOASTS = 4;
       const THEME_PREFERENCES = ["system", "light", "dark"];
+      /**
+       * @typedef {Object} StarterDeckEntry
+       * @property {string} key
+       * @property {string} href
+       * @property {string} label
+       * @property {string} manualBasePath
+       */
+
+      /**
+       * @typedef {Object} StarterDecksMap
+       * @property {Readonly<StarterDeckEntry>} basic
+       */
+
+      /** @type {Readonly<StarterDecksMap>} */
       const STARTER_DECKS = Object.freeze({
         basic: Object.freeze({
           key: "basic",
@@ -123,7 +141,17 @@
           manualBasePath: "/tests/fixtures/playwright/",
         }),
       });
+      // =====================================================================
+      // Bridge protocol versioning (ADR-012 §1, WO-12)
+      // BRIDGE_PROTOCOL_VERSION — numeric version sent in hello payload by iframe.
+      //   Shell validates protocol === BRIDGE_PROTOCOL_VERSION (must be 2).
+      // SHELL_BUILD — short build label embedded in hello and reported in diagnostics.
+      const BRIDGE_PROTOCOL_VERSION = 2;
+      const SHELL_BUILD = 'v0.28.0';
+      // =====================================================================
+      /** @type {Set<string>} */
       const SHELL_WARNING_CACHE = new Set();
+      /** @type {Set<string>} */
       const BRIDGE_MUTATION_TYPES = new Set([
         "apply-style",
         "apply-styles",
@@ -150,6 +178,7 @@
       const DIRECT_MANIP_MIN_SIZE_PX = 24;
       const DIRECT_MANIP_NUDGE_PX = 1;
       const DIRECT_MANIP_NUDGE_FAST_PX = 10;
+      /** @type {Set<string>} */
       const INTERACTION_MODES = new Set([
         "preview",
         "select",
@@ -195,6 +224,14 @@
       //   SCRIPTS_ONLY — allow-scripts allow-same-origin; scripts run but origin isolated
       //                  (WO-07 will wire Trust-Banner toggle to SCRIPTS_ONLY)
       //   FULL         — allow-same-origin only; scripts completely blocked
+      /**
+       * @typedef {Object} SandboxModesMap
+       * @property {'off'} OFF
+       * @property {'scripts-only'} SCRIPTS_ONLY
+       * @property {'full'} FULL
+       */
+
+      /** @type {Readonly<SandboxModesMap>} */
       const SANDBOX_MODES = Object.freeze({
         OFF: "off",
         SCRIPTS_ONLY: "scripts-only",
@@ -218,6 +255,17 @@
       //   objectEmbed      — <object> and <embed> plugin elements
       //
       // OWASP A03:2021 Injection — CWE-79, CWE-1021 (iframe restriction)
+      /**
+       * @typedef {Object} TrustDetectionSelectorsMap
+       * @property {string} scripts
+       * @property {string} inlineHandlers
+       * @property {string} jsUrls
+       * @property {string} remoteIframes
+       * @property {string} metaRefresh
+       * @property {string} objectEmbed
+       */
+
+      /** @type {Readonly<TrustDetectionSelectorsMap>} */
       const TRUST_DETECTION_SELECTORS = Object.freeze({
         scripts: 'script',
         inlineHandlers: '[onclick],[onload],[onerror],[onmouseover],[onchange],[onsubmit],[onkeydown],[onkeyup],[onfocus],[onblur]',
@@ -232,11 +280,26 @@
       //   PENDING   — not yet decided (default; banner shown when findings > 0)
       //   NEUTRALIZE — user clicked "Нейтрализовать скрипты"; scripts were stripped
       //   ACCEPT    — user clicked "Оставить как есть"; scripts kept, no re-banner
+      /**
+       * @typedef {Object} TrustDecisionKeysMap
+       * @property {'neutralize'} NEUTRALIZE
+       * @property {'accept'} ACCEPT
+       * @property {'pending'} PENDING
+       */
+
+      /** @type {Readonly<TrustDecisionKeysMap>} */
       const TRUST_DECISION_KEYS = Object.freeze({
         NEUTRALIZE: 'neutralize',
         ACCEPT: 'accept',
         PENDING: 'pending',
       });
+      // =====================================================================
+      // Telemetry constants (ADR-020, WO-15)
+      // Opt-in local-only event log. localStorage only; zero network calls.
+      const TELEMETRY_ENABLED_KEY = "editor:telemetry:enabled";
+      const TELEMETRY_LOG_KEY = "editor:telemetry:log";
+      const TELEMETRY_MAX_BYTES = 1048576; // 1 MB
+      const TELEMETRY_MAX_EVENTS = 5000;
       // =====================================================================
       // Bridge origin allow-list (AUDIT-D-04, ADR-012 §4)
       // Under file:// protocol the browser reports event.origin === "null"
