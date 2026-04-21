@@ -29,6 +29,39 @@
  */
 
 /**
+ * Selection state slice — all 16 selection fields migrated from window.state.
+ * Migrated fields: activeNodeId, activeSlideId, selectionPath, leafNodeId, tag,
+ * computed, html, rect, attrs, entityKind, flags, policy, liveRect,
+ * manipulationContext, clickThroughState, runtimeActiveSlideId, overlapIndex.
+ *
+ * ADR-017 CRDT-readiness checklist for SelectionSlice:
+ *   [x] Updates produce new objects (immutable) — store.update spreads into new obj
+ *   [x] IDs are stable — only string IDs stored, never DOM nodes
+ *   [x] Operations describable as {op, path, value} patches — store.update IS a patch
+ *   [x] Array ops are position-independent — selectionPath is a value array
+ *   [x] No cross-slice mutable references — no DOM nodes, only plain objects + IDs
+ *
+ * @typedef {Object} SelectionSlice
+ * @property {string|null} activeNodeId - Currently selected node ID
+ * @property {string|null} activeSlideId - Active slide ID in modelDoc
+ * @property {Array<Object>} selectionPath - DOM path from root to selected node
+ * @property {string|null} leafNodeId - Leaf node of the current selection path
+ * @property {string|null} tag - HTML tag name of the selected element
+ * @property {Object|null} computed - Computed style object for the selected element
+ * @property {string} html - Outer HTML of the selected element
+ * @property {Object|null} rect - Bounding rect of the selected element in iframe coordinates
+ * @property {Object} attrs - Attribute map of the selected element
+ * @property {string} entityKind - Entity kind (from IMPORT_ENTITY_KINDS), default 'none'
+ * @property {Object} flags - SelectionFlags for the selected element
+ * @property {Object} policy - SelectionPolicy edit-permission policy
+ * @property {Object|null} liveRect - Live rect updated during manipulation
+ * @property {Object|null} manipulationContext - Active direct-manipulation context
+ * @property {Object|null} clickThroughState - Stack depth / click-through state
+ * @property {string|null} runtimeActiveSlideId - Active slide ID reported by iframe
+ * @property {number} overlapIndex - Overlap cycling index (0 = no cycle active)
+ */
+
+/**
  * A per-slice subscriber callback.
  * @template T
  * @callback SliceListener

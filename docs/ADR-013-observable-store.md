@@ -127,6 +127,7 @@ Writes outside the owner → ESLint rule (new, lightweight).
 
 - v0.28.3 — `store.js` module scaffold + `ui` slice bootstrap (`defineSlice("ui", ...)`) ✓
 - v0.28.4 — `boot.js` rewired: `applyResolvedTheme`, `setThemePreference`, `setComplexityMode`, `setPreviewZoom` sync writes to `store.update("ui", ...)` ✓
+- v0.28.5 — selection slice migration: 16 fields migrated (`defineSlice("selection", ...)`), `applyElementSelection` batched via `store.batch`, `createDefaultSelectionPolicy` refactored to table-lookup (P2-07), Proxy shim extended with 16 selection mappings ✓
 - v0.29.x — `selection` slice migration (biggest surface)
 - v0.30.x — `history` slice + slim-snapshot storage (addresses PAIN-MAP P0-11)
 - v0.31.x — `model` slice + `bridge` slice; `window.state` shim removed

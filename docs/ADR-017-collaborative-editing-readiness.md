@@ -98,6 +98,7 @@ If a slice fails this, document the reason in the ADR-013 application notes.
 ## Applied In
 
 - v0.28.x — ADR-013 store slices designed to the checklist above
+- v0.28.5 — selection slice passes CRDT-readiness checklist ✓ (immutable updates, stable IDs only, patch-based via store.update, no DOM refs, no position-indexed array ops)
 - v0.30.x — history.js migrated to patch-based snapshots (PAIN-MAP P0-11 remediation)
 - v1.0 — readiness-only; no live collab
 - v2.x (speculative) — evaluate Yjs or Automerge if product direction changes

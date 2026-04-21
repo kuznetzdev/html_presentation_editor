@@ -4,6 +4,16 @@
 
 ---
 
+## [v0.28.5] — 2026-04-21 — W3 Bridge v2+Store batch 2: WO-17 Selection Slice
+
+### State
+- refactor(store): selection slice migration — 16 selection fields migrated from window.state to store 'selection' slice — ADR-013 phase 2 — PAIN-MAP P2-07 (closure table). `store.js`: `@typedef SelectionSlice` covering all 16 fields with ADR-017 CRDT-readiness checklist. `state.js`: `window.store.defineSlice('selection', {...})` with full initial shape including flags/policy objects. `createDefaultSelectionPolicy` refactored: 6-branch if-chain replaced with `SELECTION_POLICY_TABLE` + priority-order loop — output shape byte-identical for all flag combinations; Russian reason strings preserved verbatim. Proxy shim extended: `_SELECTION_STATE_TO_SLICE` map (16 entries) added alongside existing `_UI_SLICE_KEYS` — reads route to `store.get('selection')[sliceKey]`, writes dual-write to store + raw state for backward compat. `bridge-commands.js` `applyElementSelection`: 3-phase refactor — (1) compute all values, (2) dual-write raw state fields + `window.store.batch(() => store.update('selection', fullPatch))` for ONE microtask notification per selection event, (3) side-effect calls in identical order. No DOM nodes stored in slice (IDs + plain objects only). Zero bundler deps added. Gate-A: 59/5/0. ADR-013. ADR-017. PAIN-MAP: P2-07.
+
+### Tests
+- test(state): selection-slice.spec.js — 8 unit cases (Node --test runner). Cases: defineSlice-initial, update-next-prev, batch-fires-once, policy-slide-root, policy-table-priority, policy-golden-object, policy-free-defaults, select-entityKind-initial. test:unit → 20/20 (12 store + 8 selection).
+
+---
+
 ## [v0.28.4] — 2026-04-21 — W3 Bridge v2+Store batch 2: WO-16 Observable Store
 
 ### State
