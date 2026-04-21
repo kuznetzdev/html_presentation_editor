@@ -45,6 +45,7 @@
         bindContextMenu();
         bindLayerPicker();
         bindRestoreBanner();
+        window.bindBrokenAssetBanner?.(); // WO-24: wire broken-asset recovery banner
         bindPaletteActions();
         addInspectorHelpBadges();
         if (!consumeStarterLaunchIntent()) {
@@ -1411,6 +1412,7 @@
         const safeAudit = audit || createEmptyPreviewAssetAudit();
         state.resolvedPreviewAssets = safeAudit.resolved;
         state.unresolvedPreviewAssets = safeAudit.unresolved;
+        window.updateBrokenAssetBanner?.(); // WO-24: render broken-asset banner on state update
         state.baseUrlDependentAssets = safeAudit.baseUrlDependent;
         state.previewAssetAuditCounts = {
           resolved: Number(safeAudit?.counts?.resolved || 0),

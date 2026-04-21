@@ -38,6 +38,7 @@
     <link rel="stylesheet" href="styles/base.css" />
     <link rel="stylesheet" href="styles/layout.css" />
     <link rel="stylesheet" href="styles/preview.css" />
+    <link rel="stylesheet" href="styles/broken-asset-banner.css" />
     <link rel="stylesheet" href="styles/inspector.css" />
     <link rel="stylesheet" href="styles/overlay.css" />
     <link rel="stylesheet" href="styles/modal.css" />
@@ -889,6 +890,32 @@
               <div class="block-reason-text" id="blockReasonText"></div>
               <div class="block-reason-actions">
                 <button type="button" class="ghost-btn" id="blockReasonActionBtn" hidden></button>
+              </div>
+            </div>
+            <!-- [WO-24] Broken-asset recovery banner (P0-04) -->
+            <div
+              id="brokenAssetBanner"
+              class="broken-asset-banner"
+              role="status"
+              aria-live="polite"
+              aria-hidden="true"
+              data-editor-ui="true"
+              hidden
+            >
+              <div class="broken-asset-banner__body">
+                <div class="broken-asset-banner__title" id="brokenAssetBannerTitle">
+                  Не загружено 0 файлов
+                </div>
+                <ul class="broken-asset-banner__list" id="brokenAssetBannerList" aria-label="Список не найденных файлов"></ul>
+                <div class="broken-asset-banner__footnote" id="brokenAssetBannerFootnote">
+                  Подключите папку проекта, чтобы редактор восстановил относительные ссылки.
+                </div>
+              </div>
+              <div class="broken-asset-banner__actions">
+                <button type="button" class="ghost-btn" id="brokenAssetBannerActionBtn">
+                  Подключить папку ресурсов
+                </button>
+                <button type="button" class="icon-btn" id="brokenAssetBannerDismissBtn" aria-label="Скрыть предупреждение">×</button>
               </div>
             </div>
             <!-- [LAYER-MODEL v2] selection mode toggle -->
@@ -1810,6 +1837,7 @@
     <script src="src/export.js"></script>
     <script src="src/history.js"></script>
     <script src="src/feedback.js"></script>
+    <script src="src/broken-asset-banner.js"></script>
     <script src="src/selection.js"></script>
     <script src="src/layers-panel.js"></script>
     <script src="src/floating-toolbar.js"></script>
