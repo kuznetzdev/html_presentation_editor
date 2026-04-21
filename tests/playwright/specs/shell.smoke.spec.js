@@ -780,8 +780,11 @@ test.describe("Editor shell smoke @harness", () => {
     expect(shell.workflow).toBe("empty");
     expect(shell.controls.open).toBe(true);
     expect(shell.controls.emptyOpen).toBe(true);
-    expect(shell.controls.emptyPaste).toBe(true);
+    // emptyPasteBtn is now inside a disclosure panel (#emptyMorePanel) — hidden by default (WO-25)
+    expect(shell.controls.emptyPaste).toBe(false);
     await expect(page.locator("#emptyStarterDeckBtn")).toBeVisible();
+    // Disclosure toggle must be visible
+    await expect(page.locator("#emptyMoreToggleBtn")).toBeVisible();
     expect(shell.controls.previewMode).toBe(false);
     expect(shell.controls.editMode).toBe(false);
     expect(shell.controls.basicMode).toBe(false);

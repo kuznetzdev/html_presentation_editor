@@ -43,6 +43,7 @@
     <link rel="stylesheet" href="styles/overlay.css" />
     <link rel="stylesheet" href="styles/modal.css" />
     <link rel="stylesheet" href="styles/responsive.css" />
+    <link rel="stylesheet" href="styles/onboarding.css" />
   </head>
   <body>
     <!-- ====================================================================
@@ -455,7 +456,7 @@
               <div class="empty-state-lead" id="emptyStateLead">
                 Редактор открывает файл напрямую — без конвертации. После загрузки можно сразу переходить к правке.
               </div>
-              <div class="empty-state-steps" aria-label="Как начать работу">
+              <div class="empty-state-steps" aria-label="Как начать работу" hidden>
                 <div class="empty-state-step">
                   <span class="empty-state-step-index">1</span>
                   <strong>Откройте HTML</strong>
@@ -484,12 +485,25 @@
                 <button type="button" id="emptyOpenBtn" class="primary-btn">
                   Открыть HTML
                 </button>
-                <button type="button" id="emptyPasteBtn" class="ghost-btn">
-                  Вставить из буфера
-                </button>
                 <button type="button" id="emptyStarterDeckBtn" class="ghost-btn">
-                  Открыть стартовый пример
+                  Попробовать на примере
                 </button>
+                <div class="empty-state-more" data-empty-state-more>
+                  <button
+                    type="button"
+                    id="emptyMoreToggleBtn"
+                    class="text-btn"
+                    aria-expanded="false"
+                    aria-controls="emptyMorePanel"
+                  >
+                    Дополнительно ▾
+                  </button>
+                  <div id="emptyMorePanel" class="empty-state-more-panel" hidden>
+                    <button type="button" id="emptyPasteBtn" class="ghost-btn">
+                      Вставить из буфера
+                    </button>
+                  </div>
+                </div>
               </div>
               <div class="empty-state-footnote" id="emptyStateFootnote">
                 Загрузите HTML для предпросмотра.
