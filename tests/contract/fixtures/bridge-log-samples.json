@@ -1,0 +1,149 @@
+[
+  {
+    "id": "F-01-hello-happy",
+    "description": "Happy path: minimal valid hello handshake (ADR-012 §1)",
+    "message": {
+      "type": "hello",
+      "protocol": "v2",
+      "build": "448baf7",
+      "capabilities": ["select", "replace-node-html"]
+    },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "F-02-hello-empty-capabilities",
+    "description": "Happy path: hello with empty capabilities array is valid",
+    "message": {
+      "type": "hello",
+      "protocol": "v2",
+      "build": "abc1234",
+      "capabilities": []
+    },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "F-03-select-happy",
+    "description": "Happy path: valid select message with required fields",
+    "message": {
+      "type": "select",
+      "nodeId": "node-42",
+      "slideId": "slide-01"
+    },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "F-04-select-with-selection-path",
+    "description": "Happy path: valid select with optional selectionPath",
+    "message": {
+      "type": "select",
+      "nodeId": "node-99",
+      "slideId": "slide-03",
+      "selectionPath": "slide > .card > h1"
+    },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "F-05-replace-node-html-happy",
+    "description": "Happy path: replace-node-html with small payload",
+    "message": {
+      "type": "replace-node-html",
+      "nodeId": "node-7",
+      "html": "<p>Hello <strong>World</strong></p>"
+    },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "F-06-replace-node-html-boundary",
+    "description": "Boundary: replace-node-html html field exactly at 262144 bytes (should pass)",
+    "message": {
+      "type": "replace-node-html",
+      "nodeId": "node-boundary",
+      "__html_byte_length": 262144,
+      "__html_generated": true,
+      "html": "BOUNDARY_262144"
+    },
+    "expected": { "ok": true, "errors": [] },
+    "__setup_note": "The test runner replaces html with a string of exactly 262144 ASCII bytes"
+  },
+  {
+    "id": "F-07-replace-node-html-over-limit",
+    "description": "Negative: replace-node-html html field over 262144 bytes (should fail)",
+    "message": {
+      "type": "replace-node-html",
+      "nodeId": "node-overflow",
+      "__html_byte_length": 262145,
+      "__html_generated": true,
+      "html": "OVER_262145"
+    },
+    "expected": { "ok": false, "errors": ["exceeds max size"] },
+    "__setup_note": "The test runner replaces html with a string of exactly 262145 ASCII bytes"
+  },
+  {
+    "id": "F-08-missing-node-id",
+    "description": "Negative: replace-node-html missing nodeId field",
+    "message": {
+      "type": "replace-node-html",
+      "html": "<p>text</p>"
+    },
+    "expected": { "ok": false, "errors": ["nodeId"] }
+  },
+  {
+    "id": "F-09-unknown-type",
+    "description": "Negative: unknown message type is rejected",
+    "message": {
+      "type": "teleport-node",
+      "nodeId": "x"
+    },
+    "expected": { "ok": false, "errors": ["unknown message type"] }
+  },
+  {
+    "id": "F-10-non-object-message",
+    "description": "Negative: non-object message (string) is rejected",
+    "message": "hello from iframe",
+    "expected": { "ok": false, "errors": ["must be a non-null object"] }
+  },
+  {
+    "id": "F-11-null-message",
+    "description": "Negative: null is rejected",
+    "message": null,
+    "expected": { "ok": false, "errors": ["must be a non-null object"] }
+  },
+  {
+    "id": "F-12-missing-protocol-in-hello",
+    "description": "Negative: hello without protocol field fails validation",
+    "message": {
+      "type": "hello",
+      "build": "abc1234",
+      "capabilities": ["select"]
+    },
+    "expected": { "ok": false, "errors": ["protocol"] }
+  },
+  {
+    "id": "F-13-missing-slide-id-in-select",
+    "description": "Negative: select without slideId fails validation",
+    "message": {
+      "type": "select",
+      "nodeId": "node-5"
+    },
+    "expected": { "ok": false, "errors": ["slideId"] }
+  },
+  {
+    "id": "F-14-schema-free-type-passthrough",
+    "description": "Happy path: schema-free types (bridge-ready, ack, etc.) pass without payload constraints",
+    "message": {
+      "type": "bridge-ready",
+      "anyField": "anyValue"
+    },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "F-15-ack-schema-free",
+    "description": "Happy path: ack is schema-free and passes validation",
+    "message": {
+      "type": "ack",
+      "refSeq": 7,
+      "ok": true
+    },
+    "expected": { "ok": true, "errors": [] }
+  }
+]

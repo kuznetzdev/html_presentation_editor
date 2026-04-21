@@ -54,6 +54,20 @@ module.exports = defineConfig({
     timeout: 30_000,
   },
   projects: [
+    // -------------------------------------------------------------------------
+    // gate-contract — Bridge schema registry contract tests (WO-08 / ADR-012)
+    // Pure Node.js vm sandbox — no browser DOM required; runs fast (< 5 s).
+    // testMatch scoped to tests/contract/ to keep it isolated from Gate-A.
+    // -------------------------------------------------------------------------
+    {
+      name: "gate-contract",
+      testDir: path.join(__dirname, "tests", "contract"),
+      testMatch: "**/*.spec.js",
+      use: {
+        browserName: "chromium",
+        viewport: { width: 1280, height: 900 },
+      },
+    },
     {
       name: "chromium-desktop",
       use: {

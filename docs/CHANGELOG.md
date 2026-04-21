@@ -2,7 +2,11 @@
 
 ## Unreleased
 
+### Tests
+- Bridge schema registry + contract scaffold — 15-fixture test corpus covering happy-path (hello, select, replace-node-html), boundary (html exactly at 262144 bytes), and negative cases (over-limit, missing nodeId, unknown type, non-object). Gate-contract project added to playwright.config.js. Pure Node.js vm sandbox — no browser required. WO-08 / ADR-012 §2 / PAIN-MAP P0-13.
+
 ### Security
+- Shell banner plumbing + broken-asset recovery + sandbox-mode flag (AUDIT-D-01/07, P0-04). `shellBoundary.report/clear` API added to `feedback.js` (ADR-014 §Layer 1). `#shellBanner` region added to shell chrome (role=region, aria-live=polite, non-blocking). `SANDBOX_MODES` enum + `DEFAULT_SANDBOX_MODE='off'` added to `constants.js`; `state.sandboxMode` wired at `import.js:97` switch replacing bare `removeAttribute("sandbox")` with ADR-014/AUDIT-D-01/07 comment. `probeBrokenAssets` probes img/link/video/source via HEAD (localhost) or onerror-inspection (file://); result surfaces Russian banner "Некоторые ресурсы не найдены. N файл(ов)." with "Подключить папку ресурсов" action. New gate: `broken-asset-banner.spec.js` (4 scenarios). WO-07 will wire Trust-Banner script detection to SANDBOX_MODES.SCRIPTS_ONLY.
 - Autosave size cap: warn at 3 MB, light-snapshot fallback at 6 MB, QuotaExceededError handled gracefully (AUDIT-D-05). stripHeavyDataUris strips only data:image/... URIs > 1024 chars; all HTML structure preserved. Russian toast copy surfaced at every tier; light-snapshot banner shown on restore. New gate: autosave-cap.spec.js (3 scenarios).
 - Assert bridge postMessage origin in receive handlers (bridge.js shell + bridge-script.js iframe); replace bare `'*'` send target with origin-aware target — `file://` retains `'*'` (browser rejects `"null"` as target), `http(s)://` uses `location.origin`. New gate: `bridge-origin.spec.js` (2 scenarios + file:// note). Closes AUDIT-D-04. ADR-012 §4.
 - Vendor pptxgenjs@3.12.0 under `editor/vendor/pptxgenjs/` to eliminate CDN supply-chain risk (AUDIT-D-03, P0-03). CDN path retained as operator opt-in with SRI `integrity` + `crossorigin="anonymous"` on the `<script>` element. Vendor path resolves under `file://` — no network required for default PPTX export flow. New gate: `export-sri.spec.js` (2 scenarios).
