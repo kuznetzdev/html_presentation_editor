@@ -1,0 +1,135 @@
+/* banners.css — @layer banners
+ * Shell-level persistent notification bar (ADR-014 §Layer 1, WO-06).
+ * Wires into #shellBanner injected by shellBoundary.report/clear API (feedback.js).
+ *
+ * Design contract (ADR-014):
+ *  - Non-blocking: never steals focus, never overlaps modal/overlay surfaces.
+ *  - Coexists with toasts, popovers, and transient surfaces.
+ *  - role=region + aria-live=polite: screen readers announce new items without interrupting.
+ *  - Collapses (display:none) when empty; no dead vertical space.
+ *
+ * OWASP: A05:2021 Security Misconfiguration — visible disclosure of security state
+ *   to users is a positive control; this banner surfaces broken-asset warnings so
+ *   users can make informed decisions before editing or exporting.
+ */
+
+@layer banners {
+
+  /* ── Region container ─────────────────────────────────────────────────── */
+  #shellBanner {
+    /* Sits above the workspace, below the topbar. */
+    position: sticky;
+    top: 0;
+    z-index: 90;
+    /* Stacks items top-down; multiple banners are separated by a hairline. */
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    /* Collapsed by default via inline style="display:none"; shown by JS.    */
+    background: transparent;
+    /* Prevent banner from intercepting pointer events when logically empty.  */
+    pointer-events: none;
+  }
+
+  /* ── Individual banner item ───────────────────────────────────────────── */
+  .shell-banner-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    /* Warning appearance (default kind). Override per kind below. */
+    background: var(--shell-warning-bg, rgba(143, 106, 21, 0.08));
+    border-bottom: 1px solid var(--shell-warning-border, rgba(143, 106, 21, 0.14));
+    color: var(--shell-text, #1d1d1f);
+    pointer-events: all;
+  }
+
+  /* kind variants */
+  .shell-banner-item[data-kind="error"] {
+    background: var(--shell-danger-bg, rgba(201, 52, 47, 0.08));
+    border-bottom-color: var(--shell-danger-border, rgba(201, 52, 47, 0.14));
+  }
+
+  .shell-banner-item[data-kind="info"] {
+    background: var(--shell-accent-soft, rgba(0, 113, 227, 0.06));
+    border-bottom-color: var(--state-accent-border, rgba(0, 113, 227, 0.18));
+  }
+
+  /* ── Banner message text ──────────────────────────────────────────────── */
+  .shell-banner-message {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* ── Action buttons row ───────────────────────────────────────────────── */
+  .shell-banner-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .shell-banner-action-btn {
+    /* Inherits ghost-btn visuals; reset to minimal baseline here. */
+    appearance: none;
+    background: none;
+    border: 1px solid var(--shell-border-strong, rgba(29, 29, 31, 0.12));
+    border-radius: 5px;
+    padding: 3px 10px;
+    font-size: 0.8125rem;
+    font-family: inherit;
+    cursor: pointer;
+    color: var(--shell-accent, #0071e3);
+    white-space: nowrap;
+  }
+
+  .shell-banner-action-btn:hover {
+    background: var(--shell-accent-soft, rgba(0, 113, 227, 0.06));
+  }
+
+  .shell-banner-action-btn:focus-visible {
+    outline: 2px solid var(--shell-accent, #0071e3);
+    outline-offset: 2px;
+  }
+
+  /* ── Dismiss button ───────────────────────────────────────────────────── */
+  .shell-banner-dismiss {
+    appearance: none;
+    background: none;
+    border: none;
+    padding: 2px 6px;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--shell-text-muted, rgba(60, 60, 67, 0.6));
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  .shell-banner-dismiss:hover {
+    color: var(--shell-text, #1d1d1f);
+    background: var(--shell-field-bg, #f2f2f7);
+  }
+
+  .shell-banner-dismiss:focus-visible {
+    outline: 2px solid var(--shell-accent, #0071e3);
+    outline-offset: 2px;
+  }
+
+  /* Dark theme adjustments */
+  [data-theme="dark"] .shell-banner-item {
+    color: var(--shell-text, #f5f5f7);
+  }
+
+  [data-theme="dark"] .shell-banner-action-btn {
+    color: var(--shell-accent, #2997ff);
+    border-color: var(--shell-border-strong, rgba(255, 255, 255, 0.12));
+  }
+
+  [data-theme="dark"] .shell-banner-dismiss {
+    color: var(--shell-text-muted, rgba(235, 235, 245, 0.6));
+  }
+
+} /* end @layer banners */

@@ -188,6 +188,22 @@
       const AUTOSAVE_FAIL_BYTES = 6 * 1024 * 1024;  // 6 MB
       const AUTOSAVE_LIGHT_TAG = 'light-v1';
       // =====================================================================
+      // Sandbox-mode flag (AUDIT-D-01, AUDIT-D-07, ADR-014 §Layer 1, WO-06)
+      // Controls how import.js arms the preview iframe sandbox attribute.
+      //   OFF          — removeAttribute("sandbox") — full trust, deck-engine JS works
+      //                  (file:// + localhost default; ADR-014 §Layer 1 decision)
+      //   SCRIPTS_ONLY — allow-scripts allow-same-origin; scripts run but origin isolated
+      //                  (WO-07 will wire Trust-Banner toggle to SCRIPTS_ONLY)
+      //   FULL         — allow-same-origin only; scripts completely blocked
+      const SANDBOX_MODES = Object.freeze({
+        OFF: "off",
+        SCRIPTS_ONLY: "scripts-only",
+        FULL: "full",
+      });
+      // DEFAULT_SANDBOX_MODE = OFF preserves the product promise: deck-engine JS
+      // (reveal.js, Shower, etc.) keeps running. WO-07 will add user-facing toggle.
+      const DEFAULT_SANDBOX_MODE = SANDBOX_MODES.OFF;
+      // =====================================================================
       // Bridge origin allow-list (AUDIT-D-04, ADR-012 §4)
       // Under file:// protocol the browser reports event.origin === "null"
       // (the string "null", not JS null). We must accept that string.

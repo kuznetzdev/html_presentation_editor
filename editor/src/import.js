@@ -94,13 +94,35 @@
         els.documentMeta.textContent = `${sourceLabel} • подготовка превью…`;
         els.emptyState.classList.add("hidden");
         els.previewFrame.classList.remove("hidden");
-        els.previewFrame.removeAttribute("sandbox");
+        // Sandbox-mode switch — AUDIT-D-01/07, ADR-014 §Layer 1, WO-06.
+        // OFF (default) removes the sandbox attribute entirely so the deck's own
+        // script engine (reveal.js, Shower, etc.) keeps running.
+        // SCRIPTS_ONLY / FULL are reserved for WO-07 Trust-Banner toggle.
+        switch (state.sandboxMode) {
+          case SANDBOX_MODES.SCRIPTS_ONLY:
+            els.previewFrame.setAttribute("sandbox", "allow-scripts allow-same-origin");
+            break;
+          case SANDBOX_MODES.FULL:
+            els.previewFrame.setAttribute("sandbox", "allow-same-origin");
+            break;
+          case SANDBOX_MODES.OFF:
+          default:
+            // off = trust user's own deck script engine (ADR-014 §Layer 1, AUDIT-D-01/07)
+            els.previewFrame.removeAttribute("sandbox");
+            break;
+        }
         els.previewFrame.src = state.previewUrl;
 
         els.previewFrame.onload = () => {
           sendToBridge("set-mode", { mode: state.mode });
           // [LAYER-MODEL v2] sync selection mode after iframe load
           sendToBridge("set-selection-mode", { containerMode: state.selectionMode === "container" });
+          // [WO-06] probe for broken assets after iframe fully settles
+          window.setTimeout(function() {
+            if (typeof runBrokenAssetProbeAndReport === "function") {
+              runBrokenAssetProbeAndReport();
+            }
+          }, 200);
         };
 
         if (options.resetHistory) {
