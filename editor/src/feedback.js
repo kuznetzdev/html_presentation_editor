@@ -672,6 +672,11 @@
           case "zoom": return { label: "Сбросить масштаб", action: "reset-zoom" };
           case "locked": return { label: "Разблокировать", action: "unlock" };
           case "hidden": return { label: "Показать", action: "show" };
+          case "own-transform":
+          case "parent-transform":
+          case "slide-transform":
+          case "transform":
+            return { label: "Открыть инспектор", action: "resolve-transform" };
           default: return null;
         }
       }

@@ -351,6 +351,9 @@
           els.heightInput.value = "";
           els.leftInput.value = "";
           els.topInput.value = "";
+          // [WO-26] Clear transform input on deselect
+          { const tEl = document.getElementById("transformInput"); if (tEl) tEl.value = ""; }
+          { const rBtn = document.getElementById("resetTransformBtn"); if (rBtn) rBtn.disabled = true; }
           els.marginInput.value = "";
           els.paddingInput.value = "";
           if (els.opacityInput) els.opacityInput.value = "";
@@ -483,6 +486,22 @@
         els.heightInput.value = sanitizeCssValue(state.selectedComputed.height);
         els.leftInput.value = sanitizeCssValue(state.selectedComputed.left);
         els.topInput.value = sanitizeCssValue(state.selectedComputed.top);
+        // [WO-26] Populate transform input (inline style, not computed — avoid matrix expansion)
+        {
+          const transformEl = document.getElementById("transformInput");
+          const resetBtn = document.getElementById("resetTransformBtn");
+          const node = getSelectedModelNode();
+          const inlineTransform = node instanceof HTMLElement ? (node.style.transform || "") : "";
+          if (transformEl && document.activeElement !== transformEl) {
+            transformEl.value = inlineTransform;
+          }
+          if (transformEl) {
+            transformEl.disabled = !state.selectedPolicy?.canEditStyles;
+          }
+          if (resetBtn) {
+            resetBtn.disabled = !state.selectedPolicy?.canEditStyles || !inlineTransform;
+          }
+        }
         els.marginInput.value = sanitizeCssValue(state.selectedComputed.margin);
         els.paddingInput.value = sanitizeCssValue(
           state.selectedComputed.padding,
@@ -1051,6 +1070,9 @@
           els.heightInput.value = "";
           els.leftInput.value = "";
           els.topInput.value = "";
+          // [WO-26] Clear transform input on deselect
+          { const tEl = document.getElementById("transformInput"); if (tEl) tEl.value = ""; }
+          { const rBtn = document.getElementById("resetTransformBtn"); if (rBtn) rBtn.disabled = true; }
           els.marginInput.value = "";
           els.paddingInput.value = "";
           if (els.opacityInput) els.opacityInput.value = "";
@@ -1204,6 +1226,22 @@
         els.heightInput.value = sanitizeCssValue(state.selectedComputed.height);
         els.leftInput.value = sanitizeCssValue(state.selectedComputed.left);
         els.topInput.value = sanitizeCssValue(state.selectedComputed.top);
+        // [WO-26] Populate transform input (inline style, not computed — avoid matrix expansion)
+        {
+          const transformEl = document.getElementById("transformInput");
+          const resetBtn = document.getElementById("resetTransformBtn");
+          const node = getSelectedModelNode();
+          const inlineTransform = node instanceof HTMLElement ? (node.style.transform || "") : "";
+          if (transformEl && document.activeElement !== transformEl) {
+            transformEl.value = inlineTransform;
+          }
+          if (transformEl) {
+            transformEl.disabled = !state.selectedPolicy?.canEditStyles;
+          }
+          if (resetBtn) {
+            resetBtn.disabled = !state.selectedPolicy?.canEditStyles || !inlineTransform;
+          }
+        }
         els.marginInput.value = sanitizeCssValue(state.selectedComputed.margin);
         els.paddingInput.value = sanitizeCssValue(
           state.selectedComputed.padding,
