@@ -502,7 +502,7 @@
         if (!hasTableCellSelection()) return;
         sendToBridge("navigate-table-cell", {
           nodeId: state.selectedNodeId,
-          direction: direction === "previous" ? "previous" : "next",
+          direction: direction === "previous" ? "shift-tab" : "tab",
         });
       }
 

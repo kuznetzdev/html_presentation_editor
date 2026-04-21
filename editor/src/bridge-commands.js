@@ -77,6 +77,17 @@
 
       function sendToBridge(type, payload = {}) {
         if (!state.bridgeToken || !els.previewFrame.contentWindow) return false;
+        // [WO-13] ADR-012 §2 — Pre-send schema validation gate.
+        // Validate the flat message envelope (type + payload fields) before
+        // dispatching. On reject: drop + diagnostic, do NOT send.
+        if (window.BRIDGE_SCHEMA) {
+          const _flat = Object.assign({ type }, payload);
+          const _vResult = window.BRIDGE_SCHEMA.validateMessage(_flat);
+          if (!_vResult.ok) {
+            addDiagnostic(`bridge-send-rejected:${type}:${_vResult.errors.join('; ')}`);
+            return false;
+          }
+        }
         try {
           const message = {
             __presentationEditorParent: true,
@@ -180,21 +191,8 @@
       // applyElementSelection
       // Обновляет данные о выбранном элементе: тег, html, computed styles,
       // флаги типа (text/image/video/container) и атрибуты.
-      const CANONICAL_ENTITY_KINDS = new Set([
-        "text",
-        "image",
-        "video",
-        "container",
-        "element",
-        "slide-root",
-        "protected",
-        "table",
-        "table-cell",
-        "code-block",
-        "svg",
-        "fragment",
-        "none",
-      ]);
+      // PAIN-MAP P2-05: single source of truth via CANONICAL_ENTITY_KINDS_ARR (constants.js).
+      const CANONICAL_ENTITY_KINDS = new Set(CANONICAL_ENTITY_KINDS_ARR);
 
       function readCanonicalEntityKind(kind) {
         const normalized = String(kind || "")

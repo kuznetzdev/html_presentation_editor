@@ -1,0 +1,322 @@
+[
+  {
+    "id": "BL-01-hello-happy",
+    "description": "Happy path: valid hello handshake (numeric protocol:2)",
+    "message": { "type": "hello", "protocol": 2, "build": "v0.29.1", "capabilities": ["replace-node-html", "replace-slide-html"] },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "BL-02-hello-empty-caps",
+    "description": "Happy path: hello with empty capabilities array",
+    "message": { "type": "hello", "protocol": 2, "build": "abc1234", "capabilities": [] },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "BL-03-hello-wrong-proto-number",
+    "description": "Negative: hello protocol:1 (wrong version number)",
+    "message": { "type": "hello", "protocol": 1, "build": "old", "capabilities": [] },
+    "expected": { "ok": false, "errors": ["protocol"] }
+  },
+  {
+    "id": "BL-04-hello-string-proto",
+    "description": "Negative: hello protocol as string 'v2' (must be numeric 2)",
+    "message": { "type": "hello", "protocol": "v2", "build": "old", "capabilities": [] },
+    "expected": { "ok": false, "errors": ["protocol"] }
+  },
+  {
+    "id": "BL-05-hello-missing-build",
+    "description": "Negative: hello without build field",
+    "message": { "type": "hello", "protocol": 2, "capabilities": [] },
+    "expected": { "ok": false, "errors": ["build"] }
+  },
+  {
+    "id": "BL-06-hello-capabilities-not-array",
+    "description": "Negative: hello capabilities as string instead of array",
+    "message": { "type": "hello", "protocol": 2, "build": "abc", "capabilities": "select" },
+    "expected": { "ok": false, "errors": ["capabilities"] }
+  },
+  {
+    "id": "BL-07-select-happy",
+    "description": "Happy path: valid select with required fields",
+    "message": { "type": "select", "nodeId": "node-42", "slideId": "slide-01" },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "BL-08-select-with-selectionpath",
+    "description": "Happy path: select with optional selectionPath string",
+    "message": { "type": "select", "nodeId": "node-99", "slideId": "slide-03", "selectionPath": "section > .box" },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "BL-09-select-empty-nodeid",
+    "description": "Negative: select with empty nodeId",
+    "message": { "type": "select", "nodeId": "", "slideId": "slide-01" },
+    "expected": { "ok": false, "errors": ["nodeId"] }
+  },
+  {
+    "id": "BL-10-select-missing-slideid",
+    "description": "Negative: select without slideId",
+    "message": { "type": "select", "nodeId": "n1" },
+    "expected": { "ok": false, "errors": ["slideId"] }
+  },
+  {
+    "id": "BL-11-select-numeric-nodeid",
+    "description": "Negative: select with numeric nodeId (must be string)",
+    "message": { "type": "select", "nodeId": 42, "slideId": "slide-01" },
+    "expected": { "ok": false, "errors": ["nodeId"] }
+  },
+  {
+    "id": "BL-12-replace-node-html-happy",
+    "description": "Happy path: replace-node-html with small HTML payload",
+    "message": { "type": "replace-node-html", "nodeId": "node-7", "html": "<p>Hello <strong>World</strong></p>" },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "BL-13-replace-node-html-boundary",
+    "description": "Boundary: replace-node-html exactly at 262144 bytes (should pass)",
+    "message": {
+      "type": "replace-node-html",
+      "nodeId": "node-boundary",
+      "__html_byte_length": 262144,
+      "__html_generated": true,
+      "html": "BOUNDARY_262144"
+    },
+    "expected": { "ok": true, "errors": [] },
+    "__setup_note": "Test runner replaces html with exactly 262144 ASCII bytes"
+  },
+  {
+    "id": "BL-14-replace-node-html-over-limit",
+    "description": "Negative: replace-node-html over 262144 bytes (should fail with oversize error)",
+    "message": {
+      "type": "replace-node-html",
+      "nodeId": "node-overflow",
+      "__html_byte_length": 262145,
+      "__html_generated": true,
+      "html": "OVER_262145"
+    },
+    "expected": { "ok": false, "errors": ["exceeds max size"] },
+    "__setup_note": "Test runner replaces html with exactly 262145 ASCII bytes"
+  },
+  {
+    "id": "BL-15-replace-node-html-missing-nodeid",
+    "description": "Negative: replace-node-html without nodeId",
+    "message": { "type": "replace-node-html", "html": "<p>text</p>" },
+    "expected": { "ok": false, "errors": ["nodeId"] }
+  },
+  {
+    "id": "BL-16-replace-node-html-numeric-html",
+    "description": "Negative: replace-node-html html field is a number",
+    "message": { "type": "replace-node-html", "nodeId": "n1", "html": 123 },
+    "expected": { "ok": false, "errors": ["html"] }
+  },
+  {
+    "id": "BL-17-replace-slide-html-happy",
+    "description": "Happy path: replace-slide-html with valid payload",
+    "message": { "type": "replace-slide-html", "slideId": "slide-01", "html": "<section class='slide'><p>ok</p></section>" },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "BL-18-replace-slide-html-over-limit",
+    "description": "Negative: replace-slide-html over 262144 bytes",
+    "message": {
+      "type": "replace-slide-html",
+      "slideId": "slide-overflow",
+      "__html_byte_length": 262145,
+      "__html_generated": true,
+      "html": "OVER_262145"
+    },
+    "expected": { "ok": false, "errors": ["exceeds max size"] }
+  },
+  {
+    "id": "BL-19-replace-slide-html-missing-slideid",
+    "description": "Negative: replace-slide-html without slideId",
+    "message": { "type": "replace-slide-html", "html": "<section></section>" },
+    "expected": { "ok": false, "errors": ["slideId"] }
+  },
+  {
+    "id": "BL-20-insert-element-happy",
+    "description": "Happy path: insert-element with valid slideId and html",
+    "message": { "type": "insert-element", "slideId": "slide-01", "html": "<div class='box'>New</div>" },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "BL-21-insert-element-missing-slideid",
+    "description": "Negative: insert-element without slideId",
+    "message": { "type": "insert-element", "html": "<div>x</div>" },
+    "expected": { "ok": false, "errors": ["slideId"] }
+  },
+  {
+    "id": "BL-22-apply-style-happy",
+    "description": "Happy path: apply-style with valid fields",
+    "message": { "type": "apply-style", "nodeId": "n1", "styleName": "color", "value": "red" },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "BL-23-apply-style-empty-value-ok",
+    "description": "Happy path: apply-style with empty string value (removes property)",
+    "message": { "type": "apply-style", "nodeId": "n1", "styleName": "color", "value": "" },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "BL-24-apply-style-missing-stylename",
+    "description": "Negative: apply-style without styleName",
+    "message": { "type": "apply-style", "nodeId": "n1", "value": "red" },
+    "expected": { "ok": false, "errors": ["styleName"] }
+  },
+  {
+    "id": "BL-25-apply-styles-happy",
+    "description": "Happy path: apply-styles with nodeId and styles object",
+    "message": { "type": "apply-styles", "nodeId": "n1", "styles": { "color": "blue", "fontSize": "16px" } },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "BL-26-apply-styles-styles-not-object",
+    "description": "Negative: apply-styles with styles as array",
+    "message": { "type": "apply-styles", "nodeId": "n1", "styles": ["color", "red"] },
+    "expected": { "ok": false, "errors": ["styles"] }
+  },
+  {
+    "id": "BL-27-update-attributes-happy",
+    "description": "Happy path: update-attributes with nodeId and attrs object",
+    "message": { "type": "update-attributes", "nodeId": "n1", "attrs": { "data-custom": "value" } },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "BL-28-update-attributes-missing-attrs",
+    "description": "Negative: update-attributes without attrs field",
+    "message": { "type": "update-attributes", "nodeId": "n1" },
+    "expected": { "ok": false, "errors": ["attrs"] }
+  },
+  {
+    "id": "BL-29-ack-happy-ok-true",
+    "description": "Happy path: ack with ok:true and valid refSeq",
+    "message": { "type": "ack", "refSeq": 42, "ok": true },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "BL-30-ack-happy-ok-false-with-error",
+    "description": "Happy path: ack with ok:false and error object",
+    "message": { "type": "ack", "refSeq": 7, "ok": false, "error": { "code": "replace-node-html.oversize", "message": "too large" } },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "BL-31-ack-missing-refseq",
+    "description": "Negative: ack without refSeq",
+    "message": { "type": "ack", "ok": true },
+    "expected": { "ok": false, "errors": ["refSeq"] }
+  },
+  {
+    "id": "BL-32-ack-boolean-string-ok",
+    "description": "Negative: ack with ok as string 'true' instead of boolean",
+    "message": { "type": "ack", "refSeq": 1, "ok": "true" },
+    "expected": { "ok": false, "errors": ["ok"] }
+  },
+  {
+    "id": "BL-33-move-element-happy",
+    "description": "Happy path: move-element with nodeId and direction number",
+    "message": { "type": "move-element", "nodeId": "n1", "direction": 1 },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "BL-34-move-element-direction-string",
+    "description": "Negative: move-element with direction as string",
+    "message": { "type": "move-element", "nodeId": "n1", "direction": "up" },
+    "expected": { "ok": false, "errors": ["direction"] }
+  },
+  {
+    "id": "BL-35-nudge-element-happy",
+    "description": "Happy path: nudge-element with dx and dy numbers",
+    "message": { "type": "nudge-element", "nodeId": "n1", "dx": 10, "dy": -5 },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "BL-36-nudge-element-missing-dy",
+    "description": "Negative: nudge-element without dy",
+    "message": { "type": "nudge-element", "nodeId": "n1", "dx": 10 },
+    "expected": { "ok": false, "errors": ["dy"] }
+  },
+  {
+    "id": "BL-37-replace-image-src-happy",
+    "description": "Happy path: replace-image-src with nodeId and src",
+    "message": { "type": "replace-image-src", "nodeId": "img1", "src": "photo.jpg" },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "BL-38-navigate-table-cell-happy",
+    "description": "Happy path: navigate-table-cell with valid direction",
+    "message": { "type": "navigate-table-cell", "nodeId": "td1", "direction": "right" },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "BL-39-navigate-table-cell-invalid-direction",
+    "description": "Negative: navigate-table-cell with unknown direction",
+    "message": { "type": "navigate-table-cell", "nodeId": "td1", "direction": "diagonal" },
+    "expected": { "ok": false, "errors": ["direction"] }
+  },
+  {
+    "id": "BL-40-table-structure-op-happy",
+    "description": "Happy path: table-structure-op insert-row-below",
+    "message": { "type": "table-structure-op", "nodeId": "td1", "operation": "insert-row-below" },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "BL-41-table-structure-op-invalid-operation",
+    "description": "Negative: table-structure-op with unknown operation",
+    "message": { "type": "table-structure-op", "nodeId": "td1", "operation": "shuffle-rows" },
+    "expected": { "ok": false, "errors": ["operation"] }
+  },
+  {
+    "id": "BL-42-proxy-select-at-point-happy",
+    "description": "Happy path: proxy-select-at-point with clientX and clientY",
+    "message": { "type": "proxy-select-at-point", "clientX": 100, "clientY": 200 },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "BL-43-proxy-select-at-point-missing-y",
+    "description": "Negative: proxy-select-at-point without clientY",
+    "message": { "type": "proxy-select-at-point", "clientX": 100 },
+    "expected": { "ok": false, "errors": ["clientY"] }
+  },
+  {
+    "id": "BL-44-request-slide-sync-no-slideid",
+    "description": "Happy path: request-slide-sync without slideId (syncs current slide)",
+    "message": { "type": "request-slide-sync" },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "BL-45-request-slide-sync-with-slideid",
+    "description": "Happy path: request-slide-sync with valid slideId",
+    "message": { "type": "request-slide-sync", "slideId": "slide-02", "reason": "manual" },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "BL-46-unknown-type",
+    "description": "Negative: completely unknown message type",
+    "message": { "type": "teleport-node", "nodeId": "x" },
+    "expected": { "ok": false, "errors": ["unknown message type"] }
+  },
+  {
+    "id": "BL-47-non-object",
+    "description": "Negative: non-object message (string)",
+    "message": "hello from iframe",
+    "expected": { "ok": false, "errors": ["must be a non-null object"] }
+  },
+  {
+    "id": "BL-48-null-message",
+    "description": "Negative: null message",
+    "message": null,
+    "expected": { "ok": false, "errors": ["must be a non-null object"] }
+  },
+  {
+    "id": "BL-49-schema-free-bridge-ready",
+    "description": "Happy path: schema-free bridge-ready passes without constraints",
+    "message": { "type": "bridge-ready", "anyField": "anyValue" },
+    "expected": { "ok": true, "errors": [] }
+  },
+  {
+    "id": "BL-50-schema-free-ack-passthrough",
+    "description": "Happy path: ack with refSeq:0 and ok:true passes validator",
+    "message": { "type": "ack", "refSeq": 0, "ok": true },
+    "expected": { "ok": true, "errors": [] }
+  }
+]

@@ -27,7 +27,9 @@
         const FLASH_ATTR = 'data-editor-flash';
         const EXCLUDED = new Set(['SCRIPT','STYLE','META','LINK','BASE','HEAD','HTML','BODY','NOSCRIPT','TEMPLATE']);
         const TEXT_TAGS = new Set(['H1','H2','H3','H4','H5','H6','P','LI','BLOCKQUOTE','FIGCAPTION','TD','TH','PRE','CODE','SMALL','LABEL','A','SPAN']);
-        const KNOWN_ENTITY_KINDS = new Set(['text','image','video','container','element','slide-root','protected','table','table-cell','code-block','svg','fragment']);
+        // PAIN-MAP P2-05: entity kinds injected from CANONICAL_ENTITY_KINDS_ARR (constants.js).
+        // Do NOT add kinds here — update constants.js CANONICAL_ENTITY_KINDS_ARR instead.
+        const KNOWN_ENTITY_KINDS = new Set(${JSON.stringify(CANONICAL_ENTITY_KINDS_ARR)});
         const PLAIN_TEXT_BLOCK_TAGS = new Set([
           'ADDRESS',
           'ARTICLE',
@@ -202,6 +204,21 @@
             ? options.seq
             : (Number(STATE.activeCommandSeq || 0) || 0);
           parent.postMessage({ __presentationEditor: true, token: TOKEN, type, seq, payload }, _SHELL_TARGET);
+        }
+
+        /**
+         * Emit a structured ack for a mutation message (ADR-012 §5).
+         * @param {number}  refSeq  - Sequence number of the originating mutation.
+         * @param {boolean} ok      - Whether the mutation succeeded.
+         * @param {string}  [code]  - Error code when ok:false.
+         * @param {string}  [msg]   - Human-readable error detail.
+         */
+        function postAck(refSeq, ok, code, msg) {
+          const ackPayload = { refSeq: refSeq, ok: ok };
+          if (!ok && code) {
+            ackPayload.error = { code: code, message: msg || code };
+          }
+          post('ack', ackPayload, { seq: refSeq });
         }
 
         function onRuntimeError(message, source, line, column) {
@@ -1102,7 +1119,7 @@
           const rows = getAllTableRows(context.table);
           const rowIndex = rows.indexOf(context.row);
           if (rowIndex === -1) return false;
-          const step = direction === 'previous' ? -1 : 1;
+          const step = (direction === 'previous' || direction === 'shift-tab') ? -1 : 1;
           const rowCells = Array.from(context.row.cells);
           const inRowCell = rowCells[context.cellIndex + step] || null;
           if (inRowCell instanceof HTMLTableCellElement) {
@@ -3474,6 +3491,7 @@
               }
               case 'insert-element': {
                 insertElement(payload);
+                postAck(inboundSeq, true);
                 break;
               }
               case 'flash-node': {
@@ -3512,10 +3530,27 @@
                 break;
               }
               case 'replace-node-html': {
+                // ADR-012 §7: Validate size before parseSingleRoot (schema pre-check layer).
+                if (typeof payload.html === 'string') {
+                  try {
+                    const _byteLen = unescape(encodeURIComponent(payload.html)).length;
+                    if (_byteLen > ${JSON.stringify(262144)}) {
+                      postAck(inboundSeq, false, 'replace-node-html.oversize',
+                        'html payload too large: ' + _byteLen + ' bytes');
+                      return;
+                    }
+                  } catch (_) {}
+                }
                 const current = findNodeById(payload.nodeId);
-                if (!current || !createProtectionPolicy(current).canEditHtml) return;
+                if (!current || !createProtectionPolicy(current).canEditHtml) {
+                  postAck(inboundSeq, false, 'replace-node-html.rejected', 'node not found or not editable');
+                  return;
+                }
                 const replacement = parseSingleRoot(payload.html);
-                if (!replacement) return;
+                if (!replacement) {
+                  postAck(inboundSeq, false, 'replace-node-html.parse-failed', 'parseSingleRoot returned null');
+                  return;
+                }
                 preserveAuthoredMarkerContract(current, replacement);
                 ensureUniqueDomIds(replacement, current);
                 replacement.setAttribute(EDITOR_MARKER, payload.nodeId);
@@ -3523,13 +3558,31 @@
                 current.replaceWith(replacement);
                 selectElement(replacement, { focusText: false });
                 notifyElementUpdated(replacement);
+                postAck(inboundSeq, true);
                 break;
               }
               case 'replace-slide-html': {
+                // ADR-012 §7: Validate size before parseSingleRoot.
+                if (typeof payload.html === 'string') {
+                  try {
+                    const _byteLen = unescape(encodeURIComponent(payload.html)).length;
+                    if (_byteLen > ${JSON.stringify(262144)}) {
+                      postAck(inboundSeq, false, 'replace-slide-html.oversize',
+                        'html payload too large: ' + _byteLen + ' bytes');
+                      return;
+                    }
+                  } catch (_) {}
+                }
                 const current = findSlideById(payload.slideId);
-                if (!current) return;
+                if (!current) {
+                  postAck(inboundSeq, false, 'replace-slide-html.not-found', 'slide not found: ' + payload.slideId);
+                  return;
+                }
                 const replacement = parseSingleRoot(payload.html);
-                if (!replacement) return;
+                if (!replacement) {
+                  postAck(inboundSeq, false, 'replace-slide-html.parse-failed', 'parseSingleRoot returned null');
+                  return;
+                }
                 preserveAuthoredMarkerContract(current, replacement);
                 ensureUniqueDomIds(replacement, current);
                 replacement.setAttribute(SLIDE_MARKER, payload.slideId);
@@ -3537,6 +3590,7 @@
                 current.replaceWith(replacement);
                 STATE.slides = collectSlides();
                 emitRuntimeMetadata();
+                postAck(inboundSeq, true);
                 break;
               }
               // [v0.18.0] Toggle element visibility (session-only, not synced to parent)

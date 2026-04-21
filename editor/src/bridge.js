@@ -182,6 +182,23 @@
                   }
                 }
                 break;
+              // [WO-13] ADR-012 §5 — structured ack from iframe after mutation
+              case "ack": {
+                const _ackPayload = data.payload || {};
+                const _refSeq = Number(_ackPayload.refSeq || 0);
+                if (_refSeq > 0) {
+                  state.bridgeAcks.set(_refSeq, {
+                    refSeq: _refSeq,
+                    ok: Boolean(_ackPayload.ok),
+                    error: _ackPayload.error || undefined,
+                    stale: _ackPayload.stale || undefined,
+                  });
+                  if (!_ackPayload.ok && _ackPayload.error) {
+                    addDiagnostic(`bridge-ack-error:seq=${_refSeq}:${_ackPayload.error.code || 'unknown'}:${_ackPayload.error.message || ''}`);
+                  }
+                }
+                break;
+              }
             }
           } catch (error) {
             addDiagnostic(

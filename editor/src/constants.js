@@ -148,6 +148,34 @@
       // SHELL_BUILD — short build label embedded in hello and reported in diagnostics.
       const BRIDGE_PROTOCOL_VERSION = 2;
       const SHELL_BUILD = 'v0.28.0';
+      /**
+       * Maximum payload byte size for replace-node-html / replace-slide-html / insert-element.
+       * Must align with MAX_HTML_BYTES in bridge-schema.js and parseSingleRoot guard (WO-01).
+       * ADR-012 §2 — WO-13.
+       */
+      const BRIDGE_MAX_PAYLOAD_BYTES = 262144; // 256 KB
+      /**
+       * Canonical entity kind strings shared by bridge-script.js (KNOWN_ENTITY_KINDS) and
+       * bridge-commands.js (CANONICAL_ENTITY_KINDS). Single source of truth — PAIN-MAP P2-05.
+       * bridge-script.js uses KNOWN_ENTITY_KINDS (Set built from this array).
+       * bridge-commands.js uses CANONICAL_ENTITY_KINDS (Set built from this array).
+       * @type {Readonly<string[]>}
+       */
+      const CANONICAL_ENTITY_KINDS_ARR = Object.freeze([
+        'text',
+        'image',
+        'video',
+        'container',
+        'element',
+        'slide-root',
+        'protected',
+        'table',
+        'table-cell',
+        'code-block',
+        'svg',
+        'fragment',
+        'none',
+      ]);
       // =====================================================================
       /** @type {Set<string>} */
       const SHELL_WARNING_CACHE = new Set();

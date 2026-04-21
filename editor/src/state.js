@@ -517,6 +517,29 @@
        * @property {string|null} lastImportedRawHtml - Verbatim HTML string passed to buildModelDocument
        */
 
+      // =====================================================================
+      // ZONE: Observable Store — ui slice registration (ADR-013 WO-16)
+      // store.js MUST be loaded before state.js (see presentation-editor.html).
+      // =====================================================================
+
+      // Guard: store.js must be loaded and window.store.defineSlice must be callable
+      if (typeof window.store === "undefined" || typeof window.store.defineSlice !== "function") {
+        throw new Error(
+          "store.js must be loaded before state.js. " +
+          "Ensure <script src=\"src/store.js\"> appears before <script src=\"src/state.js\"> in the HTML shell."
+        );
+      }
+
+      // Register the 'ui' slice BEFORE declaring the state literal.
+      // Migrated fields: complexityMode, previewZoom, theme, themePreference.
+      // All other state fields remain on the state object during this transitional phase.
+      window.store.defineSlice("ui", {
+        complexityMode: "basic",
+        previewZoom: 1.0,
+        theme: "light",
+        themePreference: "system",
+      });
+
       /** @type {State} */
       const state = {
         sourceLabel: "",
@@ -679,7 +702,66 @@
         //   Preserved so neutralizeAndReload() can re-parse from the original source
         //   rather than from the (already-annotated) modelDoc serialization.
         lastImportedRawHtml: null,
+        // [WO-13] bridgeAcks — Map<refSeq, AckPayload> of received structured acks.
+        // Keyed by the originating command sequence number (ADR-012 §5).
+        // Shell collects acks here; entries expire on next import/reload.
+        /** @type {Map<number, {refSeq:number, ok:boolean, error?: {code:string, message:string}, stale?: boolean}>} */
+        bridgeAcks: new Map(),
       };
+
+      // =====================================================================
+      // ZONE: window.state Proxy shim (ADR-013 WO-16)
+      //
+      // Keeps all existing consumers working unchanged while the 4 migrated
+      // fields (complexityMode, previewZoom, theme, themePreference) are now
+      // owned by the store 'ui' slice.
+      //
+      // READ:  state.theme → reads from store.get('ui').theme
+      // WRITE: state.theme = 'dark' → writes via store.update('ui', { theme: 'dark' })
+      //        (also updates the local state literal so any destructured refs still see it)
+      //
+      // Non-migrated keys pass through to the underlying state literal as before.
+      // =====================================================================
+
+      /** @type {Set<string>} */
+      var _UI_SLICE_KEYS = new Set(["complexityMode", "previewZoom", "theme", "themePreference"]);
+
+      // Install Proxy if the runtime supports it (ES6+). Falls back to direct
+      // state access for very old environments (not expected for this project).
+      if (typeof Proxy !== "undefined") {
+        var _stateRaw = state;
+        var _stateProxy = new Proxy(_stateRaw, {
+          get: function (target, prop) {
+            if (_UI_SLICE_KEYS.has(String(prop))) {
+              return window.store.get("ui")[prop];
+            }
+            return target[prop];
+          },
+          set: function (target, prop, value) {
+            if (_UI_SLICE_KEYS.has(String(prop))) {
+              // Write to store (triggers notification)
+              window.store.update("ui", (function () {
+                var patch = {};
+                patch[prop] = value;
+                return patch;
+              }()));
+              // Also mirror to the raw state so JSON serialisation / spread still works
+              target[prop] = value;
+              return true;
+            }
+            target[prop] = value;
+            return true;
+          },
+        });
+        // Replace the module-level `state` reference so all code in this IIFE
+        // transparently uses the proxy. This assignment is in the same scope where
+        // `const state` was declared — the var-scoped proxy shadows it for
+        // all code that closes over the module-level name after this point.
+        // NOTE: We cannot reassign a `const`, so instead we expose the proxy on
+        // window so all other modules that access `state` via the shared global
+        // continue to work. The local `const state` remains the raw backing store.
+        window.stateProxy = _stateProxy;
+      }
 
       // ====================================================================
       // els — кеш DOM-элементов оболочки редактора.
