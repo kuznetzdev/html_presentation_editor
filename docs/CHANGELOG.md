@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## Unreleased
+## [v0.27.5] — 2026-04-21 — W2 Sandbox+A11y CLOSED (WO-06..11)
 
 ### Accessibility
 - feat(a11y): rail keyboard nav (↑/↓, Alt+↑/↓) + focus-trap audit — P0-05 / P0-08. Roving tabindex on slide rail (exactly one slide-item has tabindex=0 at any time). ArrowDown/ArrowUp cycles focus between rail items without activating the slide. Alt+ArrowDown/Alt+ArrowUp reorders the focused slide and emits Russian toast "Слайд перемещён: позиция N → M". shortcuts.js arrow-nudge gated on #slidesPanel source so rail ArrowDown does not nudge the preview element. Focus-visible ring tokens (--focus-ring-color, --focus-ring-width) added to tokens.css for both light and dark themes; preview.css :focus-visible rule updated to use tokens. ADR-006, WO-10.

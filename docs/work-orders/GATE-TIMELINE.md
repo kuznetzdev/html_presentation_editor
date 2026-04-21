@@ -24,9 +24,12 @@
 | **v0.26.3** (WO-05 crypto bridge token) | 55/5/0 ✅ | +bridge-token 2 specs (WO-05) | unchanged | unchanged | unchanged | unchanged | — | — | — | — |
 | **v0.26.4** (WO-02 bridge origin assertion) | 55/5/0 ✅ | +bridge-origin 2 specs (WO-02) | unchanged | unchanged | unchanged | unchanged | — | — | — | — |
 | **v0.26.5** (WO-04 autosave size cap) | 55/5/0 ✅ | +autosave-cap 3 specs (WO-04) — W1 Security CLOSED | unchanged | unchanged | unchanged | unchanged | — | — | — | — |
-| **v0.27.0** (onboarding + broken-asset) | 55/5/0 invariant | +trust-banner spec (WO-07) | unchanged | unchanged | unchanged | unchanged | — | — | — | — |
-| **v0.27.1** (a11y gate) | 55/5/0 invariant | +a11y integration smoke | +focus-order Firefox | includes new tab/rail kbd | unchanged | includes all above | **NEW 0 violations** (WO-09, WO-10, WO-11) | — | — | — |
-| **v0.27.2** (undo-chain, transform) | 55/5/0 invariant | +undo-chain ≥20 spec | unchanged | unchanged | unchanged | includes all above | 0 violations invariant | — | — | — |
+| **v0.27.0** (WO-08 bridge contract scaffold) | 59/5/0 ✅ live since v0.27.0 | +bridge-schema contract 34 specs — gate-contract new | unchanged | unchanged | unchanged | unchanged | — | — | **NEW gate-contract 34/0/0** (WO-08) | — |
+| **v0.27.1** (WO-06 broken-asset banner) | 59/5/0 ✅ | +broken-asset-banner 4 specs added to gate-a (baseline now 59/5/0) | unchanged | unchanged | unchanged | unchanged | — | — | 34/0/0 | — |
+| **v0.27.2** (W2 batch 1 bump) | 59/5/0 invariant | unchanged | unchanged | unchanged | unchanged | unchanged | — | — | 34/0/0 | — |
+| **v0.27.3** (WO-07 trust-banner + neutralize-scripts) | 59/5/0 ✅ | +trust-banner 8 scenarios (not in gate-a; gate-b candidate) | unchanged | unchanged | unchanged | unchanged | — | — | 34/0/0 | — |
+| **v0.27.4** (WO-10 keyboard nav + focus-trap) | 59/5/0 ✅ | +keyboard-nav 6 specs gate-a11y | unchanged | unchanged | unchanged | unchanged | 0 violations + 6 keyboard-nav (WO-10) | — | 34/0/0 | — |
+| **v0.27.5** (WO-11 contrast ratio — W2 CLOSED) | 59/5/0 ✅ | +contrast 14 assertions gate-a11y | unchanged | unchanged | unchanged | unchanged | **27 passed gate-a11y total** (WO-09/10/11) ✅ live since v0.27.5 | — | 34/0/0 | — |
 | **v0.28.0** (visual regression) | 55/5/0 invariant | visual.spec.js retired, subsumed by gate-visual | unchanged | unchanged | unchanged | includes all above | 0 violations | **NEW** 15/0/0 chromium-visual 1440×900 (WO-32) | — | — |
 | **v0.28.1** (telemetry scaffold + types) | 55/5/0 invariant | +telemetry scaffold spec | unchanged | unchanged | unchanged | includes all above | 0 violations | 15/0/0 | — | **NEW optional** `tsc --noEmit` (WO-14) |
 | **v0.29.0** (error boundaries + bridge v2 hello) | 55/5/0 invariant | +error-boundary spec | unchanged | unchanged | unchanged | includes all above | 0 violations | 15/0/0 | — | optional |
