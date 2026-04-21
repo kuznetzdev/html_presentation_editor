@@ -806,3 +806,45 @@
           addDiagnostic(`autosave-failed: ${error.message}`);
         }
       }
+
+      // =====================================================================
+      // ZONE: History Budget Chip (WO-18)
+      // Renders <span class="history-budget-chip" ...>N/20</span> in the topbar.
+      // Visible when patches >= 5; color thresholds: 15-18 = is-warning, 19-20 = is-danger.
+      // Subscribes to store 'history' slice so it re-renders on every patch commit.
+      // =====================================================================
+      function renderHistoryBudgetChip() {
+        var chip = els.historyBudgetChip;
+        if (!chip) return;
+        var histSlice = window.store.get("history");
+        var count = histSlice.patches.length;
+        var limit = histSlice.limit || HISTORY_LIMIT;
+
+        // Hide when < 5 steps (not worth showing the counter)
+        if (count < 5) {
+          chip.hidden = true;
+          chip.removeAttribute("aria-label");
+          return;
+        }
+
+        chip.hidden = false;
+        chip.textContent = count + "/" + limit;
+        chip.setAttribute("aria-label", count + "/" + limit + " шагов истории");
+
+        // Color thresholds
+        chip.classList.remove("is-warning", "is-danger");
+        if (count >= 19) {
+          chip.classList.add("is-danger");
+        } else if (count >= 15) {
+          chip.classList.add("is-warning");
+        }
+      }
+
+      // Subscribe to history slice so the chip re-renders on any patch commit.
+      // Subscription is set up once at parse time (classic-script: this runs synchronously
+      // after store.js + state.js have already run and defined the 'history' slice).
+      if (window.store) {
+        window.store.subscribe("history", function () {
+          renderHistoryBudgetChip();
+        });
+      }

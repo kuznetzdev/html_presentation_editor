@@ -630,68 +630,9 @@
         );
       }
 
-      function captureHistorySnapshot(reason, options = {}) {
-        if (!state.modelDoc) return;
-        const slideIds = state.slides.map((slide) => slide.id);
-        const requestedSlideId = getRequestedSlideId();
-        const snapshotActiveSlideId = slideIds.includes(requestedSlideId)
-          ? requestedSlideId
-          : slideIds.includes(state.activeSlideId)
-            ? state.activeSlideId
-            : slideIds.includes(state.runtimeActiveSlideId)
-              ? state.runtimeActiveSlideId
-              : state.slides[0]?.id || null;
-        const snapshot = {
-          html: serializeCurrentProject(),
-          sourceLabel: state.sourceLabel,
-          manualBaseUrl: state.manualBaseUrl,
-          mode: normalizeEditorMode(state.mode),
-          activeSlideIndex: Math.max(
-            0,
-            state.slides.findIndex((slide) => slide.id === snapshotActiveSlideId),
-          ),
-        };
-        const sameAsCurrent =
-          state.historyIndex >= 0 &&
-          state.history[state.historyIndex]?.html === snapshot.html;
-        if (sameAsCurrent && !options.force) {
-          refreshUi();
-          return;
-        }
-        if (state.historyIndex < state.history.length - 1) {
-          state.history = state.history.slice(0, state.historyIndex + 1);
-        }
-        state.history.push(snapshot);
-        if (state.history.length > HISTORY_LIMIT) {
-          state.history.shift();
-        }
-        state.historyIndex = state.history.length - 1;
-        addDiagnostic(`snapshot:${reason}`);
-        refreshUi();
-      }
-
-      function serializeCurrentProject() {
-        const exportDoc = state.modelDoc.cloneNode(true);
-        stripEditorArtifacts(exportDoc);
-        return `${state.doctypeString}
-${exportDoc.documentElement.outerHTML}`;
-      }
-
-      function restoreSnapshot(snapshot) {
-        if (!snapshot?.html) return;
-        state.historyMuted = true;
-        setManualBaseUrl(snapshot.manualBaseUrl || "");
-        loadHtmlString(
-          snapshot.html,
-          snapshot.sourceLabel || state.sourceLabel || "Восстановленная версия",
-          {
-            resetHistory: false,
-            dirty: true,
-            mode: normalizeEditorMode(snapshot.mode, state.mode),
-            preferSlideIndex: snapshot.activeSlideIndex || 0,
-          },
-        );
-        state.historyMuted = false;
-      }
+      // WO-18: captureHistorySnapshot, serializeCurrentProject, restoreSnapshot
+      // moved to history.js (loaded after this file — global scope, all scripts share window).
+      // Runtime calls (from event handlers / setTimeout) resolve them from history.js.
+      // No re-declaration needed: global function declarations are available after DOMContentLoaded.
 
       // =====================================================================

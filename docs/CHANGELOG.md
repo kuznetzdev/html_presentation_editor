@@ -4,6 +4,17 @@
 
 ---
 
+## [v0.29.0] — 2026-04-21 — W3 Bridge v2+Store batch 3: WO-18 History Slice + Patch Engine
+
+### History
+- feat(history): patch-based snapshots + history budget chip — ADR-013 §history slice — WO-18. `history.js` (+254 LOC): `HISTORY_CLIENT_ID` stable per-session random ID via `crypto.getRandomValues` / `Math.random` fallback; `_historyPatchCounter` monotonically increasing (ADR-017 CRDT-readiness). `fnv1a32(str)` — FNV-1a 32-bit hash (synchronous, no crypto.subtle) for HTML deduplication: identical HTML skipped without disk/memory write. `createDomPatch(html, reason, currentPatches)` — produces `{op:'baseline'|'delta', html, diff?, hash, clientId, counter, at, reason}`. Baseline rolled on first commit and every 10th delta since last baseline. Delta stores `diff: JSON.stringify({nextHtml})` plus full `html` fallback (ADR-017 §no-replay). `captureHistorySnapshot` rewritten: reads from `window.store.get('history')` (immutable), trims forward-redo branch, dedup via hash, calls `createDomPatch`, enforces `HISTORY_LIMIT=20` via `slice(-20)`, emits single `window.store.batch(...)` update, mirrors to legacy `state.history` / `state.historyIndex` for backward compat, shows Russian warning toast on overflow: "Старейший шаг истории сброшен. Сохрани проект, чтобы не потерять работу.". `restoreSnapshot` updated: handles both `op:'baseline'` (direct html), `op:'delta'` (parse diff.nextHtml, fallback to html), and legacy object shape. `undo()`/`redo()` now read from `window.store.get('history')` and emit `store.update` in addition to legacy state mirror. `captureHistorySnapshot`, `serializeCurrentProject`, `restoreSnapshot` removed from `export.js` (WO-18: moved to history.js global scope). `state.js`: `window.store.defineSlice('history', {index:-1,limit:20,baseline:null,patches:[],dirty:false,lastSavedAt:0})`; Proxy shim extended with `_HISTORY_STATE_TO_SLICE` map (historyIndex/dirty/lastSavedAt); `els.historyBudgetChip` cached. `store.js`: `@typedef HistoryPatch` + `@typedef HistorySlice` with ADR-017 CRDT-readiness checklist. `primary-action.js`: `renderHistoryBudgetChip()` reads `histSlice.patches.length` → hidden if <5, shows `N/20` text + `aria-label`, adds `.is-warning` at ≥15, `.is-danger` at ≥19; subscribed to 'history' slice. `layout.css`: `.history-budget-chip` + `.is-warning` + `.is-danger` styles inside `@layer layout`. `presentation-editor.html`: `<span id="historyBudgetChip">` in `#topbarStateCluster` with `role="status" aria-live="polite"`. CommonJS export guard in history.js exports `fnv1a32`, `createDomPatch`, `getHistoryClientId` for Node test runner. Gate-A: 59/5/0. ADR-013. ADR-017. PAIN-MAP: P0-09.
+
+### Tests
+- test(history): history-patches.spec.js — 12 unit cases (Node --test runner). Cases: (a) first-baseline, (b) hash-dedup, (c) 11th-rolls-baseline, (d) HISTORY_LIMIT overflow, (e) baseline-restore, (f) delta-restore, (g) clientId-stable, (h) counter-monotonic, (i) undo-store, (j) redo-store, (k) fnv1a32-deterministic, (l) 20-identical-dedup-1-baseline-<50KB. test:unit → 32/32 (12 store + 8 selection + 12 history).
+- test(history): history-budget.spec.js — 2 Playwright gate-B cases: (A) 15 snapshots → chip shows "15/20" with .is-warning; (B) 21 snapshots → overflow toast "Старейший шаг истории сброшен." visible + chip shows "20/20" with .is-danger.
+
+---
+
 ## [v0.28.5] — 2026-04-21 — W3 Bridge v2+Store batch 2: WO-17 Selection Slice
 
 ### State
