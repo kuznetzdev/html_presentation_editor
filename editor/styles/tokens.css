@@ -1,5 +1,5 @@
 /* Layer order — must be declared before any layer rules */
-@layer banners, tokens, base, layout, preview, inspector, overlay, modal, responsive;
+@layer banners, tokens, base, layout, preview, broken-asset-banner, inspector, overlay, modal, responsive;
 
 @layer tokens {
 /* ======================================================================

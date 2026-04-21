@@ -463,6 +463,12 @@
         const manualBaseUrl = getManualBaseUrl();
 
         const setPreviewAssistAction = (config = null) => {
+          // P0-04 (WO-24): when unresolved assets are present, always keep the
+          // "Подключить папку ресурсов" action visible, even after modal close.
+          // This overrides any null/cleared config so the button persists.
+          if ((!config?.action || !config?.label) && (state.unresolvedPreviewAssets?.length || 0) > 0) {
+            config = { action: "assets", label: "Подключить папку ресурсов" };
+          }
           if (!els.previewAssistActionBtn) return;
           if (!config?.action || !config?.label) {
             els.previewAssistActionBtn.hidden = true;

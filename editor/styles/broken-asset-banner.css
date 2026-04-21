@@ -1,0 +1,87 @@
+/* ============================================================
+ broken-asset-banner.css  — Layer: broken-asset-banner
+ Shell-side warning surface for unresolved preview assets.
+ Rendered by editor/src/broken-asset-banner.js.
+ Uses ONLY existing design tokens (no new color literals).
+ ADR-014 Error Boundaries — Layer 1 (shell surface, kind="warning")
+ WO-24 / P0-04
+ ============================================================ */
+
+@layer broken-asset-banner {
+
+.broken-asset-banner {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  margin-top: var(--space-3);
+  background: var(--shell-warning-bg);
+  border: 1px solid var(--shell-warning-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  color: var(--shell-text);
+  font-size: var(--text-sm);
+}
+
+/* Hidden state — matches [hidden] attribute management in JS */
+.broken-asset-banner[hidden] {
+  display: none;
+}
+
+.broken-asset-banner__body {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.broken-asset-banner__title {
+  font-weight: 600;
+  color: var(--shell-warning);
+  line-height: 1.3;
+}
+
+.broken-asset-banner__list {
+  margin: 0;
+  padding: 0 0 0 1.2em;
+  list-style: disc;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.broken-asset-banner__list li {
+  font-size: var(--text-sm);
+  color: var(--shell-text);
+  word-break: break-all;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 480px;
+}
+
+.broken-asset-banner__list .broken-asset-more {
+  list-style: none;
+  color: var(--shell-text);
+  opacity: 0.65;
+  font-style: italic;
+}
+
+.broken-asset-banner__footnote {
+  color: var(--shell-text);
+  opacity: 0.75;
+  font-size: var(--text-sm);
+}
+
+.broken-asset-banner__actions {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+} /* @layer broken-asset-banner */

@@ -555,6 +555,8 @@
         state.editingSupported = false;
         state.resolvedPreviewAssets = [];
         state.unresolvedPreviewAssets = [];
+        window.resetBrokenAssetBannerDismissal?.(); // WO-24: reset dismissal on new load
+        window.updateBrokenAssetBanner?.();          // WO-24: hide banner immediately on reset
         state.baseUrlDependentAssets = [];
         state.previewAssetAuditCounts = {
           resolved: 0,

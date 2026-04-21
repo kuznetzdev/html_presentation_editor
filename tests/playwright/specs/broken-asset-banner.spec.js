@@ -87,6 +87,188 @@ async function dispatchBannerAction(page, key, action) {
   }, { k: key, a: action });
 }
 
+// ─── Additional helpers for #brokenAssetBanner element ─────────────────────
+
+// Inject unresolved assets directly into state and trigger banner render.
+// Uses window.stateProxy — the Proxy shim exposed by state.js — for reliable
+// cross-script write access without relying on const-scoped variable lookup.
+async function injectUnresolvedAssets(page, paths) {
+  return page.evaluate((items) => {
+    var sp = window.stateProxy;
+    if (!sp) return false;
+    sp.unresolvedPreviewAssets = items;
+    sp.brokenAssetBannerDismissed = false;
+    if (typeof window.updateBrokenAssetBanner === "function") {
+      window.updateBrokenAssetBanner();
+    }
+    return true;
+  }, paths);
+}
+
+// Reset unresolved assets and hide banner.
+async function clearUnresolvedAssets(page) {
+  return page.evaluate(() => {
+    var sp = window.stateProxy;
+    if (!sp) return false;
+    sp.unresolvedPreviewAssets = [];
+    sp.brokenAssetBannerDismissed = false;
+    if (typeof window.updateBrokenAssetBanner === "function") {
+      window.updateBrokenAssetBanner();
+    }
+    return true;
+  });
+}
+
+test.describe("broken-asset-banner: #brokenAssetBanner element (WO-24, P0-04)", () => {
+  test.beforeEach(async ({ page }, testInfo) => {
+    test.skip(
+      !isChromiumOnlyProject(testInfo.project.name),
+      "Chromium-only shell behaviour.",
+    );
+    await page.goto("/editor/presentation-editor.html", {
+      waitUntil: "domcontentloaded",
+      timeout: 30_000,
+    });
+    await page.evaluate(() => {
+      window.localStorage.clear();
+      window.sessionStorage.clear();
+    });
+    await page.reload({ waitUntil: "domcontentloaded", timeout: 30_000 });
+  });
+
+  // ── Test BAE1 ─────────────────────────────────────────────────────────────
+  // With zero unresolved assets, #brokenAssetBanner must be hidden.
+  test("BAE1 — zero unresolved assets: banner has hidden attribute and aria-hidden=true", async ({ page }) => {
+    await clearUnresolvedAssets(page);
+
+    const banner = page.locator("#brokenAssetBanner");
+    await expect(banner).toHaveAttribute("hidden", "");
+    await expect(banner).toHaveAttribute("aria-hidden", "true");
+  });
+
+  // ── Test BAE2 ─────────────────────────────────────────────────────────────
+  // With 3 unresolved assets, banner shows correct plural count and list items.
+  test("BAE2 — 3 unresolved assets: banner shows 'Не загружено 3 файла' with 3-entry list", async ({ page }) => {
+    const paths = ["images/logo.png", "styles/main.css", "fonts/body.woff2"];
+    await injectUnresolvedAssets(page, paths);
+
+    const banner = page.locator("#brokenAssetBanner");
+    await expect(banner).not.toHaveAttribute("hidden");
+    await expect(banner).toHaveAttribute("aria-hidden", "false");
+
+    // Title must contain the count and plural form.
+    const title = page.locator("#brokenAssetBannerTitle");
+    await expect(title).toContainText("Не загружено 3");
+    await expect(title).toContainText("файла");
+
+    // List must have exactly 3 items.
+    const listItems = page.locator("#brokenAssetBannerList li");
+    await expect(listItems).toHaveCount(3);
+
+    // Each path must appear in the list.
+    for (const p of paths) {
+      await expect(page.locator("#brokenAssetBannerList")).toContainText(p);
+    }
+  });
+
+  // ── Test BAE3 ─────────────────────────────────────────────────────────────
+  // Dismiss button click hides the banner (state.brokenAssetBannerDismissed = true).
+  // The banner lives inside the inspector panel which may be hidden when no deck is
+  // loaded. We verify dismiss behaviour via window.dismissBrokenAssetBanner() and
+  // then confirm the brokenAssetBannerDismissed state flag is set.
+  test("BAE3 — dismiss button hides banner and sets dismissed flag", async ({ page }) => {
+    await injectUnresolvedAssets(page, ["img/missing.png"]);
+
+    const banner = page.locator("#brokenAssetBanner");
+    // Banner element must have hidden removed after inject.
+    await expect(banner).not.toHaveAttribute("hidden");
+
+    // Call dismissBrokenAssetBanner via the global window function (same logic
+    // as the dismiss button's click handler) to avoid clicking inside a potentially
+    // hidden panel.
+    const dismissed = await page.evaluate(() => {
+      if (typeof window.dismissBrokenAssetBanner !== "function") return null;
+      window.dismissBrokenAssetBanner();
+      return window.stateProxy ? window.stateProxy.brokenAssetBannerDismissed : null;
+    });
+    expect(dismissed).toBe(true);
+
+    // Banner must now be hidden.
+    await expect(banner).toHaveAttribute("hidden", "");
+    await expect(banner).toHaveAttribute("aria-hidden", "true");
+
+    // Verify: calling updateBrokenAssetBanner while dismissed keeps banner hidden.
+    await page.evaluate(() => {
+      if (typeof window.updateBrokenAssetBanner === "function") {
+        window.updateBrokenAssetBanner();
+      }
+    });
+    await expect(banner).toHaveAttribute("hidden", "");
+  });
+
+  // ── Test BAE4 ─────────────────────────────────────────────────────────────
+  // Overflow: 6 assets cap to 5 shown + 1 "…и ещё" entry.
+  test("BAE4 — 6 assets: list caps at 5 entries with overflow indicator", async ({ page }) => {
+    const paths = [
+      "a/1.png", "b/2.png", "c/3.png", "d/4.png", "e/5.png", "f/6.png",
+    ];
+    await injectUnresolvedAssets(page, paths);
+
+    const banner = page.locator("#brokenAssetBanner");
+    await expect(banner).not.toHaveAttribute("hidden");
+
+    // 5 regular items + 1 overflow item = 6 total
+    const listItems = page.locator("#brokenAssetBannerList li");
+    await expect(listItems).toHaveCount(6);
+
+    // The overflow item must contain "ещё 1"
+    const overflow = page.locator("#brokenAssetBannerList .broken-asset-more");
+    await expect(overflow).toHaveCount(1);
+    await expect(overflow).toContainText("1");
+  });
+
+  // ── Test BAE5 ─────────────────────────────────────────────────────────────
+  // Export HTML must NOT contain id="brokenAssetBanner" (data-editor-ui stripping).
+  test("BAE5 — export HTML does not contain id=brokenAssetBanner", async ({ page }) => {
+    await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL });
+
+    // Trigger export and capture the result.
+    const exported = await page.evaluate(async () => {
+      if (typeof window.exportCurrentHtml !== "function") return null;
+      return window.exportCurrentHtml();
+    });
+
+    // If exportCurrentHtml is not available, verify via DOM export.
+    if (exported !== null) {
+      expect(exported).not.toContain("id=\"brokenAssetBanner\"");
+      expect(exported).not.toContain("broken-asset-banner");
+    }
+
+    // Additionally verify the element has data-editor-ui="true" (export will strip it).
+    const hasEditorUi = await page.evaluate(() => {
+      const el = document.getElementById("brokenAssetBanner");
+      return el ? el.getAttribute("data-editor-ui") : null;
+    });
+    expect(hasEditorUi).toBe("true");
+  });
+
+  // ── Test BAE6 ─────────────────────────────────────────────────────────────
+  // Plural forms: 1 = файл, 2 = файла, 5 = файлов.
+  test("BAE6 — Russian plural forms are correct for 1, 2, 5 unresolved assets", async ({ page }) => {
+    // 1 file
+    await injectUnresolvedAssets(page, ["a.png"]);
+    await expect(page.locator("#brokenAssetBannerTitle")).toContainText("1\u00a0файл");
+
+    // 2 files
+    await injectUnresolvedAssets(page, ["a.png", "b.png"]);
+    await expect(page.locator("#brokenAssetBannerTitle")).toContainText("2\u00a0файла");
+
+    // 5 files
+    await injectUnresolvedAssets(page, ["a.png", "b.png", "c.png", "d.png", "e.png"]);
+    await expect(page.locator("#brokenAssetBannerTitle")).toContainText("5\u00a0файлов");
+  });
+});
+
 test.describe("broken-asset-banner: shellBoundary + sandbox-mode @security", () => {
   test.beforeEach(async ({ page }, testInfo) => {
     test.skip(
