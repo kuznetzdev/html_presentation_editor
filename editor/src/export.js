@@ -43,16 +43,76 @@
       // HTML export path.
       // ======================================================================
 
-      function pptxLoadScript(src) {
+      // -----------------------------------------------------------------------
+      // PptxGenJS loader configuration (AUDIT-D-03, P0-03)
+      //
+      // Default path: vendor-local file under editor/vendor/pptxgenjs/ —
+      // eliminates CDN supply-chain risk and works on file:// with no network.
+      //
+      // Operator opt-in CDN path: set PPTX_USE_VENDOR = false below.
+      // When CDN path is used, the <script> element carries an `integrity`
+      // attribute (SRI sha384) + `crossorigin="anonymous"` so the browser
+      // rejects any tampered response.
+      //
+      // SRI hash covers pptxgenjs@3.12.0 dist/pptxgen.bundle.js (466 KB).
+      // Upgrade procedure: see editor/vendor/pptxgenjs/README.md
+      // -----------------------------------------------------------------------
+
+      /** Set to false to opt into the CDN path (operator/dev use only). */
+      var PPTX_USE_VENDOR = true;
+
+      /**
+       * Relative path from the shell HTML to the vendored bundle.
+       * Resolves correctly under both http://localhost and file:// because
+       * the shell lives at editor/presentation-editor.html and the vendor
+       * file is at editor/vendor/pptxgenjs/pptxgen.bundled.min.js.
+       */
+      var PPTX_VENDOR_PATH = "vendor/pptxgenjs/pptxgen.bundled.min.js";
+
+      /** Pinned CDN URL — fallback / operator opt-in only. */
+      var PPTX_CDN_URL =
+        "https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js";
+
+      /**
+       * SRI integrity attribute for the CDN URL above.
+       * sha384 of pptxgenjs@3.12.0 dist/pptxgen.bundle.js as served by jsDelivr.
+       * Recompute with: node -e "const c=require('crypto'),fs=require('fs');
+       *   console.log('sha384-'+c.createHash('sha384').update(fs.readFileSync('pptxgen.bundled.min.js')).digest('base64'))"
+       */
+      var PPTX_SRI =
+        "sha384-Cck14aA9cifjYolcnjebXRfWGkz5ltHMBiG4px/j8GS+xQcb7OhNQWZYyWjQ+UwQ";
+
+      /**
+       * Load a script element and return a Promise that resolves on load.
+       *
+       * Security: when `sri` is provided (CDN path) the <script> element
+       * receives `integrity` + `crossorigin="anonymous"` attributes so the
+       * browser enforces the SRI hash before executing the response.
+       * The vendor path uses no integrity attribute — the file is already
+       * local and served from the same origin (or file://).
+       *
+       * @param {string} url  - script URL (vendor-relative or CDN)
+       * @param {string} [sri] - optional SRI hash (e.g. "sha384-…")
+       */
+      function pptxLoadScript(url, sri) {
         return new Promise((resolve, reject) => {
-          if (document.querySelector(`script[src="${CSS.escape ? src : src}"]`)) {
+          // De-duplicate: skip if a <script> with this src is already in DOM.
+          if (document.querySelector('script[src="' + url + '"]')) {
             resolve();
             return;
           }
-          const s = document.createElement("script");
-          s.src = src;
+          var s = document.createElement("script");
+          s.src = url;
+          // Attach SRI integrity + crossorigin when loading from CDN.
+          // OWASP A08:2021 — Software and Data Integrity Failures mitigation.
+          if (sri) {
+            s.integrity = sri;
+            s.crossOrigin = "anonymous";
+          }
           s.onload = resolve;
-          s.onerror = () => reject(new Error("pptx-cdn-load-failed"));
+          s.onerror = function () {
+            reject(new Error("pptx-script-load-failed: " + url));
+          };
           document.head.appendChild(s);
         });
       }
@@ -263,16 +323,21 @@
         }
       }
 
-      // Main entry point — loads PptxGenJS lazily, builds clean doc snapshot,
-      // maps each slide, and triggers browser download.
+      // Main entry point — loads PptxGenJS lazily (vendor-first, no network
+      // required for default path), builds clean doc snapshot, maps each
+      // slide, and triggers browser download.
       async function exportPptx() {
         if (!state.modelDoc) return;
 
-        const PPTX_CDN = "https://cdn.jsdelivr.net/npm/pptxgenjs/dist/pptxgen.bundled.js";
         if (typeof PptxGenJS === "undefined") {
+          // Vendor path: resolves relative to the shell HTML under file:// and
+          // http://localhost alike. No external network call.
+          // CDN path (PPTX_USE_VENDOR=false): pinned version + SRI enforced.
+          var loadUrl = PPTX_USE_VENDOR ? PPTX_VENDOR_PATH : PPTX_CDN_URL;
+          var loadSri = PPTX_USE_VENDOR ? undefined : PPTX_SRI;
           showToast("Загрузка PptxGenJS…", "info", { ttl: 8000 });
           try {
-            await pptxLoadScript(PPTX_CDN);
+            await pptxLoadScript(loadUrl, loadSri);
           } catch (_) {
             showToast(
               "Не удалось загрузить PptxGenJS. Проверь сетевое подключение.",
