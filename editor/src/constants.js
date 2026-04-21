@@ -175,3 +175,18 @@
       ];
 
       // =====================================================================
+      // Bridge origin allow-list (AUDIT-D-04, ADR-012 §4)
+      // Under file:// protocol the browser reports event.origin === "null"
+      // (the string "null", not JS null). We must accept that string.
+      // Under http(s):// we restrict to the exact same origin as the shell.
+      // Callers: bridge.js receive guard, bridge-script.js receive guard.
+      function getAllowedBridgeOrigins() {
+        if (typeof window !== 'undefined' && window.location && window.location.protocol === 'file:') {
+          return ['null'];
+        }
+        if (typeof window !== 'undefined' && window.location) {
+          return [window.location.origin];
+        }
+        return ['null'];
+      }
+      // =====================================================================

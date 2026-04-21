@@ -183,11 +183,25 @@
           clickThroughState: { x: 0, y: 0, timestamp: 0, index: -1, candidates: [] },
         };
 
+        // AUDIT-D-04: Compute shell target origin for iframe→shell sends.
+        // The string "null" is NOT a valid postMessage targetOrigin — only '*' is
+        // accepted when the shell document has "null" origin (file:// context).
+        // Under http(s):// we target the shell's exact origin for precision.
+        function _getShellTarget() {
+          // parent.origin may throw in cross-origin sandboxed iframes; guard it.
+          try {
+            const o = parent.location.origin;
+            if (o && o !== 'null') return o;
+          } catch (e) {}
+          return '*';
+        }
+        const _SHELL_TARGET = _getShellTarget();
+
         function post(type, payload, options) {
           const seq = options && typeof options.seq === 'number'
             ? options.seq
             : (Number(STATE.activeCommandSeq || 0) || 0);
-          parent.postMessage({ __presentationEditor: true, token: TOKEN, type, seq, payload }, '*');
+          parent.postMessage({ __presentationEditor: true, token: TOKEN, type, seq, payload }, _SHELL_TARGET);
         }
 
         function onRuntimeError(message, source, line, column) {
@@ -3300,6 +3314,14 @@
         window.addEventListener('scroll', notifySelectionGeometry, true);
 
         window.addEventListener('message', (event) => {
+          // AUDIT-D-04: Reject messages from unexpected origins.
+          // Under file:// the shell origin is "null" — that string is allowed.
+          // Under http(s):// we accept only the shell's exact origin.
+          const _allowedForIframe = (window.location.protocol === 'file:') ? ['null'] : [window.location.origin];
+          if (!_allowedForIframe.includes(event.origin)) {
+            post('runtime-log', { message: 'origin-rejected:' + event.origin, source: 'bridge-receive' });
+            return;
+          }
           const data = event.data;
           if (!data || data.__presentationEditorParent !== true) return;
           if (event.source !== parent) return;

@@ -90,7 +90,12 @@
             const slideId = resolveBridgeCommandSlideId(type, payload);
             if (slideId) lockSlideSync(slideId, seq, type);
           }
-          els.previewFrame.contentWindow.postMessage(message, "*");
+          // AUDIT-D-04: Target the iframe's origin precisely when possible.
+          // Under file:// the iframe origin is also "null" so we must keep '*'
+          // (postMessage rejects "null" as a target — only the string '*' works).
+          // Under http(s):// the iframe is same-origin so we target location.origin.
+          const _iframeTarget = (window.location.protocol === 'file:') ? '*' : window.location.origin;
+          els.previewFrame.contentWindow.postMessage(message, _iframeTarget);
           return true;
         } catch (error) {
           addDiagnostic(`bridge-send-error:${type}:${error.message}`);

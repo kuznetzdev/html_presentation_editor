@@ -6,6 +6,14 @@
        ====================================================================== */
       function bindMessages() {
         window.addEventListener("message", (event) => {
+          // AUDIT-D-04: Assert postMessage origin before processing any message.
+          // Under file:// protocol event.origin is the string "null" — that is
+          // the allowed value; under http(s):// we restrict to location.origin.
+          const _allowedOrigins = getAllowedBridgeOrigins();
+          if (!_allowedOrigins.includes(event.origin)) {
+            addDiagnostic('bridge-origin-rejected:' + event.origin);
+            return;
+          }
           const data = event.data;
           if (!data || data.__presentationEditor !== true) return;
           if (data.token !== state.bridgeToken) return;

@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Security
+- Assert bridge postMessage origin in receive handlers (bridge.js shell + bridge-script.js iframe); replace bare `'*'` send target with origin-aware target — `file://` retains `'*'` (browser rejects `"null"` as target), `http(s)://` uses `location.origin`. New gate: `bridge-origin.spec.js` (2 scenarios + file:// note). Closes AUDIT-D-04. ADR-012 §4.
 - Vendor pptxgenjs@3.12.0 under `editor/vendor/pptxgenjs/` to eliminate CDN supply-chain risk (AUDIT-D-03, P0-03). CDN path retained as operator opt-in with SRI `integrity` + `crossorigin="anonymous"` on the `<script>` element. Vendor path resolves under `file://` — no network required for default PPTX export flow. New gate: `export-sri.spec.js` (2 scenarios).
 - `parseSingleRoot` now sanitizes tag allow-list (`ALLOWED_HTML_TAGS`), attribute filter (`BLOCKED_ATTR_NAMES` + `/^on/i`), URL protocol check (`javascript:`/`vbscript:`/`data:` non-image), `srcdoc` strip, and size guard (>256 KB rejected) in `replace-node-html` and `replace-slide-html` (AUDIT-D-02, P0-02). New gate: `bridge-sanitize.spec.js` (5 scenarios).
 - Replace `Math.random` bridge token with `crypto.getRandomValues` (AUDIT-D-15, P1-15). Entropy upgraded from ~52 bits to 192 bits (24 bytes). Preserves `"pe-"` prefix for log-grep back-compat and `Math.random` fallback branch for sandboxed contexts without SubtleCrypto. New gate: `bridge-token.spec.js` (2 scenarios).
