@@ -562,6 +562,7 @@
         previewZoom: 1.0,
         theme: "light",
         themePreference: "system",
+        activeBanners: [],
       });
 
       // Register the 'history' slice — WO-18 (ADR-013 phase 3).

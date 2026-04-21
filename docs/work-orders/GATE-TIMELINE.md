@@ -61,8 +61,8 @@
 | `test:gate-a11y` | **v0.27.1** | [WO-09](W2/WO-09-a11y-axe-gate.md), [WO-10](W2/WO-10-keyboard-nav-completeness.md), [WO-11](W2/WO-11-contrast-spec.md) |
 | `test:gate-visual` | **v0.28.0** | [WO-32](W7/WO-32-visual-regression-gate.md) |
 | `test:gate-contract` | **v0.28.3** ✅ live | WO-13 — schema validators per message (152/0) |
-| `test:gate-types` | **v0.28.1** ✅ live (optional) → v0.37.0 (required) | WO-14 — `tsc --noEmit` baseline |
-| `test:unit` | **v0.28.4** ✅ live | WO-16 — store.js unit tests (20/20, Node --test) |
+| `test:gate-types` | **v0.28.1** ✅ live (optional) → v0.37.0 (required) | WO-14 — `tsc --noEmit` baseline (globals.d.ts drift noted v0.29.5, deferred) |
+| `test:unit` | **v0.28.4** ✅ live | WO-16 — store.js unit tests; expanded to 54/54 by W4 (Node --test) |
 
 ## Gate rebalancing notes
 

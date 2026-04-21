@@ -206,9 +206,10 @@ When touching `presentation-editor.html`:
 
 ## JS Module Inventory (editor/src/)
 
-26 modules total (as of v0.29.2):
+32 modules total (as of v0.29.5):
 
-- `boot.js` — Bootstrap, theme resolution, init sequence
+- `banners.js` — Banner registry: unified API for shell-level banners scaffold (v0.29.5 WO-23; PAIN-MAP P2-09; ~97 LOC)
+- `boot.js` — Bootstrap: init sequence, complexity mode, selection mode, slide templates, binding functions (~1551 LOC; theme/zoom/shell-layout extracted WO-22)
 - `bridge-commands.js` — Bridge command handlers (shell side)
 - `bridge-schema.js` — Per-message schema validators
 - `bridge-script.js` — Bridge script injected into iframe
@@ -217,16 +218,21 @@ When touching `presentation-editor.html`:
 - `context-menu.js` — Context menu rendering and actions
 - `dom.js` — DOM utilities and direct manipulation
 - `export.js` — HTML/PPTX export
-- `feedback.js` — Toast, diagnostics, telemetry UI binding
+- `feedback.js` — Toast, diagnostics, telemetry UI binding (surface mutex moved to surface-manager.js WO-23; ~1237 LOC)
+- `floating-toolbar.js` — Floating toolbar position/drag/collapse (v0.29.3)
 - `history.js` — Undo/redo, patch-based snapshots
 - `inspector-sync.js` — Inspector panel sync and rendering
 - `layers-panel.js` — Advanced-mode layers panel: render + drag-drop + lock/visibility + grouping
-- `main.js` — Entry point, orchestrates init
+- `main.js` — Entry point — calls init() (3 LOC; P1-08 closed v0.29.4)
 - `primary-action.js` — Primary action button and history budget chip
 - `selection.js` — Selection overlay, direct manipulation (drag/resize), selection state
+- `shell-layout.js` — Responsive shell: compact-shell detection, panel open/close, roving focus (WO-22, ~206 LOC)
 - `shell-overlays.js` — Shell overlay elements (breadcrumb, context-menu layer picker)
 - `slide-rail.js` — Slide rail rendering and navigation
 - `state.js` — Shared mutable state, store slices
 - `store.js` — Observable store (window.store)
 - `telemetry.js` — Opt-in local telemetry scaffold
-- `toolbar.js` — Floating toolbar rendering and binding
+- `theme.js` — Theme preference (light/dark/system), FOUC-safe applyResolvedTheme (WO-22, ~153 LOC)
+- `toolbar.js` — Inspector-init helpers (initInspectorSections, addInspectorHelpBadges, slugify)
+- `surface-manager.js` — Transient surface mutex: normalizeShellSurfaceKeep + closeTransientShellUi (v0.29.5 WO-23; PAIN-MAP P2-09; ~37 LOC)
+- `zoom.js` — CSS-zoom preview scale, clamp 0.25–2.0, persist localStorage (WO-22, ~89 LOC)

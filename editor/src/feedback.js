@@ -52,31 +52,8 @@
         window.setTimeout(removeToast, ttl);
       }
 
-      function normalizeShellSurfaceKeep(keepValue) {
-        return new Set(
-          Array.isArray(keepValue)
-            ? keepValue.filter(Boolean)
-            : keepValue
-              ? [keepValue]
-              : [],
-        );
-      }
-
-      function closeTransientShellUi(options = {}) {
-        const keep = normalizeShellSurfaceKeep(options.keep);
-        if (!keep.has("context-menu")) closeContextMenu();
-        if (!keep.has("layer-picker")) closeLayerPicker();
-        if (!keep.has("insert-palette") && isInsertPaletteOpen()) {
-          closeInsertPalette();
-        }
-        if (!keep.has("slide-template") && isSlideTemplateBarOpen()) {
-          closeSlideTemplateBar();
-        }
-        if (!keep.has("topbar-overflow") && isTopbarOverflowOpen()) {
-          closeTopbarOverflow();
-        }
-        if (!keep.has("floating-toolbar")) hideFloatingToolbar();
-      }
+      // Surface mutex moved to surface-manager.js (WO-23 — PAIN-MAP P1-09, P2-09).
+      // closeTransientShellUi + normalizeShellSurfaceKeep remain callable via shared global.
 
       function readShellMetricVar(name, fallback = 0) {
         const value = parseFloat(

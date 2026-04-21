@@ -4,6 +4,31 @@
 
 ---
 
+## [v0.29.5] — 2026-04-21 — W4 batch 6 (FINAL): WO-23 feedback.js split → surface-manager + banners scaffold
+
+### Refactor
+- refactor(arch): split feedback.js → surface-manager.js + banners.js scaffold — PAIN-MAP **P2-09 CLOSED**; P1-09 partially closed (full banner migration deferred post-v1.0). `surface-manager.js` (37 LOC): 2 functions cut/pasted verbatim from feedback.js (`normalizeShellSurfaceKeep`, `closeTransientShellUi`) with ZERO body edits. Runtime guard: throws if `closeContextMenu` not yet defined (enforces load-after-context-menu.js). `banners.js` (97 LOC scaffold): `BANNER_REGISTRY` (Object.create(null)); `@typedef BannerSpec` with required `.render(payload)` + optional `.hide()`; `registerBanner(id, spec)` — throws on missing render; `showBanner(id, payload)` — calls spec.render, replaces existing activeBanners entry (no duplicate), updates `window.store.update('ui', {activeBanners})`, falls back to `reportShellWarning` for unknown id; `hideBanner(id)` — calls optional spec.hide, filters activeBanners; `getActiveBanners()` — returns frozen copy. Runtime guard: throws if `window.store.get` not a function. WO-07 Trust Banner wired separately via shellBoundary (path b — already merged v0.27.3). `state.js`: ui slice extended with `activeBanners: []` initial value. `feedback.js`: moved block replaced with 2-line comment (`// Surface mutex moved to surface-manager.js (WO-23 — PAIN-MAP P1-09, P2-09).`). Script load order: `context-menu.js` → `inspector-sync.js` → `shell-overlays.js` → `surface-manager.js` → `banners.js` → `theme.js`. Call-site audit: `closeTransientShellUi` called in `boot.js` (1), `bridge-commands.js` (2), `selection.js` (1), `shell-layout.js` (3), `shell-overlays.js` (3); `normalizeShellSurfaceKeep` called in `shell-layout.js` (1), `feedback.js` (removed). All resolve via shared global scope — no imports added. feedback.js: 1237 LOC (was 1260). Module count: 30 → 32. Gate-A: 59/5/0. test:unit: 54/54.
+
+### Tests
+- test(arch): surface-manager.spec.js — 5 unit cases. Cases: (a) keep:'context-menu' skips context-menu closer, (b) normalizeShellSurfaceKeep(undefined) → empty Set, (c) normalizeShellSurfaceKeep('x') → Set{x}, (d) normalizeShellSurfaceKeep(['a','b',null]) → Set{a,b} (null filtered), (e) no-options closes all 6 surfaces.
+- test(arch): banners.spec.js — 6 unit cases. Cases: (a) registerBanner stores spec, (b) showBanner calls render + updates activeBanners, (c) hideBanner removes from active list, (d) unknown id does not throw — calls reportShellWarning, (e) duplicate showBanner replaces entry, (f) missing render throws. test:unit → 54/54.
+
+---
+
+## [v0.29.4] — 2026-04-21 — W4 batch 5: WO-22 boot.js split → theme + zoom + shell-layout
+
+### Refactor
+- refactor(arch): split boot.js → theme.js + zoom.js + shell-layout.js (~440 LOC extracted). main.js orphan DOM reparent absorbed into boot.js::ensureSlideTemplateBarRoot — **PAIN-MAP P1-08 CLOSED**. P1-07 partially closed (remaining boot.js concerns deferred post-v1.0). `theme.js` (~153 LOC): 8 functions moved verbatim (`resolveSystemTheme`, `getThemePreferenceLabel`, `queueThemeTransitionUnlock`, `syncThemeDatasets`, `applyResolvedTheme`, `initTheme`, `setThemePreference`, `toggleTheme`). Runtime guard: throws if `window.store.get` not a function. `zoom.js` (~89 LOC): 5 functions moved verbatim (`initPreviewZoom`, `setPreviewZoom`, `applyPreviewZoom`, `updatePreviewZoomUi`, `stepZoom`). Runtime guard: throws if `window.store.get` not a function. `shell-layout.js` (~206 LOC): 11 functions moved verbatim (`setToggleButtonState`, `setDisclosureButtonState`, `bindShellLayout`, `isCompactShell`, `syncShellPanelFocusableState`, `setElementInertState`, `applyShellPanelState`, `syncShellPanelVisibility`, `setShellPanelState`, `toggleShellPanel`, `closeShellPanels`). Runtime guard: throws if `state` or `els` not defined. Script load order: `shell-overlays.js` → `theme.js` → `zoom.js` → `shell-layout.js` → `boot.js` → `primary-action.js` → `main.js`. All callers in `boot.js`, `bridge-commands.js`, `context-menu.js`, `dom.js`, `feedback.js`, `floating-toolbar.js`, `primary-action.js`, `selection.js`, `shell-overlays.js`, `shortcuts.js` resolve via shared global scope. boot.js: ~1551 LOC (was 1973). main.js: 3 LOC (was 12). Module count: 27 → 30. Gate-A: 59/5/0. test:unit: 43/43. PAIN-MAP: P1-07 (partial), P1-08 (CLOSED).
+
+---
+
+## [v0.29.3] — 2026-04-21 — W4 batch 4: WO-21 selection.js split → floating-toolbar.js
+
+### Refactor
+- refactor(arch): split selection.js → floating-toolbar.js (198 LOC extracted) + toolbar.js (54 LOC extracted); **PAIN-MAP P1-06 CLOSED**. `floating-toolbar.js` (267 LOC): 6 functions moved verbatim from selection.js (`toggleFloatingToolbarCollapsed`, `persistToolbarSession`, `initFloatingToolbarState`, `clampToolbarPosition`, `positionFloatingToolbar`, `hideFloatingToolbar`) + 1 function moved verbatim from toolbar.js (`updateFloatingToolbarContext`). Runtime guard: throws if `getSelectionInteractionRect` not yet defined (enforces load order). Script load order: `selection.js` → `layers-panel.js` → `floating-toolbar.js` → `toolbar.js`. `toolbar.js` retains only inspector-init helpers (`initInspectorSections`, `addInspectorHelpBadges`, `slugify`). selection.js now ~1171 LOC. toolbar.js now 96 LOC (was 152). Module count: 26 → 27. Gate-A: 59/5/0. test:unit: 43/43. PAIN-MAP: P1-06 (final closure).
+
+---
+
 ## [v0.29.2] — 2026-04-21 — W4 batch 3: WO-20 selection.js split → layers-panel.js
 
 ### Refactor
