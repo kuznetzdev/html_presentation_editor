@@ -1,0 +1,3 @@
+# Treat vendored JS bundles as binary to prevent diff noise and line-ending
+# conversion that would invalidate SRI hashes.
+editor/vendor/pptxgenjs/*.js binary
