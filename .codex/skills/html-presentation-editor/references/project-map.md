@@ -206,8 +206,9 @@ When touching `presentation-editor.html`:
 
 ## JS Module Inventory (editor/src/)
 
-30 modules total (as of v0.29.4):
+32 modules total (as of v0.29.5):
 
+- `banners.js` — Banner registry: unified API for shell-level banners scaffold (v0.29.5 WO-23; PAIN-MAP P2-09; ~97 LOC)
 - `boot.js` — Bootstrap: init sequence, complexity mode, selection mode, slide templates, binding functions (~1551 LOC; theme/zoom/shell-layout extracted WO-22)
 - `bridge-commands.js` — Bridge command handlers (shell side)
 - `bridge-schema.js` — Per-message schema validators
@@ -217,7 +218,7 @@ When touching `presentation-editor.html`:
 - `context-menu.js` — Context menu rendering and actions
 - `dom.js` — DOM utilities and direct manipulation
 - `export.js` — HTML/PPTX export
-- `feedback.js` — Toast, diagnostics, telemetry UI binding
+- `feedback.js` — Toast, diagnostics, telemetry UI binding (surface mutex moved to surface-manager.js WO-23; ~1237 LOC)
 - `floating-toolbar.js` — Floating toolbar position/drag/collapse (v0.29.3)
 - `history.js` — Undo/redo, patch-based snapshots
 - `inspector-sync.js` — Inspector panel sync and rendering
@@ -233,4 +234,5 @@ When touching `presentation-editor.html`:
 - `telemetry.js` — Opt-in local telemetry scaffold
 - `theme.js` — Theme preference (light/dark/system), FOUC-safe applyResolvedTheme (WO-22, ~153 LOC)
 - `toolbar.js` — Inspector-init helpers (initInspectorSections, addInspectorHelpBadges, slugify)
+- `surface-manager.js` — Transient surface mutex: normalizeShellSurfaceKeep + closeTransientShellUi (v0.29.5 WO-23; PAIN-MAP P2-09; ~37 LOC)
 - `zoom.js` — CSS-zoom preview scale, clamp 0.25–2.0, persist localStorage (WO-22, ~89 LOC)
