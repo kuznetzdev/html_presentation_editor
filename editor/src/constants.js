@@ -175,6 +175,19 @@
       ];
 
       // =====================================================================
+      // Autosave size-cap thresholds (AUDIT-D-05, WO-04)
+      // AUTOSAVE_WARN_BYTES  — serialized payload above this triggers a toast
+      //   warning but the write still proceeds normally.
+      // AUTOSAVE_FAIL_BYTES  — serialized payload above this triggers the
+      //   light-snapshot fallback: inline data-URIs > 1 KB are stripped
+      //   before writing so the structural draft is preserved.
+      // AUTOSAVE_LIGHT_TAG   — marker embedded in the stored payload so that
+      //   tryRestoreDraftPrompt can surface a banner when a light snapshot
+      //   is restored.
+      const AUTOSAVE_WARN_BYTES = 3 * 1024 * 1024;  // 3 MB
+      const AUTOSAVE_FAIL_BYTES = 6 * 1024 * 1024;  // 6 MB
+      const AUTOSAVE_LIGHT_TAG = 'light-v1';
+      // =====================================================================
       // Bridge origin allow-list (AUDIT-D-04, ADR-012 §4)
       // Under file:// protocol the browser reports event.origin === "null"
       // (the string "null", not JS null). We must accept that string.
