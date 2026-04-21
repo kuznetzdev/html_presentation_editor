@@ -858,7 +858,8 @@ iframe {
 }
 
 .slide-item:focus-visible {
-  outline: none;
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: 2px;
   border-color: var(--shell-accent);
   box-shadow: 0 0 0 4px var(--shell-focus);
 }

@@ -139,6 +139,8 @@
               event.key,
             )
           ) {
+            // If focus is inside the slide rail, let the rail own arrow keys.
+            if (event.target && event.target.closest("#slidesPanel")) return;
             event.preventDefault();
             const step = event.shiftKey
               ? DIRECT_MANIP_NUDGE_FAST_PX
