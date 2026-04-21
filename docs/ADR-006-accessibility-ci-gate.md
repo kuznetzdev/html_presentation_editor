@@ -1,6 +1,6 @@
 # ADR-006: Accessibility CI Gate
 
-**Status**: Proposed  
+**Status**: Accepted-partial — shell-a11y gate live, keyboard+contrast pending  
 **Phase**: v0.27.1  
 **Owner**: Agent D (a11y+visual-regression worktree)
 
