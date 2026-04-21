@@ -28,6 +28,45 @@
           const bridgeSeq = Number(data.seq || data.payload?.seq || 0);
           try {
             switch (data.type) {
+              // ADR-012 §1 — Bridge v2 hello handshake (WO-12)
+              // Emitted by bridge-script.js BEFORE bridge-ready.
+              // Validates numeric protocol === 2; degrades to read-only on mismatch.
+              case "hello": {
+                const _helloPayload = data.payload || {};
+                const _vResult = window.BRIDGE_SCHEMA
+                  ? window.BRIDGE_SCHEMA.validateMessage({ type: 'hello', ..._helloPayload })
+                  : { ok: false, errors: ['BRIDGE_SCHEMA not loaded'] };
+                if (!_vResult.ok || _helloPayload.protocol !== BRIDGE_PROTOCOL_VERSION) {
+                  // Protocol mismatch — degrade to read-only preview.
+                  state.editingSupported = false;
+                  const _receivedProto = _helloPayload.protocol !== undefined
+                    ? _helloPayload.protocol
+                    : '?';
+                  addDiagnostic(
+                    `bridge-hello-mismatch: expected protocol ${BRIDGE_PROTOCOL_VERSION}, got ${_receivedProto}; errors: ${_vResult.errors.join(', ')}`
+                  );
+                  showToast(
+                    `Несовместимый bridge: shell ожидает протокол v${BRIDGE_PROTOCOL_VERSION}, iframe прислал v${_receivedProto}. Превью переведено в режим только для чтения.`,
+                    'error',
+                    { title: 'Bridge mismatch', ttl: 999999999 }
+                  );
+                } else {
+                  // Valid hello — record negotiated version and build.
+                  state.bridgeProtocolVersion = BRIDGE_PROTOCOL_VERSION;
+                  state.bridgeBuild = _helloPayload.build || '';
+                  addDiagnostic(
+                    `bridge-hello-ok: protocol=${BRIDGE_PROTOCOL_VERSION} build=${state.bridgeBuild}`
+                  );
+                  if (state.complexityMode === 'advanced') {
+                    showToast(
+                      `Bridge v${BRIDGE_PROTOCOL_VERSION} подключён: сборка ${state.bridgeBuild}`,
+                      'info',
+                      { ttl: 3000 }
+                    );
+                  }
+                }
+                break;
+              }
               case "bridge-ready":
                 state.bridgeAlive = true;
                 state.previewReady = true;

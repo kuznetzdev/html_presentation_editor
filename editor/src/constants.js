@@ -123,6 +123,14 @@
           manualBasePath: "/tests/fixtures/playwright/",
         }),
       });
+      // =====================================================================
+      // Bridge protocol versioning (ADR-012 §1, WO-12)
+      // BRIDGE_PROTOCOL_VERSION — numeric version sent in hello payload by iframe.
+      //   Shell validates protocol === BRIDGE_PROTOCOL_VERSION (must be 2).
+      // SHELL_BUILD — short build label embedded in hello and reported in diagnostics.
+      const BRIDGE_PROTOCOL_VERSION = 2;
+      const SHELL_BUILD = 'v0.28.0';
+      // =====================================================================
       const SHELL_WARNING_CACHE = new Set();
       const BRIDGE_MUTATION_TYPES = new Set([
         "apply-style",

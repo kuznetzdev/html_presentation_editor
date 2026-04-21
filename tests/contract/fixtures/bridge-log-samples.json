@@ -1,10 +1,10 @@
 [
   {
     "id": "F-01-hello-happy",
-    "description": "Happy path: minimal valid hello handshake (ADR-012 §1)",
+    "description": "Happy path: minimal valid hello handshake (ADR-012 §1, WO-12 — numeric protocol 2)",
     "message": {
       "type": "hello",
-      "protocol": "v2",
+      "protocol": 2,
       "build": "448baf7",
       "capabilities": ["select", "replace-node-html"]
     },
@@ -12,10 +12,10 @@
   },
   {
     "id": "F-02-hello-empty-capabilities",
-    "description": "Happy path: hello with empty capabilities array is valid",
+    "description": "Happy path: hello with empty capabilities array is valid (numeric protocol 2)",
     "message": {
       "type": "hello",
-      "protocol": "v2",
+      "protocol": 2,
       "build": "abc1234",
       "capabilities": []
     },
