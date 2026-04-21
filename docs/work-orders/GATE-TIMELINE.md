@@ -60,8 +60,9 @@
 | `test:gate-f` | pre-v0.25.0 baseline | — (historical, gated by WO-38) |
 | `test:gate-a11y` | **v0.27.1** | [WO-09](W2/WO-09-a11y-axe-gate.md), [WO-10](W2/WO-10-keyboard-nav-completeness.md), [WO-11](W2/WO-11-contrast-spec.md) |
 | `test:gate-visual` | **v0.28.0** | [WO-32](W7/WO-32-visual-regression-gate.md) |
-| `test:gate-contract` | **v0.29.1** | WO-13 (planned) — schema validators per message |
-| `test:gate-types` | **v0.28.1** (optional) → v0.37.0 (required) | WO-14 (planned) — `tsc --noEmit` baseline |
+| `test:gate-contract` | **v0.28.3** ✅ live | WO-13 — schema validators per message (152/0) |
+| `test:gate-types` | **v0.28.1** ✅ live (optional) → v0.37.0 (required) | WO-14 — `tsc --noEmit` baseline |
+| `test:unit` | **v0.28.4** ✅ live | WO-16 — store.js unit tests (20/20, Node --test) |
 
 ## Gate rebalancing notes
 
