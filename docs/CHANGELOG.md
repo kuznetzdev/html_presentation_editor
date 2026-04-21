@@ -2,9 +2,13 @@
 
 ## Unreleased
 
+### Accessibility
+- feat(a11y): rail keyboard nav (↑/↓, Alt+↑/↓) + focus-trap audit — P0-05 / P0-08. Roving tabindex on slide rail (exactly one slide-item has tabindex=0 at any time). ArrowDown/ArrowUp cycles focus between rail items without activating the slide. Alt+ArrowDown/Alt+ArrowUp reorders the focused slide and emits Russian toast "Слайд перемещён: позиция N → M". shortcuts.js arrow-nudge gated on #slidesPanel source so rail ArrowDown does not nudge the preview element. Focus-visible ring tokens (--focus-ring-color, --focus-ring-width) added to tokens.css for both light and dark themes; preview.css :focus-visible rule updated to use tokens. ADR-006, WO-10.
+
 ### Tests
 - Bridge schema registry + contract scaffold — 15-fixture test corpus covering happy-path (hello, select, replace-node-html), boundary (html exactly at 262144 bytes), and negative cases (over-limit, missing nodeId, unknown type, non-object). Gate-contract project added to playwright.config.js. Pure Node.js vm sandbox — no browser required. WO-08 / ADR-012 §2 / PAIN-MAP P0-13.
 - Add test:gate-a11y: axe-playwright shell scan (3 workflow states, WCAG 2.1 AA). ADR-006 partial shipped. Known violations: color-contrast (#8a8a8e/#ffffff = 3.43:1) and nested-interactive (slide-item role=button with focusable descendants) — tracked in known-violations.md, marked test.fail() pending WO-10 remediation. Gate is additive — does not affect Gate-A baseline.
+- keyboard-nav.spec.js: 6 keyboard navigation tests (P0-05, P0-08). Tab order through topbar → rail, Escape closes modal, ArrowDown/Up roving tabindex, Alt+ArrowDown reorders rail, modal focus-trap Tab/Shift+Tab, Russian aria-label invariant + --focus-ring-width token assertion. WO-10.
 
 ### Security
 - Shell banner plumbing + broken-asset recovery + sandbox-mode flag (AUDIT-D-01/07, P0-04). `shellBoundary.report/clear` API added to `feedback.js` (ADR-014 §Layer 1). `#shellBanner` region added to shell chrome (role=region, aria-live=polite, non-blocking). `SANDBOX_MODES` enum + `DEFAULT_SANDBOX_MODE='off'` added to `constants.js`; `state.sandboxMode` wired at `import.js:97` switch replacing bare `removeAttribute("sandbox")` with ADR-014/AUDIT-D-01/07 comment. `probeBrokenAssets` probes img/link/video/source via HEAD (localhost) or onerror-inspection (file://); result surfaces Russian banner "Некоторые ресурсы не найдены. N файл(ов)." with "Подключить папку ресурсов" action. New gate: `broken-asset-banner.spec.js` (4 scenarios). WO-07 will wire Trust-Banner script detection to SANDBOX_MODES.SCRIPTS_ONLY.

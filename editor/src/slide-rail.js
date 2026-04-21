@@ -34,7 +34,7 @@
           item.dataset.index = String(index);
           item.dataset.slideId = slide.id;
           item.setAttribute("role", "button");
-          item.setAttribute("tabindex", "0");
+          item.setAttribute("tabindex", isActiveSlide ? "0" : "-1");
           item.setAttribute(
             "aria-label",
             `Слайд ${index + 1}: ${slide.title || "без названия"}`,
@@ -133,6 +133,42 @@
                 rect.left + Math.min(rect.width - 18, 42),
                 rect.top + Math.min(rect.height - 12, 28),
               );
+              return;
+            }
+            // Alt+ArrowDown / Alt+ArrowUp — reorder slide within rail
+            if (event.altKey && (event.key === "ArrowDown" || event.key === "ArrowUp")) {
+              event.preventDefault();
+              event.stopPropagation();
+              const direction = event.key === "ArrowDown" ? 1 : -1;
+              const toIndex = index + direction;
+              if (toIndex >= 0 && toIndex < state.slides.length) {
+                moveSlideToIndex(index, toIndex, { activateMovedSlide: false });
+                showToast(
+                  `Слайд перемещён: позиция ${index + 1} → ${toIndex + 1}`,
+                  "info",
+                  { title: "Перемещение слайда" },
+                );
+              }
+              return;
+            }
+            // ArrowDown / ArrowUp — move focus to adjacent rail item (roving tabindex)
+            if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+              event.preventDefault();
+              event.stopPropagation();
+              const items = Array.from(
+                els.slidesList.querySelectorAll(".slide-item"),
+              );
+              const currentPos = items.indexOf(item);
+              const nextPos =
+                event.key === "ArrowDown"
+                  ? Math.min(items.length - 1, currentPos + 1)
+                  : Math.max(0, currentPos - 1);
+              if (nextPos !== currentPos) {
+                // Update roving tabindex: remove from current, add to next
+                item.setAttribute("tabindex", "-1");
+                items[nextPos].setAttribute("tabindex", "0");
+                items[nextPos].focus();
+              }
               return;
             }
             if (event.key !== "Enter" && event.key !== " ") return;
