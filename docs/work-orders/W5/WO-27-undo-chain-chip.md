@@ -1,5 +1,13 @@
 ## Step 27 — v0.27.2 · Topbar undo-budget chip + toast-on-drop
 
+> **⚠️ STATUS: SUPERSEDED — Do NOT execute.**
+> WO-18 (history patch-based, merged v0.29.0) already delivered the full history-budget chip
+> via `renderHistoryBudgetChip()` in `editor/src/primary-action.js`, wired with
+> `window.store.subscribe('history', renderHistoryBudgetChip)` and the `#historyBudgetChip`
+> element in the shell. PAIN-MAP P0-07 is CLOSED. Running this WO would duplicate
+> the chip and conflict with the store-backed implementation.
+> Superseded: 2026-04-21
+
 **Window:** W5   **Agent-lane:** D   **Effort:** S
 **ADR:** ADR-013 (Observable Store — soft tie; scaffolds onto `window.state` now)   **PAIN-MAP:** P0-07 (part 1)
 **Depends on:** none (re-wires to observable store later when WO-16/17/18 land)   **Unblocks:** —
