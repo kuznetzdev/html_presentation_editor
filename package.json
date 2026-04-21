@@ -22,7 +22,8 @@
     "test:gate-c": "playwright test tests/playwright/specs/shell.smoke.spec.js tests/playwright/specs/editor.regression.spec.js tests/playwright/specs/click-through.spec.js tests/playwright/specs/selection-engine-v2.spec.js --project=firefox-desktop --project=webkit-desktop",
     "test:gate-d": "playwright test tests/playwright/specs/shell.smoke.spec.js tests/playwright/specs/editor.regression.spec.js --project=chromium-mobile-390 --project=chromium-mobile-640 --project=chromium-tablet-820",
     "test:gate-e": "npm run test:asset-parity && playwright test tests/playwright/specs/asset-parity.spec.js --project=chromium-desktop",
-    "test:gate-f": "playwright test"
+    "test:gate-f": "playwright test",
+    "test:gate-a11y": "PLAYWRIGHT_TEST_SERVER_PORT=41735 npx playwright test tests/a11y/ --project=chromium-desktop --config playwright.a11y.config.js"
   },
   "repository": {
     "type": "git",
@@ -45,6 +46,7 @@
   },
   "homepage": "https://github.com/kuznetzdev/html_presentation_editor#readme",
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.2",
     "@playwright/test": "^1.58.2"
   }
 }

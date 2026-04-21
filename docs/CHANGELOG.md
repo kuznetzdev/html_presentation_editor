@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Tests
+- Add test:gate-a11y: axe-playwright shell scan (3 workflow states, WCAG 2.1 AA). ADR-006 partial shipped. Known violations: color-contrast (#8a8a8e/#ffffff = 3.43:1) and nested-interactive (slide-item role=button with focusable descendants) — tracked in known-violations.md, marked test.fail() pending WO-10 remediation. Gate is additive — does not affect Gate-A 55/5/0 baseline.
+
 ### Security
 - Autosave size cap: warn at 3 MB, light-snapshot fallback at 6 MB, QuotaExceededError handled gracefully (AUDIT-D-05). stripHeavyDataUris strips only data:image/... URIs > 1024 chars; all HTML structure preserved. Russian toast copy surfaced at every tier; light-snapshot banner shown on restore. New gate: autosave-cap.spec.js (3 scenarios).
 - Assert bridge postMessage origin in receive handlers (bridge.js shell + bridge-script.js iframe); replace bare `'*'` send target with origin-aware target — `file://` retains `'*'` (browser rejects `"null"` as target), `http(s)://` uses `location.origin`. New gate: `bridge-origin.spec.js` (2 scenarios + file:// note). Closes AUDIT-D-04. ADR-012 §4.
