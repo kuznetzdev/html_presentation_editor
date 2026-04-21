@@ -564,6 +564,18 @@
         themePreference: "system",
       });
 
+      // Register the 'history' slice — WO-18 (ADR-013 phase 3).
+      // Migrated fields: index, limit, baseline, patches, dirty, lastSavedAt.
+      // Proxy shim: history/historyIndex/dirty/lastSavedAt keys forwarded to this slice.
+      window.store.defineSlice("history", {
+        index: -1,
+        limit: 20,
+        baseline: null,
+        patches: [],
+        dirty: false,
+        lastSavedAt: 0,
+      });
+
       // Register the 'selection' slice — WO-17 (ADR-013 phase 2).
       // Migrated fields: all 16 selection fields from window.state.
       // Dual-write: state raw fields + store slice kept in sync by applyElementSelection.
@@ -781,6 +793,21 @@
       /** @type {Set<string>} */
       var _UI_SLICE_KEYS = new Set(["complexityMode", "previewZoom", "theme", "themePreference"]);
 
+      // History fields mapped from legacy state key → store 'history' slice key.
+      // READ:  state.historyIndex → store.get('history').index
+      // WRITE: state.historyIndex = 5 → store.update('history', {index: 5})
+      //         + also updates raw state for backward compat.
+      // NOTE: captureHistorySnapshot in history.js performs batched store.update('history')
+      //       for full patch commits — that is the canonical write path.
+      /** @type {Object.<string, string>} */
+      var _HISTORY_STATE_TO_SLICE = {
+        historyIndex:  "index",
+        dirty:         "dirty",
+        lastSavedAt:   "lastSavedAt",
+      };
+      /** @type {Set<string>} */
+      var _HISTORY_STATE_KEYS = new Set(Object.keys(_HISTORY_STATE_TO_SLICE));
+
       // Selection fields mapped from legacy state key → store 'selection' slice key.
       // READ:  state.selectedNodeId      → store.get('selection').activeNodeId
       // WRITE: state.selectedNodeId = x  → store.update('selection', {activeNodeId: x})
@@ -824,6 +851,10 @@
               var sliceKey = _SELECTION_STATE_TO_SLICE[String(prop)];
               return window.store.get("selection")[sliceKey];
             }
+            if (_HISTORY_STATE_KEYS.has(String(prop))) {
+              var hSliceKey = _HISTORY_STATE_TO_SLICE[String(prop)];
+              return window.store.get("history")[hSliceKey];
+            }
             return target[prop];
           },
           set: function (target, prop, value) {
@@ -844,6 +875,18 @@
               window.store.update("selection", (function () {
                 var patch = {};
                 patch[sliceKey] = value;
+                return patch;
+              }()));
+              // Mirror to raw state for backward compat
+              target[prop] = value;
+              return true;
+            }
+            if (_HISTORY_STATE_KEYS.has(String(prop))) {
+              // Write to history store slice (triggers notification)
+              var hSliceKey = _HISTORY_STATE_TO_SLICE[String(prop)];
+              window.store.update("history", (function () {
+                var patch = {};
+                patch[hSliceKey] = value;
                 return patch;
               }()));
               // Mirror to raw state for backward compat
@@ -901,6 +944,7 @@
         reloadPreviewBtn: document.getElementById("reloadPreviewBtn"),
         documentMeta: document.getElementById("documentMeta"),
         saveStatePill: document.getElementById("saveStatePill"),
+        historyBudgetChip: document.getElementById("historyBudgetChip"),
         workspaceStateBadge: document.getElementById("workspaceStateBadge"),
         themeToggleBtn: document.getElementById("themeToggleBtn"),
         topbarStateCluster: document.getElementById("topbarStateCluster"),

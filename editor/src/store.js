@@ -62,6 +62,48 @@
  */
 
 /**
+ * A single history patch entry.
+ * op='baseline' — full HTML snapshot; op='delta' — diff wrapper with nextHtml.
+ *
+ * ADR-017 CRDT-readiness checklist for HistoryPatch:
+ *   [x] Immutable — patches are never mutated after creation
+ *   [x] Causality tracked via clientId + monotonic counter
+ *   [x] Dedup via FNV-1a hash equality
+ *   [x] Full-HTML fallback: every patch stores recoverable html
+ *
+ * @typedef {Object} HistoryPatch
+ * @property {'baseline'|'delta'} op - Patch operation type
+ * @property {string} html - Full HTML (baseline) or nextHtml extracted from diff (delta)
+ * @property {string} [diff] - JSON-encoded {nextHtml} for delta patches
+ * @property {string} reason - Change reason label (passed from commitChange)
+ * @property {number} at - Timestamp (Date.now()) when patch was created
+ * @property {string} clientId - Stable per-session random ID (set once at module parse time)
+ * @property {number} counter - Monotonically increasing per-session counter
+ * @property {number} [baselineIndex] - patches-array index of the baseline this delta refers to
+ * @property {string} hash - FNV-1a 32-bit hex hash of the full HTML
+ */
+
+/**
+ * History state slice — patch-based undo/redo stack.
+ * Migrated fields: index (historyIndex), limit (HISTORY_LIMIT), dirty, lastSavedAt.
+ *
+ * ADR-017 CRDT-readiness checklist for HistorySlice:
+ *   [x] Updates produce new objects (immutable) — store.update spreads into new obj
+ *   [x] IDs are stable — clientId + counter provide causal identity per patch
+ *   [x] Operations describable as {op, path, value} patches — each HistoryPatch IS a patch
+ *   [x] Dedup via hash equality — identical HTML never produces duplicate entries
+ *   [x] Memory bound — patches shift oldest on overflow (HISTORY_LIMIT = 20)
+ *
+ * @typedef {Object} HistorySlice
+ * @property {number} index - Current position in the patches array (-1 = empty)
+ * @property {number} limit - Maximum patches retained (mirrors HISTORY_LIMIT)
+ * @property {HistoryPatch|null} baseline - Most recent baseline patch (reference copy)
+ * @property {HistoryPatch[]} patches - Immutable array of history patches
+ * @property {boolean} dirty - Whether unsaved changes exist
+ * @property {number} lastSavedAt - Timestamp of the last successful autosave
+ */
+
+/**
  * A per-slice subscriber callback.
  * @template T
  * @callback SliceListener

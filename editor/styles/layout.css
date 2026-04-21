@@ -442,4 +442,29 @@ body[data-editor-workflow="empty"] .empty-state {
   color: var(--shell-accent);
   font-weight: 700;
 }
+
+/* History budget chip — WO-18 */
+.history-budget-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: 999px;
+  min-height: 22px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid var(--shell-border);
+  background: var(--shell-panel);
+  color: var(--shell-text-muted);
+  white-space: nowrap;
+}
+.history-budget-chip.is-warning {
+  color: var(--shell-warning);
+  border-color: var(--shell-warning-border);
+  background: var(--shell-warning-bg);
+}
+.history-budget-chip.is-danger {
+  color: var(--shell-danger);
+  border-color: var(--shell-danger-border);
+  background: var(--shell-danger-bg);
+}
 }
