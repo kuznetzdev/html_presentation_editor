@@ -214,3 +214,16 @@ The editor targets modern evergreen browsers with automatic updates:
 The preview zoom feature uses the CSS `zoom:` property which is on the W3C standards track (Working Draft) with 97%+ global browser support. This property triggers browser re-layout at the target resolution, preserving text and vector rendering quality at all zoom levels.
 
 **Graceful degradation**: On unsupported browsers (Firefox < 126), zoom controls remain functional but quality improvement may not apply. No errors or crashes occur.
+
+---
+
+## Release state
+
+**Current**: v0.37.0-rc.0 — RC freeze declared 2026-04-22
+
+All 38 Work Orders (W1–W8) merged to main. All 15 P0 PAIN-MAP items resolved.
+All 20 ADRs: Accepted or Deferred (0 Proposed). Gate matrix: 9/10 gates GREEN.
+
+**Target GA**: v1.0.0 on 2026-05-06 (14-day freeze window).
+
+See `docs/RELEASE_CRITERIA.md` and `docs/RC_FREEZE_CHECKLIST.md` for binding criteria.
