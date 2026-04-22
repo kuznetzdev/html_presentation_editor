@@ -50,7 +50,7 @@
           );
           const metaTags = buildSlideMetaTags(slide, slideNode);
           const hasSevereOverlap =
-            state.complexityMode === "basic" &&
+            isBasicMode() &&
             Boolean(state.slideOverlapWarnings[slide.id]);
           if (hasSevereOverlap) metaTags.push("⚠ перекрытие");
           const stateTagClass =

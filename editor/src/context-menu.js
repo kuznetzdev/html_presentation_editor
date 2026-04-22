@@ -72,7 +72,7 @@
         const isProtected = entityKind === "protected";
         const isVideo = entityKind === "video";
         const isTableCell = entityKind === "table-cell";
-        const isAdvanced = state.complexityMode === "advanced";
+        const isAdvanced = isAdvancedMode();
         const policy = normalizeSelectionPolicy(
           payload.protectionPolicy || state.selectedPolicy,
           {

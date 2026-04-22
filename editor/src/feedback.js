@@ -1463,7 +1463,7 @@
         if (!section) return;
 
         const tel = window.telemetry;
-        const isAdvanced = (typeof state !== "undefined") && state.complexityMode === "advanced";
+        const isAdvanced = isAdvancedMode();
         const isOn = tel && tel.isEnabled();
 
         // Show/hide logic: visible only when advanced mode AND opt-in enabled.

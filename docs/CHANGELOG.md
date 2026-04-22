@@ -7,6 +7,7 @@
 - Telemetry viewer in advanced-mode Diagnostics panel: session summary, event filter, export log as JSON, clear log (ADR-020). 100% local, zero network. Export-purity spec locks PPTX isolation. (WO-34)
 
 ### Refactored
+- shortcuts.js rewritten as declarative KEYBINDINGS table — 22 bindings, auto-generates cheat-sheet modal. isAdvancedMode()/isBasicMode() accessors centralize complexityMode checks (was 21 inline uses). (WO-37, P2-04, P2-08)
 - Entity-kind registry externalized into entity-kinds.js (ADR-016 Layer 1, P2-05). Bridge + commands share single source of truth. (WO-35)
 
 ### Changed

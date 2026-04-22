@@ -208,7 +208,7 @@
           return "Выбран весь слайд. Справа доступны настройки слайда и безопасные действия без изменения каркаса.";
         }
         if (hasBlockedDirectManipulationContext()) {
-          return state.complexityMode === "advanced"
+          return isAdvancedMode()
             ? `Этот элемент нельзя свободно двигать мышью в текущем контексте. Используйте ${getComplexityModeDisplayLabel()} и точные поля справа для размера и позиции.`
             : `Этот элемент нельзя свободно двигать мышью в ${getComplexityModeDisplayLabel()}. Если нужна точная позиция, переключитесь в режим «Точно».`;
         }

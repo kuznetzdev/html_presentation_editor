@@ -16,7 +16,7 @@
           state.selectedNodeId && state.mode === "edit",
         );
         const policy = state.selectedPolicy || createDefaultSelectionPolicy();
-        const isAdvanced = state.complexityMode === "advanced";
+        const isAdvanced = isAdvancedMode();
         const compactLayout = document.body.dataset.toolbarLayout === "compact";
         const entityKind = hasSelection ? getSelectedEntityKindForUi() : "none";
         const canEditRichTextStyles =

@@ -82,7 +82,7 @@
               transformFamily.includes(getBlockReason());
             visible =
               visible &&
-              (state.complexityMode === "advanced" || shouldUnhideGeometry);
+              (isAdvancedMode() || shouldUnhideGeometry);
           }
           setInspectorSectionVisibility(section, visible);
         });
@@ -113,7 +113,7 @@
           showSlideSummary &&
             !(
               workflow === "loaded-preview" &&
-              state.complexityMode === "basic"
+              isBasicMode()
             ),
         );
       }
@@ -169,7 +169,7 @@
           if (!hasPresentation || slideIndex < 0) {
             els.currentSlideSummaryText.textContent =
               "Откройте презентацию и выберите слайд, чтобы увидеть его контекст и дальнейшие действия.";
-          } else if (workflow === "loaded-preview" && state.complexityMode === "basic") {
+          } else if (workflow === "loaded-preview" && isBasicMode()) {
             els.currentSlideSummaryText.textContent =
               "Слайд открыт в безопасном режиме просмотра. Проверьте содержимое и нажмите «Начать редактирование», когда будете готовы к правкам.";
           } else if (state.mode === "edit") {
@@ -763,7 +763,7 @@
           addAction("fit-image", "Вписать");
         } else if (entityKind === "video") {
           addAction("edit-media-url", "URL", { primary: true });
-        } else if (directManipulationBlocked && state.complexityMode === "basic") {
+        } else if (directManipulationBlocked && isBasicMode()) {
           addAction("switch-advanced", "Точно", { primary: true });
         }
 
@@ -773,7 +773,7 @@
 
         if (
           directManipulationBlocked &&
-          state.complexityMode === "basic" &&
+          isBasicMode() &&
           actions.length < 4
         ) {
           addAction("switch-advanced", "Точно");
@@ -900,7 +900,7 @@
         // [v0.18.0] Render layers panel (advanced mode only)
         // [WO-19/P1-12] Skip renderLayersPanel in basic mode or when section is hidden
         // to avoid unnecessary DOM work on every selection change.
-        if (state.complexityMode === "advanced" && els.layersInspectorSection && !els.layersInspectorSection.hidden) {
+        if (isAdvancedMode() && els.layersInspectorSection && !els.layersInspectorSection.hidden) {
           renderLayersPanel();
         }
         // [WO-29] Unified banner dispatch — single renderBlockReasonBanner call

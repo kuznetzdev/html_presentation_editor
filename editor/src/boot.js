@@ -34,6 +34,7 @@
         bindInspectorActions();
         bindSelectionOverlayInteractions();
         bindModals();
+        renderShortcutsModalFromKeybindings(); // WO-37: auto-render from KEYBINDINGS table
         bindShellLayout();
         bindShellChromeMetrics();
         bindSlideTemplateActions();
@@ -139,7 +140,7 @@
       }
 
       function applyComplexityModeUi() {
-        const isAdvanced = state.complexityMode === "advanced";
+        const isAdvanced = isAdvancedMode();
         document.body.dataset.complexityMode = state.complexityMode;
         setToggleButtonState(els.basicModeBtn, !isAdvanced);
         setToggleButtonState(els.advancedModeBtn, isAdvanced);
@@ -413,6 +414,41 @@
             first.focus({ preventScroll: true });
           }
         });
+      }
+
+      // WO-37: Auto-render shortcuts cheat-sheet modal body from KEYBINDINGS table.
+      // Groups are built from binding.group; column split is at the midpoint of groups.
+      function renderShortcutsModalFromKeybindings() {
+        const body = document.querySelector("#shortcutsModal .shortcuts-modal-body");
+        if (!body || typeof window.KEYBINDINGS === "undefined") return;
+
+        // Collect groups preserving order of first appearance.
+        const groupOrder = [];
+        const groups = {};
+        for (const b of window.KEYBINDINGS) {
+          if (!b.label || !b.group) continue;
+          if (!groups[b.group]) {
+            groups[b.group] = [];
+            groupOrder.push(b.group);
+          }
+          groups[b.group].push(b);
+        }
+
+        function buildGroupHtml(groupName) {
+          const rows = groups[groupName]
+            .map((b) => `<tr><td><kbd>${b.chord}</kbd></td><td>${b.label}</td></tr>`)
+            .join("");
+          return `<h4>${groupName}</h4><table class="shortcuts-table">${rows}</table>`;
+        }
+
+        // Split groups into two columns: first half left, second half right.
+        const mid = Math.ceil(groupOrder.length / 2);
+        const leftGroups = groupOrder.slice(0, mid);
+        const rightGroups = groupOrder.slice(mid);
+
+        body.innerHTML =
+          `<div class="shortcuts-col">${leftGroups.map(buildGroupHtml).join("")}</div>` +
+          `<div class="shortcuts-col">${rightGroups.map(buildGroupHtml).join("")}</div>`;
       }
 
       // Shell layout functions moved to shell-layout.js (WO-22).
