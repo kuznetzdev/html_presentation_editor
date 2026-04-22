@@ -1,7 +1,6 @@
 # Release Notes — v1.0.0
 
-> GA ceremony document. To be finalized when `package.json` is promoted from
-> `0.37.0-rc.0` → `1.0.0` after the 14-day RC freeze window (target: 2026-05-06).
+> GA ceremony completed: 2026-04-22. Package promoted `0.37.0-rc.0` → `1.0.0`.
 
 ---
 
