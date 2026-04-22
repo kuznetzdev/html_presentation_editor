@@ -128,5 +128,21 @@ module.exports = defineConfig({
         viewport: { width: 1440, height: 960 },
       },
     },
+    // -------------------------------------------------------------------------
+    // chromium-visual — Visual regression gate (WO-32 / ADR-007 v0.32.0)
+    // Dedicated 1440×900 snapshot project. Run via: npm run test:gate-visual
+    // Baselines stored in: tests/visual/__snapshots__/chromium-visual/
+    // -------------------------------------------------------------------------
+    {
+      name: "chromium-visual",
+      testDir: path.join(__dirname, "tests", "visual"),
+      snapshotDir: path.join(__dirname, "tests", "visual", "__snapshots__", "chromium-visual"),
+      use: {
+        browserName: "chromium",
+        viewport: { width: 1440, height: 900 },
+        deviceScaleFactor: 1,
+        colorScheme: "light",
+      },
+    },
   ],
 });
