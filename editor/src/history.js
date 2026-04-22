@@ -610,6 +610,10 @@
           lines.push.apply(lines, state.diagnostics);
         }
         els.diagnosticsBox.textContent = lines.join("\n");
+        // WO-34: Sync telemetry viewer visibility alongside diagnostics update.
+        if (typeof renderTelemetryViewer === "function") {
+          renderTelemetryViewer();
+        }
       }
 
       function pluralizeSlides(count) {
