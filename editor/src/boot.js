@@ -119,6 +119,8 @@
             });
           }
         }
+        // [WO-36] Reset ack marker before sending so waitForContainerModeApplied() can re-arm
+        state.__containerModeAckAt = 0;
         // [LAYER-MODEL v2] sync container mode to iframe
         sendToBridge("set-selection-mode", { containerMode: state.selectionMode === "container" });
         applySelectionModeUi();
