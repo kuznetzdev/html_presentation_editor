@@ -1255,6 +1255,52 @@
       });
 
       // =====================================================================
+      // Compact-viewport detection (WO-33, ADR-018)
+      // Returns true when the shell viewport is ≤820px — the tablet/mobile
+      // posture where drag, resize, and rail-reorder are blocked.
+      // Exposed on window so selection.js and slide-rail.js can call it without
+      // a hard import dependency (all scripts are concatenated into one HTML file).
+      // =====================================================================
+      function isCompactViewport() {
+        return window.matchMedia
+          ? window.matchMedia("(max-width: 820px)").matches
+          : window.innerWidth <= 820;
+      }
+      window.isCompactViewport = isCompactViewport;
+
+      // =====================================================================
+      // Compact-viewport block helpers (WO-33, ADR-018)
+      // Called by selection.js and slide-rail.js guards to surface a banner.
+      // Uses the existing window.shellBoundary.report() → #shellBanner API.
+      // Auto-dismisses after 4 s so the banner doesn't linger between gestures.
+      // =====================================================================
+      function reportCompactManipBlock() {
+        if (!window.shellBoundary) return;
+        window.shellBoundary.report(
+          "compact-manip",
+          "Перемещение и изменение размера — только на desktop",
+          [],
+        );
+        window.setTimeout(function () {
+          if (window.shellBoundary) window.shellBoundary.clear("compact-manip");
+        }, 4000);
+      }
+      window.reportCompactManipBlock = reportCompactManipBlock;
+
+      function reportCompactRailBlock() {
+        if (!window.shellBoundary) return;
+        window.shellBoundary.report(
+          "compact-rail",
+          "Перетаскивание слайдов — только на desktop",
+          [],
+        );
+        window.setTimeout(function () {
+          if (window.shellBoundary) window.shellBoundary.clear("compact-rail");
+        }, 4000);
+      }
+      window.reportCompactRailBlock = reportCompactRailBlock;
+
+      // =====================================================================
       // Telemetry toggle UI wiring (ADR-020, WO-15)
       // Binds #telemetryToggle / #telemetryExportBtn / #telemetryClearBtn.
       // Called from init() in boot.js after the DOM is ready.

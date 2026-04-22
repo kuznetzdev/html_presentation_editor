@@ -132,4 +132,25 @@
     color: var(--shell-text-muted, rgba(235, 235, 245, 0.6));
   }
 
+  /* ── Compact-viewport adjustments (WO-33, ADR-018) ──────────────────── */
+  /* On ≤820px screens (tablet + mobile) the banner gets tighter padding    */
+  /* and smaller font to preserve vertical space without breaking legibility.*/
+  @media (max-width: 820px) {
+    .shell-banner-item {
+      padding: 6px 10px;
+      font-size: 0.75rem;
+      gap: 8px;
+    }
+
+    .shell-banner-action-btn {
+      padding: 2px 8px;
+      font-size: 0.75rem;
+    }
+
+    .shell-banner-dismiss {
+      padding: 2px 5px;
+      font-size: 0.9rem;
+    }
+  }
+
 } /* end @layer banners */

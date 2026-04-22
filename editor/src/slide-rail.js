@@ -177,6 +177,12 @@
           });
           if (canDragSlideRail) {
             item.addEventListener("dragstart", (event) => {
+              // [WO-33 / ADR-018] Block rail drag-reorder on compact viewports (≤820px).
+              if (window.isCompactViewport && window.isCompactViewport()) {
+                event.preventDefault();
+                if (window.reportCompactRailBlock) window.reportCompactRailBlock();
+                return;
+              }
               state.slideRailDrag.slideId = slide.id;
               state.slideRailDrag.hoverIndex = index;
               state.slideRailDrag.suppressClickUntil = 0;
