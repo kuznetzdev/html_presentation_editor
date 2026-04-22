@@ -210,6 +210,16 @@
                 }
                 break;
               }
+              // [WO-28] ADR-004 — sibling rects response from iframe snap query
+              case "sibling-rects-response": {
+                const _srPayload = data.payload || {};
+                const _srRequestId = Number(_srPayload.requestId || 0);
+                const _srRects = Array.isArray(_srPayload.rects) ? _srPayload.rects : [];
+                if (_srRequestId > 0 && typeof window.precisionHandleSiblingRectsResponse === 'function') {
+                  window.precisionHandleSiblingRectsResponse(_srRequestId, _srRects);
+                }
+                break;
+              }
             }
           } catch (error) {
             addDiagnostic(

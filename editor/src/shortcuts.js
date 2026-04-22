@@ -132,6 +132,8 @@
             setPreviewZoom(1.0, true);
             return;
           }
+          // [ADR-004] Nudge action. Snap engine (editor/src/precision.js) consumes sibling rects during drag;
+          // this nudge path bypasses snap — nudging is discrete commitment, snap is analog-correction during drag.
           if (
             state.mode === "edit" &&
             state.selectedNodeId &&
