@@ -1,6 +1,6 @@
 # ADR-018: Mobile / Touch Strategy — tablet-viewable, not tablet-editable in v1.0
 
-**Status**: Proposed
+**Status**: Accepted
 **Phase**: v0.27.x–v1.0 (policy decision; scoped investment)
 **Owner**: Product + Architecture
 **Date**: 2026-04-20
@@ -89,8 +89,11 @@ Concretely:
 
 ---
 
+**Accepted in**: v0.32.3 via WO-33
+
 ## Applied In
 
+- v0.32.3 (WO-33) — tablet honest-block banners implemented; `isCompactViewport()` added to feedback.js; drag/resize guard in selection.js; rail-reorder guard in slide-rail.js; Gate-D +10 tests (tablet-honest.spec.js × 3 viewports)
 - v0.27.x — tablet honest-block banners for direct-manip + rail-reorder
 - v0.27.x — gate-D spec depth expanded (tap-select, tap-edit-text, tap-replace-image, rail-nav)
 - v0.28.x — a11y gate runs at compact viewports (ADR-006 extension)

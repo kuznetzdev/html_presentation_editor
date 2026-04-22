@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Added
+- Tablet honest-block: drag/resize/rail-reorder blocked on ≤820px width with Russian banner. Tap-select, tap-edit, tap-switch-slide continue working. Gate-D expanded +30 runs (WO-33, ADR-018).
+
 ### Refactored
 - Entity-kind registry externalized into entity-kinds.js (ADR-016 Layer 1, P2-05). Bridge + commands share single source of truth. (WO-35)
 

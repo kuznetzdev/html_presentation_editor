@@ -482,6 +482,14 @@
 
       function startActiveManipulation(kind, event, handle = null) {
         state.pendingOverlayClickProxy = false;
+        // [WO-33 / ADR-018] Block drag and resize on compact viewports (≤820px).
+        // Tap-select and tap-edit-text are unaffected; only drag/resize are blocked.
+        if (window.isCompactViewport && window.isCompactViewport()) {
+          event.preventDefault();
+          event.stopPropagation();
+          if (window.reportCompactManipBlock) window.reportCompactManipBlock();
+          return;
+        }
         const action = kind === "resize" ? "resize" : "move";
         if (
           !guardSelectionAction(
