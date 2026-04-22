@@ -1481,6 +1481,22 @@
             <button type="button" id="telemetryExportBtn" class="ghost-btn" disabled>Экспорт журнала</button>
             <button type="button" id="telemetryClearBtn" class="ghost-btn" disabled>Очистить</button>
           </div>
+          <section id="telemetryViewer" class="telemetry-viewer" hidden>
+            <h3 class="telemetry-viewer__header">Локальный журнал действий</h3>
+            <p class="telemetry-viewer__subtitle">Сохраняется только в вашем браузере. В сеть не отправляется.</p>
+            <div class="telemetry-viewer__summary"></div>
+            <div class="telemetry-viewer__filters">
+              <button class="telemetry-filter-chip is-active" data-filter="all">Все</button>
+              <button class="telemetry-filter-chip" data-filter="error">Ошибки</button>
+              <button class="telemetry-filter-chip" data-filter="warn">Предупреждения</button>
+              <button class="telemetry-filter-chip" data-filter="ok">Успешные</button>
+            </div>
+            <ul class="telemetry-viewer__list"></ul>
+            <div class="telemetry-viewer__actions">
+              <button id="exportTelemetryBtn">Сохранить журнал в файл</button>
+              <button id="clearTelemetryBtn">Очистить журнал</button>
+            </div>
+          </section>
         </div>
       </aside>
     </main>

@@ -783,3 +783,161 @@ textarea {
   outline-offset: 2px;
   transition: outline-color var(--motion-medium) var(--motion-ease);
 }
+
+/* ======================================================================
+ Telemetry Viewer (ADR-020, WO-34)
+ .telemetry-viewer — section inside the advanced-mode Diagnostics panel.
+ Uses semantic tokens from WO-30. No new @layer — reuses inspector layer.
+ ====================================================================== */
+
+.telemetry-viewer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 0 4px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.telemetry-viewer__header {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.telemetry-viewer__subtitle {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-tertiary, var(--text-secondary));
+  line-height: 1.4;
+}
+
+.telemetry-viewer__summary {
+  font-size: 11px;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  padding: 4px 8px;
+  background: var(--surface-secondary, var(--surface-primary));
+  border-radius: var(--radius-sm, 4px);
+  border: 1px solid var(--border-subtle);
+}
+
+.telemetry-viewer__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.telemetry-filter-chip {
+  padding: 2px 8px;
+  font-size: 11px;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  line-height: 1.6;
+}
+
+.telemetry-filter-chip:hover {
+  background: var(--surface-secondary, var(--surface-primary));
+  color: var(--text-primary);
+}
+
+.telemetry-filter-chip.is-active {
+  background: var(--text-accent);
+  color: #fff;
+  border-color: var(--text-accent);
+}
+
+.telemetry-viewer__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 11px;
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm, 4px);
+  background: var(--surface-primary);
+  scrollbar-gutter: stable;
+}
+
+.telemetry-viewer__empty {
+  padding: 8px;
+  color: var(--text-secondary);
+  text-align: center;
+  font-style: italic;
+}
+
+.telemetry-event {
+  display: flex;
+  gap: 6px;
+  padding: 2px 6px;
+  align-items: baseline;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.telemetry-event:last-child {
+  border-bottom: none;
+}
+
+.telemetry-event__time {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  min-width: 58px;
+}
+
+.telemetry-event__level {
+  flex-shrink: 0;
+  min-width: 36px;
+  font-weight: 600;
+}
+
+.telemetry-event--ok .telemetry-event__level {
+  color: var(--status-success, #22a861);
+}
+
+.telemetry-event--warn .telemetry-event__level {
+  color: var(--status-warning, #c27400);
+}
+
+.telemetry-event--error .telemetry-event__level {
+  color: var(--status-error, #d32f2f);
+}
+
+.telemetry-event__code {
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.telemetry-viewer__actions {
+  display: flex;
+  gap: 6px;
+}
+
+.telemetry-viewer__actions button {
+  flex: 1 1 0;
+  padding: 4px 8px;
+  font-size: 11px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm, 4px);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.telemetry-viewer__actions button:hover {
+  background: var(--surface-secondary, var(--surface-primary));
+  color: var(--text-primary);
+}
+}

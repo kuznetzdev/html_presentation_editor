@@ -1328,6 +1328,8 @@
         toggle.addEventListener("change", function () {
           window.telemetry.setEnabled(this.checked);
           _updateTelemetryButtons(this.checked);
+          // Re-render the viewer section when opt-in state changes.
+          renderTelemetryViewer();
         });
 
         exportBtn.addEventListener("click", function () {
@@ -1348,6 +1350,182 @@
           window.telemetry.clearLog();
           showToast("Журнал очищен", "info");
         });
+      }
+
+      // =====================================================================
+      // Telemetry Viewer (ADR-020, WO-34)
+      // Renders the #telemetryViewer section inside the advanced-mode Diagnostics
+      // panel. Called from renderDiagnosticsPanel() when complexityMode is
+      // "advanced" AND telemetry opt-in is enabled.
+      //
+      // Subscribe/unsubscribe pattern: the viewer subscribes to telemetry on
+      // show and unsubscribes on hide. RAF batching with a single-flight guard
+      // prevents DOM thrash when many events fire in rapid succession.
+      //
+      // No network calls. No type="module". No bundler.
+      // =====================================================================
+
+      // Module-level state for the viewer (scoped inside the IIFE).
+      let _tvUnsubscribe = null;
+      let _tvRafPending = false;
+      let _tvActiveFilter = "all";
+
+      function _tvRenderSummary(section) {
+        const summaryEl = section.querySelector(".telemetry-viewer__summary");
+        if (!summaryEl || !window.telemetry) return;
+        const s = window.telemetry.getSummary();
+        const parts = [];
+        parts.push(s.count + " " + _tvPluralEvents(s.count));
+        if (s.errors > 0) parts.push(s.errors + " ошибок");
+        if (s.avgFirstSelectMs > 0) parts.push("avg select " + s.avgFirstSelectMs + " ms");
+        if (s.autosaveBytes > 0) parts.push("autosave " + _tvFormatBytes(s.autosaveBytes));
+        summaryEl.textContent = parts.join(" · ") || "Нет данных";
+      }
+
+      function _tvPluralEvents(n) {
+        if (n === 1) return "событие";
+        if (n >= 2 && n <= 4) return "события";
+        return "событий";
+      }
+
+      function _tvFormatBytes(bytes) {
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+        return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+      }
+
+      function _tvEscapeHtml(str) {
+        return String(str || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function _tvFormatTime(t) {
+        const d = new Date(t);
+        const hh = String(d.getHours()).padStart(2, "0");
+        const mm = String(d.getMinutes()).padStart(2, "0");
+        const ss = String(d.getSeconds()).padStart(2, "0");
+        return hh + ":" + mm + ":" + ss;
+      }
+
+      function _tvRenderList(section) {
+        const listEl = section.querySelector(".telemetry-viewer__list");
+        if (!listEl || !window.telemetry) return;
+
+        const filterOpts = {};
+        if (_tvActiveFilter !== "all") filterOpts.level = _tvActiveFilter;
+        const events = window.telemetry.getEvents({ limit: 200, ...filterOpts });
+
+        if (events.length === 0) {
+          listEl.innerHTML = '<li class="telemetry-viewer__empty">Нет событий</li>';
+          return;
+        }
+
+        const fragment = document.createDocumentFragment();
+        for (let i = 0; i < events.length; i++) {
+          const ev = events[i];
+          const li = document.createElement("li");
+          li.className = "telemetry-event telemetry-event--" + _tvEscapeHtml(ev.level || "ok");
+          const time = _tvFormatTime(ev.t);
+          const code = _tvEscapeHtml(ev.code || "unknown");
+          const level = _tvEscapeHtml(ev.level || "ok");
+          li.innerHTML =
+            '<span class="telemetry-event__time">' + time + '</span>' +
+            '<span class="telemetry-event__level">' + level + '</span>' +
+            '<span class="telemetry-event__code">' + code + '</span>';
+          fragment.appendChild(li);
+        }
+        listEl.textContent = "";
+        listEl.appendChild(fragment);
+      }
+
+      function _tvFullRender(section) {
+        _tvRenderSummary(section);
+        _tvRenderList(section);
+      }
+
+      function _tvScheduleRender(section) {
+        if (_tvRafPending) return; // single-flight guard
+        _tvRafPending = true;
+        requestAnimationFrame(function () {
+          _tvRafPending = false;
+          const el = document.getElementById("telemetryViewer");
+          if (el && !el.hidden) {
+            _tvFullRender(el);
+          }
+        });
+      }
+
+      function renderTelemetryViewer() {
+        const section = document.getElementById("telemetryViewer");
+        if (!section) return;
+
+        const tel = window.telemetry;
+        const isAdvanced = (typeof state !== "undefined") && state.complexityMode === "advanced";
+        const isOn = tel && tel.isEnabled();
+
+        // Show/hide logic: visible only when advanced mode AND opt-in enabled.
+        const shouldShow = Boolean(isAdvanced && isOn);
+        section.hidden = !shouldShow;
+
+        if (!shouldShow) {
+          // Remove subscription when viewer hides to avoid ghost updates.
+          if (_tvUnsubscribe) {
+            _tvUnsubscribe();
+            _tvUnsubscribe = null;
+          }
+          return;
+        }
+
+        // Subscribe if not already subscribed.
+        if (!_tvUnsubscribe && tel && tel.subscribe) {
+          _tvUnsubscribe = tel.subscribe(function () {
+            _tvScheduleRender(section);
+          });
+        }
+
+        // Wire filter chips (idempotent — only wire once via data attribute).
+        const filtersEl = section.querySelector(".telemetry-viewer__filters");
+        if (filtersEl && !filtersEl.dataset.tvBound) {
+          filtersEl.dataset.tvBound = "1";
+          filtersEl.addEventListener("click", function (e) {
+            const chip = e.target.closest(".telemetry-filter-chip");
+            if (!chip) return;
+            const filter = chip.dataset.filter || "all";
+            _tvActiveFilter = filter;
+            // Update active chip UI.
+            const chips = filtersEl.querySelectorAll(".telemetry-filter-chip");
+            chips.forEach(function (c) {
+              c.classList.toggle("is-active", c.dataset.filter === filter);
+            });
+            _tvFullRender(section);
+          });
+        }
+
+        // Wire export button (idempotent).
+        const exportBtn = document.getElementById("exportTelemetryBtn");
+        if (exportBtn && !exportBtn.dataset.tvBound) {
+          exportBtn.dataset.tvBound = "1";
+          exportBtn.addEventListener("click", function () {
+            if (tel && tel.exportLog) tel.exportLog();
+          });
+        }
+
+        // Wire clear button (idempotent).
+        const clearBtn = document.getElementById("clearTelemetryBtn");
+        if (clearBtn && !clearBtn.dataset.tvBound) {
+          clearBtn.dataset.tvBound = "1";
+          clearBtn.addEventListener("click", function () {
+            if (!window.confirm("Очистить локальный журнал? Отменить нельзя.")) return;
+            if (tel && tel.clearLog) tel.clearLog();
+            showToast("Журнал очищен", "info");
+          });
+        }
+
+        // Initial full render.
+        _tvFullRender(section);
       }
 
       // =====================================================================
