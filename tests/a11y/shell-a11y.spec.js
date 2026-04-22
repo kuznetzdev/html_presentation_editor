@@ -44,10 +44,9 @@ async function waitForWorkflowState(page, expectedState) {
 // State 1: "empty" — editor just loaded, no deck open
 // ---------------------------------------------------------------------------
 test("shell passes WCAG 2.1 AA axe scan in workflow state: empty", async ({ page }) => {
-  // TODO(WO-10): color-contrast violation — #8a8a8e on #ffffff = 3.43:1 (needs 4.5:1).
-  // Affects: #previewModeLabel, #zoomLevelLabel. Fix: darken --color-secondary token.
-  // See: tests/a11y/known-violations.md
-  test.fail(true, "Known violations: color-contrast (#8a8a8e on #ffffff). Fix tracked in WO-10.");
+  // NOTE: color-contrast violation (#previewModeLabel, #zoomLevelLabel) does not affect
+  // the empty state — those elements are hidden until a deck is loaded.
+  // test.fail() marker removed at v0.31.2 (WO-25 fixed empty-state UX, confirmed 0 violations).
 
   await gotoFreshEditor(page);
   await waitForWorkflowState(page, "empty");
