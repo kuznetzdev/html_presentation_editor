@@ -142,6 +142,7 @@ Extend ADR-006 a11y gate:
 
 ## Applied In
 
+- v0.32.1 — Layer 2 semantic tokens in tokens.css; inspector.css migrated (WO-30)
 - v0.28.x — Layer 2 tokens added; ADR-014 banners use intent tokens from day one
 - v0.29.x — inspector.css, overlay.css migrated
 - v0.30.x — all 8 CSS files migrated; contrast gate enabled in `test:gate-a11y`
