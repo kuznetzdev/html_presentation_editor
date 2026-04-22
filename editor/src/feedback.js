@@ -685,6 +685,71 @@
         return getBlockReason() !== "none";
       }
 
+      // [WO-29] Centralized mode-gating for block reason action visibility
+      function getBlockReasonActionVisibleIn(reason, mode) {
+        if (mode === "advanced") return true;
+        switch (reason) {
+          case "zoom": return true;
+          case "locked": return true;
+          case "hidden": return true;
+          case "own-transform":
+          case "parent-transform":
+          case "slide-transform":
+          case "transform":
+            return true;
+          default: return false;
+        }
+      }
+
+      // [WO-29] Single dispatch entry point for the block-reason banner surface.
+      // Reads state, computes effective reason, updates all banner DOM in one pass.
+      // Returns { show, reason, actionVisible } for consumer coordination.
+      function renderBlockReasonBanner() {
+        const hasSelection = Boolean(
+          state.selectedNodeId && state.mode === "edit",
+        );
+        const entityKind = hasSelection ? (state.selectedEntityKind || "none") : "none";
+
+        const blockReason = hasSelection ? getBlockReason() : "none";
+        // Unified locked check: getBlockReason() already returns "locked" when element is locked.
+        // effectiveReason = blockReason covers both basic and advanced modes.
+        const effectiveReason = blockReason;
+
+        const show = Boolean(
+          hasSelection &&
+            effectiveReason !== "none" &&
+            entityKind !== "slide-root" &&
+            entityKind !== "protected",
+        );
+
+        if (els.blockReasonBanner) {
+          els.blockReasonBanner.hidden = !show;
+          els.blockReasonBanner.setAttribute("aria-hidden", show ? "false" : "true");
+        }
+        if (els.blockReasonText) {
+          els.blockReasonText.textContent = show ? getBlockReasonLabel(effectiveReason) : "";
+        }
+
+        const actionDef = show ? getBlockReasonAction(effectiveReason) : null;
+        const actionVisible = Boolean(
+          actionDef &&
+            getBlockReasonActionVisibleIn(effectiveReason, state.complexityMode),
+        );
+
+        if (els.blockReasonActionBtn) {
+          if (actionVisible) {
+            els.blockReasonActionBtn.hidden = false;
+            els.blockReasonActionBtn.textContent = actionDef.label;
+            els.blockReasonActionBtn.dataset.blockAction = actionDef.action;
+          } else {
+            els.blockReasonActionBtn.hidden = true;
+            els.blockReasonActionBtn.removeAttribute("data-block-action");
+          }
+        }
+
+        return { show, reason: effectiveReason, actionVisible };
+      }
+
       function clearSelectionTooltipTimer() {
         if (!state.selectionTooltip?.hideTimer) return;
         clearTimeout(state.selectionTooltip.hideTimer);

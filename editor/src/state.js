@@ -1035,10 +1035,6 @@
         overlapRecoveryText: document.getElementById("overlapRecoveryText"),
         overlapSelectLayerBtn: document.getElementById("overlapSelectLayerBtn"),
         overlapMoveTopBtn: document.getElementById("overlapMoveTopBtn"),
-        // [v0.18.0] Lock banner
-        lockBanner: document.getElementById("lockBanner"),
-        lockBannerText: document.getElementById("lockBannerText"),
-        unlockElementBtn: document.getElementById("unlockElementBtn"),
         // [v0.19.0] Block reason banner
         blockReasonBanner: document.getElementById("blockReasonBanner"),
         blockReasonText: document.getElementById("blockReasonText"),

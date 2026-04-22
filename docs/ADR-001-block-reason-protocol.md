@@ -105,6 +105,7 @@ All 12 existing call sites keep working without modification.
 
 - v0.25.0 — `editor/src/feedback.js`, `editor/styles/banner.css`
 - Test: `tests/playwright/specs/honest-feedback.spec.js`
+- v0.31.2 — `#lockBanner` unified into `#blockReasonBanner` via `renderBlockReasonBanner()` (WO-29); `getBlockReasonActionVisibleIn()` added; P1-02 geometry leak closed
 
 ## Links
 

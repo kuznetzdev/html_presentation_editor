@@ -100,7 +100,6 @@ test.describe("Honest feedback and transient shell routing", () => {
       })()`,
     );
 
-    await expect(page.locator("#lockBanner")).toBeHidden();
     await expect
       .poll(
         () =>
@@ -118,7 +117,7 @@ test.describe("Honest feedback and transient shell routing", () => {
     await expect(page.locator("#blockReasonActionBtn")).toContainText("Разблокировать");
   });
 
-  test("advanced mode keeps lock banner priority over generic block banner @stage-f", async ({ page }, testInfo) => {
+  test("advanced mode locked element shows block banner via unified dispatch @stage-f", async ({ page }, testInfo) => {
     test.skip(!testInfo.project.name.includes("desktop"), "Desktop-focused advanced shell only.");
 
     await closeCompactShellPanels(page);
@@ -139,8 +138,10 @@ test.describe("Honest feedback and transient shell routing", () => {
       })()`,
     );
 
-    await expect(page.locator("#lockBanner")).toBeVisible();
-    await expect(page.locator("#blockReasonBanner")).toBeHidden();
+    // [WO-29] lockBanner deleted — unified banner handles locked reason in all modes
+    await expect(page.locator("#blockReasonBanner")).toBeVisible();
+    await expect(page.locator("#blockReasonText")).toContainText("заблокирован");
+    await expect(page.locator("#blockReasonActionBtn")).toContainText("Разблокировать");
   });
 
   test("compact drawer opening closes insert palette and topbar overflow @stage-e", async ({ page }, testInfo) => {

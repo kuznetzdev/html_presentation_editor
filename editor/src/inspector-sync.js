@@ -74,10 +74,15 @@
               ? selectionPolicyVisible
               : hasSelection && visibleKinds.has(kind);
           if (section === els.geometryInspectorSection) {
+            // [WO-29 P1-02] Only auto-unhide geometry for transform-family reasons.
+            // locked/hidden/zoom reasons must NOT leak geometry into basic mode.
+            const transformFamily = ["own-transform", "parent-transform", "slide-transform", "transform"];
+            const shouldUnhideGeometry =
+              hasBlockedDirectManipulationContext() &&
+              transformFamily.includes(getBlockReason());
             visible =
               visible &&
-              (state.complexityMode === "advanced" ||
-                hasBlockedDirectManipulationContext());
+              (state.complexityMode === "advanced" || shouldUnhideGeometry);
           }
           setInspectorSectionVisibility(section, visible);
         });
@@ -892,67 +897,14 @@
           els.overlapSelectLayerBtn.textContent = "Выбрать слой";
           els.overlapSelectLayerBtn.setAttribute("data-ui-level", "advanced");
         }
-        // [v0.18.0] Lock banner (advanced mode only)
-        const isLocked = hasSelection && state.modelDoc
-          ? Boolean(state.modelDoc.querySelector(`[data-editor-node-id="${cssEscape(state.selectedNodeId)}"]`)?.getAttribute("data-editor-locked") === "true")
-          : false;
-        const showLockBanner = Boolean(
-          hasSelection &&
-            state.complexityMode === "advanced" &&
-            isLocked,
-        );
-        if (els.lockBanner) {
-          els.lockBanner.hidden = !showLockBanner;
-          els.lockBanner.setAttribute(
-            "aria-hidden",
-            showLockBanner ? "false" : "true",
-          );
-        }
-        if (els.unlockElementBtn) {
-          if (showLockBanner && state.selectedNodeId) {
-            els.unlockElementBtn.setAttribute(
-              "data-lock-node-id",
-              state.selectedNodeId,
-            );
-          } else {
-            els.unlockElementBtn.removeAttribute("data-lock-node-id");
-          }
-        }
         // [v0.18.0] Render layers panel (advanced mode only)
         // [WO-19/P1-12] Skip renderLayersPanel in basic mode or when section is hidden
         // to avoid unnecessary DOM work on every selection change.
         if (state.complexityMode === "advanced" && els.layersInspectorSection && !els.layersInspectorSection.hidden) {
           renderLayersPanel();
         }
-        // [v0.19.0] Block reason banner
-        const blockReason = hasSelection ? getBlockReason() : "none";
-        const effectiveBlockReason = isLocked ? "locked" : blockReason;
-        const showBlockBanner = Boolean(
-          hasSelection &&
-            effectiveBlockReason !== "none" &&
-            !showLockBanner &&
-            entityKind !== "slide-root" &&
-            entityKind !== "protected",
-        );
-        if (els.blockReasonBanner) {
-          els.blockReasonBanner.hidden = !showBlockBanner;
-          els.blockReasonBanner.setAttribute("aria-hidden", showBlockBanner ? "false" : "true");
-        }
-        if (els.blockReasonText) {
-          els.blockReasonText.textContent = showBlockBanner
-            ? getBlockReasonLabel(effectiveBlockReason) : "";
-        }
-        if (els.blockReasonActionBtn) {
-          const actionDef = showBlockBanner ? getBlockReasonAction(effectiveBlockReason) : null;
-          if (actionDef) {
-            els.blockReasonActionBtn.hidden = false;
-            els.blockReasonActionBtn.textContent = actionDef.label;
-            els.blockReasonActionBtn.dataset.blockAction = actionDef.action;
-          } else {
-            els.blockReasonActionBtn.hidden = true;
-            els.blockReasonActionBtn.removeAttribute("data-block-action");
-          }
-        }
+        // [WO-29] Unified banner dispatch — single renderBlockReasonBanner call
+        const banner = renderBlockReasonBanner();
         if (els.selectedElementTitle) {
           els.selectedElementTitle.textContent = getSelectedElementTitle(entityKind);
         }
@@ -964,7 +916,7 @@
           entityKind,
           hasSelection,
         });
-        renderSelectionBreadcrumbs(hasSelection && !showBlockBanner);
+        renderSelectionBreadcrumbs(hasSelection && !banner.show);
         syncInspectorEntitySections(hasSelection);
         if (els.selectionPolicyText && !hasSelection) {
           els.selectionPolicyText.textContent =
