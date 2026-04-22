@@ -100,9 +100,9 @@ All 20 ADRs from the planning phase have Status: Accepted or Deferred.
 | gate-c | `test:gate-c` | **28/148/0** ✅ | 2.4 min | firefox-desktop + webkit-desktop; 1 flake fix (WebKit inspector wait) |
 | gate-d | `test:gate-d` | **139/60/0** ✅ | 8.0 min | chromium-mobile-390 + chromium-mobile-640 + chromium-tablet-820 |
 | gate-e | `test:gate-e` | **3/0/0** ✅ | 11 sec | asset-parity + diagnostics |
-| gate-f | `test:gate-f` | **RUNNING** | ~60-90 min | release-blocking full matrix; result in RC_FREEZE_CHECKLIST.md |
+| gate-f | `test:gate-f` | **1410/629/0** ✅ | 1.3h | full matrix all 10 projects; 0 failures (2026-04-22) |
 
-> gate-b through gate-e all GREEN (2026-04-22). gate-f running — to be recorded before GA ceremony.
+> All 10 gates GREEN (2026-04-22). Release criteria met.
 
 ---
 

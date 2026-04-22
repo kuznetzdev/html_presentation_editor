@@ -108,9 +108,9 @@ All 15 P0 items annotated in `docs/audit/PAIN-MAP.md` §"P0 Resolution log":
 | gate-c | **28/148/0** ✅ | 2026-04-22 | `npm run test:gate-c` |
 | gate-d | **139/60/0** ✅ | 2026-04-22 | `npm run test:gate-d` |
 | gate-e | **3/0/0** ✅ | 2026-04-22 | `npm run test:gate-e` |
-| gate-f | **RUNNING** | 2026-04-22 | `npm run test:gate-f` |
+| gate-f | **1410/629/0** ✅ | 2026-04-22 | `npm run test:gate-f` |
 
-> gate-b through gate-e all GREEN. gate-f (full matrix, ~90 min) still running — result to be recorded before GA ceremony.
+> All 10 gates GREEN. gate-f full matrix: 1410 passed / 629 skipped / 0 failed (1.3h, exit 0).
 > Note: gate-c required one test fix (shell.smoke.spec.js line 952): WebKit click→inspector transition needed explicit `#currentSlideSection` hidden wait.
 
 ---

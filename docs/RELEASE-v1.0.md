@@ -106,7 +106,7 @@ or PPTX. No coding required for normal editing tasks.
 | gate-c (firefox + webkit) | **28/148/0** ✅ | 1 WebKit timing fix |
 | gate-d (mobile/tablet 3 viewports) | **139/60/0** ✅ | incl. tablet-honest |
 | gate-e (asset-parity) | **3/0/0** ✅ | |
-| gate-f (full matrix) | see RC_FREEZE_CHECKLIST | release-blocking |
+| gate-f (full matrix) | **1410/629/0** ✅ | 1.3h, 10 projects, 0 failures |
 | gate-contract (152 bridge schemas) | **152/0** ✅ | |
 | gate-visual (1440×900 snapshots) | **15/0/0** ✅ | |
 | gate-a11y (WCAG AA) | **27/0** ✅ | 0 violations |
