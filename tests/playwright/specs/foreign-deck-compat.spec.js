@@ -12,8 +12,10 @@
  *
  * What is tested per fixture:
  *   A. Slide detection  — editor assigns data-editor-slide-id to all top-level slides
- *   B. Slide visibility — in edit mode, all slides are opacity:1, not opacity:0
- *   C. Pointer events   — in edit mode, pointer-events:auto on all slides
+ *   B. Slide visibility — in edit mode, decks with own class activation (.active/.present/etc.)
+ *                         preserve single-slide view (1 slide visible, deck manages opacity);
+ *                         decks without own activation get full opacity:1 override on all slides
+ *   C. Pointer events   — in edit mode, pointer-events:auto on all slides (always)
  *   D. Node IDs         — editor assigns data-editor-node-id to content elements
  *   E. Fragment reveal  — .fragment elements visible (opacity:1) in edit mode
  *   F. Nav-key blocking — ArrowRight does NOT advance the active slide when editing
@@ -86,15 +88,19 @@ test.describe("Foreign deck: Ops Control Room (viewport flat) @foreign-deck", ()
     expect(slideCount).toBe(4);
   });
 
-  test("B: all slides visible in edit mode (opacity:1, not opacity:0)", async ({ page }) => {
+  test("B: deck preserves single-slide view — exactly 1 slide visible in edit mode", async ({ page }) => {
+    // This deck uses .slide.active to manage visibility — the bridge detects this
+    // and skips the opacity:1!important override so slides don't all overlap.
     const styles = await getComputedStylesInPreview(page, "[data-editor-slide-id]");
     expect(styles.length).toBe(4);
-    for (const s of styles) {
-      expect(parseFloat(s.opacity)).toBeGreaterThan(0.9);
-    }
+    const visible = styles.filter((s) => parseFloat(s.opacity) > 0.9);
+    // Exactly 1 slide visible at a time (deck's own .active mechanism preserved)
+    expect(visible.length).toBe(1);
   });
 
   test("C: all slides have pointer-events:auto in edit mode", async ({ page }) => {
+    // pointer-events:auto is always injected regardless of activation profile
+    // so all slides can be reached via the slide rail
     const styles = await getComputedStylesInPreview(page, "[data-editor-slide-id]");
     for (const s of styles) {
       expect(s.pointerEvents).not.toBe("none");
@@ -144,12 +150,13 @@ test.describe("Foreign deck: Mercury Casefile (viewport flat) @foreign-deck", ()
     expect(slideCount).toBe(4);
   });
 
-  test("B: all slides visible in edit mode", async ({ page }) => {
+  test("B: deck preserves single-slide view — exactly 1 slide visible in edit mode", async ({ page }) => {
+    // This deck uses .slide.active — bridge detects own visibility mechanism and
+    // skips opacity override to avoid all-slides-overlap.
     const styles = await getComputedStylesInPreview(page, "[data-editor-slide-id]");
     expect(styles.length).toBe(4);
-    for (const s of styles) {
-      expect(parseFloat(s.opacity)).toBeGreaterThan(0.9);
-    }
+    const visible = styles.filter((s) => parseFloat(s.opacity) > 0.9);
+    expect(visible.length).toBe(1);
   });
 
   test("C: all slides have pointer-events:auto", async ({ page }) => {
@@ -184,12 +191,12 @@ test.describe("Foreign deck: Reveal-like nested (h-slide + v-slide + fragments) 
     expect(slideCount).toBe(3);
   });
 
-  test("B: all h-slides visible in edit mode", async ({ page }) => {
+  test("B: deck preserves single-slide view — exactly 1 h-slide visible in edit mode", async ({ page }) => {
+    // Uses section.active — bridge skips opacity override; deck manages visibility.
     const styles = await getComputedStylesInPreview(page, "[data-editor-slide-id]");
     expect(styles.length).toBe(3);
-    for (const s of styles) {
-      expect(parseFloat(s.opacity)).toBeGreaterThan(0.9);
-    }
+    const visible = styles.filter((s) => parseFloat(s.opacity) > 0.9);
+    expect(visible.length).toBe(1);
   });
 
   test("C: all h-slides have pointer-events:auto", async ({ page }) => {

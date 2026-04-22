@@ -692,6 +692,29 @@
             style.id = HELPER_STYLE_ID;
             document.head.appendChild(style);
           }
+          // Foreign-deck compat: detect if deck manages its own single-slide visibility
+          // via class toggles (.active, .present, .past/.future, aria-current, hidden, etc.).
+          // When detected, skip opacity/pointer-events/transform overrides so the deck's
+          // own navigation continues to work (one slide visible at a time).
+          // Only strip transition/animation to reduce flicker during slide navigation.
+          // For decks with NO known activation profile, force all slides visible (full override).
+          const _deckSlides = STATE.slides || [];
+          const _deckHasOwnVisibility = _deckSlides.length > 1 && (
+            _deckSlides.some((s) => s.classList.contains('active')) ||
+            _deckSlides.some((s) => s.classList.contains('current')) ||
+            _deckSlides.some((s) => s.classList.contains('present')) ||
+            _deckSlides.some((s) => s.classList.contains('past')) ||
+            _deckSlides.some((s) => s.classList.contains('future')) ||
+            _deckSlides.some((s) => s.classList.contains('next')) ||
+            _deckSlides.some((s) => s.classList.contains('previous')) ||
+            _deckSlides.some((s) => s.hasAttribute('aria-current')) ||
+            _deckSlides.some((s) => s.hasAttribute('hidden')) ||
+            _deckSlides.some((s) => s.hasAttribute('aria-hidden'))
+          );
+          const _slideEditCss = _deckHasOwnVisibility
+            ? '[data-editor-slide-id]{pointer-events:auto!important;transition:none!important;animation:none!important;}'
+            : '[data-editor-slide-id]{opacity:1!important;pointer-events:auto!important;transform:none!important;transition:none!important;animation:none!important;}';
+
           style.textContent = STATE.editMode
             ? '[data-editor-selected="true"] {' +
               'outline: 2px solid rgba(38, 103, 255, 0.92) !important;' +
@@ -715,18 +738,11 @@
               '0% { box-shadow: 0 0 0 0 rgba(38, 103, 255, 0.48); }' +
               '100% { box-shadow: 0 0 0 18px rgba(38, 103, 255, 0); }' +
               '}' +
-              /* Foreign-deck compat (WO-COMPAT): force all editor-tracked slides visible
-                 in edit mode regardless of deck-native opacity/transform/pointer-events rules.
-                 Targets only elements already tagged by the import pipeline ([data-editor-slide-id]),
-                 so own-format decks are unaffected. Fragments revealed at full opacity for editing.
-                 Vertical stacks (.stack>section) unfolded to expose sub-slide content. */
-              '[data-editor-slide-id]{' +
-              'opacity:1!important;' +
-              'pointer-events:auto!important;' +
-              'transform:none!important;' +
-              'transition:none!important;' +
-              'animation:none!important;' +
-              '}' +
+              /* Foreign-deck compat (WO-COMPAT): slide visibility override, computed above.
+                 Decks with own class-based activation (.active/.present/etc.) get only
+                 transition/animation suppression; decks without get full opacity+transform override.
+                 Fragments always revealed at full opacity. Stacks always unfolded. */
+              _slideEditCss +
               '.fragment{' +
               'opacity:1!important;' +
               'transform:none!important;' +
