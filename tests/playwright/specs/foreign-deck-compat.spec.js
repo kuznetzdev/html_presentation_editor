@@ -98,13 +98,13 @@ test.describe("Foreign deck: Ops Control Room (viewport flat) @foreign-deck", ()
     expect(visible.length).toBe(1);
   });
 
-  test("C: all slides have pointer-events:auto in edit mode", async ({ page }) => {
-    // pointer-events:auto is always injected regardless of activation profile
-    // so all slides can be reached via the slide rail
+  test("C: active slide is interactive; non-active slides respect deck pointer-events", async ({ page }) => {
     const styles = await getComputedStylesInPreview(page, "[data-editor-slide-id]");
-    for (const s of styles) {
-      expect(s.pointerEvents).not.toBe("none");
-    }
+    expect(styles.length).toBeGreaterThan(0);
+    // Deck CSS: .slide{pointer-events:none} .slide.active{pointer-events:all}
+    // Editor must NOT force pointer-events:auto on invisible slides.
+    const interactive = styles.filter((s) => s.pointerEvents !== 'none');
+    expect(interactive.length).toBe(1);
   });
 
   test("D: content elements have data-editor-node-id", async ({ page }) => {
@@ -159,11 +159,13 @@ test.describe("Foreign deck: Mercury Casefile (viewport flat) @foreign-deck", ()
     expect(visible.length).toBe(1);
   });
 
-  test("C: all slides have pointer-events:auto", async ({ page }) => {
+  test("C: active slide is interactive; non-active slides respect deck pointer-events", async ({ page }) => {
     const styles = await getComputedStylesInPreview(page, "[data-editor-slide-id]");
-    for (const s of styles) {
-      expect(s.pointerEvents).not.toBe("none");
-    }
+    expect(styles.length).toBeGreaterThan(0);
+    // Deck CSS: .slide{pointer-events:none} .slide.active{pointer-events:all}
+    // Editor must NOT force pointer-events:auto on invisible slides.
+    const interactive = styles.filter((s) => s.pointerEvents !== 'none');
+    expect(interactive.length).toBe(1);
   });
 
   test("D: kanban tickets and data cells have node IDs", async ({ page }) => {
@@ -199,11 +201,13 @@ test.describe("Foreign deck: Reveal-like nested (h-slide + v-slide + fragments) 
     expect(visible.length).toBe(1);
   });
 
-  test("C: all h-slides have pointer-events:auto", async ({ page }) => {
+  test("C: active slide is interactive; non-active slides respect deck pointer-events", async ({ page }) => {
     const styles = await getComputedStylesInPreview(page, "[data-editor-slide-id]");
-    for (const s of styles) {
-      expect(s.pointerEvents).not.toBe("none");
-    }
+    expect(styles.length).toBeGreaterThan(0);
+    // Deck CSS: .slide{pointer-events:none} .slide.active{pointer-events:all}
+    // Editor must NOT force pointer-events:auto on invisible slides.
+    const interactive = styles.filter((s) => s.pointerEvents !== 'none');
+    expect(interactive.length).toBe(1);
   });
 
   test("E: .fragment elements are visible in edit mode (opacity:1)", async ({ page }) => {

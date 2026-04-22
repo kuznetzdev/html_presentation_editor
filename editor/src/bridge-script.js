@@ -712,7 +712,7 @@
             _deckSlides.some((s) => s.hasAttribute('aria-hidden'))
           );
           const _slideEditCss = _deckHasOwnVisibility
-            ? '[data-editor-slide-id]{pointer-events:auto!important;transition:none!important;animation:none!important;}'
+            ? '[data-editor-slide-id]{transition:none!important;animation:none!important;}'
             : '[data-editor-slide-id]{opacity:1!important;pointer-events:auto!important;transform:none!important;transition:none!important;animation:none!important;}';
 
           style.textContent = STATE.editMode

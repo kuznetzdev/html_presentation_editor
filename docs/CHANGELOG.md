@@ -1,5 +1,30 @@
 # CHANGELOG
 
+## [1.0.3] — 2026-04-22 — pointer-events Regression Fix
+
+### Fixed
+- **bridge-script.js** `ensureHelperStyles()`: removed `pointer-events:auto!important` from the `_deckHasOwnVisibility=true` branch of `_slideEditCss`. Deck's own CSS (`.slide{pointer-events:none} .slide.active{pointer-events:all}`) now manages pointer-events correctly.
+- **v1.0.2 regression**: with own-visibility decks (e.g. `prepodovai_v3_edit.html`), all non-active invisible slides (opacity:0) had `pointer-events:auto` and intercepted every click intended for the active slide. Confirmed via Playwright: 8 invisible click-interceptors per deck.
+- Own-visibility branch now only injects `transition:none!important; animation:none!important` (race-condition protection). No-own-visibility branch unchanged.
+
+### Tests
+- Updated `foreign-deck-compat.spec.js` Test C in all 3 suites: assertion changed from "all slides have pointer-events:auto" → "exactly 1 interactive slide" (the active one). The previous assertion was validating the bug. foreign-deck: 17/17 ✅. Full Gate-A: 82/5/0 ✅.
+
+---
+
+## [1.0.2] — 2026-04-22 — Foreign Deck Single-Slide View Fix
+
+### Fixed
+- **bridge-script.js** `fix(compat)`: `ensureHelperStyles()` now detects whether the foreign deck manages its own slide visibility via class toggles (`.active`, `.present`, `.past`/`.future`, `aria-current`, `hidden`, `aria-hidden`).
+  - When own visibility detected: only `pointer-events:auto!important; transition:none!important; animation:none!important` is injected — deck's native single-slide navigation is preserved
+  - When no own visibility detected: full `opacity:1!important; transform:none!important` override still applies
+  - **Fixes**: `prepodovai_v3_edit.html` and similar `position:absolute` overlay decks showing all slides simultaneously and overlapping in edit mode
+
+### Tests
+- Updated `foreign-deck-compat.spec.js` Test B (all 3 foreign suites): assertion changed from "all slides opacity > 0.9" → "exactly 1 slide visible (deck manages visibility)" — all 17 tests passing (17/17 ✅)
+
+---
+
 ## [1.0.1] — 2026-04-22 — Foreign Deck Compatibility
 
 ### Fixed
