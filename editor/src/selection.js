@@ -419,6 +419,8 @@
           state.pendingOverlayClickProxy = false;
         }
         clearSelectionGuides();
+        // [WO-28 / ADR-004] Clear precision snap guides on any manipulation end/cancel.
+        window.precisionEndSnapSession?.();
         if (!cancel) {
           hideSelectionFrameTooltip({ clearMessage: true });
         }
@@ -446,12 +448,21 @@
           session.started = true;
           setInteractionMode(session.kind === "resize" ? "resize" : "drag");
         }
+        // [WO-28 / ADR-004] Start snap session on first move tick (idempotent).
+        window.precisionStartSnapSession?.(session.selectionNodeId);
         const next = computeManipulationPayload(session, event);
         session.liveRect = cloneRect(next.rect);
         state.liveSelectionRect = cloneRect(next.rect);
         state.activeGuides = next.guides;
         renderSelectionOverlay();
         queueActiveManipulationBridgeUpdate(next.bridgePayload);
+        // [WO-28 / ADR-004] Render smart snap guides in #snapGuides overlay.
+        window.precisionRenderGuides?.(
+          next.guides.vertical,
+          next.guides.horizontal,
+          next.rect,
+          els.previewStage?.getBoundingClientRect(),
+        );
       }
 
       function handleActiveManipulationEnd(event) {
@@ -464,6 +475,8 @@
         // but enough to indicate the user wasn't trying to click-through), do nothing.
         const isCleanClick = !session.started && session.maxMovement < 2;
         state.pendingOverlayClickProxy = isCleanClick;
+        // [WO-28 / ADR-004] Clear snap guides on drag end.
+        window.precisionEndSnapSession?.();
         finishActiveManipulation();
       }
 

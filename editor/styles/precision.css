@@ -1,0 +1,14 @@
+/* precision.css — snap guide overlay styles (WO-28 / ADR-004) */
+@layer precision {
+  .snap-guides { position: absolute; inset: 0; pointer-events: none; z-index: var(--z-stage-overlay); }
+  .snap-guide { position: absolute; background: transparent; opacity: 0; transition: opacity var(--motion-fast) var(--motion-ease); }
+  .snap-guide.is-active { opacity: 0.7; }
+  .snap-guide--h {
+    height: 0; border-top: 1px dashed var(--shell-accent);
+    left: 0; right: 0;
+  }
+  .snap-guide--v {
+    width: 0; border-left: 1px dashed var(--shell-accent);
+    top: 0; bottom: 0;
+  }
+}

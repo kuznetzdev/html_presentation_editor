@@ -3605,6 +3605,36 @@
                 // Do NOT call notifyElementUpdated - visibility is session-only
                 break;
               }
+              // [WO-28] ADR-004 — read-only sibling rect query for snap engine
+              case 'get-sibling-rects': {
+                const _gsrNodeId = payload.nodeId;
+                const _gsrRequestId = payload.requestId;
+                if (!_gsrNodeId || !_gsrRequestId) break;
+                const _gsrEl = findNodeById(_gsrNodeId);
+                const _gsrParent = _gsrEl ? _gsrEl.parentElement : null;
+                const _gsrRects = [];
+                if (_gsrParent) {
+                  Array.from(_gsrParent.children).forEach(function (_gsrSibling) {
+                    if (_gsrSibling === _gsrEl) return;
+                    if (!(_gsrSibling instanceof Element)) return;
+                    // Exclude hidden siblings
+                    const _gsrStyle = _gsrSibling.style;
+                    if (_gsrStyle.display === 'none') return;
+                    if (_gsrStyle.visibility === 'hidden') return;
+                    const _gsrR = _gsrSibling.getBoundingClientRect();
+                    if (_gsrR.width < 1 && _gsrR.height < 1) return;
+                    _gsrRects.push({
+                      nodeId: _gsrSibling.getAttribute(EDITOR_MARKER) || '',
+                      left: _gsrR.left,
+                      top: _gsrR.top,
+                      width: _gsrR.width,
+                      height: _gsrR.height,
+                    });
+                  });
+                }
+                post('sibling-rects-response', { requestId: _gsrRequestId, rects: _gsrRects });
+                break;
+              }
             }
           } catch (error) {
             onRuntimeError(error.message || String(error), 'bridge-message:' + (data.type || 'unknown'), 0, 0);
