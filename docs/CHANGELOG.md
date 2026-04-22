@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## [1.0.1] — 2026-04-22 — Foreign Deck Compatibility
+
+### Fixed
+- **bridge-script.js** `fix(bridge)`: CSS overrides injected via `ensureHelperStyles()` for foreign HTML presentations in edit mode.
+  - `[data-editor-slide-id]` → `opacity:1; pointer-events:auto; transform:none; transition:none; animation:none` (`!important`) — all import-pipeline-tagged slides forced visible, no transitions
+  - `.fragment` → `opacity:1; transform:none; transition:none; animation:none` — reveal-like fragments fully visible in edit mode
+  - `.stack > section` → `display:block; position:relative; transition:none; animation:none` — vertical sub-slides unfolded
+  - `stopPropagation()` on ArrowKey/Space/PageDown/PageUp in `keydown` handler — blocks deck-native slide navigation when in edit mode and not in inline text editing
+- Targets only `[data-editor-slide-id]` elements (tagged by import pipeline) — own-format decks unaffected (regression test confirms)
+
+### Tests
+- Added 3 stress test fixtures: `ops_control_room_stress.html`, `mercury_casefile_stress.html`, `reveal_like_nested_stress.html`
+- Added `tests/playwright/specs/foreign-deck-compat.spec.js` — 17 tests / 4 suites covering viewport-flat and reveal-like nested deck structures (17/17 ✅)
+
+---
+
 ## [1.0.0-rc] — 2026-04-22 — v1.0 Release Candidate (38 WOs, W1–W8 complete)
 
 > RC freeze declared. Feature freeze active. Bug-fix only until v1.0.0 GA.

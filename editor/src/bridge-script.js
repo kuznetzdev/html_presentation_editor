@@ -714,6 +714,31 @@
               '@keyframes presentation-editor-flash {' +
               '0% { box-shadow: 0 0 0 0 rgba(38, 103, 255, 0.48); }' +
               '100% { box-shadow: 0 0 0 18px rgba(38, 103, 255, 0); }' +
+              '}' +
+              /* Foreign-deck compat (WO-COMPAT): force all editor-tracked slides visible
+                 in edit mode regardless of deck-native opacity/transform/pointer-events rules.
+                 Targets only elements already tagged by the import pipeline ([data-editor-slide-id]),
+                 so own-format decks are unaffected. Fragments revealed at full opacity for editing.
+                 Vertical stacks (.stack>section) unfolded to expose sub-slide content. */
+              '[data-editor-slide-id]{' +
+              'opacity:1!important;' +
+              'pointer-events:auto!important;' +
+              'transform:none!important;' +
+              'transition:none!important;' +
+              'animation:none!important;' +
+              '}' +
+              '.fragment{' +
+              'opacity:1!important;' +
+              'transform:none!important;' +
+              'transition:none!important;' +
+              'animation:none!important;' +
+              '}' +
+              'section.stack>section,' +
+              '.stack>section{' +
+              'display:block!important;' +
+              'position:relative!important;' +
+              'transition:none!important;' +
+              'animation:none!important;' +
               '}'
             : '';
         }
@@ -3234,6 +3259,19 @@
 
         document.addEventListener('keydown', (event) => {
           if (!STATE.editMode) return;
+          // Foreign-deck compat (WO-COMPAT): block deck-native navigation keys from
+          // reaching window-level presentation handlers (ArrowKeys, Space, PageDown/Up).
+          // The bridge listener is on 'document' (bubble phase); calling stopPropagation()
+          // here prevents the event from reaching window.addEventListener handlers used
+          // by reveal-like and viewport-deck JS to advance slides.
+          // Only active when NOT in inline text editing (typed characters must pass through).
+          if (!isInlineTextEditingActive(event.target)) {
+            if (event.key === 'ArrowLeft' || event.key === 'ArrowRight' ||
+                event.key === 'ArrowUp' || event.key === 'ArrowDown' ||
+                event.key === ' ' || event.key === 'PageDown' || event.key === 'PageUp') {
+              event.stopPropagation();
+            }
+          }
           if (isInlineTextEditingActive(event.target)) {
             if (event.key === 'Tab' && STATE.selectedEl && isTableCellElement(STATE.selectedEl)) {
               const currentNodeId = STATE.selectedNodeId;

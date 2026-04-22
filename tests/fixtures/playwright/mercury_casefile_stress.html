@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Example Stress Deck — Product Casefile</title>
+  <meta name="slides-format" content="viewport" />
+  <style>
+    :root{
+      --bg:#f4f6fb; --ink:#172033; --muted:#6e7a95; --line:rgba(17,27,44,.10);
+      --blue:#2d6df6; --teal:#00b7a8; --violet:#7d5cff; --rose:#ff5c8a; --amber:#f4b942;
+      --panel:#ffffff; --panel-2:#f9fbff;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--ink)}
+    .deck{position:relative;width:100vw;height:100vh;overflow:hidden;background:
+      radial-gradient(circle at 10% 10%, rgba(45,109,246,.10), transparent 22%),
+      radial-gradient(circle at 90% 12%, rgba(125,92,255,.08), transparent 22%),
+      linear-gradient(180deg,#f4f6fb 0%, #eef2f9 100%)}
+    .slide{position:absolute;inset:0;padding:30px 34px 80px;opacity:0;pointer-events:none;transform:translateX(2%) scale(.988);transition:all .42s ease}
+    .slide.active{opacity:1;pointer-events:auto;transform:none}
+    .top{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:22px}
+    .eyebrow{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--blue);font-weight:700}
+    h1{font-size:50px;line-height:1.04;margin:10px 0 0}
+    h2{font-size:32px;line-height:1.08;margin:8px 0 0}
+    .lead{max-width:760px;font-size:18px;line-height:1.6;color:#2c3853}
+    .panel{background:rgba(255,255,255,.84);border:1px solid var(--line);border-radius:24px;box-shadow:0 18px 48px rgba(29,38,56,.10)}
+    .pad{padding:18px}
+    .grid{display:grid;gap:18px}
+    .hero{grid-template-columns:1.15fr .85fr}
+    .mobile-shell{border-radius:28px;overflow:hidden;border:1px solid rgba(17,27,44,.08);background:#fff;box-shadow:0 16px 40px rgba(23,32,51,.12)}
+    .mobile-top{height:38px;background:#0f172a;color:#fff;display:flex;align-items:center;padding:0 14px;font-size:12px;letter-spacing:.08em;justify-content:space-between}
+    .mobile-body{display:grid;grid-template-columns:88px 1fr;min-height:440px}
+    .sidebar{background:#f7f9fd;border-right:1px solid var(--line);padding:12px 10px}
+    .sidebar .nav-item{padding:10px 10px;border-radius:14px;font-size:12px;color:#51617f;margin-bottom:6px}
+    .sidebar .nav-item.active{background:#eaf0ff;color:#1a4fd0;font-weight:700}
+    .content{padding:14px;position:relative}
+    .chat{display:flex;flex-direction:column;gap:10px}
+    .msg{max-width:72%;padding:12px 14px;border-radius:18px;font-size:14px;line-height:1.5}
+    .msg.ai{background:#eff4ff;border:1px solid rgba(45,109,246,.14)}
+    .msg.user{background:#172033;color:#fff;align-self:flex-end}
+    .composer{position:absolute;left:14px;right:14px;bottom:14px;border:1px solid var(--line);border-radius:16px;padding:10px 12px;background:#fff;display:flex;justify-content:space-between;align-items:center}
+    .chip{display:inline-flex;align-items:center;gap:7px;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid var(--line);background:#fff}
+    .kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+    .col{background:#fff;border:1px solid var(--line);border-radius:22px;padding:14px;min-height:380px}
+    .col h3{margin:0 0 12px;font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+    .ticket{background:var(--panel-2);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:10px;position:relative}
+    .ticket .bar{position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:16px 0 0 16px}
+    .blue{background:var(--blue)} .teal{background:var(--teal)} .rose{background:var(--rose)} .violet{background:var(--violet)} .amber{background:var(--amber)}
+    .table{width:100%;border-collapse:collapse;font-size:13px}
+    .table th,.table td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left}
+    .table th{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap}
+    .tab{padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:12px;font-weight:700;color:#4f5e79}
+    .tab.active{background:#eaf0ff;color:#1a4fd0}
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .kpi{padding:16px;border-radius:18px;background:#fff;border:1px solid var(--line)}
+    .kpi .v{font-size:28px;font-weight:800;margin-top:10px}
+    .roadmap{position:relative;min-height:370px;background:linear-gradient(180deg,#fff,#fbfcff);border:1px solid var(--line);border-radius:22px;overflow:hidden}
+    .lane{position:absolute;left:34px;right:34px;height:1px;background:#dbe4f5}
+    .milestone{
+      position:absolute; padding:12px 14px; border-radius:16px; background:#fff; border:1px solid var(--line); box-shadow:0 8px 20px rgba(17,27,44,.06);
+      min-width:180px;
+    }
+    .connector{position:absolute;inset:0}
+    .toast{
+      position:absolute; left:50%; bottom:112px; transform:translateX(-50%); z-index:22; min-width:320px;
+      display:flex; align-items:center; gap:12px; background:rgba(18,28,47,.92); color:#fff; border-radius:18px; padding:14px 16px; box-shadow:0 18px 48px rgba(0,0,0,.24)
+    }
+    .sticky-note{
+      position:absolute; right:18px; top:20px; width:240px; padding:16px; border-radius:18px; background:#fff7d6; border:1px solid rgba(168,135,13,.18);
+      transform:rotate(3deg); box-shadow:0 14px 34px rgba(89,67,0,.14)
+    }
+    .chrome{
+      position:absolute; left:26px; right:26px; bottom:20px; display:flex; justify-content:space-between; align-items:center; z-index:40;
+      background:rgba(255,255,255,.72); border:1px solid var(--line); backdrop-filter:blur(10px); border-radius:18px; padding:12px 16px
+    }
+    .nav{display:flex;gap:10px;align-items:center}
+    .nav button{width:36px;height:36px;border-radius:50%;border:none;background:#2459d7;color:#fff;font-size:18px;font-weight:800;cursor:pointer}
+    .dots{display:flex;gap:8px}
+    .dot{width:9px;height:9px;border-radius:999px;background:#b8c5df;cursor:pointer;transition:all .25s}
+    .dot.active{width:28px;background:var(--blue)}
+    .counter{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#687894}
+    @media (max-width:1100px){ .hero,.kanban,.kpis{grid-template-columns:1fr} .mobile-body{grid-template-columns:1fr} .sidebar{display:none} .sticky-note{position:relative;right:auto;top:auto;width:auto;transform:none;margin:14px} }
+  </style>
+</head>
+<body>
+<div class="deck">
+
+  <section class="slide active" data-title="Product Tour">
+    <div class="top">
+      <div>
+        <div class="eyebrow">App-like deck · tabs + kanban + toast + sticky note</div>
+        <h1>Mercury Product Casefile</h1>
+      </div>
+      <div class="chip">mobile shell inside slide</div>
+    </div>
+    <div class="grid hero">
+      <div class="panel mobile-shell">
+        <div class="mobile-top"><span>Mercury AI</span><span>09:41</span></div>
+        <div class="mobile-body">
+          <aside class="sidebar">
+            <div class="nav-item active">Inbox</div>
+            <div class="nav-item">Deals</div>
+            <div class="nav-item">Ops</div>
+            <div class="nav-item">Files</div>
+          </aside>
+          <main class="content">
+            <div class="tabs" style="margin-bottom:14px">
+              <span class="tab active">Assistant</span><span class="tab">Copilot</span><span class="tab">Sources</span><span class="tab">Action log</span>
+            </div>
+            <div class="chat">
+              <div class="msg ai">Собрала краткую сводку по аккаунту Aurora: 3 риска, 2 быстрых win, 1 решение на согласование.</div>
+              <div class="msg user">Покажи только блокеры по запуску.</div>
+              <div class="msg ai">Есть зависимость от legal review, задержка по pricing sheet и несогласованный owner для onboarding.</div>
+              <div class="msg ai">Хочешь, превращу это в executive brief на 1 слайд?</div>
+            </div>
+            <div class="composer">
+              <span class="muted" style="font-size:14px">Спросить ассистента…</span>
+              <span class="chip" style="padding:7px 10px">Send</span>
+            </div>
+          </main>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="panel pad">
+          <div class="eyebrow">Why this deck</div>
+          <p class="lead" style="font-size:16px;max-width:none;margin-top:10px">Нужен для проверки app-like layout внутри слайда: sticky composer, tabs, mixed text blocks, small controls, nested panels, toast policy и mobile-ish UI без реального app shell.</p>
+        </div>
+        <div class="panel pad">
+          <div class="eyebrow">Stress points</div>
+          <div class="grid" style="grid-template-columns:1fr 1fr; margin-top:12px">
+            <div class="chip">nested cards</div><div class="chip">tiny hit targets</div>
+            <div class="chip">sticky-ish footer</div><div class="chip">overlays</div>
+            <div class="chip">tabs</div><div class="chip">dense content</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-title="Kanban Board">
+    <div class="top">
+      <div>
+        <div class="eyebrow">Board slide · repeated cards + badges + long labels</div>
+        <h2>Launch readiness board</h2>
+      </div>
+      <div class="chip">kanban columns</div>
+    </div>
+    <div class="kanban">
+      <div class="col">
+        <h3>Backlog</h3>
+        <div class="ticket"><span class="bar blue"></span><strong>Revise pricing FAQ</strong><div class="muted" style="margin-top:8px;font-size:13px">Need legal sign-off and GTM alignment.</div></div>
+        <div class="ticket"><span class="bar teal"></span><strong>Refresh screenshots</strong><div class="muted" style="margin-top:8px;font-size:13px">Replace outdated mobile states in deck and docs.</div></div>
+      </div>
+      <div class="col">
+        <h3>In progress</h3>
+        <div class="ticket"><span class="bar amber"></span><strong>Onboarding owner mapping</strong><div class="muted" style="margin-top:8px;font-size:13px">Three unresolved territories.</div></div>
+        <div class="ticket"><span class="bar violet"></span><strong>Security review notes</strong><div class="muted" style="margin-top:8px;font-size:13px">Consolidate red flags into one page.</div></div>
+      </div>
+      <div class="col">
+        <h3>Review</h3>
+        <div class="ticket"><span class="bar rose"></span><strong>Sales narrative v4</strong><div class="muted" style="margin-top:8px;font-size:13px">Waiting for founder comments.</div></div>
+        <div class="ticket"><span class="bar blue"></span><strong>Customer proof pack</strong><div class="muted" style="margin-top:8px;font-size:13px">Need better logo permissions.</div></div>
+      </div>
+      <div class="col">
+        <h3>Done</h3>
+        <div class="ticket"><span class="bar teal"></span><strong>Metric sanity check</strong><div class="muted" style="margin-top:8px;font-size:13px">MRR and pipeline reconciled.</div></div>
+        <div class="ticket"><span class="bar violet"></span><strong>Board update</strong><div class="muted" style="margin-top:8px;font-size:13px">Narrative shortened to decision-grade format.</div></div>
+      </div>
+    </div>
+    <div class="toast">
+      <strong>Saved</strong>
+      <span style="opacity:.78">Card “Security review notes” moved to Review. Undo available for 8 seconds.</span>
+    </div>
+  </section>
+
+  <section class="slide" data-title="Data Table">
+    <div class="top">
+      <div>
+        <div class="eyebrow">KPI slide · tabs + table + sticky annotation</div>
+        <h2>Revenue and adoption summary</h2>
+      </div>
+      <div class="tabs"><span class="tab active">Quarter</span><span class="tab">Region</span><span class="tab">Segment</span></div>
+    </div>
+    <div class="panel pad" style="position:relative; min-height:calc(100vh - 210px)">
+      <div class="kpis">
+        <div class="kpi"><div class="muted" style="font-size:12px;text-transform:uppercase;letter-spacing:.14em">Net revenue</div><div class="v">₽18.4M</div></div>
+        <div class="kpi"><div class="muted" style="font-size:12px;text-transform:uppercase;letter-spacing:.14em">Win rate</div><div class="v">27%</div></div>
+        <div class="kpi"><div class="muted" style="font-size:12px;text-transform:uppercase;letter-spacing:.14em">Pipeline</div><div class="v">₽92M</div></div>
+        <div class="kpi"><div class="muted" style="font-size:12px;text-transform:uppercase;letter-spacing:.14em">Activation</div><div class="v">61%</div></div>
+      </div>
+      <table class="table" style="margin-top:18px">
+        <thead><tr><th>Segment</th><th>ARR</th><th>Activation</th><th>Support load</th><th>Decision</th></tr></thead>
+        <tbody>
+          <tr><td>SMB</td><td>₽4.1M</td><td>68%</td><td>Medium</td><td>Scale</td></tr>
+          <tr><td>Mid-market</td><td>₽7.6M</td><td>63%</td><td>Low</td><td>Double down</td></tr>
+          <tr><td>Enterprise</td><td>₽6.7M</td><td>47%</td><td>High</td><td>Fix onboarding</td></tr>
+          <tr><td>Partners</td><td>₽1.2M</td><td>39%</td><td>Medium</td><td>Rework motion</td></tr>
+        </tbody>
+      </table>
+      <div class="sticky-note">
+        <div class="eyebrow" style="color:#8a6900">sticky annotation</div>
+        <div style="font-weight:800;font-size:18px;margin-top:8px">Enterprise looks big but fragile</div>
+        <div style="font-size:14px;line-height:1.5;margin-top:8px;color:#594a12">Useful for testing rotated / pinned notes over structured data.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-title="Roadmap">
+    <div class="top">
+      <div>
+        <div class="eyebrow">Absolute planning slide · SVG connectors + milestones</div>
+        <h2>Execution roadmap</h2>
+      </div>
+      <div class="chip">absolute positioned milestones</div>
+    </div>
+    <div class="roadmap panel">
+      <div class="lane" style="top:92px"></div>
+      <div class="lane" style="top:176px"></div>
+      <div class="lane" style="top:260px"></div>
+      <div class="lane" style="top:344px"></div>
+      <svg class="connector" viewBox="0 0 1200 420" preserveAspectRatio="none">
+        <path d="M154 84 C 250 84, 250 84, 344 84 S 450 84, 548 84 650 168, 744 168 850 252, 950 252 1020 336, 1112 336"
+          fill="none" stroke="#2d6df6" stroke-width="4" stroke-dasharray="8 8"/>
+      </svg>
+      <div class="milestone" style="left:54px; top:54px"><strong>Phase 1</strong><div class="muted" style="margin-top:6px;font-size:13px">Loader + truthful preview</div></div>
+      <div class="milestone" style="left:286px; top:54px"><strong>Phase 2</strong><div class="muted" style="margin-top:6px;font-size:13px">Selection + edit basics</div></div>
+      <div class="milestone" style="left:512px; top:140px"><strong>Phase 3</strong><div class="muted" style="margin-top:6px;font-size:13px">Media + layers + DnD</div></div>
+      <div class="milestone" style="left:740px; top:224px"><strong>Phase 4</strong><div class="muted" style="margin-top:6px;font-size:13px">Recovery + diagnostics</div></div>
+      <div class="milestone" style="left:980px; top:308px"><strong>Phase 5</strong><div class="muted" style="margin-top:6px;font-size:13px">Acceptance hardening</div></div>
+    </div>
+  </section>
+
+</div>
+
+<div class="chrome">
+  <div class="nav">
+    <button id="prevBtn">‹</button>
+    <div class="dots" id="dots"></div>
+    <button id="nextBtn">›</button>
+  </div>
+  <div class="counter" id="counter">01 / 04</div>
+</div>
+
+<script>
+(() => {
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const dots = document.getElementById('dots');
+  const counter = document.getElementById('counter');
+  let i = 0;
+  slides.forEach((_, idx) => {
+    const d = document.createElement('button');
+    d.className = 'dot' + (idx === 0 ? ' active' : '');
+    d.type = 'button';
+    d.addEventListener('click', () => go(idx));
+    dots.appendChild(d);
+  });
+  function render(){
+    slides.forEach((slide, idx) => slide.classList.toggle('active', idx === i));
+    [...dots.children].forEach((d, idx) => d.classList.toggle('active', idx === i));
+    counter.textContent = String(i + 1).padStart(2,'0') + ' / ' + String(slides.length).padStart(2,'0');
+    document.title = 'Mercury Casefile — ' + slides[i].dataset.title;
+  }
+  function go(next){ i = (next + slides.length) % slides.length; render(); }
+  document.getElementById('prevBtn').addEventListener('click', ()=>go(i-1));
+  document.getElementById('nextBtn').addEventListener('click', ()=>go(i+1));
+  window.addEventListener('keydown', (e) => {
+    if (['ArrowRight','PageDown',' '].includes(e.key)) { e.preventDefault(); go(i+1); }
+    if (['ArrowLeft','PageUp','Backspace'].includes(e.key)) { e.preventDefault(); go(i-1); }
+  });
+  render();
+})();
+</script>
+</body>
+</html>

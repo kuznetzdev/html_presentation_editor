@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="slides-format" content="viewport" />
+  <title>Example Stress Deck — Ops Control Room</title>
+  <style>
+    :root{
+      --bg:#08111f;
+      --panel:#0f1b30;
+      --panel-2:#14233b;
+      --ink:#e7eefc;
+      --muted:#92a4c8;
+      --line:rgba(255,255,255,.08);
+      --accent:#66b3ff;
+      --green:#3ddc97;
+      --amber:#f6c760;
+      --red:#ff6b81;
+      --violet:#8f8cff;
+      --cyan:#39d0ff;
+      --pink:#ff79c6;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+    .deck{position:relative;width:100vw;height:100vh;overflow:hidden;background:
+      radial-gradient(circle at 15% 20%, rgba(57,208,255,.18), transparent 28%),
+      radial-gradient(circle at 85% 10%, rgba(143,140,255,.15), transparent 24%),
+      linear-gradient(180deg,#08111f 0%, #091426 100%);}
+    .slide{
+      position:absolute; inset:0; padding:30px 34px 82px;
+      opacity:0; pointer-events:none; transform:translateX(2%) scale(.985);
+      transition:opacity .45s ease, transform .45s ease;
+    }
+    .slide.active{opacity:1; pointer-events:auto; transform:none}
+    .chrome{
+      position:absolute; left:26px; right:26px; bottom:20px; z-index:50;
+      display:flex; align-items:center; justify-content:space-between; gap:20px;
+      background:rgba(8,17,31,.7); border:1px solid var(--line); backdrop-filter:blur(12px);
+      border-radius:18px; padding:12px 16px;
+    }
+    .nav{display:flex; gap:10px; align-items:center}
+    .nav button{
+      width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;
+      background:#163155;color:white;font-weight:700;font-size:18px;
+    }
+    .dots{display:flex; gap:8px}
+    .dot{width:9px;height:9px;border-radius:99px;background:#415172;cursor:pointer;transition:all .25s}
+    .dot.active{width:28px;background:var(--accent)}
+    .counter{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+    .top{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:20px; margin-bottom:24px;
+    }
+    .eyebrow{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:700}
+    h1{font-size:52px;line-height:1.02;margin:10px 0 0}
+    h2{font-size:32px;line-height:1.08;margin:8px 0 0}
+    p{margin:0}
+    .lead{max-width:760px;font-size:18px;line-height:1.6;color:#d7e3ff}
+    .muted{color:var(--muted)}
+    .grid{display:grid; gap:18px}
+    .hero-grid{grid-template-columns:1.6fr .9fr; align-items:stretch; min-height:calc(100vh - 220px)}
+    .panel{
+      position:relative;
+      background:linear-gradient(180deg, rgba(20,35,59,.92), rgba(11,24,42,.92));
+      border:1px solid var(--line); border-radius:24px; padding:20px; overflow:hidden;
+      box-shadow:0 16px 48px rgba(0,0,0,.28);
+    }
+    .panel::after{
+      content:""; position:absolute; inset:auto -70px -90px auto; width:220px; height:220px;
+      border-radius:50%; background:radial-gradient(circle, rgba(102,179,255,.14), transparent 70%);
+      pointer-events:none;
+    }
+    .stack{display:flex; flex-direction:column; gap:14px}
+    .kpi-row{display:grid; grid-template-columns:repeat(4,1fr); gap:14px}
+    .kpi{
+      background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:18px;
+      padding:16px 16px 14px; min-height:110px; position:relative;
+    }
+    .kpi .label{font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted)}
+    .kpi .value{font-size:32px;font-weight:800; margin-top:14px}
+    .pill{
+      display:inline-flex; align-items:center; gap:8px; padding:7px 11px; border-radius:999px;
+      background:rgba(255,255,255,.05); border:1px solid var(--line); color:#e8f0ff; font-size:12px; font-weight:700;
+    }
+    .dot-led{width:8px;height:8px;border-radius:50%}
+    .green{background:var(--green)} .amber{background:var(--amber)} .red{background:var(--red)}
+    .small{font-size:13px;line-height:1.55}
+    .table{
+      width:100%; border-collapse:collapse; font-size:13px; overflow:hidden; border-radius:18px;
+    }
+    .table th,.table td{padding:11px 12px; text-align:left; border-bottom:1px solid var(--line)}
+    .table th{font-size:11px; text-transform:uppercase; letter-spacing:.14em; color:var(--muted); font-weight:700}
+    .table tr:last-child td{border-bottom:none}
+    .spark{height:82px;width:100%}
+    .legend{display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--muted)}
+    .legend span{display:inline-flex; align-items:center; gap:7px}
+    .legend i{display:inline-block; width:12px; height:12px; border-radius:3px}
+    .media-wall{display:grid; grid-template-columns:1.15fr .85fr; gap:18px; min-height:calc(100vh - 230px)}
+    .shot{
+      border:1px solid var(--line); border-radius:18px; overflow:hidden; min-height:220px;
+      background:#0d1628; position:relative;
+    }
+    .shot svg,.shot iframe,.shot video,.shot img{display:block; width:100%; height:100%; object-fit:cover}
+    .floating-note{
+      position:absolute; right:20px; top:24px; width:260px; z-index:7;
+      background:rgba(9,16,30,.84); border:1px solid rgba(255,255,255,.12); backdrop-filter:blur(10px);
+      border-radius:20px; padding:16px;
+      box-shadow:0 20px 48px rgba(0,0,0,.35);
+    }
+    .architecture{position:relative; min-height:520px; background:
+      linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+      border-radius:22px; border:1px solid var(--line); overflow:hidden}
+    .node{
+      position:absolute; width:220px; border-radius:20px; padding:16px;
+      background:rgba(14,27,46,.88); border:1px solid var(--line); z-index:2;
+    }
+    .node h3{margin:0 0 8px; font-size:18px}
+    .node p{font-size:13px; line-height:1.5; color:#c5d5f5}
+    .connector{position:absolute; inset:0; z-index:1}
+    .abs-card{
+      position:absolute; border-radius:18px; padding:14px 16px; border:1px solid var(--line); background:rgba(8,17,31,.78); backdrop-filter:blur(8px);
+      box-shadow:0 10px 28px rgba(0,0,0,.22)
+    }
+    .rot-1{transform:rotate(-3deg)} .rot2{transform:rotate(2.5deg)}
+    .heatmap{
+      display:grid; grid-template-columns:170px repeat(5, 1fr); gap:8px; align-items:stretch
+    }
+    .heatmap .cell{
+      min-height:74px; border-radius:16px; padding:10px; font-size:12px; display:flex; flex-direction:column; justify-content:space-between;
+      border:1px solid rgba(255,255,255,.05)
+    }
+    .lv0{background:#122038}.lv1{background:#1b3156}.lv2{background:#23466f}.lv3{background:#5f4423}.lv4{background:#6b2438}
+    .colhead,.rowhead{font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); padding:10px 4px}
+    .modal{
+      position:absolute; right:42px; bottom:112px; width:340px; z-index:15; border-radius:22px;
+      background:rgba(10,20,34,.95); border:1px solid var(--line); box-shadow:0 20px 60px rgba(0,0,0,.4); padding:18px;
+    }
+    .progress{height:10px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
+    .progress > span{display:block;height:100%;background:linear-gradient(90deg,var(--accent), var(--violet))}
+    .tag{display:inline-block;padding:5px 8px;border-radius:999px;font-size:11px;font-weight:700;background:rgba(255,255,255,.06);border:1px solid var(--line)}
+    @media (max-width: 1100px){
+      .hero-grid,.media-wall{grid-template-columns:1fr}
+      .kpi-row{grid-template-columns:repeat(2,1fr)}
+      h1{font-size:40px}
+      .floating-note,.modal{position:relative; width:auto; right:auto; bottom:auto; top:auto; margin-top:14px}
+    }
+  </style>
+</head>
+<body>
+<div class="deck">
+
+  <section class="slide active" data-title="Command Center">
+    <div class="top">
+      <div>
+        <div class="eyebrow">Generic HTML deck · absolute + grid + overlays</div>
+        <h1>Northwind Ops Control Room</h1>
+      </div>
+      <div class="stack" style="align-items:flex-end">
+        <div class="pill"><span class="dot-led green"></span> 19 источников синхронизированы</div>
+        <div class="pill"><span class="dot-led amber"></span> 2 деградировавших pipeline</div>
+      </div>
+    </div>
+
+    <div class="grid hero-grid">
+      <div class="panel">
+        <div class="stack" style="height:100%">
+          <div class="lead">Дек специально собран как стресс‑пример для редактора: mixed layout, layered cards, inline SVG charts, media wall, table, modal overlay, absolute annotations и разные z-index контексты.</div>
+          <div class="kpi-row">
+            <div class="kpi">
+              <div class="label">Active regions</div>
+              <div class="value">24</div>
+              <div class="small muted">EMEA · APAC · LATAM · NA</div>
+            </div>
+            <div class="kpi">
+              <div class="label">Critical alerts</div>
+              <div class="value" style="color:var(--red)">07</div>
+              <div class="small muted">4 infra · 2 data · 1 security</div>
+            </div>
+            <div class="kpi">
+              <div class="label">MTTR</div>
+              <div class="value">31m</div>
+              <div class="small muted">−18% QoQ</div>
+            </div>
+            <div class="kpi">
+              <div class="label">SLA</div>
+              <div class="value" style="color:var(--green)">99.94%</div>
+              <div class="small muted">Rolling 30d</div>
+            </div>
+          </div>
+          <div class="panel" style="padding:18px; margin-top:auto">
+            <svg class="spark" viewBox="0 0 760 82" preserveAspectRatio="none" aria-label="Operations trend chart">
+              <defs>
+                <linearGradient id="ops-fill" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stop-color="rgba(102,179,255,.55)"/>
+                  <stop offset="100%" stop-color="rgba(102,179,255,0)"/>
+                </linearGradient>
+              </defs>
+              <path d="M0,68 C65,52 105,15 155,22 C200,28 220,62 260,58 C310,53 322,24 375,24 C426,24 441,45 493,48 C535,51 570,20 625,18 C675,17 710,31 760,9" fill="none" stroke="rgba(102,179,255,.95)" stroke-width="4"/>
+              <path d="M0,68 C65,52 105,15 155,22 C200,28 220,62 260,58 C310,53 322,24 375,24 C426,24 441,45 493,48 C535,51 570,20 625,18 C675,17 710,31 760,9 L760,82 L0,82 Z" fill="url(#ops-fill)"/>
+              <g stroke="rgba(255,255,255,.08)">
+                <line x1="0" y1="20" x2="760" y2="20"/><line x1="0" y1="40" x2="760" y2="40"/><line x1="0" y1="60" x2="760" y2="60"/>
+              </g>
+            </svg>
+            <div class="legend">
+              <span><i style="background:var(--accent)"></i> incident load</span>
+              <span><i style="background:var(--green)"></i> remediation throughput</span>
+              <span><i style="background:var(--amber)"></i> deploy freeze windows</span>
+            </div>
+          </div>
+        </div>
+        <div class="abs-card rot-1" style="left:24px; bottom:26px; width:210px">
+          <div class="eyebrow" style="font-size:10px">absolute layer</div>
+          <div style="font-size:20px;font-weight:800">+12%</div>
+          <div class="small muted">manual reposition test</div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="panel" style="min-height:220px">
+          <div class="eyebrow">Scoreboard</div>
+          <h2>Состояние сервисов</h2>
+          <table class="table" style="margin-top:10px">
+            <thead><tr><th>Service</th><th>Status</th><th>Owner</th></tr></thead>
+            <tbody>
+              <tr><td>Orders API</td><td style="color:var(--green)">Healthy</td><td>Core</td></tr>
+              <tr><td>Dispatch Graph</td><td style="color:var(--amber)">Degraded</td><td>Ops</td></tr>
+              <tr><td>Partner ETL</td><td style="color:var(--red)">Critical</td><td>Data</td></tr>
+              <tr><td>Identity Broker</td><td style="color:var(--green)">Healthy</td><td>Security</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="panel" style="min-height:280px">
+          <div class="eyebrow">Mini radar</div>
+          <svg viewBox="0 0 280 220" style="width:100%;height:220px">
+            <g transform="translate(140,110)">
+              <circle r="78" fill="none" stroke="rgba(255,255,255,.10)"/><circle r="54" fill="none" stroke="rgba(255,255,255,.10)"/><circle r="28" fill="none" stroke="rgba(255,255,255,.10)"/>
+              <line x1="-88" y1="0" x2="88" y2="0" stroke="rgba(255,255,255,.08)"/>
+              <line x1="0" y1="-88" x2="0" y2="88" stroke="rgba(255,255,255,.08)"/>
+              <line x1="-62" y1="-62" x2="62" y2="62" stroke="rgba(255,255,255,.08)"/>
+              <line x1="-62" y1="62" x2="62" y2="-62" stroke="rgba(255,255,255,.08)"/>
+              <path d="M0,-72 L58,-16 L28,54 L-36,48 L-68,-6 Z" fill="rgba(143,140,255,.26)" stroke="rgba(143,140,255,.95)" stroke-width="2"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-title="Architecture Map">
+    <div class="top">
+      <div>
+        <div class="eyebrow">Architecture stress · connectors + absolute nodes</div>
+        <h2>Operational architecture with layered annotations</h2>
+      </div>
+      <div class="pill"><span class="dot-led green"></span> Connector lines rendered as SVG under cards</div>
+    </div>
+
+    <div class="panel architecture">
+      <svg class="connector" viewBox="0 0 1200 560" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="conn" x1="0" x2="1">
+            <stop offset="0%" stop-color="rgba(57,208,255,.65)"/>
+            <stop offset="100%" stop-color="rgba(143,140,255,.65)"/>
+          </linearGradient>
+        </defs>
+        <path d="M240 110 C 330 110, 335 110, 420 110" stroke="url(#conn)" stroke-width="4" fill="none"/>
+        <path d="M660 110 C 760 110, 770 110, 860 110" stroke="url(#conn)" stroke-width="4" fill="none"/>
+        <path d="M530 150 C 530 220, 530 250, 530 305" stroke="url(#conn)" stroke-width="4" fill="none"/>
+        <path d="M960 150 C 960 230, 860 260, 760 300" stroke="url(#conn)" stroke-width="4" fill="none"/>
+        <path d="M530 350 C 430 430, 340 440, 248 430" stroke="url(#conn)" stroke-width="4" fill="none"/>
+        <path d="M530 350 C 620 425, 730 442, 854 430" stroke="url(#conn)" stroke-width="4" fill="none"/>
+      </svg>
+
+      <div class="node" style="left:42px; top:44px">
+        <h3>Signals Ingest</h3>
+        <p>Webhooks, message queues, CSV imports, streaming telemetry, human escalation inbox.</p>
+      </div>
+      <div class="node" style="left:400px; top:44px; width:250px">
+        <h3>Decision Engine</h3>
+        <p>Threshold rules, anomaly scoring, incident grouping, policy routing, priority arbitration.</p>
+      </div>
+      <div class="node" style="left:830px; top:44px; width:250px">
+        <h3>Command Bus</h3>
+        <p>Approvals, rollbacks, deploy holds, patch dispatch, audit-safe replay.</p>
+      </div>
+      <div class="node" style="left:404px; top:280px; width:250px">
+        <h3>Analyst Workspace</h3>
+        <p>Work queue, reasoning trail, comparison diffs, notes, acknowledgements and runbooks.</p>
+      </div>
+      <div class="node" style="left:148px; top:408px">
+        <h3>Knowledge Layer</h3>
+        <p>Runbooks, policies, architecture docs, exception registry, ownership graph.</p>
+      </div>
+      <div class="node" style="left:786px; top:408px; width:280px">
+        <h3>Reporting + Recovery</h3>
+        <p>Executive snapshot, SLA postmortem, recovery workflows, export packages, evidence bundle.</p>
+      </div>
+
+      <div class="abs-card rot2" style="left:720px; top:190px; width:220px; z-index:6">
+        <div class="tag">z-index = 6</div>
+        <div style="font-weight:800;font-size:18px;margin-top:10px">Overlapping note</div>
+        <div class="small muted" style="margin-top:6px">Useful to test layer selection, bring-to-front and overlap recovery.</div>
+      </div>
+      <div class="abs-card" style="left:120px; top:236px; width:240px; z-index:4">
+        <div class="tag">inline annotation</div>
+        <div class="small" style="margin-top:8px">Also tests absolute positioning inside a bigger positioned stage.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-title="Media Wall">
+    <div class="top">
+      <div>
+        <div class="eyebrow">Media stress · iframe + video + poster + image + notes</div>
+        <h2>Mixed media wall</h2>
+      </div>
+      <div class="counter">object-fit · overlays · aspect ratios</div>
+    </div>
+    <div class="media-wall">
+      <div class="stack">
+        <div class="shot" style="min-height:330px">
+          <svg viewBox="0 0 1280 720" role="img" aria-label="Synthetic operations map">
+            <defs>
+              <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1">
+                <stop offset="0%" stop-color="#0d1d36"/><stop offset="100%" stop-color="#11294b"/>
+              </linearGradient>
+            </defs>
+            <rect width="1280" height="720" fill="url(#g1)"/>
+            <g opacity=".28" stroke="#59b8ff"><path d="M80 110 C250 90 380 140 480 110 S700 70 860 120 1040 140 1210 90" fill="none" stroke-width="5"/></g>
+            <g fill="#66b3ff" opacity=".9">
+              <circle cx="220" cy="280" r="18"/><circle cx="520" cy="190" r="12"/><circle cx="780" cy="340" r="16"/><circle cx="1040" cy="240" r="22"/>
+            </g>
+            <g fill="#fff" opacity=".85" font-family="Inter, Arial" font-size="24">
+              <text x="170" y="330">Berlin hub</text><text x="734" y="392">Kiev backup</text><text x="988" y="297">Tokyo route</text>
+            </g>
+          </svg>
+          <div class="floating-note">
+            <div class="eyebrow">floating note</div>
+            <div style="font-size:22px;font-weight:800;margin-top:8px">Editor case</div>
+            <div class="small muted" style="margin-top:8px">Move or resize this overlay without breaking the underlying media card.</div>
+          </div>
+        </div>
+        <div class="grid" style="grid-template-columns:1fr 1fr">
+          <div class="shot" style="height:220px">
+            <svg viewBox="0 0 640 360" aria-label="Poster card">
+              <rect width="640" height="360" fill="#111a2d"/>
+              <rect x="40" y="42" width="560" height="276" rx="24" fill="#1a2c4f" stroke="rgba(255,255,255,.08)"/>
+              <circle cx="320" cy="180" r="48" fill="rgba(255,255,255,.10)"/>
+              <polygon points="308,156 308,204 352,180" fill="#fff"/>
+            </svg>
+          </div>
+          <div class="shot" style="height:220px">
+            <iframe title="Embedded demo frame" srcdoc='<!doctype html><html><body style="margin:0;background:#0b1120;color:#fff;font-family:Segoe UI,Arial,sans-serif;display:grid;place-items:center;height:100vh"><div style="text-align:center"><div style="font-size:52px">📦</div><div style="font-size:26px;font-weight:800;margin-top:12px">Embedded widget</div><div style="opacity:.7;margin-top:10px">iframe inside a slide card</div></div></body></html>'></iframe>
+          </div>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="panel" style="min-height:240px">
+          <div class="eyebrow">playlist</div>
+          <h2>Media sources</h2>
+          <table class="table" style="margin-top:8px">
+            <thead><tr><th>Type</th><th>Mode</th><th>Risk</th></tr></thead>
+            <tbody>
+              <tr><td>Inline SVG</td><td>self-contained</td><td>Low</td></tr>
+              <tr><td>Iframe widget</td><td>embedded</td><td>Medium</td></tr>
+              <tr><td>Poster card</td><td>image-like</td><td>Low</td></tr>
+              <tr><td>Remote video slot</td><td>URL / embed</td><td>Medium</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="panel" style="min-height:290px">
+          <div class="eyebrow">progress</div>
+          <div class="stack" style="margin-top:12px">
+            <div><div class="small muted" style="margin-bottom:6px">Poster replacement</div><div class="progress"><span style="width:82%"></span></div></div>
+            <div><div class="small muted" style="margin-bottom:6px">Caption normalization</div><div class="progress"><span style="width:61%;background:linear-gradient(90deg,var(--green), #8fe7bf)"></span></div></div>
+            <div><div class="small muted" style="margin-bottom:6px">Link validation</div><div class="progress"><span style="width:43%;background:linear-gradient(90deg,var(--amber), #ffe099)"></span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-title="Risk Heatmap">
+    <div class="top">
+      <div>
+        <div class="eyebrow">Dense slide · table/grid + modal + overlap</div>
+        <h2>Risk heatmap and executive summary modal</h2>
+      </div>
+      <div class="pill"><span class="dot-led red"></span> Modal intentionally overlaps the grid</div>
+    </div>
+
+    <div class="panel">
+      <div class="heatmap">
+        <div></div>
+        <div class="colhead">Q1</div><div class="colhead">Q2</div><div class="colhead">Q3</div><div class="colhead">Q4</div><div class="colhead">Q5</div>
+        <div class="rowhead">Infra</div>
+        <div class="cell lv1"><strong>Patch drift</strong><span>8 nodes</span></div>
+        <div class="cell lv2"><strong>DB lag</strong><span>2 clusters</span></div>
+        <div class="cell lv3"><strong>Cache split</strong><span>impact ↑</span></div>
+        <div class="cell lv1"><strong>CDN routing</strong><span>ok</span></div>
+        <div class="cell lv0"><strong>Edge auth</strong><span>watch</span></div>
+
+        <div class="rowhead">Data</div>
+        <div class="cell lv0"><strong>Schema drift</strong><span>low</span></div>
+        <div class="cell lv2"><strong>Late facts</strong><span>12 jobs</span></div>
+        <div class="cell lv4"><strong>Partner ETL</strong><span>critical</span></div>
+        <div class="cell lv2"><strong>Null surge</strong><span>degraded</span></div>
+        <div class="cell lv1"><strong>Warehouse QC</strong><span>ok</span></div>
+
+        <div class="rowhead">Security</div>
+        <div class="cell lv1"><strong>Token age</strong><span>medium</span></div>
+        <div class="cell lv0"><strong>MFA sync</strong><span>ok</span></div>
+        <div class="cell lv1"><strong>Secrets scope</strong><span>audit</span></div>
+        <div class="cell lv3"><strong>3rd-party IAM</strong><span>supplier risk</span></div>
+        <div class="cell lv1"><strong>WAF tuning</strong><span>fine</span></div>
+      </div>
+    </div>
+
+    <aside class="modal">
+      <div class="eyebrow">Executive summary</div>
+      <div style="font-size:24px;font-weight:800;margin-top:8px">3 red zones</div>
+      <div class="small muted" style="margin-top:10px;line-height:1.6">
+        Это окно сделано как поверхностный layer над основным контентом. Подходит для проверки selection conflict, z-index, duplicate/delete и context menu на перекрывающихся объектах.
+      </div>
+      <div class="stack" style="margin-top:14px">
+        <div class="tag">absolute</div>
+        <div class="tag">backdrop-like card</div>
+        <div class="tag">overlapping surface</div>
+      </div>
+    </aside>
+  </section>
+
+</div>
+
+<div class="chrome">
+  <div class="nav">
+    <button id="prevBtn" aria-label="Previous slide">‹</button>
+    <div class="dots" id="dots"></div>
+    <button id="nextBtn" aria-label="Next slide">›</button>
+  </div>
+  <div class="counter" id="counter">01 / 04</div>
+</div>
+
+<script>
+(() => {
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const dotsEl = document.getElementById('dots');
+  const counter = document.getElementById('counter');
+  let index = 0;
+
+  slides.forEach((_, i) => {
+    const dot = document.createElement('button');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dot.type = 'button';
+    dot.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+    dot.addEventListener('click', () => go(i));
+    dotsEl.appendChild(dot);
+  });
+
+  function render(){
+    slides.forEach((slide, i) => slide.classList.toggle('active', i === index));
+    [...dotsEl.children].forEach((dot, i) => dot.classList.toggle('active', i === index));
+    counter.textContent = String(index + 1).padStart(2, '0') + ' / ' + String(slides.length).padStart(2, '0');
+    document.title = 'Ops Control Room — ' + slides[index].dataset.title;
+  }
+  function go(next){
+    index = (next + slides.length) % slides.length;
+    render();
+  }
+  document.getElementById('prevBtn').addEventListener('click', () => go(index - 1));
+  document.getElementById('nextBtn').addEventListener('click', () => go(index + 1));
+  window.addEventListener('keydown', (e) => {
+    if (['ArrowRight','PageDown',' '].includes(e.key)) go(index + 1);
+    if (['ArrowLeft','PageUp','Backspace'].includes(e.key)) go(index - 1);
+  });
+  render();
+})();
+</script>
+</body>
+</html>

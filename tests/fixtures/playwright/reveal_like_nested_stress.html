@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Example Stress Deck — Reveal-like Nested Framework</title>
+  <meta name="slides-format" content="reveal-like" />
+  <style>
+    :root{
+      --bg:#0f1221; --fg:#edf2ff; --muted:#a9b5d5; --line:rgba(255,255,255,.10);
+      --accent:#75c1ff; --accent2:#9b8cff; --green:#38d39f; --red:#ff738f; --amber:#ffd166;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;overflow:hidden;font-family:Inter,Segoe UI,Arial,sans-serif;background:#090d18;color:var(--fg)}
+    .reveal{position:relative;width:100vw;height:100vh;overflow:hidden;background:
+      radial-gradient(circle at 20% 15%, rgba(117,193,255,.18), transparent 25%),
+      radial-gradient(circle at 80% 8%, rgba(155,140,255,.14), transparent 26%),
+      linear-gradient(180deg, #0d1221 0%, #0c1326 100%);
+    }
+    .slides{position:absolute;inset:0}
+    section{
+      position:absolute;inset:0;padding:34px 42px 86px;opacity:0;pointer-events:none;
+      transform:translateX(4%) scale(.985);
+      transition:opacity .42s ease, transform .42s ease;
+    }
+    section.active{opacity:1;pointer-events:auto;transform:none}
+    section.stack > section{display:none}
+    .frame{
+      border:1px solid var(--line); border-radius:28px; height:calc(100vh - 142px);
+      background:linear-gradient(180deg, rgba(20,25,44,.92), rgba(13,20,36,.92));
+      overflow:hidden; position:relative; box-shadow:0 16px 54px rgba(0,0,0,.34);
+    }
+    .pad{padding:22px 24px}
+    .eyebrow{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:700}
+    h1{font-size:54px;line-height:1.02;margin:8px 0 0}
+    h2{font-size:34px;line-height:1.06;margin:8px 0 0}
+    h3{font-size:20px;margin:0}
+    p{margin:0}
+    .lead{max-width:760px;font-size:18px;line-height:1.6;color:#dde7ff}
+    .muted{color:var(--muted)}
+    .layout2{display:grid;grid-template-columns:1.2fr .8fr;gap:18px}
+    .layout3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    .card{
+      background:rgba(255,255,255,.035); border:1px solid var(--line); border-radius:22px; padding:18px;
+    }
+    .fragment{opacity:.18; transform:translateY(16px); transition:opacity .35s ease, transform .35s ease}
+    .fragment.visible{opacity:1; transform:none}
+    pre{
+      margin:0; border-radius:18px; padding:18px; background:#0b1020; border:1px solid rgba(255,255,255,.06);
+      color:#cfe1ff; font-size:14px; line-height:1.5; overflow:auto;
+    }
+    code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .table{width:100%;border-collapse:collapse;font-size:13px}
+    .table th,.table td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left}
+    .table th{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+    .kbd{display:inline-flex;padding:4px 8px;border-radius:10px;background:rgba(255,255,255,.08);border:1px solid var(--line);font-size:12px;font-weight:700}
+    .progress{
+      position:absolute; left:42px; right:42px; bottom:28px; height:8px; border-radius:999px;
+      background:rgba(255,255,255,.08); overflow:hidden;
+    }
+    .progress > span{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .35s ease}
+    .hud{
+      position:absolute; top:22px; right:26px; display:flex; gap:12px; align-items:center; z-index:20;
+      background:rgba(8,14,28,.65); border:1px solid var(--line); border-radius:999px; padding:10px 14px; backdrop-filter:blur(10px)
+    }
+    .hud .s{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+    .hud .n{font-size:12px;font-weight:800;color:#fff}
+    .vertical-index{
+      position:absolute; left:20px; top:50%; transform:translateY(-50%);
+      display:flex; flex-direction:column; gap:8px; z-index:20;
+    }
+    .v-dot{width:10px;height:10px;border-radius:99px;background:#46516f}
+    .v-dot.active{background:var(--accent);height:28px}
+    .quote{
+      border-left:4px solid var(--accent); padding:14px 18px; font-size:20px; line-height:1.55; color:#e8efff;
+      background:rgba(255,255,255,.03); border-radius:0 18px 18px 0;
+    }
+    .note{
+      position:absolute; right:28px; bottom:46px; width:300px; z-index:9;
+      background:rgba(9,14,26,.88); border:1px solid rgba(255,255,255,.12); border-radius:20px;
+      padding:16px; box-shadow:0 16px 50px rgba(0,0,0,.35)
+    }
+    .flow{display:flex; gap:10px; flex-wrap:wrap}
+    .chip{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--line);font-size:12px;font-weight:700}
+    .arrow-nav{
+      position:absolute; right:28px; bottom:24px; display:flex; gap:10px; z-index:30
+    }
+    .arrow-nav button{
+      width:40px;height:40px;border-radius:50%;border:none;background:#1d3559;color:white;font-size:18px;font-weight:800;cursor:pointer
+    }
+    .mini-chart{width:100%;height:170px}
+    @media (max-width:1100px){ .layout2,.layout3{grid-template-columns:1fr} .note{position:relative;right:auto;bottom:auto;width:auto;margin:16px}}
+  </style>
+</head>
+<body>
+<div class="reveal">
+  <div class="hud">
+    <span class="s">Framework test</span>
+    <span class="n" id="hudIndex">01 · 01</span>
+    <span class="kbd">← →</span>
+    <span class="kbd">↑ ↓</span>
+    <span class="kbd">space</span>
+  </div>
+  <div class="vertical-index" id="verticalDots"></div>
+
+  <div class="slides">
+    <section class="h-slide active" data-title="Reveal Intro">
+      <div class="frame pad">
+        <div class="eyebrow">Reveal-like structure · horizontal + vertical + fragments</div>
+        <h1>Nested framework stress deck</h1>
+        <p class="lead" style="margin-top:18px">Это self-contained пример под reveal.js-подобный сценарий: верхние горизонтальные слайды, вертикальный стек, fragment-появления, code block, table, notes и прогрессбар. Нужен, чтобы редактор выдерживал не только generic deck, но и framework-aware навигацию.</p>
+        <div class="layout3" style="margin-top:24px">
+          <div class="card fragment"><h3>Horizontal slides</h3><p class="muted" style="margin-top:10px">Отдельные root sections.</p></div>
+          <div class="card fragment"><h3>Vertical stack</h3><p class="muted" style="margin-top:10px">Вложенные секции внутри общего раздела.</p></div>
+          <div class="card fragment"><h3>Fragments</h3><p class="muted" style="margin-top:10px">Постепенное раскрытие пунктов и callouts.</p></div>
+        </div>
+        <div class="note">
+          <div class="eyebrow">editing challenge</div>
+          <div style="font-size:18px;font-weight:800;margin-top:8px">Менять не сломав state</div>
+          <div class="muted" style="font-size:14px;line-height:1.55;margin-top:8px">Если редактор правит DOM такой презентации, нельзя убить внутреннюю модель навигации по подпунктам.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="h-slide stack" data-title="Vertical Stack">
+      <section class="v-slide active">
+        <div class="frame pad">
+          <div class="eyebrow">Vertical 1 / 3</div>
+          <h2>Implementation phases</h2>
+          <div class="layout2" style="margin-top:18px">
+            <div class="card">
+              <table class="table">
+                <thead><tr><th>Phase</th><th>Goal</th><th>Risk</th></tr></thead>
+                <tbody>
+                  <tr class="fragment"><td>P1</td><td>Load + preview</td><td>assets</td></tr>
+                  <tr class="fragment"><td>P2</td><td>Select + edit</td><td>desync</td></tr>
+                  <tr class="fragment"><td>P3</td><td>Layers + media</td><td>geometry</td></tr>
+                  <tr class="fragment"><td>P4</td><td>Export + reopen</td><td>fidelity</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="card">
+              <div class="quote fragment">Framework adapter должен понимать иерархию слайдов, но не брать на себя роль презентационного движка.</div>
+              <div class="flow" style="margin-top:18px">
+                <span class="chip fragment">nested sections</span>
+                <span class="chip fragment">active state</span>
+                <span class="chip fragment">fragment reveal</span>
+                <span class="chip fragment">progress sync</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="v-slide">
+        <div class="frame pad">
+          <div class="eyebrow">Vertical 2 / 3</div>
+          <h2>Code-heavy slide</h2>
+          <div class="layout2" style="margin-top:18px">
+            <div class="card">
+<pre><code>function nextVertical(delta = 1) {
+  const stack = slides[hIndex].querySelectorAll(':scope > section');
+  vIndex = Math.max(0, Math.min(vIndex + delta, stack.length - 1));
+  stack.forEach((s, i) => s.classList.toggle('active', i === vIndex));
+  syncFragments();
+}</code></pre>
+            </div>
+            <div class="card">
+              <svg class="mini-chart" viewBox="0 0 420 170" preserveAspectRatio="none">
+                <g stroke="rgba(255,255,255,.08)">
+                  <line x1="0" y1="30" x2="420" y2="30"/><line x1="0" y1="70" x2="420" y2="70"/><line x1="0" y1="110" x2="420" y2="110"/><line x1="0" y1="150" x2="420" y2="150"/>
+                </g>
+                <path d="M0 132 C 48 128, 65 88, 102 92 S 168 140, 214 114 280 36, 330 48 374 102, 420 76" fill="none" stroke="#75c1ff" stroke-width="4"/>
+                <path d="M0 154 C 54 148, 83 116, 122 126 S 198 138, 241 132 311 92, 350 96 395 112, 420 108" fill="none" stroke="#38d39f" stroke-width="4"/>
+              </svg>
+              <p class="muted" style="margin-top:12px;line-height:1.55">На code-слайдах редактору надо уметь редактировать текст, но не ломать pre/code и не вносить мусор в разметку.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="v-slide">
+        <div class="frame pad">
+          <div class="eyebrow">Vertical 3 / 3</div>
+          <h2>Callouts and fragments</h2>
+          <div class="layout3" style="margin-top:20px">
+            <div class="card fragment"><h3>Layered</h3><p class="muted" style="margin-top:8px">Overlapping note card above cards.</p></div>
+            <div class="card fragment"><h3>Stateful</h3><p class="muted" style="margin-top:8px">Visible vs hidden fragment classes.</p></div>
+            <div class="card fragment"><h3>Framework-aware</h3><p class="muted" style="margin-top:8px">Need to preserve section hierarchy.</p></div>
+          </div>
+          <div class="note">
+            <div class="eyebrow">fragment overlay</div>
+            <div style="font-size:16px;font-weight:800;margin-top:8px">This note overlaps fragment cards</div>
+            <div class="muted" style="font-size:13px;line-height:1.5;margin-top:8px">Useful for hit-testing on nested slides with overlay content.</div>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <section class="h-slide" data-title="Final">
+      <div class="frame pad">
+        <div class="eyebrow">Final slide</div>
+        <h2>What this deck tests</h2>
+        <div class="layout3" style="margin-top:18px">
+          <div class="card"><h3>Structure</h3><p class="muted" style="margin-top:10px">`.reveal > .slides > section > section`</p></div>
+          <div class="card"><h3>Navigation</h3><p class="muted" style="margin-top:10px">Horizontal and vertical keyboard flow.</p></div>
+          <div class="card"><h3>State</h3><p class="muted" style="margin-top:10px">Fragments, progress, HUD counters.</p></div>
+        </div>
+        <div class="quote" style="margin-top:20px">Если редактор справляется с таким deck’ом, значит он уже умеет жить не только в flat DOM, но и в framework-like презентациях.</div>
+      </div>
+    </section>
+  </div>
+
+  <div class="progress"><span id="progressFill"></span></div>
+  <div class="arrow-nav">
+    <button id="leftBtn" aria-label="Prev horizontal">‹</button>
+    <button id="upBtn" aria-label="Prev vertical">˄</button>
+    <button id="downBtn" aria-label="Next vertical">˅</button>
+    <button id="rightBtn" aria-label="Next horizontal">›</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  const hSlides = Array.from(document.querySelectorAll('.h-slide'));
+  const progressFill = document.getElementById('progressFill');
+  const hudIndex = document.getElementById('hudIndex');
+  const verticalDots = document.getElementById('verticalDots');
+  let h = 0, v = 0;
+
+  function currentVerticals() {
+    return Array.from(hSlides[h].querySelectorAll(':scope > section.v-slide'));
+  }
+  function currentSection() {
+    const verticals = currentVerticals();
+    return verticals.length ? verticals[v] : hSlides[h];
+  }
+  function syncVerticalDots() {
+    const verticals = currentVerticals();
+    verticalDots.innerHTML = '';
+    if (!verticals.length) return;
+    verticals.forEach((_, i) => {
+      const d = document.createElement('div');
+      d.className = 'v-dot' + (i === v ? ' active' : '');
+      verticalDots.appendChild(d);
+    });
+  }
+  function syncFragments() {
+    const frags = Array.from(currentSection().querySelectorAll('.fragment'));
+    frags.forEach((el, i) => {
+      el.classList.toggle('visible', i < fragCount());
+    });
+  }
+  function fragCount() { return Number(currentSection().dataset.fragCount || 99); }
+  function resetFragments() {
+    const frags = Array.from(currentSection().querySelectorAll('.fragment'));
+    currentSection().dataset.fragCursor = '0';
+    frags.forEach(el => el.classList.remove('visible'));
+  }
+  function nextFragment(delta) {
+    const frags = Array.from(currentSection().querySelectorAll('.fragment'));
+    if (!frags.length) return false;
+    let cursor = Number(currentSection().dataset.fragCursor || 0);
+    const next = Math.max(0, Math.min(cursor + delta, frags.length));
+    if (next === cursor) return false;
+    currentSection().dataset.fragCursor = String(next);
+    frags.forEach((el, i) => el.classList.toggle('visible', i < next));
+    return true;
+  }
+  function totalLinearSlides() {
+    return hSlides.reduce((sum, hs) => {
+      const verticals = hs.querySelectorAll(':scope > section.v-slide');
+      return sum + (verticals.length || 1);
+    }, 0);
+  }
+  function linearIndex() {
+    let n = 0;
+    for (let i = 0; i < h; i++) {
+      const verticals = hSlides[i].querySelectorAll(':scope > section.v-slide');
+      n += (verticals.length || 1);
+    }
+    return n + v + 1;
+  }
+  function render() {
+    hSlides.forEach((slide, i) => {
+      const active = i === h;
+      slide.classList.toggle('active', active);
+      const verticals = Array.from(slide.querySelectorAll(':scope > section.v-slide'));
+      verticals.forEach((vs, vi) => vs.classList.toggle('active', active && vi === v));
+    });
+    syncVerticalDots();
+    progressFill.style.width = ((linearIndex() / totalLinearSlides()) * 100) + '%';
+    hudIndex.textContent = String(h + 1).padStart(2,'0') + ' · ' + String((currentVerticals().length ? v + 1 : 1)).padStart(2,'0');
+    document.title = 'Reveal-like — ' + (hSlides[h].dataset.title || '');
+  }
+  function goHorizontal(delta) {
+    h = (h + delta + hSlides.length) % hSlides.length;
+    v = 0;
+    render();
+    resetFragments();
+  }
+  function goVertical(delta) {
+    const verticals = currentVerticals();
+    if (!verticals.length) return;
+    v = Math.max(0, Math.min(v + delta, verticals.length - 1));
+    render();
+    resetFragments();
+  }
+
+  document.getElementById('leftBtn').addEventListener('click', () => goHorizontal(-1));
+  document.getElementById('rightBtn').addEventListener('click', () => goHorizontal(1));
+  document.getElementById('upBtn').addEventListener('click', () => goVertical(-1));
+  document.getElementById('downBtn').addEventListener('click', () => goVertical(1));
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') goHorizontal(1);
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') goHorizontal(-1);
+    if (e.key === 'ArrowDown') goVertical(1);
+    if (e.key === 'ArrowUp') goVertical(-1);
+    if (e.key === ' ') {
+      if (!nextFragment(1)) goHorizontal(1);
+      e.preventDefault();
+    }
+    if (e.key === 'Backspace') {
+      if (!nextFragment(-1)) goHorizontal(-1);
+      e.preventDefault();
+    }
+  });
+
+  render();
+  resetFragments();
+})();
+</script>
+</body>
+</html>
