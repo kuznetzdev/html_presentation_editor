@@ -48,7 +48,7 @@
 | **v0.34.0** (contract tests complete) | 55/5/0 invariant | unchanged | unchanged | unchanged | unchanged | includes all above | 0 violations | 15/0/0 | 100% schemas (finalized) | optional |
 | **v0.35.0** (flake elimination) | 55/5/0 invariant + **0 `waitForTimeout` / `waitForFunction(eval)` / explicit retries** (WO-36) | green 3× consecutive | green 3× consecutive | green 3× consecutive | green | includes all above | 0 violations | 15/0/0 | 100% schemas | optional |
 | **v0.36.0** (shortcuts table + accessor) | 55/5/0 invariant | +shortcuts-table spec (WO-37) | unchanged | unchanged | unchanged | includes all above | 0 violations | 15/0/0 | 100% schemas | optional |
-| **v0.37.0** (v1.0 RC freeze) | **55/5/0** + 3× consecutive (WO-38) | full regression green 2 projects | green 2 browsers | green 3 viewports + tablet-honest | green asset-parity | **full matrix release-blocking** (WO-38) | **0 violations, release-enforced** | **15/0/0 enforced** | **100% schemas enforced** | **required (tsc clean)** |
+| **v0.37.0-rc.0** (WO-38 RC freeze, 2026-04-22) | **65/5/0** ✅ (measured) | **135/7/0** ✅ chromium-desktop + chromium-shell-1100 (5.5 min) | **28/148/0** ✅ firefox-desktop + webkit-desktop; +1 WebKit timing fix (2.4 min) | **139/60/0** ✅ chromium-mobile-390 + chromium-mobile-640 + chromium-tablet-820 (8 min) | **3/0/0** ✅ (11 sec) | **RUNNING** → result at GA | **27/0** ✅ release-enforced | **15/0/0** ✅ release-enforced | **152/0** ✅ release-enforced | **CLEAN** ✅ required (0 errors) |
 | **v1.0.0** (release) | 55/5/0 | green × 2 | green × 2 | green × 3 | green | full | 0 violations | 0 px regression | 100% | green |
 
 ## Gate-introduction citations
