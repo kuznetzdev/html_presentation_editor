@@ -144,6 +144,54 @@
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
+
+  /* ======================================================================
+   Tokens v2 — Layer 2 semantic tokens (ADR-019)
+   These tokens map Layer 1 primitives (--shell-*, --canvas-*, --on-*)
+   to semantic roles. Components consume ONLY Layer 2; primitives are
+   internal to tokens.css. Dark-theme rebinds Layer 2 only (see below).
+   ====================================================================== */
+
+  /* Surfaces — background fills for panels, fields, canvas, accents */
+  --surface-primary:      var(--shell-panel);            /* main panel/sidebar bg */
+  --surface-elevated:     var(--shell-panel-elevated);   /* floating panels, popover bg */
+  --surface-soft:         var(--shell-panel-soft);       /* subtle well, grouped bg */
+  --surface-canvas:       var(--canvas-stage-bg);        /* canvas/stage background */
+  --surface-accent-soft:  var(--shell-accent-soft);      /* accent tint overlay */
+  --surface-field:        var(--shell-field-bg);         /* input field bg */
+
+  /* Text — foreground colors for labels, copy, icons */
+  --text-primary:    var(--shell-text);               /* primary body text */
+  --text-secondary:  var(--shell-text-muted);         /* secondary/muted labels */
+  --text-disabled:   rgba(60, 60, 67, 0.35);          /* disabled text (light theme) */
+  --text-inverse:    var(--on-accent);                /* text on accent-bg buttons */
+  --text-accent:     var(--shell-accent);             /* accent-colored text/icons */
+
+  /* Borders — dividers, outlines, halos */
+  --border-subtle:  var(--shell-border);              /* soft divider, section sep */
+  --border-strong:  var(--shell-border-strong);       /* prominent border, hover ring */
+  --border-accent:  var(--state-accent-border);       /* accent-colored border/ring */
+
+  /* Intent — semantic banners / toasts / status chips (ADR-014) */
+  --intent-info-bg:       var(--shell-accent-soft);      /* info banner background */
+  --intent-info-fg:       var(--shell-accent);           /* info text/icon */
+  --intent-info-border:   var(--state-accent-border);    /* info border */
+  --intent-warning-bg:    var(--shell-warning-bg);       /* warning banner background */
+  --intent-warning-fg:    var(--shell-warning);          /* warning text/icon */
+  --intent-warning-border: var(--shell-warning-border);  /* warning border */
+  --intent-error-bg:      var(--shell-danger-bg);        /* error banner background */
+  --intent-error-fg:      var(--shell-danger);           /* error text/icon */
+  --intent-error-border:  var(--shell-danger-border);    /* error border */
+  --intent-success-bg:    var(--shell-success-bg);       /* success banner background */
+  --intent-success-fg:    var(--shell-success);          /* success text/icon */
+  --intent-success-border: var(--shell-success-border);  /* success border */
+
+  /* States — interactive micro-states */
+  /* TODO(tokens-v3): --state-hover fallback rgba literal has no matching primitive yet */
+  --state-hover:         var(--shell-hover, rgba(0, 0, 0, 0.04)); /* hover tint */
+  --state-active:        rgba(0, 0, 0, 0.08);         /* press/active tint (light theme) */
+  --state-focus-ring:    var(--shell-focus);           /* focus outline color */
+  --state-selection-ring: var(--shell-selection-ring); /* selection highlight ring */
 }
 
 :root[data-theme="dark"] {
@@ -206,5 +254,11 @@
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.18);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.24);
   --shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.28);
+
+  /* Dark theme — rebinds Layer 2 only; Layer 1 primitives already re-themed above.
+     Most Layer 2 tokens inherit correctly through the var() chain without explicit rebind. */
+  --text-disabled:  rgba(235, 235, 245, 0.35); /* dark-theme disabled text */
+  --state-hover:    rgba(255, 255, 255, 0.06); /* dark-theme hover tint */
+  --state-active:   rgba(255, 255, 255, 0.12); /* dark-theme active/press tint */
 }
 }
