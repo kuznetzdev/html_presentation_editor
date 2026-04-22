@@ -339,29 +339,6 @@ textarea {
   flex: 0 0 auto;
 }
 
-/* Lock banner */
-.lock-banner {
-  display: grid;
-  gap: 8px;
-  margin-top: 10px;
-  padding: 10px 12px;
-  border: 1px solid var(--shell-border);
-  border-radius: 10px;
-  background: var(--shell-bg-secondary);
-  color: var(--shell-text);
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.lock-banner[hidden] {
-  display: none !important;
-}
-
-.lock-banner-actions {
-  display: flex;
-  justify-content: flex-end;
-}
-
 /* [v0.19.0] Block reason banner */
 .block-reason-banner {
   display: grid;

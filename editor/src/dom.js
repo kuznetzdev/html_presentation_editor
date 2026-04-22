@@ -195,15 +195,8 @@
         els.normalizeLayersBtn?.addEventListener("click", () =>
           normalizeLayersForCurrentScope(),
         );
-        // [v0.18.0] Unlock element button
-        els.unlockElementBtn?.addEventListener("click", () => {
-          const lockedNodeId =
-            els.unlockElementBtn?.getAttribute("data-lock-node-id") ||
-            state.selectedNodeId;
-          if (!lockedNodeId) return;
-          toggleLayerLock(lockedNodeId);
-        });
         // [v0.19.0] Block reason action button
+        // [WO-29] unlock action re-routed here: blockReasonActionBtn.dataset.blockAction === "unlock"
         els.blockReasonActionBtn?.addEventListener("click", () => {
           const action = els.blockReasonActionBtn?.dataset.blockAction;
           if (action === "reset-zoom") {
