@@ -22,6 +22,7 @@ const {
   setMode,
   waitForSlideActivationState,
 } = require("../helpers/editorApp");
+const { waitForThemeApplied } = require("../helpers/waits");
 
 async function ensureInspectorSurfaceForAssertions(page) {
   await ensureShellPanelVisible(page, "inspector");
@@ -131,7 +132,7 @@ test.describe("Editor shell smoke @harness", () => {
       await page.evaluate((nextTheme) => {
         globalThis.eval(`setThemePreference(${JSON.stringify(nextTheme)}, false)`);
       }, theme);
-      await page.waitForTimeout(150);
+      await waitForThemeApplied(page, theme);
 
       return page.evaluate(() => {
         const read = (selector) => {
@@ -580,7 +581,7 @@ test.describe("Editor shell smoke @harness", () => {
     await page.evaluate(() => {
       globalThis.eval('setThemePreference("dark", false)');
     });
-    await page.waitForTimeout(180);
+    await waitForThemeApplied(page, "dark");
 
     await expect(page.locator(".preview-note")).toHaveScreenshot(
       "preview-note-editorial-summary-dark.png",
@@ -709,7 +710,13 @@ test.describe("Editor shell smoke @harness", () => {
     ).toBeVisible();
 
     await page.setViewportSize({ width: 1680, height: 960 });
-    await page.waitForTimeout(150);
+    // Poll until panel width actually expands — avoids a fixed sleep after resize
+    await expect
+      .poll(async () => {
+        const shell = await readWorkflowShellState(page);
+        return shell.metrics.slidesPanel?.width || 0;
+      })
+      .toBeGreaterThan((baseShell.metrics.slidesPanel?.width || 0) + 24);
     const wideShell = await readWorkflowShellState(page);
     expect(wideShell.metrics.slidesPanel?.width || 0).toBeGreaterThan(
       (baseShell.metrics.slidesPanel?.width || 0) + 24,

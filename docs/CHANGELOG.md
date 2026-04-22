@@ -9,6 +9,9 @@
 ### Refactored
 - Entity-kind registry externalized into entity-kinds.js (ADR-016 Layer 1, P2-05). Bridge + commands share single source of truth. (WO-35)
 
+### Changed
+- Test suite flake elimination (P1-16/P1-17/P1-19): 23 waitForTimeout → 0; 4 waitForFunction(eval) → 0; LN3 retry loop removed; page.once → stateful acceptNextDialog. New waits.js + dialog-handler.js helpers. container-mode-ack bridge round-trip added for deterministic LN3 container-mode propagation. (WO-36)
+
 ---
 
 ## [v0.29.5] — 2026-04-21 — W4 batch 6 (FINAL): WO-23 feedback.js split → surface-manager + banners scaffold

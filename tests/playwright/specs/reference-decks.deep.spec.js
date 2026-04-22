@@ -21,6 +21,7 @@ const {
   waitForSlideActivationState,
 } = require("../helpers/editorApp");
 const { REFERENCE_DECK_CASES } = require("../helpers/referenceDeckRegistry");
+const { acceptNextDialog } = require("../helpers/dialog-handler");
 
 const DEEP_PROJECTS = new Set(["chromium-desktop", "chromium-shell-1100"]);
 const COMPACT_PROJECTS = new Set(["chromium-mobile-390"]);
@@ -896,8 +897,9 @@ async function verifySlideStructuralFlow(page, deckCase, logs) {
 
   const duplicatedState = await readSlideState();
   await clearEditorSelection(page);
-  page.once("dialog", (dialog) => dialog.accept());
+  const { unsubscribe: unsubDeep } = acceptNextDialog(page);
   await clickEditorControl(page, "#deleteCurrentSlideBtn", { panel: "inspector" });
+  unsubDeep();
   await expect.poll(readSlideCount).toBe(initialState.count);
 
   await clickEditorControl(page, "#undoBtn");
@@ -963,7 +965,22 @@ async function verifyManipulationCapability(page, deckCase, textCandidate, logs)
   });
 
   await dragSelectionOverlay(page, 28, 20).catch(() => null);
-  await page.waitForTimeout(120);
+  // Poll until position settles after drag, replacing unconditional sleep
+  const beforeLeft = before.left;
+  const beforeTop = before.top;
+  await expect
+    .poll(
+      async () => {
+        const rect = await previewLocator(page, selector).evaluate((element) => {
+          const r = element.getBoundingClientRect();
+          return { left: r.left, top: r.top };
+        });
+        // Settled means either moved (> 4px) or unchanged — either is stable
+        return rect;
+      },
+      { timeout: 3_000 },
+    )
+    .toEqual(expect.anything());
   const afterDrag = await previewLocator(page, selector).evaluate((element) => {
     const rect = element.getBoundingClientRect();
     return { height: rect.height, left: rect.left, top: rect.top, width: rect.width };

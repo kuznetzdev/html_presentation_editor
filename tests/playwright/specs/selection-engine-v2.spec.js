@@ -33,6 +33,12 @@ const {
   waitForSelectedEntityKind,
   openExportValidationPopup,
 } = require("../helpers/editorApp");
+const {
+  waitForSelection,
+  waitForSelectionChange,
+  waitForSelectionKind,
+  waitForSlideActive,
+} = require("../helpers/waits");
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -136,9 +142,7 @@ test.describe("S1 — Smart Select", () => {
 
       const card = previewLocator(page, ".card").first();
       await card.click({ force: true });
-      await page.waitForFunction(
-        () => globalThis.eval("Boolean(state.selectedNodeId)"),
-      );
+      await expect.poll(() => evaluateEditor(page, "Boolean(state.selectedNodeId)")).toBe(true);
 
       const ui = await readSelectionUiState(page);
       expect(ui.selectedEntityKind).not.toBe("slide-root");
@@ -168,9 +172,7 @@ test.describe("S2 — Deep Select (Ctrl/Cmd+Click)", () => {
         modifiers: ["Control"],
       });
 
-      await page.waitForFunction(
-        () => globalThis.eval("Boolean(state.selectedNodeId)"),
-      );
+      await expect.poll(() => evaluateEditor(page, "Boolean(state.selectedNodeId)")).toBe(true);
 
       const secondNodeId = await evaluateEditor(page, "state.selectedNodeId || ''");
       // After deep-select the selected node should differ (cycled to next candidate)
@@ -193,17 +195,22 @@ test.describe("S2 — Deep Select (Ctrl/Cmd+Click)", () => {
 
       await loadAbsoluteDeck(page);
       // Slide 2 has stacked overlapping cards — navigate there first
+      const targetSlideId = await evaluateEditor(
+        page,
+        "state.slides[1]?.id || state.slides[0].id",
+      );
       await evaluateEditor(
         page,
-        "requestSlideActivation(state.slides[1]?.id || state.slides[0].id, { reason: 'test' })",
+        `requestSlideActivation(${JSON.stringify(targetSlideId)}, { reason: 'test' })`,
       );
-      await page.waitForTimeout(400);
+      await waitForSlideActive(page, targetSlideId);
 
       const seenNodeIds = new Set();
       for (let i = 0; i < 4; i++) {
+        const prevNodeId = await evaluateEditor(page, "state.selectedNodeId || ''");
         const card = previewLocator(page, ".card").nth(1);
         await card.click({ modifiers: ["Control"], force: true });
-        await page.waitForFunction(() => globalThis.eval("Boolean(state.selectedNodeId)"));
+        await expect.poll(() => evaluateEditor(page, "Boolean(state.selectedNodeId)")).toBe(true);
         const nodeId = await evaluateEditor(page, "state.selectedNodeId || ''");
         seenNodeIds.add(nodeId);
       }
@@ -234,7 +241,7 @@ test.describe("S3 — Alt+Click ancestor cycling", () => {
       await previewClick(page, '[data-node-id="hero-title"]', {
         modifiers: ["Alt"],
       });
-      await page.waitForFunction(() => globalThis.eval("Boolean(state.selectedNodeId)"));
+      await waitForSelectionChange(page, leafNodeId);
 
       const afterAltNodeId = await evaluateEditor(page, "state.selectedNodeId || ''");
       // Must have moved to a different (ancestor) node
@@ -275,11 +282,7 @@ test.describe("S4 — Shift+Enter parent navigation", () => {
       await selectionFrameLocator(page).focus();
       await page.keyboard.press("Shift+Enter");
 
-      await page.waitForFunction(
-        (prevId) => globalThis.eval("state.selectedNodeId || ''") !== prevId,
-        leafNodeId,
-        { timeout: 4_000 },
-      );
+      await waitForSelectionChange(page, leafNodeId, { timeout: 4_000 });
 
       const parentNodeId = await evaluateEditor(page, "state.selectedNodeId || ''");
       expect(parentNodeId).not.toBe(leafNodeId);
@@ -297,16 +300,17 @@ test.describe("S4 — Shift+Enter parent navigation", () => {
       await previewClick(page, '[data-node-id="hero-title"]');
       await waitForNodeId(page, "hero-title");
 
-      // Walk up the whole path
+      // Walk up the whole path — poll for selection change after each keypress
       for (let i = 0; i < 8; i++) {
         const currentKind = await evaluateEditor(
           page,
           "state.selectedEntityKind || ''",
         );
         if (currentKind === "slide-root") break;
+        const currentNodeId = await evaluateEditor(page, "state.selectedNodeId || ''");
         await selectionFrameLocator(page).focus();
         await page.keyboard.press("Shift+Enter");
-        await page.waitForTimeout(120);
+        await waitForSelectionChange(page, currentNodeId, { timeout: 4_000 });
       }
 
       const finalKind = await evaluateEditor(page, "state.selectedEntityKind || ''");
@@ -334,8 +338,9 @@ test.describe("S5 — Enter drill-down on container", () => {
       for (let i = 0; i < 6; i++) {
         const kind = await evaluateEditor(page, "state.selectedEntityKind || ''");
         if (kind === "container" || kind === "element") break;
+        const currentNodeId = await evaluateEditor(page, "state.selectedNodeId || ''");
         await page.keyboard.press("Shift+Enter");
-        await page.waitForTimeout(120);
+        await waitForSelectionChange(page, currentNodeId, { timeout: 4_000 });
       }
 
       const containerNodeId = await evaluateEditor(page, "state.selectedNodeId || ''");
@@ -357,7 +362,7 @@ test.describe("S5 — Enter drill-down on container", () => {
       test.skip(Boolean(canEditText), "Container has canEditText — Enter would open text-edit");
 
       await page.keyboard.press("Enter");
-      await page.waitForTimeout(300);
+      await waitForSelectionChange(page, containerNodeId, { timeout: 4_000 });
 
       const afterEnterNodeId = await evaluateEditor(page, "state.selectedNodeId || ''");
       // Node should have changed (drilled down)
@@ -458,6 +463,9 @@ test.describe("S7 — Breadcrumb entity kind label", () => {
       await previewClick(page, '[data-node-id="hero-title"]');
       await waitForNodeId(page, "hero-title");
 
+      // Wait for the breadcrumb UI to render after state update
+      await expect(page.locator("#selectionBreadcrumbs .crumb-kind").first()).toBeVisible();
+
       const kindLabels = await page
         .locator("#selectionBreadcrumbs .crumb-kind")
         .allTextContents();
@@ -498,11 +506,15 @@ test.describe("S8 — Context-menu layer picker", () => {
       await loadAbsoluteDeck(page);
 
       // Go to slide 2 which has overlapping cards
+      const s8SlideId1 = await evaluateEditor(
+        page,
+        "state.slides[Math.min(1, state.slides.length - 1)]?.id",
+      );
       await evaluateEditor(
         page,
-        "requestSlideActivation(state.slides[Math.min(1, state.slides.length - 1)]?.id, { reason: 'test' })",
+        `requestSlideActivation(${JSON.stringify(s8SlideId1)}, { reason: 'test' })`,
       );
-      await page.waitForTimeout(400);
+      await waitForSlideActive(page, s8SlideId1);
 
       // Right-click in the overlap zone
       const card = previewLocator(page, ".card").nth(1);
@@ -538,11 +550,15 @@ test.describe("S8 — Context-menu layer picker", () => {
 
       await loadAbsoluteDeck(page);
 
+      const s8SlideId2 = await evaluateEditor(
+        page,
+        "state.slides[Math.min(1, state.slides.length - 1)]?.id",
+      );
       await evaluateEditor(
         page,
-        "requestSlideActivation(state.slides[Math.min(1, state.slides.length - 1)]?.id, { reason: 'test' })",
+        `requestSlideActivation(${JSON.stringify(s8SlideId2)}, { reason: 'test' })`,
       );
-      await page.waitForTimeout(400);
+      await waitForSlideActive(page, s8SlideId2);
 
       // Right-click overlap zone
       const card = previewLocator(page, ".card").nth(1);
@@ -585,11 +601,7 @@ test.describe("S9 — Tab/Shift+Tab table navigation", () => {
       const firstCell = previewLocator(page, "tbody td").first();
       await firstCell.click({ force: true });
 
-      await page.waitForFunction(
-        () =>
-          globalThis.eval("Boolean(state.selectedNodeId)") &&
-          globalThis.eval("state.selectedEntityKind === 'table-cell'"),
-      );
+      await waitForSelectionKind(page, "table-cell");
 
       const firstCellNodeId = await evaluateEditor(
         page,
@@ -599,14 +611,13 @@ test.describe("S9 — Tab/Shift+Tab table navigation", () => {
       // Press Tab from selection frame
       await selectionFrameLocator(page).focus();
       await page.keyboard.press("Tab");
-      await page.waitForTimeout(300);
+      await waitForSelectionChange(page, firstCellNodeId);
 
       const secondCellNodeId = await evaluateEditor(
         page,
         "state.selectedNodeId || ''",
       );
       expect(secondCellNodeId).toBeTruthy();
-      expect(secondCellNodeId).not.toBe(firstCellNodeId);
       await waitForSelectedEntityKind(page, "table-cell");
     },
   );
@@ -627,11 +638,7 @@ test.describe("S9 — Tab/Shift+Tab table navigation", () => {
       }
 
       await cells.nth(1).click({ force: true });
-      await page.waitForFunction(
-        () =>
-          globalThis.eval("Boolean(state.selectedNodeId)") &&
-          globalThis.eval("state.selectedEntityKind === 'table-cell'"),
-      );
+      await waitForSelectionKind(page, "table-cell");
 
       const secondCellNodeId = await evaluateEditor(
         page,
@@ -640,14 +647,13 @@ test.describe("S9 — Tab/Shift+Tab table navigation", () => {
 
       await selectionFrameLocator(page).focus();
       await page.keyboard.press("Shift+Tab");
-      await page.waitForTimeout(300);
+      await waitForSelectionChange(page, secondCellNodeId);
 
       const prevCellNodeId = await evaluateEditor(
         page,
         "state.selectedNodeId || ''",
       );
       expect(prevCellNodeId).toBeTruthy();
-      expect(prevCellNodeId).not.toBe(secondCellNodeId);
       await waitForSelectedEntityKind(page, "table-cell");
     },
   );
@@ -664,11 +670,7 @@ test.describe("S9 — Tab/Shift+Tab table navigation", () => {
       const lastCellInRow = firstRowCells.last();
       await lastCellInRow.click({ force: true });
 
-      await page.waitForFunction(
-        () =>
-          globalThis.eval("Boolean(state.selectedNodeId)") &&
-          globalThis.eval("state.selectedEntityKind === 'table-cell'"),
-      );
+      await waitForSelectionKind(page, "table-cell");
 
       const lastCellNodeId = await evaluateEditor(
         page,
@@ -677,7 +679,7 @@ test.describe("S9 — Tab/Shift+Tab table navigation", () => {
 
       await selectionFrameLocator(page).focus();
       await page.keyboard.press("Tab");
-      await page.waitForTimeout(300);
+      await waitForSelectionChange(page, lastCellNodeId);
 
       const nextCellNodeId = await evaluateEditor(
         page,
@@ -685,7 +687,6 @@ test.describe("S9 — Tab/Shift+Tab table navigation", () => {
       );
       // Must have moved somewhere
       expect(nextCellNodeId).toBeTruthy();
-      expect(nextCellNodeId).not.toBe(lastCellNodeId);
       await waitForSelectedEntityKind(page, "table-cell");
     },
   );
@@ -745,16 +746,20 @@ test.describe("S10 — Export round-trip", () => {
         })()`,
       );
 
-      // Do selection interactions
+      // Do selection interactions — purpose is just to exercise selection paths;
+      // the assertion is that model doc attributes remain unchanged throughout.
       await previewClick(page, '[data-node-id="hero-title"]');
       await waitForNodeId(page, "hero-title");
       await selectionFrameLocator(page).focus();
+      const s10NodeIdBeforeShiftEnter = await evaluateEditor(page, "state.selectedNodeId || ''");
       await page.keyboard.press("Shift+Enter");
-      await page.waitForTimeout(200);
+      await waitForSelectionChange(page, s10NodeIdBeforeShiftEnter);
+      // Alt+Click cycles ancestors — may or may not change node (depends on depth).
+      // Wait for selection state to stabilize (truthy nodeId) rather than a specific change.
       await previewClick(page, '[data-node-id="hero-title"]', {
         modifiers: ["Alt"],
       });
-      await page.waitForTimeout(200);
+      await expect.poll(() => evaluateEditor(page, "Boolean(state.selectedNodeId)"), { timeout: 4_000 }).toBe(true);
 
       // Snapshot after interactions
       const afterAttrs = await evaluateEditor(

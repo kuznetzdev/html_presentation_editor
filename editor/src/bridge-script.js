@@ -3522,6 +3522,8 @@
               case 'set-selection-mode': {
                 STATE.containerMode = Boolean(payload.containerMode);
                 resetClickThroughState();
+                // [WO-36] Emit ack so shell can deterministically wait for mode propagation
+                post('container-mode-ack', { containerMode: STATE.containerMode, ackedAt: Date.now() });
                 break;
               }
               case 'select-best-child-of': {

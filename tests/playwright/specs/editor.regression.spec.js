@@ -26,6 +26,8 @@ const {
   waitForSlideActivationState,
   waitForSelectedEntityKind,
 } = require("../helpers/editorApp");
+const { waitForPreviewReady } = require("../helpers/waits");
+const { acceptNextDialog } = require("../helpers/dialog-handler");
 
 const PATTERN_IMAGE_PATH = path.join(
   EXPORT_FIXTURE_ROOT,
@@ -53,22 +55,16 @@ async function slideCount(page) {
 
 async function selectTextNode(page, selector, options = {}) {
   await clickPreview(page, selector, options);
-  await page.waitForFunction(
-    () =>
-      globalThis.eval(
-        "Boolean(state.selectedNodeId) && Boolean(state.selectedFlags.canEditText)",
-      ),
-  );
+  await expect
+    .poll(() => evaluateEditor(page, "Boolean(state.selectedNodeId) && Boolean(state.selectedFlags.canEditText)"))
+    .toBe(true);
 }
 
 async function selectImageNode(page, selector) {
   await clickPreview(page, selector);
-  await page.waitForFunction(
-    () =>
-      globalThis.eval(
-        "Boolean(state.selectedNodeId) && Boolean(state.selectedFlags.isImage)",
-      ),
-  );
+  await expect
+    .poll(() => evaluateEditor(page, "Boolean(state.selectedNodeId) && Boolean(state.selectedFlags.isImage)"))
+    .toBe(true);
 }
 
 async function selectContainerNode(page, selector, options = {}) {
@@ -84,22 +80,16 @@ async function selectContainerNode(page, selector, options = {}) {
     }
   }
   await target.click(clickOptions);
-  await page.waitForFunction(
-    () =>
-      globalThis.eval(
-        "Boolean(state.selectedNodeId) && Boolean(state.selectedFlags.isContainer)",
-      ),
-  );
+  await expect
+    .poll(() => evaluateEditor(page, "Boolean(state.selectedNodeId) && Boolean(state.selectedFlags.isContainer)"))
+    .toBe(true);
 }
 
 async function selectVideoNode(page, selector, options = {}) {
   await clickPreview(page, selector, options);
-  await page.waitForFunction(
-    () =>
-      globalThis.eval(
-        "Boolean(state.selectedNodeId) && Boolean(state.selectedFlags.isVideo)",
-      ),
-  );
+  await expect
+    .poll(() => evaluateEditor(page, "Boolean(state.selectedNodeId) && Boolean(state.selectedFlags.isVideo)"))
+    .toBe(true);
   await waitForSelectedEntityKind(page, "video");
 }
 
@@ -146,14 +136,12 @@ async function selectPreviewNodeBySelector(page, selector) {
 async function selectSlideRoot(page, slideIndex) {
   const slideRootTarget = previewLocator(page, "section.slide").nth(slideIndex);
   const waitForSlideRootSelection = () =>
-    page.waitForFunction(
-      () =>
-        globalThis.eval(
-          "Boolean(state.selectedNodeId) && Boolean(state.selectedFlags.isSlideRoot)",
-        ),
-      undefined,
-      { timeout: 2_000 },
-    );
+    expect
+      .poll(
+        () => evaluateEditor(page, "Boolean(state.selectedNodeId) && Boolean(state.selectedFlags.isSlideRoot)"),
+        { timeout: 2_000 },
+      )
+      .toBe(true);
 
   await slideRootTarget.click({ position: { x: 12, y: 12 } });
   try {
@@ -210,10 +198,11 @@ test.describe("Editor regression coverage", () => {
       count: initialCount + 2,
     });
 
-    page.once("dialog", (dialog) => dialog.accept());
+    const { unsubscribe: unsub1 } = acceptNextDialog(page);
     await clickEditorControl(page, "#deleteCurrentSlideBtn", {
       panel: "inspector",
     });
+    unsub1();
     await waitForSlideActivationState(page, {
       activeIndex: initialActiveIndex + 2,
       count: initialCount + 1,
@@ -989,14 +978,7 @@ test.describe("Editor regression coverage", () => {
         resetHistory: true
       })`,
     );
-    await page.waitForFunction(
-      () =>
-        globalThis.eval(
-          "state.previewLifecycle === 'ready' && Boolean(state.previewReady) && state.activeSlideId === 'table-stage-l'",
-        ),
-      undefined,
-      { timeout: 20_000 },
-    );
+    await waitForPreviewReady(page, { slideId: "table-stage-l" });
 
     await expect
       .poll(() =>
@@ -1096,14 +1078,7 @@ test.describe("Editor regression coverage", () => {
         resetHistory: true
       })`,
     );
-    await page.waitForFunction(
-      () =>
-        globalThis.eval(
-          "state.previewLifecycle === 'ready' && Boolean(state.previewReady) && state.activeSlideId === 'code-stage-m'",
-        ),
-      undefined,
-      { timeout: 20_000 },
-    );
+    await waitForPreviewReady(page, { slideId: "code-stage-m" });
 
     await expect
       .poll(() =>
@@ -1245,11 +1220,15 @@ test.describe("Editor regression coverage", () => {
     await closeCompactShellPanels(page);
     await clickPreview(page, "#cta-box");
 
-    await page.waitForFunction(() =>
-      String(window.sessionStorage.getItem("presentation-editor:autosave:v3") || "").includes(
-        "Autosave recovery text",
-      ),
-    );
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          String(window.sessionStorage.getItem("presentation-editor:autosave:v3") || "").includes(
+            "Autosave recovery text",
+          ),
+        ),
+      )
+      .toBe(true);
 
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.locator("#restoreBanner")).toBeVisible();
@@ -1481,8 +1460,9 @@ test.describe("Editor regression coverage", () => {
     await openSlideRailContextMenu(page, 0, {
       viaKebab: /390|640|820/.test(testInfo.project.name),
     });
-    page.once("dialog", (dialog) => dialog.accept());
+    const { unsubscribe: unsub2 } = acceptNextDialog(page);
     await page.click('[data-menu-action="slide-delete"]');
+    unsub2();
     await waitForSlideActivationState(page, {
       activeIndex: 0,
       count: 3,

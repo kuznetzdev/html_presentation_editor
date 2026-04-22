@@ -775,6 +775,10 @@
         // Shell collects acks here; entries expire on next import/reload.
         /** @type {Map<number, {refSeq:number, ok:boolean, error?: {code:string, message:string}, stale?: boolean}>} */
         bridgeAcks: new Map(),
+        // [WO-36] Timestamp (ms) of the last container-mode-ack received from the iframe.
+        // Reset to 0 when a new set-selection-mode command is dispatched so tests can
+        // re-arm the wait after each mode change.
+        __containerModeAckAt: 0,
       };
 
       // =====================================================================

@@ -210,6 +210,12 @@
                 }
                 break;
               }
+              // [WO-36] Container-mode ack — iframe confirms set-selection-mode was applied
+              case "container-mode-ack": {
+                state.__containerModeAckAt = Date.now();
+                addDiagnostic(`container-mode-ack: containerMode=${data.payload?.containerMode}`);
+                break;
+              }
               // [WO-28] ADR-004 — sibling rects response from iframe snap query
               case "sibling-rects-response": {
                 const _srPayload = data.payload || {};

@@ -9,6 +9,12 @@ const {
   loadReferenceDeck,
   selectionFrameLocator,
 } = require("../helpers/editorApp");
+const {
+  waitForSelectionChange,
+  waitForSelectionKind,
+  waitForContainerModeApplied,
+  waitForSelectionMode,
+} = require("../helpers/waits");
 
 async function waitForNodeId(page, nodeId, timeout = 6_000) {
   await expect
@@ -29,7 +35,7 @@ async function readSelectionSnapshot(page) {
 
 async function setSelectionModeAndWait(page, mode) {
   await evaluateEditor(page, `setSelectionMode('${mode}')`);
-  await expect.poll(() => evaluateEditor(page, "state.selectionMode || ''")).toBe(mode);
+  await waitForSelectionMode(page, mode);
 }
 
 async function loadV2Deck(page) {
@@ -53,8 +59,9 @@ test.describe("LN1 - Enter drill-down on container", () => {
       for (let i = 0; i < 6; i += 1) {
         const kind = await evaluateEditor(page, "state.selectedEntityKind || ''");
         if (kind === "container" || kind === "element") break;
+        const currentNodeId = await evaluateEditor(page, "state.selectedNodeId || ''");
         await page.keyboard.press("Shift+Enter");
-        await page.waitForTimeout(150);
+        await waitForSelectionChange(page, currentNodeId, { timeout: 4_000 });
       }
 
       const containerKind = await evaluateEditor(page, "state.selectedEntityKind || ''");
@@ -65,7 +72,7 @@ test.describe("LN1 - Enter drill-down on container", () => {
       test.skip(Boolean(canEditText), "Container has canEditText and Enter would open text edit");
 
       await page.keyboard.press("Enter");
-      await page.waitForTimeout(300);
+      await waitForSelectionChange(page, containerNodeId, { timeout: 4_000 });
 
       const afterNodeId = await evaluateEditor(page, "state.selectedNodeId || ''");
       expect(afterNodeId).not.toBe(containerNodeId);
@@ -91,7 +98,7 @@ test.describe("LN2 - Shift+Enter parent navigation", () => {
 
       await selectionFrameLocator(page).focus();
       await page.keyboard.press("Shift+Enter");
-      await page.waitForTimeout(300);
+      await waitForSelectionChange(page, "hero-title");
 
       const parentNodeId = await evaluateEditor(page, "state.selectedNodeId || ''");
       expect(parentNodeId).not.toBe("hero-title");
@@ -107,33 +114,31 @@ test.describe("LN3 - Container select mode toggle", () => {
     "container mode selects group instead of leaf text @stage-c",
     async ({ page }, testInfo) => {
       test.skip(!isChromiumOnlyProject(testInfo.project.name));
-      test.slow();
 
       await loadV2Deck(page);
 
+      // Set container mode and wait for the iframe to acknowledge it via the
+      // container-mode-ack bridge message (WO-36 deterministic handshake).
       await setSelectionModeAndWait(page, "container");
+      await waitForContainerModeApplied(page);
 
-      let kind = "";
-      let nodeId = "";
-      for (let attempt = 0; attempt < 5; attempt += 1) {
-        await setSelectionModeAndWait(page, "container");
-        await page.waitForTimeout(100);
-        await previewClick(page, '[data-node-id="hero-title"]');
-        await page.waitForTimeout(250);
-        ({ kind, nodeId } = await readSelectionSnapshot(page));
-        if (
-          ["container", "element", "slide-root"].includes(kind) &&
-          nodeId !== "hero-title"
-        ) {
-          break;
-        }
-      }
+      // Now the iframe is confirmed to be in container mode — click is deterministic
+      await previewClick(page, '[data-node-id="hero-title"]');
 
+      // Poll until selection settles on a non-leaf node
+      await expect
+        .poll(
+          () => evaluateEditor(page, "state.selectedNodeId || ''"),
+          { timeout: 6_000, message: "Waiting for container-mode selection to settle on non-leaf" },
+        )
+        .not.toBe("hero-title");
+
+      const { kind, nodeId } = await readSelectionSnapshot(page);
       expect(["container", "element", "slide-root"]).toContain(kind);
       expect(nodeId).not.toBe("hero-title");
 
       await setSelectionModeAndWait(page, "smart");
-      expect(await evaluateEditor(page, "state.selectionMode || ''")).toBe("smart");
+      await waitForSelectionMode(page, "smart");
     },
   );
 });
@@ -205,7 +210,20 @@ test.describe("LN5 - Export has no ghost/selection artifacts", () => {
       const crumbs = page.locator("#selectionBreadcrumbs button[data-selection-path-node-id]");
       if ((await crumbs.count()) > 1) {
         await crumbs.nth(1).dispatchEvent("pointerenter");
-        await page.waitForTimeout(100);
+        // Wait for ghost to appear, then remove it — deterministic round-trip
+        await expect
+          .poll(
+            () => evaluateEditor(
+              page,
+              `(() => {
+                const frame = document.getElementById("previewFrame");
+                const doc = frame?.contentDocument || null;
+                return !!doc?.querySelector('[data-editor-highlight="ghost"]');
+              })()`,
+            ),
+            { timeout: 3_000 },
+          )
+          .toBe(true);
         await crumbs.nth(1).dispatchEvent("pointerleave");
       }
 

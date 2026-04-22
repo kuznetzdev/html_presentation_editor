@@ -20,6 +20,7 @@ const {
   isChromiumOnlyProject,
   loadReferenceDeck,
 } = require("../helpers/editorApp");
+const { waitForOverlapMapUpdated } = require("../helpers/waits");
 
 async function loadOverlapDeck(page) {
   await loadReferenceDeck(page, "v1-absolute-positioned", { mode: "edit" });
@@ -433,7 +434,8 @@ test.describe("N3 no overlap ghost outline", () => {
     );
     expect(dispatched).toBe(true);
 
-    await page.waitForTimeout(250);
+    // Wait for the overlap detection render cycle to settle, then assert no ghost
+    await waitForOverlapMapUpdated(page);
 
     const ghostExists = await evaluateEditor(
       page,

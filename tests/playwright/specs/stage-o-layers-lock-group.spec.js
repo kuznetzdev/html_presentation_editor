@@ -22,6 +22,7 @@ const {
   closeCompactShellPanels,
   ensureShellPanelVisible,
 } = require("../helpers/editorApp");
+const { waitForOverlapMapUpdated } = require("../helpers/waits");
 
 async function waitForEditorSettled(page) {
   await expect.poll(
@@ -237,7 +238,10 @@ test.describe("stage-o-layers-lock-group @stage-o", () => {
     );
     expect(reorderApplied).toBe(true);
 
-    await page.waitForTimeout(200);
+    // Poll until the layer row DOM reflects the reorder — replaces unconditional sleep
+    await expect
+      .poll(() => getLayerNodeOrder(page), { timeout: 4_000 })
+      .not.toEqual(initialLayers);
   });
 
   test("lock @stage-o", async ({ page }) => {
