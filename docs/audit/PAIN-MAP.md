@@ -40,6 +40,30 @@ Effort scale — **S** (<1 day · <100 LOC) · **M** (1–3 days · <500 LOC) ·
 
 ---
 
+## P0 Resolution log — WO-38 RC audit (2026-04-22)
+
+> **All 15 P0 items resolved or explicitly deferred with rationale. No open P0 blockers remain.**
+
+| # | Resolved in | WO(s) | Tag | Notes |
+|---|-------------|-------|-----|-------|
+| P0-01 | Trust-Banner + sandbox audit | WO-06, WO-07, WO-12 | v0.27.3 | Trust decision (pending/neutralize/accept) + AUDIT-D-01 closed |
+| P0-02 | parseSingleRoot sanitize | WO-01 | v0.26.1 | BLOCKED_ATTR_NAMES + UNSAFE_ATTR filter + 256 KB cap |
+| P0-03 | pptxgenjs vendor + SRI | WO-03 | v0.26.2 | Pinned version + integrity hash + crossorigin |
+| P0-04 | Broken-asset recovery banner | WO-24 | v0.30.0 | Banner enumerates missing assets; gate-A +6 specs |
+| P0-05 | Keyboard nav + declarative shortcuts | WO-10, WO-37 | v0.27.4, v0.33.1 | Rail roving tabindex + 29-entry KEYBINDINGS table |
+| P0-06 | Transform resolve banner | WO-26 | v0.30.2 | Inspector transform field + Resolve action button |
+| P0-07 | History budget chip + patch-based | WO-18 | v0.29.0 | N/20 chip + toast-on-drop + hash-dedup snapshots |
+| P0-08 | Rail keyboard nav | WO-10 | v0.27.4 | ↑/↓ rail nav + focus-trap audits |
+| P0-09 | Observable store (god-state split) | WO-16, WO-17, WO-18 | v0.28.4–v0.29.0 | ui/selection/history slices; Proxy shim backward compat |
+| P0-10 | Bridge Protocol v2 | WO-12, WO-13 | v0.28.0, v0.28.3 | Hello handshake + 152 schema validators (gate-contract 152/0) |
+| P0-11 | Patch-based history snapshots | WO-18 | v0.29.0 | Hash-dedup; 20× identical = baseline only (<1 MB) |
+| P0-12 | RAF-coalesce selection render | WO-19 | v0.29.1 | 7→1 render passes; scheduleSelectionRender() queue |
+| P0-13 | Bridge contract gate | WO-13 | v0.28.3 | 152 contract tests; gate-contract live since v0.28.3 |
+| P0-14 | Accessibility gate | WO-09, WO-10, WO-11 | v0.27.5 | axe-core + keyboard-nav + contrast; gate-a11y 27/0 |
+| P0-15 | Starter-deck CTA rehome | WO-25 | v0.30.1 | Open/Starter/Paste order; starter-deck fixture relocated |
+
+---
+
 ## P1 — Daily-UX polish (post-RC, pre-1.0)
 
 | # | Area | Problem | Evidence | Fix | Effort |

@@ -1,6 +1,6 @@
 # ADR-017: Collaborative Editing Readiness — CRDT-friendly state shape, single-user execution
 
-**Status**: Proposed (readiness-only — live collaboration deferred indefinitely)
+**Status**: Accepted (readiness phase) — History patch-based snapshots + conflict-free history shipped v0.29.0 via WO-18; live CRDT collaboration deferred to v2.0
 **Phase**: v0.30.x+ model-shape guidance; live collab remains out of scope
 **Owner**: Architecture · State layer
 **Depends on**: ADR-013 (observable store)

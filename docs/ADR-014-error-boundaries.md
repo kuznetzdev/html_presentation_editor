@@ -1,6 +1,6 @@
 # ADR-014: Error Boundaries — shell / bridge / iframe three-layer guard
 
-**Status**: Proposed
+**Status**: Accepted — Error boundaries (trust-banner + broken-asset banner) shipped across v0.27.1–v0.30.0 via WO-06, WO-07, WO-12, WO-24
 **Phase**: v0.27.x (foundational — used by ADR-012 and P0-01 Trust Banner)
 **Owner**: Architecture · Reliability
 **Depends on**: ADR-012 (bridge acks)

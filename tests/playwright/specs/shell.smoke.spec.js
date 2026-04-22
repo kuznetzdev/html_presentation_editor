@@ -950,6 +950,10 @@ test.describe("Editor shell smoke @harness", () => {
 
     await closeCompactShellPanels(page);
     await clickPreview(page, "#hero-title");
+    // Wait for inspector to transition from slide view to element view.
+    // WebKit processes click events asynchronously so the slide section may
+    // still be visible when ensureInspectorSurfaceForAssertions resolves.
+    await expect(page.locator("#currentSlideSection")).toBeHidden({ timeout: 5000 });
     await ensureInspectorSurfaceForAssertions(page);
 
     shell = await readWorkflowShellState(page);

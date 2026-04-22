@@ -1,6 +1,6 @@
 # ADR-002: Stack Depth Indicator
 
-**Status**: Proposed  
+**Status**: Deferred to v1.1+ — Stack depth indicator visual polish not shipped in v1.0 scope; baseline badge functional as of v0.25.0  
 **Phase**: v0.25.0  
 **Owner**: Agent A (feedback+onboarding worktree)
 

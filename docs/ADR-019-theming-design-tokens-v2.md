@@ -1,6 +1,6 @@
 # ADR-019: Theming & Design Tokens v2 — contracted surfaces, contrast-verified
 
-**Status**: Proposed
+**Status**: Accepted — Semantic token layer (Layer 2) implemented in: v0.32.1 via WO-30; inspector.css migrated 58 primitive → semantic tokens
 **Phase**: v0.28.x (leverages ADR-006 a11y gate + ADR-007 visual gate)
 **Owner**: Architecture · CSS layer
 **Date**: 2026-04-20

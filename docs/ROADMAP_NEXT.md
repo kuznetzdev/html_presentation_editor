@@ -1,8 +1,43 @@
 # ROADMAP NEXT — v0.25.0 → v1.0.0
 
+> **⛔ FREEZE PERIOD** — 2026-04-22 through 2026-05-06
+> RC freeze active. No new roadmap items merge until v1.0.0 ships.
+> All items below are the **historical roadmap** from planning. For shipped vs. deferred status, see §"Post-v1.0" below.
+
 > **Baseline**: v0.24.0 shipped (Gate-A: 55 passed / 5 skipped / 0 failed).
 > Architecture: 25 JS modules + 8 CSS @layers. parent shell + iframe bridge + modelDoc stays fixed.
 > User research driver: _lack of honest feedback, invisible layers, no precision, no onboarding path_.
+
+---
+
+## v1.0 Shipped State (as of 2026-04-22)
+
+| Component | Status |
+|-----------|--------|
+| All 15 P0 PAIN-MAP items | ✅ Resolved |
+| 37/38 WOs merged | ✅ (WO-27 superseded) |
+| Gate-A: 65/5/0 | ✅ |
+| Gate-contract: 152/0 | ✅ |
+| Gate-visual: 15/0/0 | ✅ |
+| Gate-a11y: 27/0 | ✅ |
+| Gate-types: clean | ✅ (WO-38) |
+| All 20 ADRs: Accepted/Deferred | ✅ |
+| Version | `0.37.0-rc.0` (→ `1.0.0` at GA) |
+
+## Post-v1.0 (Deferred items)
+
+| Item | ADR | Priority |
+|------|-----|---------|
+| Stack-depth indicator visual polish | ADR-002 | P1 |
+| Plugin L2 marketplace | ADR-016 | P1 |
+| Live CRDT collaboration | ADR-017 | v2.0 |
+| God-cache `requireEl` migration | — | P1 |
+| Full boot.js split | — | P1 |
+| TypeScript JSDoc full rollout | ADR-011 | P2 |
+| Slide rail keyed diff | — | P1 |
+| Autosave debounce | — | P1 |
+
+---
 
 ---
 

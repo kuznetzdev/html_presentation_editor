@@ -1,6 +1,6 @@
 # ADR-004: Snap and Nudge System
 
-**Status**: Proposed  
+**Status**: Accepted — Snap-to-siblings + smart guides implemented in: v0.31.1 via WO-28  
 **Phase**: v0.26.0  
 **Owner**: Agent C (precision-editing worktree)
 

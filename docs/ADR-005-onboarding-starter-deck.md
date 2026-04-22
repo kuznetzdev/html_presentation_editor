@@ -1,6 +1,6 @@
 # ADR-005: Onboarding Starter-Deck
 
-**Status**: Proposed  
+**Status**: Accepted — Empty-state rehome + starter-deck CTA implemented in: v0.30.1 via WO-25  
 **Phase**: v0.27.0  
 **Owner**: Agent A (feedback+onboarding worktree)
 

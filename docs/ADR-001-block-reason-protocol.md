@@ -1,6 +1,6 @@
 # ADR-001: Block Reason Protocol
 
-**Status**: Proposed  
+**Status**: Accepted — Resolved in: v0.30.2 via WO-26 (transform-resolve banner) + v0.31.2 via WO-29 (banner unification)  
 **Phase**: v0.25.0  
 **Owner**: Agent A (feedback+onboarding worktree)
 

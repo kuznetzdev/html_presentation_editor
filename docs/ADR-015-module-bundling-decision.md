@@ -1,6 +1,6 @@
 # ADR-015: Module Bundling Decision — keep zero-build to v1.0
 
-**Status**: Proposed (ratifies existing invariant)
+**Status**: Accepted — Zero-build invariant enforced throughout v0.26.0–v0.33.1; no type=module or bundler added
 **Phase**: v0.26.x–v1.0 (decision document — no build step change)
 **Owner**: Architecture
 **Date**: 2026-04-20

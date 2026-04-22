@@ -1,6 +1,6 @@
 # ADR-003: Layer Picker Popup
 
-**Status**: Proposed  
+**Status**: Accepted — Layer picker modes implemented in v0.25.0 baseline (noted in EXECUTION_PLAN as done)  
 **Phase**: v0.25.1  
 **Owner**: Agent B (layer-picker worktree)
 

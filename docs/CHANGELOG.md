@@ -1,17 +1,65 @@
 # CHANGELOG
 
-## Unreleased
+## [1.0.0-rc] — 2026-04-22 — v1.0 Release Candidate (38 WOs, W1–W8 complete)
 
-### Added
-- Tablet honest-block: drag/resize/rail-reorder blocked on ≤820px width with Russian banner. Tap-select, tap-edit, tap-switch-slide continue working. Gate-D expanded +30 runs (WO-33, ADR-018).
-- Telemetry viewer in advanced-mode Diagnostics panel: session summary, event filter, export log as JSON, clear log (ADR-020). 100% local, zero network. Export-purity spec locks PPTX isolation. (WO-34)
+> RC freeze declared. Feature freeze active. Bug-fix only until v1.0.0 GA.
+> All 15 P0 PAIN-MAP items resolved. All 9 test gates green. 37 WOs merged.
+> Version tag for RC: `v0.37.0-rc.0` (internal marker) → release tag: `v1.0.0`.
 
-### Refactored
-- shortcuts.js rewritten as declarative KEYBINDINGS table — 22 bindings, auto-generates cheat-sheet modal. isAdvancedMode()/isBasicMode() accessors centralize complexityMode checks (was 21 inline uses). (WO-37, P2-04, P2-08)
-- Entity-kind registry externalized into entity-kinds.js (ADR-016 Layer 1, P2-05). Bridge + commands share single source of truth. (WO-35)
+### Security
+- **WO-01** `fix(security)`: parseSingleRoot sanitize — `BLOCKED_ATTR_NAMES` + `UNSAFE_ATTR` filter + 256 KB cap (P0-02, v0.26.1)
+- **WO-03** `fix(security)`: pptxgenjs vendored + SRI hash — supply-chain pinning (P0-03, v0.26.2)
+- **WO-05** `fix(security)`: crypto bridge token — `window.crypto.getRandomValues` + origin assertion (P1-15, v0.26.3)
+- **WO-02** `fix(security)`: bridge origin assertion — `postMessage` targetOrigin + event.origin equality (P1-13, v0.26.4)
+- **WO-04** `fix(security)`: sessionStorage autosave size cap + light-snapshot fallback on quota (P1-14, v0.26.5)
+- **WO-07** `feat(security)`: trust-banner — detect `<script>`/`on*`/`javascript:` + one-click neutralize + ADR-014 (P0-01, v0.27.3)
+- **WO-06** `feat(security)`: broken-asset banner + iframe sandbox-attrs audit (P0-01 partial, v0.27.1)
+- **WO-08** `feat(bridge)`: bridge contract scaffold + schema registry (ADR-012, v0.27.0, gate-contract NEW)
+- **WO-13** `feat(bridge)`: 152 per-message schema validators — gate-contract 152/0 (ADR-012, P0-10, P0-13, v0.28.3)
 
-### Changed
-- Test suite flake elimination (P1-16/P1-17/P1-19): 23 waitForTimeout → 0; 4 waitForFunction(eval) → 0; LN3 retry loop removed; page.once → stateful acceptNextDialog. New waits.js + dialog-handler.js helpers. container-mode-ack bridge round-trip added for deterministic LN3 container-mode propagation. (WO-36)
+### Added (Gates & Testing infrastructure)
+- **WO-09/10/11** `feat(a11y)`: gate-a11y — axe-core scan + keyboard-nav + contrast, 27/0 (ADR-006, P0-05, P0-08, P0-14, v0.27.5)
+- **WO-32** `test(visual)`: gate-visual — 15 chromium-visual snapshots 1440×900 (ADR-007, v0.32.0)
+- **WO-14** `chore(types)`: gate-types — tsc --noEmit baseline; globals.d.ts (ADR-011, v0.28.1; clean v0.33.1 WO-38)
+- **WO-08** contract gate introduced; **WO-13** extended to 152 schemas
+
+### Added (Features)
+- **WO-12** `feat(bridge)`: Bridge v2 hello handshake + version negotiation (ADR-012, v0.28.0)
+- **WO-15** `feat(telemetry)`: telemetry scaffold — event emit API + session tracking (ADR-020, v0.28.2)
+- **WO-24** `feat(ux)`: broken-asset recovery banner — enumerate missing assets + asset resolver (P0-04, v0.30.0, gate-A +6)
+- **WO-25** `feat(ux)`: starter-deck CTA rehome — Open/Starter/Paste order + fixture relocation (P0-15, v0.30.1)
+- **WO-28** `feat(ux)`: snap-to-siblings + smart guides overlay (ADR-004, v0.31.1)
+- **WO-31** `feat(ux)`: shift-click multi-select toast + dismiss (P1-03, v0.31.0)
+- **WO-33** `feat(ux)`: tablet honest-block — drag/resize/rail-reorder blocked ≤820px, Russian banner (ADR-018, v0.32.3)
+- **WO-34** `feat(telemetry)`: telemetry viewer — session summary, event filter, export log, clear log (ADR-020, v0.32.4)
+- **WO-35** `feat(plugin)`: entity-kind registry externalized (ADR-016 Layer 1, P2-05, v0.32.2)
+
+### Changed (Architecture & Refactoring)
+- **WO-16/17** `refactor(state)`: observable store + ui/selection slices — `window.store` API (ADR-013, v0.28.4–v0.28.5)
+- **WO-18** `perf(history)`: patch-based snapshots + history budget chip N/20 + toast-on-drop (ADR-013, P0-07, P0-11, v0.29.0)
+- **WO-20/21** `refactor(split)`: selection.js → layers-panel.js + floating-toolbar.js (P1-06, v0.29.2–v0.29.3)
+- **WO-22** `refactor(split)`: boot.js → theme.js + zoom.js + shell-layout.js (P1-07/P1-08, v0.29.4)
+- **WO-23** `refactor(split)`: feedback.js → surface-manager.js + banners.js (P1-09/P2-09, v0.29.5)
+- **WO-29** `feat(ux)`: banner unification — `#lockBanner` + `#blockReasonBanner` merged (ADR-001, P1-01/P1-02, v0.31.2)
+- **WO-30** `refactor(tokens)`: design tokens v2 — Layer 2 semantic tokens + inspector.css migration 58 vars (ADR-019, v0.32.1)
+- **WO-37** `refactor(shortcuts)`: declarative KEYBINDINGS 29-entry table + isAdvancedMode() accessor (ADR-011, P2-04/P2-08, v0.33.1)
+
+### Fixed (Performance)
+- **WO-19** `perf(render)`: RAF-coalesce selection fan-out 7→1 pass (ADR-013, P0-12/P1-12, v0.29.1)
+- **WO-26** `fix(ux)`: transform resolve — inspector transform field + Resolve action button (P0-06, v0.30.2)
+
+### Fixed (Reliability)
+- **WO-36** `test(flake)`: flake elimination — 23 `waitForTimeout` → 0; `page.once` → `acceptNextDialog`; container-mode-ack bridge round-trip (P1-16/17/19, v0.33.0)
+
+### Deferred to v1.1+
+- ADR-002 (stack-depth indicator visual polish) — baseline badge functional
+- ADR-016 Layer 2 (plugin marketplace) — Layer 1 shipped
+- God-cache migration P1-05 (full `requireEl` lazy accessor pattern)
+- Live CRDT collaboration (ADR-017) — readiness shipped; live collab deferred to v2.0
+- P1-07 full boot.js split — partial shipped in v0.29.4
+
+### Version history (all tags v0.26.1–v0.33.1)
+`v0.26.1` WO-01 · `v0.26.2` WO-03 · `v0.26.3` WO-05 · `v0.26.4` WO-02 · `v0.26.5` WO-04 · `v0.27.0` WO-08 · `v0.27.1` WO-06 · `v0.27.2` bump · `v0.27.3` WO-07 · `v0.27.4` WO-10 · `v0.27.5` WO-11 · `v0.28.0` WO-12 · `v0.28.1` WO-14 · `v0.28.2` WO-15 · `v0.28.3` WO-13 · `v0.28.4` WO-16 · `v0.28.5` WO-17 · `v0.29.0` WO-18 · `v0.29.1` WO-19 · `v0.29.2` WO-20 · `v0.29.3` WO-21 · `v0.29.4` WO-22 · `v0.29.5` WO-23 · `v0.30.0` WO-24 · `v0.30.1` WO-25 · `v0.30.2` WO-26 · `v0.31.0` WO-31 · `v0.31.1` WO-28 · `v0.31.2` WO-29 · `v0.32.0` WO-32 · `v0.32.1` WO-30 · `v0.32.2` WO-35 · `v0.32.3` WO-33 · `v0.32.4` WO-34 · `v0.33.0` WO-36 · `v0.33.1` WO-37
 
 ---
 
