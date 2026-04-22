@@ -63,6 +63,8 @@
         "fragment",
         "none",
       ]);
+      // ENTITY_KINDS_CANONICAL, ENTITY_KINDS_KNOWN, ENTITY_KINDS — see entity-kinds.js (ADR-016 Layer 1).
+      // Exposed as window globals; referenced by bridge-commands.js and bridge-script.js.
 
       /** @type {Set<string>} */
       const TEXT_TAGS = new Set([

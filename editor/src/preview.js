@@ -23,6 +23,11 @@
       // Встраивает внутрь preview минимальный runtime-мост. Он отвечает за выбор
       // элементов, операции над DOM и обратные сообщения в shell.
       function injectBridge(doc) {
+        // ADR-016 Layer 1: inject entity kinds from shell registry before bridge script runs.
+        const preScript = doc.createElement("script");
+        preScript.id = "__presentation_editor_entity_kinds__";
+        preScript.textContent = "window.__KNOWN_ENTITY_KINDS = " + JSON.stringify(Array.from(window.ENTITY_KINDS_KNOWN)) + ";";
+        doc.body.appendChild(preScript);
         const bridgeScript = doc.createElement("script");
         bridgeScript.id = "__presentation_editor_bridge__";
         bridgeScript.textContent = buildBridgeScript(state.bridgeToken);
