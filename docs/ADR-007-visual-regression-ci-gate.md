@@ -1,7 +1,7 @@
 # ADR-007: Visual Regression CI Gate
 
-**Status**: Proposed  
-**Phase**: v0.28.0  
+**Status**: Accepted — Accepted in: v0.32.0 via WO-32  
+**Phase**: v0.32.0  
 **Owner**: Agent D (a11y+visual-regression worktree)
 
 ---
@@ -114,8 +114,10 @@ Required to pass before any CSS-touching PR is merged from v0.28.0 onward.
 
 ## Applied In
 
-- v0.28.0 — `tests/visual/shell-visual.spec.js`, `tests/visual/__snapshots__/`
-- playwright.config.js: new `chromium-visual` project
+- v0.32.0 (WO-32) — `tests/visual/shell-visual.spec.js`, `tests/visual/__snapshots__/chromium-visual/`
+- playwright.config.js: new `chromium-visual` project at 1440×900
+- 15 baselines: empty (light/dark), loaded-preview (light/dark), loaded-edit (light/dark), selected-text (light/dark), block-banner (light/dark), floating-toolbar (light/dark), layer-picker (light/dark), action-hint (light)
+- Legacy `tests/playwright/specs/visual.spec.js` retired
 
 ## Links
 

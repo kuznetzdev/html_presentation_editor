@@ -58,7 +58,6 @@ Coverage includes:
 - `editor.regression.spec.js`
 - `asset-parity.spec.js`
 - `honest-feedback.spec.js`
-- `visual.spec.js`
 
 Projects:
 
@@ -164,3 +163,48 @@ Before inviting pilot users, two people should independently complete:
 - asset parity
 - compact drawer routing
 - theme and transient-shell stability
+
+## Visual regression gate (gate-visual)
+
+Added in v0.32.0 via WO-32. See `docs/ADR-007-visual-regression-ci-gate.md` for full spec.
+
+**Visual baselines are Windows-Chromium-specific.** Regenerate with `npm run test:gate-visual:update`
+when intentional CSS changes land (e.g. design token changes, new shell surfaces, layout shifts).
+Do not regenerate on CI — only when a human reviewer has confirmed the visual change is intentional.
+
+Command:
+
+```bash
+npm run test:gate-visual         # enforce baselines — must be 15/0/0
+npm run test:gate-visual:update  # regenerate baselines after intentional CSS changes
+```
+
+Configuration:
+
+- Playwright project: `chromium-visual`
+- Viewport: 1440×900 (deviceScaleFactor: 1)
+- Snapshot dir: `tests/visual/__snapshots__/chromium-visual/`
+- Thresholds: `maxDiffPixelRatio: 0.01`, `threshold: 0.2`
+- Animations disabled in every test via `page.addStyleTag`
+
+15 surfaces captured:
+
+| Slug | Surface |
+|------|---------|
+| empty-light | Empty shell, light |
+| empty-dark | Empty shell, dark |
+| loaded-preview-light | Deck loaded, preview mode, light |
+| loaded-preview-dark | Deck loaded, preview mode, dark |
+| loaded-edit-light | Deck loaded, edit mode, no selection, light |
+| loaded-edit-dark | Deck loaded, edit mode, no selection, dark |
+| selected-text-light | h1 selected in edit mode, light |
+| selected-text-dark | h1 selected in edit mode, dark |
+| block-banner-light | Block banner (zoom 125%), light |
+| block-banner-dark | Block banner (zoom 125%), dark |
+| floating-toolbar-light | Floating toolbar visible, light |
+| floating-toolbar-dark | Floating toolbar visible, dark |
+| layer-picker-light | Layer picker popup open, light |
+| layer-picker-dark | Layer picker popup open, dark |
+| action-hint-light | Inspector guidance hint, light only |
+
+Gate-visual runs independently and does not block Gate-A.
