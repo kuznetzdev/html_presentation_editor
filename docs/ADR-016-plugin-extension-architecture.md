@@ -1,6 +1,7 @@
 # ADR-016: Plugin / Extension Architecture — opt-in custom elements via declarative manifest
 
-**Status**: Proposed (deferred design — implementation post-v1.0)
+**Status**: Layer 1 Accepted · Layer 2 Deferred
+**Accepted in**: v0.32.2 via WO-35 (Layer 1 only).
 **Phase**: v1.0 compatibility foundation; implementation v1.1+
 **Owner**: Architecture · Extension surface
 **Depends on**: ADR-011 (types), ADR-012 (bridge v2)

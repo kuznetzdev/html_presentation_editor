@@ -27,9 +27,16 @@
         const FLASH_ATTR = 'data-editor-flash';
         const EXCLUDED = new Set(['SCRIPT','STYLE','META','LINK','BASE','HEAD','HTML','BODY','NOSCRIPT','TEMPLATE']);
         const TEXT_TAGS = new Set(['H1','H2','H3','H4','H5','H6','P','LI','BLOCKQUOTE','FIGCAPTION','TD','TH','PRE','CODE','SMALL','LABEL','A','SPAN']);
-        // PAIN-MAP P2-05: entity kinds injected from CANONICAL_ENTITY_KINDS_ARR (constants.js).
-        // Do NOT add kinds here — update constants.js CANONICAL_ENTITY_KINDS_ARR instead.
-        const KNOWN_ENTITY_KINDS = new Set(${JSON.stringify(CANONICAL_ENTITY_KINDS_ARR)});
+        // ADR-016 Layer 1: entity kinds injected from shell registry (entity-kinds.js) via
+        // window.__KNOWN_ENTITY_KINDS pre-script. Defensive fallback kept for resilience.
+        // Do NOT add kinds here — update entity-kinds.js instead.
+        const __injectedKinds = window.__KNOWN_ENTITY_KINDS;
+        if (!__injectedKinds) {
+          (typeof parent !== 'undefined' && parent && parent.postMessage)
+            ? parent.postMessage({ __presentationEditor: true, token: TOKEN, type: 'runtime-warn', seq: 0, payload: { code: 'entity-kinds-fallback', message: 'window.__KNOWN_ENTITY_KINDS not injected; using built-in fallback list' } }, '*')
+            : console.warn('[bridge] window.__KNOWN_ENTITY_KINDS not injected; using built-in fallback list');
+        }
+        const KNOWN_ENTITY_KINDS = new Set(__injectedKinds || ['text','image','video','container','element','slide-root','protected','table','table-cell','code-block','svg','fragment']);
         const PLAIN_TEXT_BLOCK_TAGS = new Set([
           'ADDRESS',
           'ARTICLE',

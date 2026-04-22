@@ -191,8 +191,8 @@
       // applyElementSelection
       // Обновляет данные о выбранном элементе: тег, html, computed styles,
       // флаги типа (text/image/video/container) и атрибуты.
-      // PAIN-MAP P2-05: single source of truth via CANONICAL_ENTITY_KINDS_ARR (constants.js).
-      const CANONICAL_ENTITY_KINDS = new Set(CANONICAL_ENTITY_KINDS_ARR);
+      // PAIN-MAP P2-05: single source of truth via entity-kinds.js (ADR-016 Layer 1).
+      const CANONICAL_ENTITY_KINDS = window.ENTITY_KINDS_CANONICAL;
 
       function readCanonicalEntityKind(kind) {
         const normalized = String(kind || "")

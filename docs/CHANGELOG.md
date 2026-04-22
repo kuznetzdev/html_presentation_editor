@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Refactored
+- Entity-kind registry externalized into entity-kinds.js (ADR-016 Layer 1, P2-05). Bridge + commands share single source of truth. (WO-35)
+
 ---
 
 ## [v0.29.5] — 2026-04-21 — W4 batch 6 (FINAL): WO-23 feedback.js split → surface-manager + banners scaffold
