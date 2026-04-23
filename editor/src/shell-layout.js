@@ -1,6 +1,31 @@
 // shell-layout.js — Responsive shell: compact-shell detection, panel open/close, roving focus.
 // Extracted from boot.js v0.29.4 per PAIN-MAP P1-07.
+// [v1.1.1] Added applyLayoutVersionAttribute + applyLayersStandaloneAttribute
+// helpers for v2 layout feature-flag wiring (ADR-031, ADR-032). Default v1 = no-op.
 if (typeof state !== 'object' || !els) throw new Error('shell-layout.js requires state.js loaded first');
+
+      // -------------------------------------------------------------------
+      // [v1.1.1 / ADR-032] Apply layout version attribute to <body>
+      // Reads window.featureFlags.layoutVersion and mirrors to data attribute
+      // so CSS rules in split-pane.css / layers-region.css can scope styles.
+      // -------------------------------------------------------------------
+      function applyLayoutVersionAttribute() {
+        var version = (window.featureFlags && window.featureFlags.layoutVersion) || "v1";
+        if (version !== "v1" && version !== "v2") version = "v1";
+        document.body.dataset.layoutVersion = version;
+      }
+
+      // [v1.1.1 / ADR-031] Apply layers-standalone attribute to <body>
+      // When true, CSS hides #layersInspectorSection (inspector-nested) and
+      // layers-panel.js renders into #layersRegion (shell-region). Default false.
+      function applyLayersStandaloneAttribute() {
+        var standalone = Boolean(window.featureFlags && window.featureFlags.layersStandalone);
+        document.body.dataset.layersStandalone = standalone ? "true" : "false";
+      }
+
+      // Expose for boot.js
+      window.applyLayoutVersionAttribute = applyLayoutVersionAttribute;
+      window.applyLayersStandaloneAttribute = applyLayersStandaloneAttribute;
 
       function setToggleButtonState(button, active) {
         if (!button) return;

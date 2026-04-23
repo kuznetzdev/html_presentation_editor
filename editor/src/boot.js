@@ -22,6 +22,11 @@
 
       function init() {
         ensureSlideTemplateBarRoot(); // P1-08: DOM reparent absorbed from main.js (WO-22)
+        // [v1.1.1 / ADR-032] Apply layout version + layers-standalone body attrs
+        // BEFORE first paint so split-pane.css / layers-region.css rules scope
+        // correctly on initial render. No-op when feature flags are off (default).
+        window.applyLayoutVersionAttribute?.();
+        window.applyLayersStandaloneAttribute?.();
         initTheme();
         initInspectorSections();
         initComplexityMode();
@@ -36,6 +41,9 @@
         bindModals();
         renderShortcutsModalFromKeybindings(); // WO-37: auto-render from KEYBINDINGS table
         bindShellLayout();
+        // [v1.1.1 / ADR-032] Init split-pane resizer if layoutVersion==="v2".
+        // No-op otherwise. Called after bindShellLayout so shell DOM is wired.
+        window.initLeftPaneSplitter?.();
         bindShellChromeMetrics();
         bindSlideTemplateActions();
         bindMessages();

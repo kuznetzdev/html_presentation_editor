@@ -1,7 +1,9 @@
 /* Layer order — must be declared before any layer rules */
 /* [v1.1.0] Added `layers-region` layer between broken-asset-banner and inspector
    for persistent Layers Panel (ADR-031 + ADR-032 scaffold). Empty in v1.1.0. */
-@layer banners, tokens, base, layout, preview, broken-asset-banner, layers-region, inspector, precision, overlay, modal, responsive;
+/* [v1.1.1] Added `split-pane` layer for Figma-style left column layout (ADR-032).
+   Activated by body[data-layout-version="v2"] — dormant until Phase B3. */
+@layer banners, tokens, base, layout, preview, broken-asset-banner, layers-region, inspector, precision, overlay, modal, split-pane, responsive;
 
 @layer tokens {
 /* ======================================================================

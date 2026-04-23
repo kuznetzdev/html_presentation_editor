@@ -1,5 +1,31 @@
 # CHANGELOG
 
+## [1.1.1] — 2026-04-23 — Phase B1: Split-pane scaffold (dormant)
+
+Second micro-step of Phase B. Scaffolds the Figma-style split-pane layout
+behind `ui.layoutVersion === "v2"` feature flag. Default off — zero UX change.
+
+### Added
+
+- `editor/styles/split-pane.css` — full v2 layout rules, scoped to `body[data-layout-version="v2"]`. Contains grid definitions for `.left-pane-wrapper`, `.left-pane-resizer` (with :hover / :focus-visible / .is-dragging states), responsive fallback < 1024px.
+- `editor/src/left-pane-splitter.js` — resizer JS with pointer drag, keyboard arrows (Arrow Up/Down step 2%, Shift 10%, Home/End, Enter/Space reset), double-click reset, `role="separator"`, `aria-valuenow/min/max`, localStorage persistence. No-op when flag off.
+- `editor/src/shell-layout.js`: `applyLayoutVersionAttribute()` and `applyLayersStandaloneAttribute()` helpers — mirror flag values to `<body data-layout-version>` / `<body data-layers-standalone>` so CSS scoping works on first paint.
+- `editor/src/boot.js`: `init()` calls body-attribute helpers before first paint and `initLeftPaneSplitter()` after `bindShellLayout()`.
+- `@layer` declaration: `split-pane` layer appended (after `modal`, before `responsive`).
+- `presentation-editor.html`: link `split-pane.css`, script `left-pane-splitter.js`.
+
+### Non-breaking
+
+- **Zero UX change** — `ui.layoutVersion` defaults to `"v1"`, so `body[data-layout-version="v1"]` → no v2 CSS rules match → layout identical to v1.1.0.
+- Gate-A: 65/5/0 preserved.
+
+### Activation
+
+- Manual (advanced users): set `window.featureFlags.layoutVersion = "v2"` + `window.featureFlags.layersStandalone = true` in devtools, reload. Splitter activates (requires `.left-pane-wrapper` in DOM — comes in v1.1.2).
+- Default flip: v1.1.3 (Phase B3).
+
+---
+
 ## [1.1.0] — 2026-04-23 — Phase A Foundation (v2.0 Redesign trajectory start)
 
 **First milestone on the path v1.0.3 → v2.0.0.** Foundation release — zero UX change, all changes additive. Sets up tokens, feature flags, CSS layer, and 7 new ADRs for the next 4 phases.

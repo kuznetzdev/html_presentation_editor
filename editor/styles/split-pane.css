@@ -1,0 +1,120 @@
+/* =============================================================================
+ * split-pane.css — Figma-style split-pane styles for left column (ADR-032)
+ *
+ * Activated by: body[data-layout-version="v2"]
+ * Companion JS: editor/src/left-pane-splitter.js
+ *
+ * Layout:
+ *   [slides panel]       -- top, size = --left-split * column height
+ *   [resizer handle]     -- 6px (10px on hover), drag vertical
+ *   [layers region]      -- bottom, size = remaining height
+ *
+ * Fallback: body[data-layout-version="v1"] (default in v1.1.x) — no rules apply,
+ * existing 3-column layout untouched. Activation deferred to v1.1.3 (Phase B3).
+ * =============================================================================
+ */
+
+@layer split-pane {
+  /* v2 layout: wrap slides + layers in a single left column, split by resizer.
+     Only activates when body attribute is set. */
+  body[data-layout-version="v2"] .workspace {
+    /* Override the default 3-column grid: left column becomes one track with
+       internal subgrid for slides/resizer/layers. */
+    grid-template-columns:
+      minmax(250px, var(--slide-rail-width))
+      minmax(360px, 1fr)
+      minmax(300px, var(--inspector-panel-width));
+  }
+
+  body[data-layout-version="v2"] .left-pane-wrapper {
+    display: grid;
+    grid-row: 1 / -1;
+    grid-column: 1 / 2;
+    grid-template-rows:
+      minmax(var(--left-pane-min-height), calc(var(--left-split, 0.55) * 1fr))
+      var(--left-resizer-thickness)
+      minmax(var(--left-pane-min-height), 1fr);
+    gap: 0;
+    min-height: 0;
+    height: 100%;
+    /* Isolate layout so resizer drag doesn't relayout central canvas */
+    contain: layout style;
+  }
+
+  /* When v2 active, slidesPanel no longer owns grid-column 1 — it's nested */
+  body[data-layout-version="v2"] .shell-panel-left {
+    grid-row: 1 / 2;
+    grid-column: auto;
+  }
+
+  body[data-layout-version="v2"] .left-pane-resizer {
+    grid-row: 2 / 3;
+    grid-column: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: ns-resize;
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    position: relative;
+    outline: none;
+    transition:
+      background-color var(--motion-micro, 120ms) var(--ease-out, ease),
+      border-color var(--motion-micro, 120ms) var(--ease-out, ease);
+  }
+
+  body[data-layout-version="v2"] .left-pane-resizer::before {
+    content: "";
+    display: block;
+    width: 32px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--border-subtle, rgba(29, 29, 31, 0.08));
+    transition: background-color var(--motion-micro, 120ms) var(--ease-out, ease);
+  }
+
+  body[data-layout-version="v2"] .left-pane-resizer:hover::before,
+  body[data-layout-version="v2"] .left-pane-resizer:focus-visible::before {
+    background: var(--border-accent, rgba(0, 113, 227, 0.35));
+    width: 48px;
+    height: 4px;
+  }
+
+  body[data-layout-version="v2"] .left-pane-resizer:focus-visible {
+    outline: var(--focus-ring-width, 3px) solid var(--state-focus-ring, rgba(0, 113, 227, 0.32));
+    outline-offset: -2px;
+    border-radius: 2px;
+  }
+
+  body[data-layout-version="v2"] .left-pane-resizer.is-dragging::before {
+    background: var(--shell-accent, #0071e3);
+    width: 56px;
+    height: 4px;
+  }
+
+  /* The #layersRegion in v2 mode — gets bottom row of left column */
+  body[data-layout-version="v2"] #layersRegion {
+    grid-row: 3 / 4;
+    grid-column: auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* Visually hide old inspector-nested layers section when v2 + standalone active.
+     Complements JS that moves rendering target. */
+  body[data-layout-version="v2"][data-layers-standalone="true"] #layersInspectorSection {
+    display: none !important;
+  }
+
+  /* Responsive: below 1024px, split-pane collapses to drawer behavior (existing).
+     Slides and layers become separate drawer tabs, not stacked split. */
+  @media (max-width: 1024px) {
+    body[data-layout-version="v2"] .left-pane-wrapper {
+      display: contents;
+    }
+  }
+}
