@@ -1,0 +1,23 @@
+/* =============================================================================
+ * layers-region.css — persistent Layers panel styles (ADR-031 + ADR-032)
+ *
+ * Status in v1.1.0: SCAFFOLD (empty).
+ *
+ * This CSS layer is reserved for the persistent layers panel that is activated
+ * in Phase B (v1.2.0) when feature flag `ui.layersStandalone` flips to true and
+ * `ui.layoutVersion` flips to "v2".
+ *
+ * In v1.1.0 the layers panel still lives inside the inspector section. No styles
+ * are applied by this file. See tokens.css for the @layer declaration that
+ * reserves the ordering slot (between broken-asset-banner and inspector).
+ *
+ * Related ADRs:
+ *   - ADR-031 Persistent Layers Panel
+ *   - ADR-032 Workspace Layout v2 (Figma-style split-pane)
+ *   - ADR-034 Layer Tree DnD
+ * =============================================================================
+ */
+
+@layer layers-region {
+  /* Reserved. No rules in v1.1.0. See Phase B (v1.2.0) for activation. */
+}

@@ -1,5 +1,7 @@
 /* Layer order — must be declared before any layer rules */
-@layer banners, tokens, base, layout, preview, broken-asset-banner, inspector, precision, overlay, modal, responsive;
+/* [v1.1.0] Added `layers-region` layer between broken-asset-banner and inspector
+   for persistent Layers Panel (ADR-031 + ADR-032 scaffold). Empty in v1.1.0. */
+@layer banners, tokens, base, layout, preview, broken-asset-banner, layers-region, inspector, precision, overlay, modal, responsive;
 
 @layer tokens {
 /* ======================================================================
@@ -73,6 +75,56 @@
   --motion-fast: 160ms;
   --motion-medium: 180ms;
   --motion-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+
+  /* ======================================================================
+   [v1.1.0 / Tokens v3 / ADR-033] Elevation System (light theme)
+   5 levels of shadows for consistent depth across shell panels, floating
+   surfaces, modals. Dark theme rebinds in `:root[data-theme="dark"]`.
+   ====================================================================== */
+  --elevation-0: 0 0 0 0 rgba(0, 0, 0, 0);
+  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
+  --elevation-2: 0 2px 4px rgba(0, 0, 0, 0.06), 0 4px 8px rgba(0, 0, 0, 0.08);
+  --elevation-3: 0 4px 8px rgba(0, 0, 0, 0.08), 0 8px 16px rgba(0, 0, 0, 0.10);
+  --elevation-4: 0 8px 16px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.14);
+
+  /* Semantic shadows — components should consume these, not --elevation-* directly */
+  --shadow-panel:    var(--elevation-1);
+  --shadow-floating: var(--elevation-3);
+  --shadow-modal:    var(--elevation-4);
+  --shadow-pressed:  var(--elevation-0);
+
+  /* ======================================================================
+   [v1.1.0 / Tokens v3 / ADR-033] State tokens — hover/active strong
+   Complements the existing --state-hover / --state-active in Layer 2.
+   "strong" variants for sticky or important interactive elements.
+   ====================================================================== */
+  --state-hover-strong:  rgba(0, 0, 0, 0.08);
+  --state-active-strong: rgba(0, 0, 0, 0.16);
+
+  /* ======================================================================
+   [v1.1.0 / Tokens v3 / ADR-033] Motion hierarchy
+   --motion-fast / --motion-medium kept for backward-compat.
+   --motion-micro / --motion-base / --motion-emphasis are the semantic
+   motion tokens new components should consume.
+   ====================================================================== */
+  --motion-micro:    120ms;  /* tap feedback, tiny hover tints */
+  --motion-base:     180ms;  /* panel swap, section open, toast in */
+  --motion-emphasis: 280ms;  /* modal open, route/workflow change */
+
+  --ease-out:    cubic-bezier(0.25, 0.10, 0.25, 1.00);
+  --ease-in-out: cubic-bezier(0.42, 0.00, 0.58, 1.00);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1.00);
+
+  /* ======================================================================
+   [v1.1.0 / Tokens v3 / ADR-032] Left-pane split reservation
+   For the Figma-style split-pane layout activated in v1.2.0 (Phase B).
+   `--left-split` is a 0..1 ratio (slides height / total left column height).
+   Currently unused — reserved for when ui.layoutVersion = "v2".
+   ====================================================================== */
+  --left-split:               0.55;       /* 55% slides / 45% layers default */
+  --left-resizer-thickness:   6px;
+  --left-resizer-hover:       10px;
+  --left-pane-min-height:     120px;      /* min height each panel can shrink to */
 
   --topbar-min-h: 52px;
   --shell-top-offset: 52px;
@@ -260,5 +312,17 @@
   --text-disabled:  rgba(235, 235, 245, 0.35); /* dark-theme disabled text */
   --state-hover:    rgba(255, 255, 255, 0.06); /* dark-theme hover tint */
   --state-active:   rgba(255, 255, 255, 0.12); /* dark-theme active/press tint */
+
+  /* [v1.1.0 / Tokens v3 / ADR-033] Elevation rebind for dark theme
+     Shadows need stronger alpha to stay visible against dark panels. */
+  --elevation-0: 0 0 0 0 rgba(0, 0, 0, 0);
+  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.30), 0 1px 3px rgba(0, 0, 0, 0.20);
+  --elevation-2: 0 2px 4px rgba(0, 0, 0, 0.38), 0 4px 8px rgba(0, 0, 0, 0.24);
+  --elevation-3: 0 4px 8px rgba(0, 0, 0, 0.44), 0 8px 16px rgba(0, 0, 0, 0.28);
+  --elevation-4: 0 8px 16px rgba(0, 0, 0, 0.50), 0 16px 32px rgba(0, 0, 0, 0.36);
+
+  /* [v1.1.0 / Tokens v3] Hover/active strong — dark theme rebind */
+  --state-hover-strong:  rgba(255, 255, 255, 0.12);
+  --state-active-strong: rgba(255, 255, 255, 0.22);
 }
 }

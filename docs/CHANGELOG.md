@@ -1,5 +1,50 @@
 # CHANGELOG
 
+## [1.1.0] — 2026-04-23 — Phase A Foundation (v2.0 Redesign trajectory start)
+
+**First milestone on the path v1.0.3 → v2.0.0.** Foundation release — zero UX change, all changes additive. Sets up tokens, feature flags, CSS layer, and 7 new ADRs for the next 4 phases.
+
+### Added (Architecture / Docs)
+
+- **7 new ADRs** (031–037) covering the full v2.0 redesign scope:
+  - ADR-031 Persistent Layers Panel — extract layers from inspector into shell region
+  - ADR-032 Workspace Layout v2 — Figma-style split-pane (slides/layers left column)
+  - ADR-033 Theme System v3 — elevation, SVG icons, motion hierarchy, focus-ring
+  - ADR-034 Layer Tree DnD — hierarchical tree view, drag-drop reparent, group/ungroup
+  - ADR-035 Smart Import Pipeline v2 — 8 framework detectors, 4 slide inference strategies, complexity score, preprocessing report
+  - ADR-036 PPTX Fidelity v2 — getBoundingClientRect position resolver, SVG shapes, gradients, font map, validator
+  - ADR-037 UX Progressive Disclosure — contextual sections, error layers 4-6, destructive-action confirm, onboarding v2
+- Updated vault: `PROJ - v2.x Redesign`, `ARCH - Overview` (module/CSS trajectory, feature flags registry)
+
+### Added (Code — additive only)
+
+- **tokens v3** in `editor/styles/tokens.css`:
+  - Elevation system: `--elevation-0..4` with light + dark rebinds
+  - Semantic shadows: `--shadow-panel`, `--shadow-floating`, `--shadow-modal`, `--shadow-pressed`
+  - Hover/active strong states: `--state-hover-strong`, strengthened `--state-active`
+  - Motion hierarchy: `--motion-micro` (120ms), `--motion-base` (180ms), `--motion-emphasis` (280ms)
+  - Easings: `--ease-out`, `--ease-in-out`, `--ease-spring`
+  - Left-pane split reservation: `--left-split`, `--left-resizer-thickness`, `--left-resizer-hover`
+- `editor/src/feature-flags.js` — extended with v2 flags: `layoutVersion`, `layersStandalone`, `treeLayers`, `multiSelect`, `pptxV2`, `smartImport`, `svgIcons`. All default to off/v1 in this release.
+- `editor/styles/layers-region.css` — empty scaffold; added `layers-region` to `@layer` declaration in `tokens.css`.
+
+### Non-breaking
+
+- **Zero UX difference** from v1.0.3. All additions are dormant (behind flags default off).
+- **Gate-A: 65/5/0** preserved.
+- No `type="module"` introduced (ADR-015 preserved).
+- iframe + bridge + modelDoc architecture untouched.
+
+### Planned next (Phase B → v1.2.0)
+
+- Activate persistent layers region (`ui.layersStandalone = true`)
+- Activate 4-zone layout (`ui.layoutVersion = "v2"`)
+- Implement Smart Import Pipeline v2 (`import-pipeline-v2/` module)
+- Tree-view layer hierarchy with DnD
+- Playwright: `layers-panel-v2.spec.js`, `import-pipeline-v2.spec.js`
+
+---
+
 ## [1.0.3] — 2026-04-22 — pointer-events Regression Fix
 
 ### Fixed
