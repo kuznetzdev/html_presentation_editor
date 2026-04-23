@@ -19,5 +19,37 @@
  */
 
 @layer layers-region {
-  /* Reserved. No rules in v1.1.0. See Phase B (v1.2.0) for activation. */
+  /*
+   * v1.1.3 — activated scaffold.
+   * The panel uses flex layout when visible so the list container consumes
+   * remaining height and scrolls independently of the header.
+   */
+  #layersRegion {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* When [hidden] is set by JS (layers-panel.js), `display:none` wins via the
+     UA stylesheet. No override needed. */
+
+  #layersRegion .panel-header {
+    flex: 0 0 auto;
+  }
+
+  #layersRegion .layers-region-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    /* The list container is appended here by ensureLayersContainerPlacement(). */
+    padding: 12px 16px 16px;
+  }
+
+  /* When the list lives inside the region, drop the inspector-section
+     paddings so the layout looks shell-native. The container itself still
+     owns its internal gap. */
+  #layersRegion .layers-list-container {
+    width: 100%;
+  }
 }

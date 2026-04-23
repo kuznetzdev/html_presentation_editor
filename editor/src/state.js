@@ -1068,6 +1068,8 @@
         layersInspectorSection: document.getElementById("layersInspectorSection"),
         layersListContainer: document.getElementById("layersListContainer"),
         normalizeLayersBtn: document.getElementById("normalizeLayersBtn"),
+        // [v1.1.3 / ADR-031] Persistent Layers shell region (dormant default).
+        layersRegion: document.getElementById("layersRegion"),
         currentSlideMetaBadge: document.getElementById("currentSlideMetaBadge"),
         currentSlideSummaryCard: document.getElementById("currentSlideSummaryCard"),
         currentSlideTitleDisplay: document.getElementById("currentSlideTitleDisplay"),

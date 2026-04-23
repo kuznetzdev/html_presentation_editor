@@ -115,7 +115,9 @@ These cannot be violated at any point in any phase. Gate-A enforces most.
 | v1.0.2 | 2026-04-22 | Fix | 2b69051 | 65/5/0 | Single-slide view for own-visibility decks |
 | v1.0.3 | 2026-04-22 | Fix | 1a0beba | 65/5/0 | pointer-events regression |
 | **v1.1.0** | **2026-04-23** | **A** | **4691253** | **65/5/0** | **Phase A Foundation — tokens v3, feature flags, 7 ADRs** |
-| v1.1.1 | 2026-04-23 | B1 | (pending) | TBD | Split-pane scaffold (dormant) |
+| v1.1.1 | 2026-04-23 | B1 | 2a917fc | 65/5/0 | Split-pane scaffold (dormant) |
+| v1.1.2 | 2026-04-23 | Docs | 2435c33 | 65/5/0 | V2-CONTINUATION-PROMPT for fresh agent sessions |
+| v1.1.3 | 2026-04-23 | B2 | (pending) | 65/5/0 | #layersRegion shell region + dual-render (dormant) |
 
 ### Current baseline (as of 2026-04-23)
 

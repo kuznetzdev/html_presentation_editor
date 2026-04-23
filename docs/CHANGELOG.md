@@ -1,5 +1,45 @@
 # CHANGELOG
 
+## [1.1.3] — 2026-04-23 — Phase B2: #layersRegion shell region + dual-render
+
+Third micro-step of Phase B. Adds the persistent Layers shell region scaffold
+and dual-render placement logic. Defaults remain v1 — zero UX change until
+v1.1.4 flips them.
+
+### Added
+
+- `presentation-editor.html`: wraps `#slidesPanel` in `<div class="left-pane-wrapper">`, adds `<button class="left-pane-resizer">` (already DOM-expected by left-pane-splitter.js), and adds `<aside id="layersRegion" class="panel shell-panel shell-panel-left layers-region" hidden>` with internal `.layers-region-body` container.
+- `editor/src/layers-panel.js`:
+  - `ensureLayersContainerPlacement()` — moves the single `#layersListContainer` DOM node between `.layers-region-body` (when `featureFlags.layersStandalone` true) and `#layersInspectorSection` (default). Single node avoids duplicated IDs + event rebinds.
+  - `getActiveLayersHost()` — resolves either `#layersRegion` or `#layersInspectorSection` per flag.
+  - `syncInactiveLayersHost()` — hides the non-owning host so stale `hidden` state can't leak after a runtime flag flip.
+  - `renderLayersPanel()` now delegates visibility to the active host, not hardcoded to inspector section.
+- `editor/src/state.js`: `els.layersRegion` reference added.
+- `editor/src/boot.js`: `init()` calls `ensureLayersContainerPlacement()` after `applyLayersStandaloneAttribute()` — before first paint.
+- `editor/src/inspector-sync.js`: render-skip predicate uses active host, not hardcoded inspector section (so standalone mode still triggers renders).
+- `editor/styles/layers-region.css`: activated scaffold — flex layout with scrolling `.layers-region-body`, header pinned, padded list container.
+
+### Non-breaking
+
+- **Zero UX change** — `featureFlags.layersStandalone` defaults to `false`, so `getActiveLayersHost()` returns the inspector section exactly as before; `#layersRegion` stays `hidden`; new `.left-pane-wrapper` is transparent in v1 layout (no split-pane rules apply).
+- Gate-A: **65/5/0** preserved.
+- Typecheck: clean.
+
+### Manual activation (for testing)
+
+```js
+window.featureFlags.layersStandalone = true;
+window.featureFlags.layoutVersion = "v2";
+// reload — layers panel renders in the shell region below slides rail.
+```
+
+### Related
+
+- ADR-031 Persistent Layers Panel (status: proposed → implementation landed)
+- ADR-032 Workspace Layout v2
+
+---
+
 ## [1.1.2] — 2026-04-23 — Docs: V2 Continuation Prompt
 
 Docs-only patch. No code changes. No UX change.

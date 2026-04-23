@@ -27,6 +27,10 @@
         // correctly on initial render. No-op when feature flags are off (default).
         window.applyLayoutVersionAttribute?.();
         window.applyLayersStandaloneAttribute?.();
+        // [v1.1.3 / ADR-031] Place #layersListContainer into its correct host
+        // (#layersInspectorSection or #layersRegion) per flag — before first
+        // paint, so renderLayersPanel can populate the right parent on load.
+        window.ensureLayersContainerPlacement?.();
         initTheme();
         initInspectorSections();
         initComplexityMode();

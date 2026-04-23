@@ -898,9 +898,17 @@
           els.overlapSelectLayerBtn.setAttribute("data-ui-level", "advanced");
         }
         // [v0.18.0] Render layers panel (advanced mode only)
-        // [WO-19/P1-12] Skip renderLayersPanel in basic mode or when section is hidden
+        // [WO-19/P1-12] Skip renderLayersPanel in basic mode or when host is hidden
         // to avoid unnecessary DOM work on every selection change.
-        if (isAdvancedMode() && els.layersInspectorSection && !els.layersInspectorSection.hidden) {
+        // [v1.1.3] Host is either inspector-section or shell layersRegion,
+        // depending on featureFlags.layersStandalone.
+        var layersStandalone = Boolean(
+          window.featureFlags && window.featureFlags.layersStandalone,
+        );
+        var layersHost = layersStandalone
+          ? els.layersRegion
+          : els.layersInspectorSection;
+        if (isAdvancedMode() && layersHost && !layersHost.hidden) {
           renderLayersPanel();
         }
         // [WO-29] Unified banner dispatch — single renderBlockReasonBanner call

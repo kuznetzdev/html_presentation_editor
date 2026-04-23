@@ -208,16 +208,77 @@
           .join("");
       }
 
-      function renderLayersPanel() {
-        if (!els.layersListContainer || !els.layersInspectorSection) return;
-        if (state.complexityMode !== "advanced" || !state.activeSlideId || !state.modelDoc) {
+      // [v1.1.3 / ADR-031] Dual-render placement for the layers list.
+      //
+      // When featureFlags.layersStandalone is true, move #layersListContainer
+      // out of #layersInspectorSection and into the shell-level #layersRegion.
+      // When false (default), restore it to its original inspector home.
+      //
+      // The list is a single DOM node — we move it rather than duplicate so
+      // that existing references (els.layersListContainer, event bindings,
+      // render targets) stay valid. Host visibility is managed by renderLayersPanel.
+      function ensureLayersContainerPlacement() {
+        var container = els.layersListContainer;
+        if (!container) return;
+        var standalone = Boolean(
+          typeof window !== "undefined" &&
+            window.featureFlags &&
+            window.featureFlags.layersStandalone,
+        );
+        var region = els.layersRegion;
+        var regionBody = region?.querySelector(".layers-region-body") || region;
+        var inspectorHost = els.layersInspectorSection;
+        var target = standalone ? regionBody : inspectorHost;
+        if (!target) return;
+        if (container.parentElement !== target) {
+          target.appendChild(container);
+        }
+      }
+      window.ensureLayersContainerPlacement = ensureLayersContainerPlacement;
+
+      // [v1.1.3] Resolve the current host (region or inspector section) for
+      // visibility toggles inside renderLayersPanel(). The flag decides where
+      // the list lives; renderLayersPanel hides/shows that host, not the
+      // other one.
+      function getActiveLayersHost() {
+        var standalone = Boolean(
+          typeof window !== "undefined" &&
+            window.featureFlags &&
+            window.featureFlags.layersStandalone,
+        );
+        if (standalone && els.layersRegion) return els.layersRegion;
+        return els.layersInspectorSection || null;
+      }
+
+      // [v1.1.3] Hide the host that does NOT own the list right now, so stale
+      // `hidden` state on the alternate host can't leak (e.g. after a runtime
+      // flag flip). The owning host's visibility is set by the caller.
+      function syncInactiveLayersHost() {
+        var standalone = Boolean(
+          typeof window !== "undefined" &&
+            window.featureFlags &&
+            window.featureFlags.layersStandalone,
+        );
+        if (standalone && els.layersInspectorSection) {
           els.layersInspectorSection.hidden = true;
+        } else if (!standalone && els.layersRegion) {
+          els.layersRegion.hidden = true;
+        }
+      }
+
+      function renderLayersPanel() {
+        ensureLayersContainerPlacement();
+        syncInactiveLayersHost();
+        var activeHost = getActiveLayersHost();
+        if (!els.layersListContainer || !activeHost) return;
+        if (state.complexityMode !== "advanced" || !state.activeSlideId || !state.modelDoc) {
+          activeHost.hidden = true;
           if (els.normalizeLayersBtn) els.normalizeLayersBtn.disabled = true;
           return;
         }
         const slideEl = state.modelDoc.querySelector(`[data-editor-slide-id="${cssEscape(state.activeSlideId)}"]`);
         if (!slideEl) {
-          els.layersInspectorSection.hidden = true;
+          activeHost.hidden = true;
           if (els.normalizeLayersBtn) els.normalizeLayersBtn.disabled = true;
           return;
         }
@@ -227,11 +288,11 @@
                  el.getAttribute("data-editor-policy-kind") !== "protected";
         });
         if (!allLayers.length) {
-          els.layersInspectorSection.hidden = true;
+          activeHost.hidden = true;
           if (els.normalizeLayersBtn) els.normalizeLayersBtn.disabled = true;
           return;
         }
-        els.layersInspectorSection.hidden = false;
+        activeHost.hidden = false;
         const sortedLayers = allLayers.sort((a, b) => compareVisualStackOrder(b, a));
         const currentScope = getLayerScopeInfo();
         if (els.normalizeLayersBtn) {

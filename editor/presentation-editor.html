@@ -222,6 +222,10 @@
        inspector. Это shell-оболочка редактора; внутренняя презентация живёт в iframe.
        ==================================================================== -->
     <main class="workspace" id="workspace">
+      <!-- v1.1.3 / ADR-031, ADR-032: left-pane-wrapper becomes active when
+           body[data-layout-version="v2"] is set (default "v1" = no-op).
+           Wrapper groups #slidesPanel (top), resizer (middle), #layersRegion (bottom). -->
+      <div class="left-pane-wrapper">
       <aside class="panel shell-panel shell-panel-left" id="slidesPanel">
         <div class="panel-header">
           <div>
@@ -277,6 +281,34 @@
         </div>
         <div class="slides-panel-body" id="slidesList"></div>
       </aside>
+      <!-- v1.1.3: vertical resizer between slides (top) and layers (bottom).
+           Dormant (display:none via CSS) when body[data-layout-version="v1"]. -->
+      <button
+        type="button"
+        class="left-pane-resizer"
+        aria-label="Изменить соотношение слайдов и слоёв"
+        aria-orientation="horizontal"
+        role="separator"
+        tabindex="0"
+      ></button>
+      <!-- v1.1.3 / ADR-031: persistent Layers region (shell-level).
+           Hidden by default; activated when body[data-layers-standalone="true"]. -->
+      <aside
+        id="layersRegion"
+        class="panel shell-panel shell-panel-left layers-region"
+        aria-label="Слои"
+        hidden
+      >
+        <div class="panel-header">
+          <div>
+            <h2>Слои</h2>
+            <div class="panel-subtext">Структура текущего слайда.</div>
+          </div>
+        </div>
+        <div class="layers-region-body"></div>
+      </aside>
+      </div>
+      <!-- /.left-pane-wrapper -->
 
       <section class="panel panel-main" id="mainPreviewPanel">
         <div class="panel-header">
