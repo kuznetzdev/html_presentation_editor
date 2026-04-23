@@ -10,6 +10,40 @@
       // Это центральная точка входа для загрузки презентации.
       // ====================================================================
       function loadHtmlString(htmlString, sourceLabel, options = {}) {
+        // [v1.2.0 / ADR-035] Smart Import Pipeline v2 gate.
+        // When featureFlags.smartImport is "report" or "full", run the
+        // preprocessing pipeline and show the report modal before loading.
+        // On confirm, re-invoke loadHtmlString with bypassReport=true. On
+        // cancel, abort the load entirely.
+        const smartImportMode = String(
+          (window.featureFlags && window.featureFlags.smartImport) || "off",
+        );
+        if (
+          smartImportMode !== "off" &&
+          !options.bypassReport &&
+          typeof window.runImportPipelineV2 === "function" &&
+          typeof window.showImportReportModal === "function"
+        ) {
+          const report = window.runImportPipelineV2(htmlString);
+          if (report && report.ok) {
+            window.showImportReportModal(report, {
+              onContinue() {
+                loadHtmlString(htmlString, sourceLabel, {
+                  ...options,
+                  bypassReport: true,
+                });
+              },
+              onCancel() {
+                // User declined — leave the editor in its prior state.
+                setPreviewLoading(false);
+              },
+            });
+            // Returning true tells callers (Open HTML modal, etc.) that the
+            // load was accepted — they can close their own UI. The actual
+            // modelDoc update happens only after the user confirms the report.
+            return true;
+          }
+        }
         const requestedMode = normalizeEditorMode(options.mode, "preview");
         const manualBaseUrl = String(
           options.manualBaseUrl ?? els.baseUrlInput?.value ?? "",
@@ -1017,6 +1051,9 @@
           mode: state.mode,
           manualBaseUrl: state.manualBaseUrl,
           resetHistory: false,
+          // [v1.2.0] Neutralized reload retains the original document's
+          // classification — skip the report modal for a seamless flip.
+          bypassReport: true,
         });
         if (loaded) {
           // loadHtmlString → resetRuntimeState resets trustDecision to PENDING.

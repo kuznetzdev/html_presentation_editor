@@ -235,6 +235,11 @@
             dirty: true,
             mode: normalizeEditorMode(snapshot.mode || state.mode, state.mode),
             preferSlideIndex: snapshot.activeSlideIndex || 0,
+            // [v1.2.0] Skip Smart Import report modal — history-driven loads
+            // (undo/redo/restore-draft) already went through the pipeline
+            // on their original load. Re-showing the modal every undo click
+            // would block the restore and break round-tripping.
+            bypassReport: true,
           }
         );
         state.historyMuted = false;

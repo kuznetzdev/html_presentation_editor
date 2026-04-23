@@ -393,6 +393,9 @@
             resetHistory: true,
             dirty: false,
             manualBaseUrl,
+            // [v1.2.0] Starter decks are bundled + low-complexity; skip the
+            // preprocessing report modal for a direct jump to Preview.
+            bypassReport: true,
           });
           closeModal(els.openHtmlModal);
           showToast(

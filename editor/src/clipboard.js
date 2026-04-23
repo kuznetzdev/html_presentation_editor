@@ -78,6 +78,9 @@
               preferSlideIndex: payload.activeSlideIndex || 0,
               onError: (message) =>
                 showToast(message, "error", { title: "Восстановление" }),
+              // [v1.2.0] Autosave restore already inspected by the pipeline
+              // on its first load — skip the preprocessing report modal.
+              bypassReport: true,
             },
           );
         });

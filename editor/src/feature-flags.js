@@ -77,7 +77,8 @@
     // "off"    = use existing import.js only.
     // "report" = run pipeline v2, show preprocessing report modal, load via v1.
     // "full"   = run pipeline v2 as primary loader.
-    smartImport: "off",
+    // [v1.2.0] flipped: "off" → "report" as part of Phase B6.
+    smartImport: "report",
 
     // ADR-033 — SVG icon sprite.
     // false = emoji/unicode icons (current).

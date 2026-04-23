@@ -3,7 +3,9 @@
    for persistent Layers Panel (ADR-031 + ADR-032 scaffold). Empty in v1.1.0. */
 /* [v1.1.1] Added `split-pane` layer for Figma-style left column layout (ADR-032).
    Activated by body[data-layout-version="v2"] — dormant until Phase B3. */
-@layer banners, tokens, base, layout, preview, broken-asset-banner, layers-region, inspector, precision, overlay, modal, split-pane, responsive;
+/* [v1.2.0] Added `import-report-modal` layer for Smart Import v2 preprocessing
+   report modal (ADR-035). Activated by featureFlags.smartImport !== "off". */
+@layer banners, tokens, base, layout, preview, broken-asset-banner, layers-region, inspector, precision, overlay, modal, split-pane, import-report-modal, responsive;
 
 @layer tokens {
 /* ======================================================================

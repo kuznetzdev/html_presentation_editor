@@ -1,5 +1,68 @@
 # CHANGELOG
 
+## [1.2.0] — 2026-04-24 — Phase B6: Smart Import Pipeline v2 (ADR-035)
+
+Major feature release, minor version bump. Introduces a preprocessing pass
+that classifies the incoming HTML, infers slide boundaries, scores
+complexity, and surfaces a user-facing report modal before the editor
+commits to loading. First step toward 90%+ editable-deck coverage.
+
+### Added
+
+- `editor/src/import-pipeline-v2/` — new module directory:
+  - `detectors.js` — 8 framework detectors (reveal, impress, spectacle,
+    marp, slidev, MS-Office PPTX, Canva, Notion) + generic fallback.
+    Each returns a 0..1 confidence score; orchestrator picks the highest.
+  - `inference.js` — 4 slide-inference strategies tried in order:
+    explicit markers, h1-split, viewport sections, page-break directives.
+    Falls back to single-slide wrap when none match.
+  - `complexity.js` — 0..10 scoring with per-issue warnings (inline
+    scripts, CDN fonts, @import, transforms, SVG/canvas, iframes, large
+    DOM, deep nesting) and a metrics dictionary.
+  - `index.js` — orchestrator. `window.runImportPipelineV2(htmlString)`
+    returns `{ ok, elapsedMs, detector, slides, complexity, doc }`.
+- `editor/src/import-report-modal.js` — modal surface. Shows framework +
+  confidence, slide count + strategy, complexity pill (low/medium/high/
+  severe), warning list, Continue/Cancel. Ctrl+Enter commits.
+- `editor/styles/import-report-modal.css` — modal styles with complexity
+  colour bucketing.
+- `tokens.css`: `import-report-modal` layer appended (between modal and
+  responsive).
+- `presentation-editor.html`: CSS link + 5 pipeline scripts loaded before
+  `import.js` so `runImportPipelineV2` is ready during the load flow.
+- `editor/src/import.js`: `loadHtmlString` now runs pipeline-v2 first when
+  `featureFlags.smartImport` is `"report"` or `"full"`, shows the modal,
+  and re-invokes itself with `bypassReport: true` on user confirm.
+- `tests/playwright/specs/import-pipeline-v2.spec.js` — 17 tests covering
+  detector accuracy, inference strategies, complexity scoring, orchestrator
+  output, and the report modal gating behaviour.
+
+### Changed
+
+- `editor/src/feature-flags.js`: `smartImport` default `"off"` → `"report"`.
+
+### UX Notes
+
+- The modal is informational + confirming. It does NOT rewrite the
+  document. Editability normalization is still done by the legacy import
+  pipeline; pipeline-v2 is the classifier and reporter.
+- `"full"` flag mode (pipeline as primary loader) is wired but
+  intentionally untouched in this tag — activation deferred to avoid
+  regressing the 12-deck editability corpus.
+
+### Non-breaking
+
+- User can opt out: `window.featureFlags.smartImport = "off"` in devtools.
+- Gate-A expanded with the pipeline spec (target: 100+ tests passing).
+- Typecheck: clean.
+- ADR-015 invariants preserved: no `type="module"`, no bundler.
+
+### Related
+
+- ADR-035 Smart Import Pipeline v2 — classifier + report half shipped.
+
+---
+
 ## [1.1.6] — 2026-04-24 — Phase B5: Inline rename + layer-row context menu
 
 Sixth micro-step of Phase B. Adds Figma/PSD-style layer management: rename

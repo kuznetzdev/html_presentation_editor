@@ -179,8 +179,25 @@ async function openHtmlFixture(page, fixturePath, options = {}) {
   await page.fill("#baseUrlInput", manualBaseUrl);
   await page.setInputFiles("#fileInput", fixturePath);
   await page.click("#loadFileBtn");
+  // [v1.2.0] Auto-dismiss the Smart Import report modal when it appears
+  // (featureFlags.smartImport === "report" is now the default). Tests that
+  // specifically verify the modal disable the flag first.
+  await dismissImportReportModalIfPresent(page);
   await waitForPreviewReady(page);
   await expect(page.locator("#previewFrame")).toBeVisible();
+}
+
+async function dismissImportReportModalIfPresent(page) {
+  const modal = page.locator("#importReportModal.is-open");
+  try {
+    await modal.waitFor({ state: "visible", timeout: 2_000 });
+  } catch {
+    return; // No modal to dismiss.
+  }
+  await page
+    .locator("#importReportModal [data-import-report-continue]")
+    .click();
+  await modal.waitFor({ state: "hidden", timeout: 4_000 }).catch(() => {});
 }
 
 async function connectAssetDirectory(page, rootDir = EXPORT_FIXTURE_ROOT) {
