@@ -101,17 +101,24 @@ textarea:disabled {
   cursor: not-allowed;
 }
 
+/* [v1.2.2 / V2-09] Formalized focus-visible ring — one source of truth.
+   Uses the semantic --focus-ring-width (3px default) token from tokens.css
+   so theme swaps keep the ring consistent. Every interactive surface in
+   the shell gets the same visible treatment. */
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible,
 .section-toggle:focus-visible,
 .context-menu button:focus-visible,
 .layer-picker button:focus-visible,
-.quick-palette button:focus-visible {
+.quick-palette button:focus-visible,
+.layer-row:focus-visible {
   outline: none;
   border-color: var(--shell-accent);
-  box-shadow: 0 0 0 4px var(--shell-focus);
+  box-shadow: 0 0 0 var(--focus-ring-width, 3px) var(--focus-ring-color, var(--shell-focus));
 }
 
 .primary-btn {

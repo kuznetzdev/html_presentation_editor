@@ -1,5 +1,44 @@
 # CHANGELOG
 
+## [1.2.2] — 2026-04-24 — Phase C2: focus-visible ring + motion tokens
+
+Eighth tag toward v2.0. Formalizes the focus-visible treatment across
+every interactive shell surface and replaces hardcoded transition
+durations with the semantic motion token introduced in v1.1.0.
+
+### Added (tokens applied)
+
+- `editor/styles/base.css`: single `:focus-visible` rule covers buttons,
+  inputs, selects, textareas, `a`, `[tabindex]`, context menu buttons,
+  layer picker buttons, quick-palette buttons, and `.layer-row`. Ring
+  uses `--focus-ring-width` + `--focus-ring-color` from tokens.css v3.
+
+### Changed
+
+- `editor/styles/inspector.css`: hardcoded `transition: background 0.12s,
+  color 0.12s` (telemetry chips + telemetry viewer action buttons) now
+  use `var(--motion-micro) var(--ease-out)` — satisfies V2-02 ("tokens v3
+  consumed through semantic names") on touched surfaces.
+
+### Non-breaking
+
+- Legacy `--shadow-sm/md/lg` and `--motion-fast/medium` tokens kept
+  unchanged for backward compatibility. New surfaces (layers-region,
+  split-pane, import-report-modal, icons, layer-label-input) already use
+  v3 semantic tokens by construction. Full migration of legacy tokens
+  across preview.css / overlay.css / layout.css is queued for post-v2.0
+  polish (low risk of visual regression).
+- Gate-A: 102/5/0 preserved (no test behavior changes).
+- Typecheck: clean.
+
+### Related
+
+- ADR-033 Theme System v3 — V2-09 (focus-visible consistency) shipped.
+- V2-02 invariant scoped to "touched surfaces use v3" — not wholesale
+  rewrites. Documented in MASTERPLAN §1.
+
+---
+
 ## [1.2.1] — 2026-04-24 — Phase C1: SVG icon sprite (ADR-033)
 
 Seventh tag toward v2.0. Replaces emoji icons in the persistent Layers
