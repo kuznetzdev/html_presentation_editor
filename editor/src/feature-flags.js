@@ -83,7 +83,8 @@
     // ADR-033 — SVG icon sprite.
     // false = emoji/unicode icons (current).
     // true  = inline SVG <symbol> sprite (consistent across themes).
-    svgIcons: false,
+    // [v1.2.1] flipped: false → true as part of Phase C1.
+    svgIcons: true,
   };
 
   function loadFeatureFlagsFromStorage() {

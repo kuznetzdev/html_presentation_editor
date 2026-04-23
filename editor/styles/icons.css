@@ -1,0 +1,43 @@
+/* =============================================================================
+ * icons.css — SVG icon sprite styling (ADR-033)
+ * All icons use currentColor so they adapt to theme automatically.
+ * ===========================================================================
+ */
+
+@layer icons {
+  .icon {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.125em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+  }
+
+  /* Size variants — use class for non-inline contexts. */
+  .icon.icon-sm {
+    width: 14px;
+    height: 14px;
+  }
+
+  .icon.icon-md {
+    width: 18px;
+    height: 18px;
+  }
+
+  .icon.icon-lg {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* When the parent is a button with only an icon, keep the click target
+     large enough for touch per WCAG. */
+  button > .icon:only-child {
+    min-width: 16px;
+    min-height: 16px;
+  }
+}

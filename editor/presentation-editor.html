@@ -46,6 +46,7 @@
     <link rel="stylesheet" href="styles/overlay.css" />
     <link rel="stylesheet" href="styles/modal.css" />
     <link rel="stylesheet" href="styles/import-report-modal.css" />
+    <link rel="stylesheet" href="styles/icons.css" />
     <link rel="stylesheet" href="styles/responsive.css" />
     <link rel="stylesheet" href="styles/onboarding.css" />
   </head>
@@ -1904,6 +1905,10 @@
     <script src="src/bridge.js"></script>
     <script src="src/shortcuts.js"></script>
     <script src="src/clipboard.js"></script>
+    <!-- [v1.2.1 / ADR-033] SVG icon sprite — inlined at init() so
+         <use href="#i-*"/> resolves without network. No-op when
+         featureFlags.svgIcons is false (legacy emoji rendering kept). -->
+    <script src="icons/icons.svg.js"></script>
     <!-- [v1.2.0 / ADR-035] Smart Import Pipeline v2 — detectors, inference,
          complexity, orchestrator, and report modal. Loaded before import.js
          so runImportPipelineV2 is available during load. -->

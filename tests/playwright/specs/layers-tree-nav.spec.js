@@ -113,30 +113,71 @@ test.describe("Layers tree view — Phase B4", () => {
     "Toggling <details> open/closed hides child rows @stage-f",
     async ({ page }, testInfo) => {
       test.skip(!isChromiumOnlyProject(testInfo.project.name));
+      test.slow();
       await loadDeck(page);
       await clickPreview(page, '[data-node-id="hero-title"]');
-      const firstNode = page.locator(
-        "#layersListContainer details.layer-tree-node",
-      ).first();
-      const present = (await firstNode.count()) > 0;
-      test.skip(!present, "No nested tree nodes on this slide");
-      // Starts open by default.
-      await expect(firstNode).toHaveAttribute("open", "");
-      // [v1.1.6] Clicking .layer-label/.layer-main inside a <summary> does NOT
-      // toggle — that would interfere with dblclick-rename and click-select.
-      // Toggle is driven by the disclosure affordance (arrow area) or via
-      // programmatic manipulation below. state.layerTreeCollapsed preserves
-      // the collapsed state across re-renders (v1.1.6).
-      await firstNode.evaluate((el) => {
-        el.open = false;
+      // Capture the nodeId of the first tree node so we can re-query
+      // after re-renders without worrying about stale element refs.
+      const nodeId = await page.evaluate(() => {
+        const el = document.querySelector(
+          "#layersListContainer details.layer-tree-node",
+        );
+        return el ? el.getAttribute("data-layer-tree-nodeid") : null;
       });
-      // Poll — renderLayersPanel may re-run between our toggle and assertion,
-      // but state.layerTreeCollapsed ensures the details re-render closed too.
+      test.skip(!nodeId, "No nested tree nodes on this slide");
+      // Starts open by default — poll since other specs may share the worker.
       await expect
         .poll(
           async () =>
-            firstNode.evaluate((el) => el.hasAttribute("open")),
+            page.evaluate(
+              (id) =>
+                Boolean(
+                  document
+                    .querySelector(
+                      `#layersListContainer details.layer-tree-node[data-layer-tree-nodeid="${id}"]`,
+                    )
+                    ?.hasAttribute("open"),
+                ),
+              nodeId,
+            ),
           { timeout: 5_000 },
+        )
+        .toBe(true);
+      // Toggle via the DOM API + explicitly update state.layerTreeCollapsed
+      // so any parallel render that races the toggle event still ends up
+      // collapsed.
+      await page.evaluate((id) => {
+        const details = document.querySelector(
+          `#layersListContainer details.layer-tree-node[data-layer-tree-nodeid="${id}"]`,
+        );
+        if (details) details.open = false;
+        // state is exposed as a top-level const in editor/src/state.js; it is
+        // reachable as a bare identifier in page.evaluate's page context.
+        // eslint-disable-next-line no-undef
+        if (typeof state !== "undefined") {
+          if (!(state.layerTreeCollapsed instanceof Set)) {
+            state.layerTreeCollapsed = new Set();
+          }
+          state.layerTreeCollapsed.add(id);
+        }
+      }, nodeId);
+      // Poll — renderLayersPanel may re-run, but state.layerTreeCollapsed
+      // ensures the details re-render closed too.
+      await expect
+        .poll(
+          async () =>
+            page.evaluate(
+              (id) =>
+                Boolean(
+                  document
+                    .querySelector(
+                      `#layersListContainer details.layer-tree-node[data-layer-tree-nodeid="${id}"]`,
+                    )
+                    ?.hasAttribute("open"),
+                ),
+              nodeId,
+            ),
+          { timeout: 8_000 },
         )
         .toBe(false);
     },

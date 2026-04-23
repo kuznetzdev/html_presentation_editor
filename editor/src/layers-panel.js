@@ -491,6 +491,13 @@
             </label>
           `
           : "";
+        // [v1.2.1] Prefer SVG icons when enabled; fall back to emoji otherwise.
+        const iconOf = typeof window.iconMarkup === "function" ? window.iconMarkup : null;
+        const gripIcon = iconOf ? iconOf("grip-vertical", "⋮⋮") : "⋮⋮";
+        const lockIcon = iconOf
+          ? iconOf(isLocked ? "lock" : "unlock", isLocked ? "🔒" : "🔓")
+          : isLocked ? "🔒" : "🔓";
+        const eyeIcon = iconOf ? iconOf(isHidden ? "eye-off" : "eye", "👁") : "👁";
         const dragHandleHtml = showAdvancedControls
           ? `
             <button
@@ -502,7 +509,7 @@
               aria-label="Изменить порядок слоя ${label}"
               title="Перетащить, чтобы изменить порядок"
             >
-              ⋮⋮
+              ${gripIcon}
             </button>
           `
           : "";
@@ -515,7 +522,7 @@
               aria-label="${isLocked ? "Разблокировать слой" : "Заблокировать слой"}"
               title="${isLocked ? "Разблокировать слой" : "Заблокировать слой"}"
             >
-              ${isLocked ? "🔒" : "🔓"}
+              ${lockIcon}
             </button>
           `
           : "";
@@ -546,7 +553,7 @@
                   aria-label="${isHidden ? "Показать слой" : "Скрыть слой"}"
                   title="${isHidden ? "Показать слой" : "Скрыть слой"}"
                 >
-                  👁
+                  ${eyeIcon}
                 </button>
                 ${lockButtonHtml}
               </div>

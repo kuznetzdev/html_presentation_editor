@@ -5,7 +5,9 @@
    Activated by body[data-layout-version="v2"] — dormant until Phase B3. */
 /* [v1.2.0] Added `import-report-modal` layer for Smart Import v2 preprocessing
    report modal (ADR-035). Activated by featureFlags.smartImport !== "off". */
-@layer banners, tokens, base, layout, preview, broken-asset-banner, layers-region, inspector, precision, overlay, modal, split-pane, import-report-modal, responsive;
+/* [v1.2.1] Added `icons` layer for SVG icon sprite sizing / currentColor
+   fallback styles (ADR-033). Activated by featureFlags.svgIcons === true. */
+@layer banners, tokens, base, layout, preview, broken-asset-banner, layers-region, inspector, precision, overlay, modal, split-pane, import-report-modal, icons, responsive;
 
 @layer tokens {
 /* ======================================================================

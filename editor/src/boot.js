@@ -31,6 +31,10 @@
         // (#layersInspectorSection or #layersRegion) per flag — before first
         // paint, so renderLayersPanel can populate the right parent on load.
         window.ensureLayersContainerPlacement?.();
+        // [v1.2.1 / ADR-033] Inline the SVG icon sprite so <use href="#i-*"/>
+        // resolves anywhere in the shell. No-op when featureFlags.svgIcons
+        // is false (default off in this tag — flipped later in Phase C).
+        window.injectIconSprite?.();
         initTheme();
         initInspectorSections();
         initComplexityMode();

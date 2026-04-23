@@ -1,5 +1,53 @@
 # CHANGELOG
 
+## [1.2.1] — 2026-04-24 — Phase C1: SVG icon sprite (ADR-033)
+
+Seventh tag toward v2.0. Replaces emoji icons in the persistent Layers
+panel with an inline SVG sprite. All icons use `currentColor` so they
+auto-adapt to the active theme. Feature flag `svgIcons` flipped to `true`.
+
+### Added
+
+- `editor/icons/icons.svg.js` — inline SVG sprite generator. Exposes:
+  - `injectIconSprite()` — inserts the sprite into `<body>` on init.
+  - `iconMarkup(name, fallbackEmoji)` — returns `<svg><use/></svg>` when
+    the flag is on, otherwise the fallback string. Call sites never
+    need to branch.
+  - 35 initial icons: chevrons, arrows (including -top/-bottom for z-order
+    shorthand), pencil, trash, duplicate, plus, x, check, eye, eye-off,
+    lock, unlock, undo, redo, play, folder-open, download, sun, moon,
+    text, image, video, box, layers, grid, more-horizontal, more-vertical,
+    grip-vertical, info, alert-triangle, rotate-cw.
+- `editor/styles/icons.css` — `.icon` sizing (1em default, `icon-sm|md|lg`)
+  with `currentColor` stroke; `@layer icons` between `import-report-modal`
+  and `responsive`.
+- `editor/presentation-editor.html` — CSS link + sprite script before
+  the pipeline-v2 scripts.
+- `editor/src/boot.js` — `init()` calls `window.injectIconSprite?.()`
+  before first paint so `<use>` refs resolve on initial render.
+
+### Changed
+
+- `editor/src/feature-flags.js`: `svgIcons` default `false` → `true`.
+- `editor/src/layers-panel.js`: layer-row drag handle, lock button, and
+  visibility button now use `iconMarkup()` (grip-vertical / lock-unlock /
+  eye-eye-off) with emoji fallback.
+
+### Non-breaking
+
+- Legacy emoji fallback: set `window.featureFlags.svgIcons = false` to
+  revert instantly.
+- Gate-A: preserved (102/5/0 baseline; C1 adds only rendering changes).
+- Typecheck: clean.
+
+### Related
+
+- ADR-033 Theme System v3 — sprite scaffold + Layer panel usage landed.
+  Remaining emoji replacements across topbar / context menu / empty
+  state deferred to follow-up micro-tags within Phase C.
+
+---
+
 ## [1.2.0] — 2026-04-24 — Phase B6: Smart Import Pipeline v2 (ADR-035)
 
 Major feature release, minor version bump. Introduces a preprocessing pass
