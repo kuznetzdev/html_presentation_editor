@@ -52,4 +52,58 @@
   #layersRegion .layers-list-container {
     width: 100%;
   }
+
+  /* -------------------------------------------------------------------------
+   * v1.1.5 / ADR-034 — Tree view (featureFlags.treeLayers)
+   * ----------------------------------------------------------------------- */
+
+  /* Depth-based left padding on rows. --layer-depth is 0 for roots, grows +1
+     per nesting level. 14px per level matches the selection-rail inset. */
+  .layer-row[data-layer-depth] {
+    padding-left: calc(var(--layer-depth, 0) * 14px);
+  }
+
+  /* Collapsible sub-tree wrapper. Summary acts as the clickable row; children
+     live in .layer-tree-children. */
+  .layers-list-container.is-tree-mode .layer-tree-node {
+    display: block;
+  }
+
+  .layers-list-container.is-tree-mode .layer-tree-node > summary {
+    list-style: none;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .layers-list-container.is-tree-mode .layer-tree-node > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  /* Custom disclosure arrow — rotates 90° when <details open>. Positioned
+     in the gutter to the LEFT of depth-indented content, so deeper levels
+     still get a consistent visual hierarchy. */
+  .layers-list-container.is-tree-mode .layer-tree-node > summary::before {
+    content: "";
+    display: inline-block;
+    width: 0;
+    height: 0;
+    border: 4px solid transparent;
+    border-left-color: currentColor;
+    margin-right: 6px;
+    transition: transform var(--motion-micro, 120ms) var(--ease-out, ease);
+    vertical-align: middle;
+    opacity: 0.6;
+  }
+
+  .layers-list-container.is-tree-mode .layer-tree-node[open] > summary::before {
+    transform: rotate(90deg);
+  }
+
+  .layers-list-container.is-tree-mode .layer-tree-children {
+    display: block;
+  }
+
+  .layers-list-container.is-tree-mode .layer-tree-node:not([open]) .layer-tree-children {
+    display: none;
+  }
 }

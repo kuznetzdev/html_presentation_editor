@@ -1,5 +1,53 @@
 # CHANGELOG
 
+## [1.1.5] — 2026-04-24 — Phase B4: Layers tree view (ADR-034)
+
+Fifth micro-step of Phase B. Replaces the flat z-order list with a
+hierarchical tree following DOM parent-child structure. Siblings inside
+each branch remain z-sorted so the stacking intuition is preserved.
+
+### Added
+
+- `editor/src/layers-panel.js`:
+  - `buildLayerRowHtml(layer, index, ctx, options)` — extracted shared row
+    HTML used by both flat and tree renderers. `options.renderAsSummary`
+    picks `<summary>` for details-based hosts; `options.depth` drives left
+    indentation via `--layer-depth` CSS var.
+  - `buildLayerTree(sortedLayers, slideEl)` — walks each element's DOM
+    parent chain until it finds an ancestor in the same set; returns root
+    entries.
+  - `renderLayerTreeNodes(nodes, depth, ctx)` — recursive render; nested
+    branches wrap in `<details open>` + `<summary>`; leaves render as plain
+    rows so focus / click / drag bindings stay uniform.
+- `editor/styles/layers-region.css`: tree-mode rules — depth indentation,
+  custom disclosure arrow that rotates on `<details[open]>`, default-open
+  children, hide list marker.
+- `tests/playwright/specs/layers-tree-nav.spec.js` — 10 new smoke tests:
+  region visibility, `.is-tree-mode` class, depth attr, click-to-select,
+  details wrappers, toggle behavior, basic vs advanced control gating,
+  visibility button coverage, flag off → flat mode.
+- Gate-A expanded to include the new spec → **75 passed / 5 skipped / 0 failed**.
+
+### Changed
+
+- `editor/src/feature-flags.js`: `treeLayers` default flipped `false → true`.
+- `editor/src/inspector-sync.js`: when standalone, always attempt render
+  — the shell region starts `[hidden]` and was never getting un-hidden
+  because the gate required "`!hidden`" (chicken-and-egg).
+
+### Non-breaking
+
+- Flat-mode fallback retained: `window.featureFlags.treeLayers = false;
+  renderLayersPanel()` reverts to the flat list instantly.
+- Gate-A: **75/5/0** (up from 65/5/0 — 10 new tree-nav tests, no regressions).
+- Typecheck: clean.
+
+### Related
+
+- ADR-034 Layer Tree DnD — tree-rendering half shipped (DnD reparent deferred)
+
+---
+
 ## [1.1.4] — 2026-04-23 — Phase B3: Flip defaults to v2 layout (first visible UX change)
 
 Fourth micro-step of Phase B — first user-visible UX change in the v2

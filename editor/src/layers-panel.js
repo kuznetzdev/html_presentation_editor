@@ -312,102 +312,180 @@
         // selection + visibility), but advanced-only row controls (z-index,
         // lock) stay hidden to keep the basic surface quiet.
         const showAdvancedControls = state.complexityMode === "advanced";
-        const html = sortedLayers
-          .map((layer, index) => {
-            const nodeId = layer.getAttribute("data-editor-node-id") || "";
-            const entityKind = layer.getAttribute("data-editor-entity-kind") || "element";
-            const isLocked = layer.getAttribute("data-editor-locked") === "true";
-            const isHidden = isLayerSessionHidden(nodeId);
-            const zIndex = layer.style.zIndex || "auto";
-            const label = escapeHtml(getLayerLabel(layer));
-            const icon = getEntityKindIcon(entityKind);
-            const isActive = nodeId === state.selectedNodeId;
-            const stackHint = `${getEntityKindLabel(entityKind)} · ${formatLayerStackHint(
-              index,
-              sortedLayers.length,
-            )}`;
-            const chips = [];
-            if (isActive) chips.push({ label: "Текущий", className: "is-current" });
-            if (isHidden) chips.push({ label: "Скрыт", className: "is-hidden" });
-            if (isLocked && showAdvancedControls) {
-              chips.push({ label: "Заблокирован", className: "is-locked" });
-            }
-            const zControl = isActive && showAdvancedControls
-              ? `
-                <label class="layer-z-field" title="z-index текущего слоя">
-                  <span>z</span>
-                  <input
-                    type="text"
-                    class="layer-z-input"
-                    value="${escapeHtml(zIndex)}"
-                    data-layer-node-id="${escapeHtml(nodeId)}"
-                  />
-                </label>
-              `
-              : "";
-            const dragHandleHtml = showAdvancedControls
-              ? `
-                <button
-                  type="button"
-                  class="layer-drag-handle"
-                  draggable="true"
-                  data-layer-node-id="${escapeHtml(nodeId)}"
-                  data-layer-index="${index}"
-                  aria-label="Изменить порядок слоя ${label}"
-                  title="Перетащить, чтобы изменить порядок"
-                >
-                  ⋮⋮
-                </button>
-              `
-              : "";
-            const lockButtonHtml = showAdvancedControls
-              ? `
-                <button
-                  type="button"
-                  class="layer-action-btn layer-lock-btn ${isLocked ? "is-locked" : ""}"
-                  data-layer-node-id="${escapeHtml(nodeId)}"
-                  aria-label="${isLocked ? "Разблокировать слой" : "Заблокировать слой"}"
-                  title="${isLocked ? "Разблокировать слой" : "Заблокировать слой"}"
-                >
-                  ${isLocked ? "🔒" : "🔓"}
-                </button>
-              `
-              : "";
-            return `
-              <div
-                class="layer-row ${isActive ? "is-active" : ""}"
+        // [v1.1.5 / ADR-034] Tree view: when featureFlags.treeLayers is true,
+        // render a <details>-based hierarchy following DOM parent chains. Each
+        // sibling group is sorted by z-order to keep the stacking intuition.
+        const treeMode = Boolean(window.featureFlags && window.featureFlags.treeLayers);
+        const renderContext = { showAdvancedControls, sortedLayers };
+        let html;
+        if (treeMode) {
+          const tree = buildLayerTree(sortedLayers, slideEl);
+          html = renderLayerTreeNodes(tree, 0, renderContext);
+          els.layersListContainer.classList.add("is-tree-mode");
+        } else {
+          html = sortedLayers
+            .map((layer, index) => buildLayerRowHtml(layer, index, renderContext))
+            .join("");
+          els.layersListContainer.classList.remove("is-tree-mode");
+        }
+        els.layersListContainer.innerHTML = html;
+        bindLayersPanelActions();
+      }
+
+      // [v1.1.5] Single-row HTML shared by both flat and tree rendering paths.
+      // The optional `depth` param is used only for tree mode to add a class
+      // for indentation styling. `ctx.sortedLayers` is the full z-sorted list,
+      // used to compute the stack-position hint.
+      function buildLayerRowHtml(layer, index, ctx, options) {
+        const depth = options && typeof options.depth === "number" ? options.depth : 0;
+        const renderAsSummary = Boolean(options && options.renderAsSummary);
+        const { showAdvancedControls, sortedLayers } = ctx;
+        const nodeId = layer.getAttribute("data-editor-node-id") || "";
+        const entityKind = layer.getAttribute("data-editor-entity-kind") || "element";
+        const isLocked = layer.getAttribute("data-editor-locked") === "true";
+        const isHidden = isLayerSessionHidden(nodeId);
+        const zIndex = layer.style.zIndex || "auto";
+        const label = escapeHtml(getLayerLabel(layer));
+        const isActive = nodeId === state.selectedNodeId;
+        const stackHint = `${getEntityKindLabel(entityKind)} · ${formatLayerStackHint(
+          index,
+          sortedLayers.length,
+        )}`;
+        const chips = [];
+        if (isActive) chips.push({ label: "Текущий", className: "is-current" });
+        if (isHidden) chips.push({ label: "Скрыт", className: "is-hidden" });
+        if (isLocked && showAdvancedControls) {
+          chips.push({ label: "Заблокирован", className: "is-locked" });
+        }
+        const zControl = isActive && showAdvancedControls
+          ? `
+            <label class="layer-z-field" title="z-index текущего слоя">
+              <span>z</span>
+              <input
+                type="text"
+                class="layer-z-input"
+                value="${escapeHtml(zIndex)}"
                 data-layer-node-id="${escapeHtml(nodeId)}"
-                data-layer-index="${index}"
-                tabindex="0"
-                aria-current="${isActive ? "true" : "false"}"
-              >
-                ${dragHandleHtml}
-                <div class="layer-main">
-                  <span class="layer-label">${label}</span>
-                  <span class="layer-meta">${escapeHtml(stackHint)}</span>
-                </div>
-                <div class="layer-trailing">
-                  <div class="layer-status-list">${buildLayerStatusChipsHtml(chips)}</div>
-                  <div class="layer-row-actions">
-                    ${zControl}
-                    <button
-                      type="button"
-                      class="layer-action-btn layer-visibility-btn ${isHidden ? "is-hidden" : ""}"
-                      data-layer-node-id="${escapeHtml(nodeId)}"
-                      aria-label="${isHidden ? "Показать слой" : "Скрыть слой"}"
-                      title="${isHidden ? "Показать слой" : "Скрыть слой"}"
-                    >
-                      👁
-                    </button>
-                    ${lockButtonHtml}
-                  </div>
-                </div>
+              />
+            </label>
+          `
+          : "";
+        const dragHandleHtml = showAdvancedControls
+          ? `
+            <button
+              type="button"
+              class="layer-drag-handle"
+              draggable="true"
+              data-layer-node-id="${escapeHtml(nodeId)}"
+              data-layer-index="${index}"
+              aria-label="Изменить порядок слоя ${label}"
+              title="Перетащить, чтобы изменить порядок"
+            >
+              ⋮⋮
+            </button>
+          `
+          : "";
+        const lockButtonHtml = showAdvancedControls
+          ? `
+            <button
+              type="button"
+              class="layer-action-btn layer-lock-btn ${isLocked ? "is-locked" : ""}"
+              data-layer-node-id="${escapeHtml(nodeId)}"
+              aria-label="${isLocked ? "Разблокировать слой" : "Заблокировать слой"}"
+              title="${isLocked ? "Разблокировать слой" : "Заблокировать слой"}"
+            >
+              ${isLocked ? "🔒" : "🔓"}
+            </button>
+          `
+          : "";
+        const tag = renderAsSummary ? "summary" : "div";
+        const depthStyle = depth > 0 ? ` style="--layer-depth:${depth};"` : "";
+        return `
+          <${tag}
+            class="layer-row ${isActive ? "is-active" : ""}"
+            data-layer-node-id="${escapeHtml(nodeId)}"
+            data-layer-index="${index}"
+            data-layer-depth="${depth}"
+            tabindex="0"
+            aria-current="${isActive ? "true" : "false"}"${depthStyle}
+          >
+            ${dragHandleHtml}
+            <div class="layer-main">
+              <span class="layer-label">${label}</span>
+              <span class="layer-meta">${escapeHtml(stackHint)}</span>
+            </div>
+            <div class="layer-trailing">
+              <div class="layer-status-list">${buildLayerStatusChipsHtml(chips)}</div>
+              <div class="layer-row-actions">
+                ${zControl}
+                <button
+                  type="button"
+                  class="layer-action-btn layer-visibility-btn ${isHidden ? "is-hidden" : ""}"
+                  data-layer-node-id="${escapeHtml(nodeId)}"
+                  aria-label="${isHidden ? "Показать слой" : "Скрыть слой"}"
+                  title="${isHidden ? "Показать слой" : "Скрыть слой"}"
+                >
+                  👁
+                </button>
+                ${lockButtonHtml}
               </div>
+            </div>
+          </${tag}>
+        `;
+      }
+
+      // [v1.1.5 / ADR-034] Build a parent-child tree from the flat sorted list
+      // by walking each element's DOM parent chain until we hit another
+      // element present in the same set. Elements with no such ancestor are
+      // tree roots. Sibling order follows the z-sorted input order.
+      function buildLayerTree(sortedLayers, slideEl) {
+        const entries = sortedLayers.map((el, index) => ({
+          el,
+          nodeId: el.getAttribute("data-editor-node-id") || "",
+          index,
+          children: [],
+        }));
+        const byNodeId = new Map(entries.map((e) => [e.nodeId, e]));
+        const roots = [];
+        for (const entry of entries) {
+          let parent = entry.el.parentElement;
+          let parentEntry = null;
+          while (parent && parent !== slideEl) {
+            const parentId = parent.getAttribute("data-editor-node-id");
+            if (parentId && byNodeId.has(parentId)) {
+              parentEntry = byNodeId.get(parentId);
+              break;
+            }
+            parent = parent.parentElement;
+          }
+          if (parentEntry) parentEntry.children.push(entry);
+          else roots.push(entry);
+        }
+        return roots;
+      }
+
+      // [v1.1.5 / ADR-034] Recursive render of the tree. Nodes with children
+      // render as <details><summary>row</summary>...children...</details>; leaf
+      // nodes render as plain row div so focus and click bindings stay uniform.
+      function renderLayerTreeNodes(nodes, depth, ctx) {
+        return nodes
+          .map((entry) => {
+            if (!entry.children.length) {
+              return buildLayerRowHtml(entry.el, entry.index, ctx, { depth });
+            }
+            const summaryHtml = buildLayerRowHtml(entry.el, entry.index, ctx, {
+              depth,
+              renderAsSummary: true,
+            });
+            const childrenHtml = renderLayerTreeNodes(entry.children, depth + 1, ctx);
+            return `
+              <details class="layer-tree-node" open data-layer-tree-depth="${depth}">
+                ${summaryHtml}
+                <div class="layer-tree-children">${childrenHtml}</div>
+              </details>
             `;
           })
           .join("");
-        els.layersListContainer.innerHTML = html;
-        bindLayersPanelActions();
       }
 
       function bindLayersPanelActions() {

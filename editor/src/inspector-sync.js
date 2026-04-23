@@ -903,14 +903,19 @@
         // depending on featureFlags.layersStandalone.
         // [v1.1.4] When standalone, basic mode must also re-render so the
         // active-row highlight stays fresh (V2-01: layers visible in both modes).
+        // [v1.1.5] When standalone, always attempt render — the host starts
+        // with [hidden], and renderLayersPanel is the only code that unhides
+        // it. Gating on !hidden was a chicken-and-egg for the shell region.
         var layersStandalone = Boolean(
           window.featureFlags && window.featureFlags.layersStandalone,
         );
-        var layersHost = layersStandalone
-          ? els.layersRegion
-          : els.layersInspectorSection;
-        var layersRenderAllowed = isAdvancedMode() || layersStandalone;
-        if (layersRenderAllowed && layersHost && !layersHost.hidden) {
+        if (layersStandalone) {
+          renderLayersPanel();
+        } else if (
+          isAdvancedMode() &&
+          els.layersInspectorSection &&
+          !els.layersInspectorSection.hidden
+        ) {
           renderLayersPanel();
         }
         // [WO-29] Unified banner dispatch — single renderBlockReasonBanner call

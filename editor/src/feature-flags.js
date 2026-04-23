@@ -58,9 +58,10 @@
     layersStandalone: true,
 
     // ADR-034 — hierarchical tree view for layers panel.
-    // false = flat z-order list (current).
-    // true  = <details>-based tree with drag-drop reparent.
-    treeLayers: false,
+    // false = flat z-order list.
+    // true  = <details>-based tree following DOM hierarchy; siblings z-sorted.
+    // [v1.1.5] flipped: false → true as part of Phase B4.
+    treeLayers: true,
 
     // Phase D — true multi-select (shift-click, Ctrl+A).
     // false = single selection only (current behavior).
