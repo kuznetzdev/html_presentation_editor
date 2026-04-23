@@ -48,12 +48,14 @@
     // ADR-032 — workspace layout version.
     // "v1" = current 3-column (slides | canvas | inspector).
     // "v2" = Figma-style split-pane (slides+layers left, canvas, inspector).
-    layoutVersion: "v1",
+    // [v1.1.4] flipped: v1 → v2 as part of Phase B3.
+    layoutVersion: "v2",
 
     // ADR-031 — persistent Layers Panel.
     // false = layers stays inside inspector (advanced-only).
     // true  = layers in separate #layersRegion shell region (visible in both modes).
-    layersStandalone: false,
+    // [v1.1.4] flipped: false → true as part of Phase B3.
+    layersStandalone: true,
 
     // ADR-034 — hierarchical tree view for layers panel.
     // false = flat z-order list (current).

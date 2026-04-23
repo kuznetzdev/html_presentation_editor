@@ -1,5 +1,47 @@
 # CHANGELOG
 
+## [1.1.4] — 2026-04-23 — Phase B3: Flip defaults to v2 layout (first visible UX change)
+
+Fourth micro-step of Phase B — first user-visible UX change in the v2
+redesign trajectory. Flips `layoutVersion` default from `"v1"` to `"v2"`
+and `layersStandalone` default from `false` to `true`. Gate-A: 65/5/0.
+
+### Changed
+
+- `editor/src/feature-flags.js`: DEFAULT_FLAGS
+  - `layoutVersion: "v1"` → `"v2"`
+  - `layersStandalone: false` → `true`
+- `editor/src/layers-panel.js`: `renderLayersPanel()` now renders in basic
+  mode when `layersStandalone` is true (V2-01 invariant: layers visible in
+  both basic + advanced modes). Advanced-only controls (drag handle,
+  z-index input, lock button, "Заблокирован" chip) hidden in basic mode.
+- `editor/src/inspector-sync.js`: host-aware render gate now allows basic
+  mode when `layersStandalone`, so selection-change highlight stays fresh.
+
+### UX impact
+
+- New users: Figma-style split-pane left column with persistent Layers
+  panel below the slide rail. Layers visible in basic mode (view+visibility
+  toggle) and advanced mode (+ drag-reorder, z-index, lock).
+- Existing users (with localStorage persisted from v1.1.0–v1.1.3): flags
+  stay on v1 per their stored prefs. They can reset via
+  `window.resetFeatureFlags()` in devtools.
+
+### Non-breaking
+
+- Gate-A: **65/5/0** preserved — CSS rule hides `#layersInspectorSection`
+  when `[data-layers-standalone="true"]`, so existing `toBeHidden()`
+  assertions still pass.
+- Typecheck: clean.
+
+### Related
+
+- ADR-031 Persistent Layers Panel — status flipped to Accepted (code shipped)
+- ADR-032 Workspace Layout v2 — status flipped to Accepted (code shipped)
+- V2-MASTERPLAN §1 V2-01 invariant active
+
+---
+
 ## [1.1.3] — 2026-04-23 — Phase B2: #layersRegion shell region + dual-render
 
 Third micro-step of Phase B. Adds the persistent Layers shell region scaffold

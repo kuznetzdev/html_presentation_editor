@@ -271,7 +271,17 @@
         syncInactiveLayersHost();
         var activeHost = getActiveLayersHost();
         if (!els.layersListContainer || !activeHost) return;
-        if (state.complexityMode !== "advanced" || !state.activeSlideId || !state.modelDoc) {
+        var standalone = Boolean(
+          window.featureFlags && window.featureFlags.layersStandalone,
+        );
+        // [V2-01] Layers panel visible in basic mode only when standalone host
+        // is active (shell region). Inspector-nested section stays advanced-only.
+        if (!standalone && state.complexityMode !== "advanced") {
+          activeHost.hidden = true;
+          if (els.normalizeLayersBtn) els.normalizeLayersBtn.disabled = true;
+          return;
+        }
+        if (!state.activeSlideId || !state.modelDoc) {
           activeHost.hidden = true;
           if (els.normalizeLayersBtn) els.normalizeLayersBtn.disabled = true;
           return;
@@ -298,6 +308,10 @@
         if (els.normalizeLayersBtn) {
           els.normalizeLayersBtn.disabled = !currentScope || currentScope.nodes.length < 2;
         }
+        // [v1.1.4 / V2-01] In basic mode the layers list still renders (for
+        // selection + visibility), but advanced-only row controls (z-index,
+        // lock) stay hidden to keep the basic surface quiet.
+        const showAdvancedControls = state.complexityMode === "advanced";
         const html = sortedLayers
           .map((layer, index) => {
             const nodeId = layer.getAttribute("data-editor-node-id") || "";
@@ -315,8 +329,10 @@
             const chips = [];
             if (isActive) chips.push({ label: "Текущий", className: "is-current" });
             if (isHidden) chips.push({ label: "Скрыт", className: "is-hidden" });
-            if (isLocked) chips.push({ label: "Заблокирован", className: "is-locked" });
-            const zControl = isActive
+            if (isLocked && showAdvancedControls) {
+              chips.push({ label: "Заблокирован", className: "is-locked" });
+            }
+            const zControl = isActive && showAdvancedControls
               ? `
                 <label class="layer-z-field" title="z-index текущего слоя">
                   <span>z</span>
@@ -329,14 +345,8 @@
                 </label>
               `
               : "";
-            return `
-              <div
-                class="layer-row ${isActive ? "is-active" : ""}"
-                data-layer-node-id="${escapeHtml(nodeId)}"
-                data-layer-index="${index}"
-                tabindex="0"
-                aria-current="${isActive ? "true" : "false"}"
-              >
+            const dragHandleHtml = showAdvancedControls
+              ? `
                 <button
                   type="button"
                   class="layer-drag-handle"
@@ -348,6 +358,30 @@
                 >
                   ⋮⋮
                 </button>
+              `
+              : "";
+            const lockButtonHtml = showAdvancedControls
+              ? `
+                <button
+                  type="button"
+                  class="layer-action-btn layer-lock-btn ${isLocked ? "is-locked" : ""}"
+                  data-layer-node-id="${escapeHtml(nodeId)}"
+                  aria-label="${isLocked ? "Разблокировать слой" : "Заблокировать слой"}"
+                  title="${isLocked ? "Разблокировать слой" : "Заблокировать слой"}"
+                >
+                  ${isLocked ? "🔒" : "🔓"}
+                </button>
+              `
+              : "";
+            return `
+              <div
+                class="layer-row ${isActive ? "is-active" : ""}"
+                data-layer-node-id="${escapeHtml(nodeId)}"
+                data-layer-index="${index}"
+                tabindex="0"
+                aria-current="${isActive ? "true" : "false"}"
+              >
+                ${dragHandleHtml}
                 <div class="layer-main">
                   <span class="layer-label">${label}</span>
                   <span class="layer-meta">${escapeHtml(stackHint)}</span>
@@ -365,15 +399,7 @@
                     >
                       👁
                     </button>
-                    <button
-                      type="button"
-                      class="layer-action-btn layer-lock-btn ${isLocked ? "is-locked" : ""}"
-                      data-layer-node-id="${escapeHtml(nodeId)}"
-                      aria-label="${isLocked ? "Разблокировать слой" : "Заблокировать слой"}"
-                      title="${isLocked ? "Разблокировать слой" : "Заблокировать слой"}"
-                    >
-                      ${isLocked ? "🔒" : "🔓"}
-                    </button>
+                    ${lockButtonHtml}
                   </div>
                 </div>
               </div>

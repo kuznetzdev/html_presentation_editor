@@ -897,18 +897,20 @@
           els.overlapSelectLayerBtn.textContent = "Выбрать слой";
           els.overlapSelectLayerBtn.setAttribute("data-ui-level", "advanced");
         }
-        // [v0.18.0] Render layers panel (advanced mode only)
-        // [WO-19/P1-12] Skip renderLayersPanel in basic mode or when host is hidden
-        // to avoid unnecessary DOM work on every selection change.
+        // [v0.18.0] Render layers panel on selection change.
+        // [WO-19/P1-12] Skip when host is hidden to avoid unnecessary DOM work.
         // [v1.1.3] Host is either inspector-section or shell layersRegion,
         // depending on featureFlags.layersStandalone.
+        // [v1.1.4] When standalone, basic mode must also re-render so the
+        // active-row highlight stays fresh (V2-01: layers visible in both modes).
         var layersStandalone = Boolean(
           window.featureFlags && window.featureFlags.layersStandalone,
         );
         var layersHost = layersStandalone
           ? els.layersRegion
           : els.layersInspectorSection;
-        if (isAdvancedMode() && layersHost && !layersHost.hidden) {
+        var layersRenderAllowed = isAdvancedMode() || layersStandalone;
+        if (layersRenderAllowed && layersHost && !layersHost.hidden) {
           renderLayersPanel();
         }
         // [WO-29] Unified banner dispatch — single renderBlockReasonBanner call

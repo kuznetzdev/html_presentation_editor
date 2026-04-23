@@ -117,7 +117,8 @@ These cannot be violated at any point in any phase. Gate-A enforces most.
 | **v1.1.0** | **2026-04-23** | **A** | **4691253** | **65/5/0** | **Phase A Foundation — tokens v3, feature flags, 7 ADRs** |
 | v1.1.1 | 2026-04-23 | B1 | 2a917fc | 65/5/0 | Split-pane scaffold (dormant) |
 | v1.1.2 | 2026-04-23 | Docs | 2435c33 | 65/5/0 | V2-CONTINUATION-PROMPT for fresh agent sessions |
-| v1.1.3 | 2026-04-23 | B2 | (pending) | 65/5/0 | #layersRegion shell region + dual-render (dormant) |
+| v1.1.3 | 2026-04-23 | B2 | 162c7e4 | 65/5/0 | #layersRegion shell region + dual-render (dormant) |
+| v1.1.4 | 2026-04-23 | B3 | (pending) | 65/5/0 | Flip defaults to v2 layout — first UX change |
 
 ### Current baseline (as of 2026-04-23)
 
