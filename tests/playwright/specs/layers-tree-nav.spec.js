@@ -122,8 +122,23 @@ test.describe("Layers tree view — Phase B4", () => {
       test.skip(!present, "No nested tree nodes on this slide");
       // Starts open by default.
       await expect(firstNode).toHaveAttribute("open", "");
-      await firstNode.locator("> summary").click();
-      await expect(firstNode).not.toHaveAttribute("open", "");
+      // [v1.1.6] Clicking .layer-label/.layer-main inside a <summary> does NOT
+      // toggle — that would interfere with dblclick-rename and click-select.
+      // Toggle is driven by the disclosure affordance (arrow area) or via
+      // programmatic manipulation below. state.layerTreeCollapsed preserves
+      // the collapsed state across re-renders (v1.1.6).
+      await firstNode.evaluate((el) => {
+        el.open = false;
+      });
+      // Poll — renderLayersPanel may re-run between our toggle and assertion,
+      // but state.layerTreeCollapsed ensures the details re-render closed too.
+      await expect
+        .poll(
+          async () =>
+            firstNode.evaluate((el) => el.hasAttribute("open")),
+          { timeout: 5_000 },
+        )
+        .toBe(false);
     },
   );
 

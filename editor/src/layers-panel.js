@@ -31,6 +31,118 @@
         updateInspectorFromSelection();
       }
 
+      // [v1.1.6 / ADR-034] Set user-authored layer name (data-layer-name).
+      // Empty string clears the attr → getLayerLabel falls back to the auto
+      // derivation (tag + author id / class / text preview).
+      function renameLayerNode(nodeId, rawName) {
+        if (!nodeId || !state.modelDoc) return;
+        const node = state.modelDoc.querySelector(`[data-editor-node-id="${cssEscape(nodeId)}"]`);
+        if (!node) return;
+        const nextName = String(rawName || "").trim();
+        const prev = node.getAttribute("data-layer-name") || "";
+        if (nextName === prev) return;
+        if (nextName) {
+          node.setAttribute("data-layer-name", nextName);
+        } else {
+          node.removeAttribute("data-layer-name");
+        }
+        recordHistoryChange(`rename-layer:${nodeId}`);
+        sendToBridge("update-attributes", {
+          nodeId,
+          attrs: nextName ? { "data-layer-name": nextName } : { "data-layer-name": null },
+        });
+        renderLayersPanel();
+        updateInspectorFromSelection();
+      }
+      window.renameLayerNode = renameLayerNode;
+
+      // [v1.1.6] Swap `.layer-label` span for an <input>, commit on Enter/blur,
+      // cancel on Escape. Sets state.layerRenameActive so renderLayersPanel
+      // can skip re-renders that would detach the input mid-edit.
+      function startInlineLayerRename(labelEl, nodeId) {
+        if (!(labelEl instanceof HTMLElement) || !nodeId) return;
+        if (labelEl.querySelector(".layer-label-input")) return; // already editing
+        const currentText = labelEl.textContent || "";
+        state.layerRenameActive = nodeId;
+        const input = document.createElement("input");
+        input.type = "text";
+        input.className = "layer-label-input";
+        input.value = currentText;
+        input.setAttribute("aria-label", "Новое имя слоя");
+        input.maxLength = 60;
+        let committed = false;
+        const finish = (shouldCommit) => {
+          if (committed) return;
+          committed = true;
+          state.layerRenameActive = null;
+          if (shouldCommit) {
+            renameLayerNode(nodeId, input.value);
+          } else {
+            labelEl.textContent = currentText;
+          }
+        };
+        input.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            finish(true);
+          } else if (event.key === "Escape") {
+            event.preventDefault();
+            finish(false);
+          }
+        });
+        input.addEventListener("blur", () => finish(true));
+        labelEl.textContent = "";
+        labelEl.appendChild(input);
+        input.focus();
+        input.select();
+      }
+      window.startInlineLayerRename = startInlineLayerRename;
+
+      // [v1.1.6] Open the layer-row context menu at given coordinates. Selects
+      // the row first so the main inspector + floating toolbar follow.
+      function openLayerRowContextMenu({ nodeId, clientX, clientY }) {
+        if (!nodeId || !els.contextMenu) return;
+        closeShellPanels?.({ keep: "context-menu" });
+        closeTransientShellUi?.({ keep: "context-menu" });
+        sendToBridge("select-element", { nodeId });
+        const payload = {
+          menuScope: "layer-row",
+          nodeId,
+          slideId: state.activeSlideId,
+          origin: "layers-panel",
+          shellClientX: clientX,
+          shellClientY: clientY,
+        };
+        state.contextMenuNodeId = nodeId;
+        state.contextMenuPayload = payload;
+        renderContextMenu(payload);
+        positionContextMenu(clientX, clientY);
+        els.contextMenu.classList.add("is-open");
+        els.contextMenu.setAttribute("aria-hidden", "false");
+        window.requestAnimationFrame(() =>
+          getContextMenuButtons?.()[0]?.focus({ preventScroll: true }),
+        );
+      }
+      window.openLayerRowContextMenu = openLayerRowContextMenu;
+
+      // [v1.1.6] Reorder a layer within its current slide's z-order list.
+      // direction = "forward" (render on top — moves later in DOM; in our
+      // z-sorted render it moves up in the list) or "backward".
+      function moveLayerInStack(nodeId, direction) {
+        if (!nodeId || !state.modelDoc) return;
+        const rows = Array.from(
+          els.layersListContainer?.querySelectorAll(".layer-row[data-layer-node-id]") || [],
+        );
+        const fromIndex = rows.findIndex(
+          (row) => row.getAttribute("data-layer-node-id") === nodeId,
+        );
+        if (fromIndex < 0) return;
+        const toIndex = direction === "forward" ? fromIndex - 1 : fromIndex + 1;
+        if (toIndex < 0 || toIndex >= rows.length) return;
+        reorderLayers(fromIndex, toIndex);
+      }
+      window.moveLayerInStack = moveLayerInStack;
+
       function toggleLayerVisibility(nodeId) {
         if (!nodeId) return;
         const nextHidden = !isLayerSessionHidden(nodeId);
@@ -101,6 +213,12 @@
 
       function getLayerLabel(el) {
         const nodeId = el.getAttribute("data-editor-node-id") || "?";
+        // [v1.1.6] User-authored data-layer-name takes precedence over any
+        // auto-generated label. Preserved on export by the regular
+        // clean-export path (data-editor-* is stripped, but data-layer-name
+        // is a user-facing attribute — see exportStripList override in B5 code).
+        const userName = (el.getAttribute("data-layer-name") || "").trim();
+        if (userName) return userName;
         const entityKind = el.getAttribute("data-editor-entity-kind") || "element";
         const authorId = el.getAttribute("data-node-id") || "";
         const tagName = el.tagName.toLowerCase();
@@ -271,6 +389,9 @@
         syncInactiveLayersHost();
         var activeHost = getActiveLayersHost();
         if (!els.layersListContainer || !activeHost) return;
+        // [v1.1.6] Skip re-render while inline rename input is active; the
+        // input lives inside an element that would be destroyed by innerHTML.
+        if (state.layerRenameActive) return;
         var standalone = Boolean(
           window.featureFlags && window.featureFlags.layersStandalone,
         );
@@ -467,6 +588,8 @@
       // [v1.1.5 / ADR-034] Recursive render of the tree. Nodes with children
       // render as <details><summary>row</summary>...children...</details>; leaf
       // nodes render as plain row div so focus and click bindings stay uniform.
+      // [v1.1.6] Open/closed state is preserved across renders via
+      // state.layerTreeCollapsed — a Set of nodeIds the user explicitly closed.
       function renderLayerTreeNodes(nodes, depth, ctx) {
         return nodes
           .map((entry) => {
@@ -478,8 +601,13 @@
               renderAsSummary: true,
             });
             const childrenHtml = renderLayerTreeNodes(entry.children, depth + 1, ctx);
+            const collapsed = Boolean(
+              state.layerTreeCollapsed &&
+                entry.nodeId &&
+                state.layerTreeCollapsed.has(entry.nodeId),
+            );
             return `
-              <details class="layer-tree-node" open data-layer-tree-depth="${depth}">
+              <details class="layer-tree-node" ${collapsed ? "" : "open"} data-layer-tree-depth="${depth}" data-layer-tree-nodeid="${escapeHtml(entry.nodeId)}">
                 ${summaryHtml}
                 <div class="layer-tree-children">${childrenHtml}</div>
               </details>
@@ -488,8 +616,66 @@
           .join("");
       }
 
+      // [v1.1.6] Delegated listeners on the container — survive innerHTML
+      // wipes from re-renders. Bound once per container lifetime.
+      function bindDelegatedLayerListeners() {
+        if (!els.layersListContainer) return;
+        if (els.layersListContainer.dataset.delegatedBound === "true") return;
+        els.layersListContainer.dataset.delegatedBound = "true";
+        // Track explicit user collapse across re-renders.
+        if (!(state.layerTreeCollapsed instanceof Set)) {
+          state.layerTreeCollapsed = new Set();
+        }
+        // `<details>` fires a native "toggle" event when open changes. Capture
+        // the resulting state so the next render preserves it.
+        els.layersListContainer.addEventListener("toggle", (event) => {
+          const details = event.target;
+          if (!(details instanceof HTMLDetailsElement)) return;
+          const nodeId = details.getAttribute("data-layer-tree-nodeid");
+          if (!nodeId) return;
+          if (details.open) state.layerTreeCollapsed.delete(nodeId);
+          else state.layerTreeCollapsed.add(nodeId);
+        }, true);
+        els.layersListContainer.addEventListener("dblclick", (event) => {
+          const label = event.target.closest(".layer-label");
+          if (!label) return;
+          const row = label.closest(".layer-row[data-layer-node-id]");
+          if (!row || !els.layersListContainer.contains(row)) return;
+          event.preventDefault();
+          event.stopPropagation();
+          const nodeId = row.getAttribute("data-layer-node-id");
+          if (nodeId) startInlineLayerRename(label, nodeId);
+        });
+        els.layersListContainer.addEventListener("contextmenu", (event) => {
+          const row = event.target.closest(".layer-row[data-layer-node-id]");
+          if (!row) return;
+          event.preventDefault();
+          event.stopPropagation();
+          const nodeId = row.getAttribute("data-layer-node-id");
+          if (!nodeId) return;
+          if (typeof window.openLayerRowContextMenu === "function") {
+            window.openLayerRowContextMenu({
+              nodeId,
+              clientX: event.clientX,
+              clientY: event.clientY,
+            });
+          }
+        });
+        // Delegated keydown for F2 (works even when row re-rendered after focus).
+        els.layersListContainer.addEventListener("keydown", (event) => {
+          if (event.key !== "F2") return;
+          const row = event.target.closest(".layer-row[data-layer-node-id]");
+          if (!row) return;
+          event.preventDefault();
+          const label = row.querySelector(".layer-label");
+          const nodeId = row.getAttribute("data-layer-node-id");
+          if (label && nodeId) startInlineLayerRename(label, nodeId);
+        });
+      }
+
       function bindLayersPanelActions() {
         if (!els.layersListContainer) return;
+        bindDelegatedLayerListeners();
         const rows = Array.from(
           els.layersListContainer.querySelectorAll(".layer-row[data-layer-node-id]"),
         );
@@ -499,13 +685,22 @@
           rows[nextIndex].focus({ preventScroll: true });
         };
         rows.forEach((row) => {
+          const rowIsSummary = row.tagName === "SUMMARY";
           row.addEventListener("click", (e) => {
             if (
               e.target.closest(".layer-action-btn") ||
               e.target.closest(".layer-z-input") ||
-              e.target.closest(".layer-drag-handle")
+              e.target.closest(".layer-drag-handle") ||
+              e.target.closest(".layer-label-input")
             ) {
               return;
+            }
+            // [v1.1.6] When the row is a <summary> (tree-mode parent node),
+            // clicking on label/body should NOT toggle <details> — that would
+            // block the dblclick-rename gesture and expand/collapse on every
+            // select. Preserve toggle via the disclosure arrow area only.
+            if (rowIsSummary && e.target.closest(".layer-label, .layer-main, .layer-trailing")) {
+              e.preventDefault();
             }
             const nodeId = row.getAttribute("data-layer-node-id");
             if (nodeId) {

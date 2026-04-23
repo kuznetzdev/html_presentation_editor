@@ -1,5 +1,64 @@
 # CHANGELOG
 
+## [1.1.6] — 2026-04-24 — Phase B5: Inline rename + layer-row context menu
+
+Sixth micro-step of Phase B. Adds Figma/PSD-style layer management: rename
+layers inline, right-click for contextual actions. Layer names are authored
+via `data-layer-name` which survives clean HTML export (only `data-editor-*`
+is stripped).
+
+### Added
+
+- `editor/src/layers-panel.js`:
+  - `renameLayerNode(nodeId, rawName)` — writes `data-layer-name` on model,
+    syncs to bridge, records history. Empty input clears the attribute.
+  - `startInlineLayerRename(labelEl, nodeId)` — swaps the label span for an
+    `<input>`; commits on Enter/blur, cancels on Escape. Sets
+    `state.layerRenameActive` so renderLayersPanel skips re-renders that
+    would detach the input.
+  - `openLayerRowContextMenu({nodeId, clientX, clientY})` — selects the row,
+    then opens the shared context menu with `menuScope: "layer-row"`.
+  - `moveLayerInStack(nodeId, direction)` — wrapper around reorderLayers.
+  - `bindDelegatedLayerListeners` — delegated dblclick/contextmenu/keydown
+    on `els.layersListContainer`; survives innerHTML wipes between renders.
+  - `getLayerLabel` now prefers `data-layer-name` when set.
+  - Collapsed tree-node state tracked in `state.layerTreeCollapsed` Set;
+    preserved across re-renders.
+- `editor/src/context-menu.js`:
+  - `menuScope === "layer-row"` — Rename / Duplicate / Bring forward /
+    Send backward / Toggle lock / Toggle visibility / Delete actions.
+  - Action handlers re-use `duplicateSelectedElement` /
+    `deleteSelectedElement` / `toggleLayerLock` / `toggleLayerVisibility`.
+- `editor/styles/layers-region.css`: `.layer-label-input` inline styling.
+- `tests/playwright/specs/layers-rename-context.spec.js` — 10 new tests:
+  dblclick rename, Enter commit, Escape cancel, label text update,
+  data-layer-name preserved in clean export, right-click menu opens,
+  menu → rename, menu → toggle visibility, F2 hotkey, menu closes on action.
+- Gate-A expanded to 85 tests (75 → 85).
+
+### Fixed
+
+- Tree toggle state now persists across re-renders via
+  `state.layerTreeCollapsed` Set + native `toggle` event capture.
+
+### UX Notes
+
+- Clicking label/main/trailing area of a tree-mode `<summary>` no longer
+  toggles `<details>` — that conflicted with dblclick-rename and
+  click-select. Toggle happens via disclosure arrow area.
+
+### Non-breaking
+
+- Gate-A: **85/5/0** (up from 75/5/0).
+- Typecheck: clean.
+- `data-layer-name` round-trip verified via clean-export contract.
+
+### Related
+
+- ADR-034 Layer Tree DnD — rename + context menu shipped; DnD reparent deferred.
+
+---
+
 ## [1.1.5] — 2026-04-24 — Phase B4: Layers tree view (ADR-034)
 
 Fifth micro-step of Phase B. Replaces the flat z-order list with a

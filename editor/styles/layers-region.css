@@ -106,4 +106,24 @@
   .layers-list-container.is-tree-mode .layer-tree-node:not([open]) .layer-tree-children {
     display: none;
   }
+
+  /* -------------------------------------------------------------------------
+   * v1.1.6 / Phase B5 — Inline rename input
+   * Replaces .layer-label span while editing; visually matches the label.
+   * ----------------------------------------------------------------------- */
+  .layer-label-input {
+    width: 100%;
+    font: inherit;
+    color: inherit;
+    background: var(--surface-elevated, rgba(255, 255, 255, 0.9));
+    border: 1px solid var(--border-accent, rgba(0, 113, 227, 0.35));
+    border-radius: 4px;
+    padding: 2px 6px;
+    outline: none;
+    box-shadow: 0 0 0 2px var(--state-focus-ring, rgba(0, 113, 227, 0.18));
+  }
+
+  .layer-label-input:focus-visible {
+    border-color: var(--shell-accent, #0071e3);
+  }
 }

@@ -5,6 +5,75 @@
       // Меню строится динамически под текущий тип элемента: текст, картинка,
       // video/iframe, контейнер. Это уменьшает шум и делает меню «человечным».
       function buildContextMenuItems(payload) {
+        // [v1.1.6 / Phase B5] Layer-row menuScope — triggered by right-click
+        // on a row in the persistent Layers panel. Actions target the row's
+        // own nodeId (selected beforehand by openLayerRowContextMenu).
+        if (payload?.menuScope === "layer-row") {
+          const targetNodeId = String(payload.nodeId || "");
+          const node = targetNodeId && state.modelDoc
+            ? state.modelDoc.querySelector(`[data-editor-node-id="${cssEscape(targetNodeId)}"]`)
+            : null;
+          const isLocked = Boolean(node?.getAttribute("data-editor-locked") === "true");
+          const isHidden = targetNodeId
+            ? (typeof isLayerSessionHidden === "function"
+              ? Boolean(isLayerSessionHidden(targetNodeId))
+              : false)
+            : false;
+          const hasUserName = Boolean(node?.getAttribute("data-layer-name"));
+          const items = [
+            {
+              section: "format",
+              action: "layer-rename",
+              icon: "✎",
+              label: hasUserName ? "Переименовать" : "Задать имя",
+              hint: "F2",
+            },
+            {
+              section: "structure",
+              action: "layer-duplicate",
+              icon: "⧉",
+              label: "Дублировать",
+              hint: "",
+            },
+            {
+              section: "structure",
+              action: "layer-bring-forward",
+              icon: "↑",
+              label: "Перенести вперёд",
+              hint: "",
+            },
+            {
+              section: "structure",
+              action: "layer-send-backward",
+              icon: "↓",
+              label: "Отправить назад",
+              hint: "",
+            },
+            {
+              section: "structure",
+              action: "layer-toggle-lock",
+              icon: isLocked ? "🔓" : "🔒",
+              label: isLocked ? "Разблокировать" : "Заблокировать",
+              hint: "",
+            },
+            {
+              section: "structure",
+              action: "layer-toggle-visibility",
+              icon: isHidden ? "👁" : "🙈",
+              label: isHidden ? "Показать слой" : "Скрыть слой",
+              hint: "",
+            },
+            {
+              section: "remove",
+              action: "layer-delete",
+              icon: "✕",
+              label: "Удалить слой",
+              hint: "Delete",
+              danger: true,
+            },
+          ];
+          return items;
+        }
         if (payload?.menuScope === "slide-rail") {
           const slideIndex = Number(payload.slideIndex);
           const slideCount = Number(payload.slideCount || state.slides.length || 0);
@@ -533,7 +602,78 @@
           state.contextMenuPayload?.menuScope === "slide-rail"
             ? state.contextMenuPayload
             : null;
+        // [v1.1.6] Layer-row menuScope payload provides the target nodeId
+        // independently of state.selectedNodeId. Most actions call the same
+        // implementations as the main context menu but against this nodeId.
+        const layerRowPayload =
+          state.contextMenuPayload?.menuScope === "layer-row"
+            ? state.contextMenuPayload
+            : null;
+        const layerRowNodeId = layerRowPayload?.nodeId || "";
         switch (action) {
+          case "layer-rename": {
+            closeContextMenu();
+            if (!layerRowNodeId) break;
+            const row = els.layersListContainer?.querySelector(
+              `.layer-row[data-layer-node-id="${cssEscape(layerRowNodeId)}"]`,
+            );
+            const labelEl = row?.querySelector(".layer-label");
+            if (row && labelEl && typeof window.startInlineLayerRename === "function") {
+              window.startInlineLayerRename(labelEl, layerRowNodeId);
+            }
+            break;
+          }
+          case "layer-duplicate":
+            closeContextMenu();
+            if (layerRowNodeId) {
+              sendToBridge("select-element", { nodeId: layerRowNodeId });
+              window.requestAnimationFrame(() => {
+                if (typeof duplicateSelectedElement === "function") {
+                  duplicateSelectedElement();
+                }
+              });
+            }
+            break;
+          case "layer-delete":
+            if (
+              layerRowNodeId &&
+              window.confirm("Удалить этот слой? Действие можно отменить через Undo.")
+            ) {
+              closeContextMenu();
+              sendToBridge("select-element", { nodeId: layerRowNodeId });
+              window.requestAnimationFrame(() => {
+                if (typeof deleteSelectedElement === "function") {
+                  deleteSelectedElement();
+                }
+              });
+            } else {
+              closeContextMenu();
+            }
+            break;
+          case "layer-toggle-lock":
+            closeContextMenu();
+            if (layerRowNodeId && typeof toggleLayerLock === "function") {
+              toggleLayerLock(layerRowNodeId);
+            }
+            break;
+          case "layer-toggle-visibility":
+            closeContextMenu();
+            if (layerRowNodeId && typeof toggleLayerVisibility === "function") {
+              toggleLayerVisibility(layerRowNodeId);
+            }
+            break;
+          case "layer-bring-forward":
+            closeContextMenu();
+            if (layerRowNodeId && typeof window.moveLayerInStack === "function") {
+              window.moveLayerInStack(layerRowNodeId, "forward");
+            }
+            break;
+          case "layer-send-backward":
+            closeContextMenu();
+            if (layerRowNodeId && typeof window.moveLayerInStack === "function") {
+              window.moveLayerInStack(layerRowNodeId, "backward");
+            }
+            break;
           case "slide-duplicate":
             if (slideRailPayload?.slideId) duplicateSlideById(slideRailPayload.slideId);
             break;
