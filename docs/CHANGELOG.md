@@ -1,5 +1,44 @@
 # CHANGELOG
 
+## [1.1.2] — 2026-04-23 — Docs: V2 Continuation Prompt
+
+Docs-only patch. No code changes. No UX change.
+
+### Added
+
+- `docs/V2-CONTINUATION-PROMPT.md` — comprehensive copy-paste prompt for
+  continuing the v2.0 redesign in a fresh agent session. Applies
+  Role-Task-Context-Constraints-Examples-StopCriteria prompt engineering
+  pattern. Includes:
+  - Mandatory context-load order (6 files)
+  - Baseline verification commands with expected outputs per release
+  - Execution loop structure (13 steps per logical unit)
+  - All invariants from MASTERPLAN §1 enumerated inline
+  - Positive + negative examples (follows rhythm / skips phases /
+    skips verification / batches commits / uses `git add .` /
+    vault-writes-without-skill)
+  - Stop conditions (when to halt and report to user)
+  - Success criteria checklist for v2.0.0 done-ness
+  - Behavioral guidelines cross-linking CLAUDE.md + AGENT-SYSTEM-INSTRUCTION
+  - Quick-reference cheat sheet
+  - Self-test instructions for verifying the prompt works
+  - Prompt engineering rationale (patterns applied)
+- `docs/V2-MASTERPLAN.md` §10: short inline version retained + link to
+  V2-CONTINUATION-PROMPT.md as canonical.
+
+### Non-breaking
+
+- Gate-A: 65/5/0 preserved (no code touched).
+- Typecheck: clean.
+
+### Purpose
+
+Ensures continuity across multiple agent sessions. Any fresh session can
+load context identically and resume mid-phase without drift in invariants,
+commit rhythm, or vault discipline.
+
+---
+
 ## [1.1.1] — 2026-04-23 — Phase B1: Split-pane scaffold (dormant)
 
 Second micro-step of Phase B. Scaffolds the Figma-style split-pane layout

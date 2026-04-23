@@ -776,7 +776,15 @@ User can opt out via devtools `window.featureFlags.X = "v1"` (persisted). Reset 
 
 ## 10. Continuation prompt (for next agent session)
 
-If starting a fresh session to continue this work, give the agent this exact prompt:
+> **Primary reference:** [docs/V2-CONTINUATION-PROMPT.md](./V2-CONTINUATION-PROMPT.md)
+> (shipped in v1.1.2 — full Role-Task-Constraints-Examples-StopCriteria format
+> with self-test instructions and prompt engineering rationale).
+>
+> The short version below is kept for quick inline reference. For a fresh
+> session, paste the content between `---PROMPT-BEGIN---` / `---PROMPT-END---`
+> markers in V2-CONTINUATION-PROMPT.md — it's the canonical version.
+
+### Short inline version
 
 ```
 You are continuing the v2.0 redesign of kuznetzdev/html_presentation_editor.
