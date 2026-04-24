@@ -483,32 +483,33 @@
         const entityKind = layer.getAttribute("data-editor-entity-kind") || "element";
         const isLocked = layer.getAttribute("data-editor-locked") === "true";
         const isHidden = isLayerSessionHidden(nodeId);
-        const zIndex = layer.style.zIndex || "auto";
         const label = escapeHtml(getLayerLabel(layer));
         const isActive = nodeId === state.selectedNodeId;
         const stackHint = `${getEntityKindLabel(entityKind)} · ${formatLayerStackHint(
           index,
           sortedLayers.length,
         )}`;
+        // [v2.0.6] Row chips carry STATE, not selection.
+        // - "Текущий" removed: the .is-active row highlight + aria-current
+        //   already communicate "this is the selected layer" both visually
+        //   and to assistive tech. A dedicated chip was pure noise.
+        // - "Скрыт" / "Заблокирован" kept: those are state the eye/lock
+        //   icons toggle, and the chip reinforces WHY that state exists
+        //   when the user scans a long list.
         const chips = [];
-        if (isActive) chips.push({ label: "Текущий", className: "is-current" });
         if (isHidden) chips.push({ label: "Скрыт", className: "is-hidden" });
         if (isLocked && showAdvancedControls) {
           chips.push({ label: "Заблокирован", className: "is-locked" });
         }
-        const zControl = isActive && showAdvancedControls
-          ? `
-            <label class="layer-z-field" title="z-index текущего слоя">
-              <span>z</span>
-              <input
-                type="text"
-                class="layer-z-input"
-                value="${escapeHtml(zIndex)}"
-                data-layer-node-id="${escapeHtml(nodeId)}"
-              />
-            </label>
-          `
-          : "";
+        // [v2.0.6] Inline "z: auto" text input removed.
+        // It was redundant with three existing paths to the same capability:
+        //   1. Inspector → Layout → z-index (precise edit, every element)
+        //   2. Ctrl+Shift+↑/↓ (bring-to-front / send-to-back shortcuts)
+        //   3. "Упорядочить стек" button in inspector (normalize whole slide)
+        // The field also displayed "auto" for 99% of elements (elements
+        // without explicit z-index), which read as meaningless clutter.
+        // Drag-and-drop reorder via the leading grip handle remains
+        // unchanged; that is the visual-first path to reorder a layer.
         // [v1.2.1] Prefer SVG icons when enabled; fall back to emoji otherwise.
         const iconOf = typeof window.iconMarkup === "function" ? window.iconMarkup : null;
         const gripIcon = iconOf ? iconOf("grip-vertical", "⋮⋮") : "⋮⋮";
@@ -563,7 +564,6 @@
             <div class="layer-trailing">
               <div class="layer-status-list">${buildLayerStatusChipsHtml(chips)}</div>
               <div class="layer-row-actions">
-                ${zControl}
                 <button
                   type="button"
                   class="layer-action-btn layer-visibility-btn ${isHidden ? "is-hidden" : ""}"
@@ -714,7 +714,6 @@
           row.addEventListener("click", (e) => {
             if (
               e.target.closest(".layer-action-btn") ||
-              e.target.closest(".layer-z-input") ||
               e.target.closest(".layer-drag-handle") ||
               e.target.closest(".layer-label-input")
             ) {
@@ -823,21 +822,11 @@
             if (nodeId) toggleLayerVisibility(nodeId);
           });
         });
-        els.layersListContainer.querySelectorAll(".layer-z-input").forEach((input) => {
-          input.addEventListener("change", (e) => {
-            e.stopPropagation();
-            const nodeId = input.getAttribute("data-layer-node-id");
-            const newZ = input.value.trim();
-            if (nodeId && newZ) {
-              sendToBridge("apply-style", { nodeId, property: "z-index", value: newZ });
-              recordHistoryChange(`set-z-index:${nodeId}:${newZ}`);
-              scheduleOverlapDetection();
-              renderLayersPanel();
-              updateInspectorFromSelection();
-            }
-          });
-          input.addEventListener("click", (e) => e.stopPropagation());
-        });
+        // [v2.0.6] Inline z-input removed; no per-row z-index handler remains.
+        // z-index editing routes exclusively through:
+        //   - #zIndexInput in the inspector "Расположение" section
+        //   - Ctrl+Shift+Arrow shortcuts (bring/send)
+        //   - Drag-and-drop reorder via .layer-drag-handle
       }
 
       function groupSelectedElements() {

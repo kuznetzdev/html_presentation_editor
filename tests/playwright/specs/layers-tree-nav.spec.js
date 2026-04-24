@@ -184,7 +184,7 @@ test.describe("Layers tree view — Phase B4", () => {
   );
 
   test(
-    "Basic mode hides advanced controls (lock button, z-index input) @stage-f",
+    "Basic mode hides advanced controls (lock button, drag handle) @stage-f",
     async ({ page }, testInfo) => {
       test.skip(!isChromiumOnlyProject(testInfo.project.name));
       await loadDeck(page);
@@ -192,11 +192,10 @@ test.describe("Layers tree view — Phase B4", () => {
       // Confirm we are in basic mode by default.
       const mode = await evaluateEditor(page, "state.complexityMode");
       expect(mode).toBe("basic");
+      // [v2.0.6] Inline .layer-z-input was removed in the panel declutter.
+      // Basic-mode gating is now verified via lock-btn + drag-handle only.
       await expect(
         page.locator("#layersListContainer .layer-lock-btn"),
-      ).toHaveCount(0);
-      await expect(
-        page.locator("#layersListContainer .layer-z-input"),
       ).toHaveCount(0);
       await expect(
         page.locator("#layersListContainer .layer-drag-handle"),

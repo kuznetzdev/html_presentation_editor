@@ -1,5 +1,85 @@
 # CHANGELOG
 
+## [2.0.6] — 2026-04-24 — Layer panel declutter (remove inline z-input + Текущий chip)
+
+User screenshot follow-up on the v2.0.5 layer panel fixes. The row
+still showed an inline `z: auto` text input next to the eye + lock
+icons on the active row, and a "Текущий" chip that duplicated the
+`.is-active` row highlight. Both read as noise rather than
+affordance.
+
+### Removed
+
+**Inline `.layer-z-field` + `.layer-z-input`** — a holdover from
+pre-inspector-redesign days when row-level z-editing was the only
+way to reach it. It is now redundant with three existing paths:
+1. Inspector → "Расположение" → z-index (precise edit, every element).
+2. `Ctrl+Shift+↑/↓` — bring-to-front / send-to-back shortcuts.
+3. "Упорядочить стек" button — normalize whole slide.
+4. Drag handle (grip) — visual-first reorder.
+
+The field also defaulted to `"auto"` for 99% of elements (anything
+without explicit z-index), which read as broken or meaningless.
+Removing it reclaims trailing-area width for chips + icons and
+eliminates the confusing default value.
+
+**`"Текущий"` chip** — duplicated the `.is-active` row highlight and
+`aria-current="true"` attribute without adding information. Sighted
+users see the background change; assistive tech reads `aria-current`.
+The chip was pure noise on an already-dense row.
+
+### Kept
+
+- `"Скрыт"` and `"Заблокирован"` chips — these carry STATE the user
+  needs to scan (hidden / locked layers in a long list). Their
+  corresponding icons are toggle controls, not state badges, so the
+  chip reinforces the distinction.
+
+### Fixed
+
+**Dblclick-to-rename guard** — the click router no longer special-
+cases `.layer-z-input` (which no longer exists).
+
+### Tests
+
+- `tests/playwright/specs/layers-tree-nav.spec.js` — "Basic mode
+  hides advanced controls" now asserts on `.layer-lock-btn` +
+  `.layer-drag-handle` only; the removed `.layer-z-input` assertion
+  would have been a tautology against the new template.
+- `tests/playwright/specs/stage-o-layers-lock-group.spec.js` — the
+  active-row check now uses `aria-current="true"` (single source of
+  truth for "this row is selected") instead of the removed chip +
+  input.
+
+### Non-breaking
+
+- Typecheck: clean.
+- Z-index editing capability fully preserved via four existing paths
+  (inspector field, two shortcut pairs, drag-and-drop, normalize).
+- No HTML contract changes — purely row template + 2 CSS rules + 1
+  JS handler block removed.
+
+### Files
+
+- `editor/src/layers-panel.js` — zControl block + handler + dblclick
+  guard removed; "Текущий" chip push removed.
+- `editor/styles/inspector.css` — `.layer-z-field` + `.layer-z-input`
+  + `.layer-status-chip.is-current` deleted.
+- `tests/playwright/specs/layers-tree-nav.spec.js` — basic-mode spec
+  updated.
+- `tests/playwright/specs/stage-o-layers-lock-group.spec.js` —
+  active-row spec updated.
+
+### Honest note
+
+The row-level z-input shipped in v0.18.x before the inspector had
+its own z-index field. By v1.0 it was redundant, and by v2.0 the
+row had so many trailing controls that the z-input read as a random
+text field. The capability deprecation was overdue; this tag pays
+off that debt.
+
+---
+
 ## [2.0.5] — 2026-04-24 — Layer panel UX rescue (icons-on-left, labels, hover)
 
 User screenshot caught a severe Layer panel regression: the "hide"

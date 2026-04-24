@@ -158,11 +158,13 @@ test.describe("stage-o-layers-lock-group @stage-o", () => {
       .toBe(targetNodeId);
     const selectedNodeId = targetNodeId;
 
-    // Verify the corresponding layer row has is-active class
+    // [v2.0.6] Verify the corresponding layer row is selected.
+    // "Текущий" chip + inline .layer-z-input were both removed in the
+    // panel declutter — the row's .is-active class and aria-current="true"
+    // are now the single source of truth for "this row is selected".
     const activeRow = page.locator(`.layer-row.is-active[data-layer-node-id="${selectedNodeId}"]`);
     await expect(activeRow).toBeVisible();
-    await expect(activeRow).toContainText("Текущий");
-    await expect(page.locator(".layer-z-input:visible")).toHaveCount(1);
+    await expect(activeRow).toHaveAttribute("aria-current", "true");
 
     // Click on a different layer row
     const secondNodeId = await page.evaluate((currentSelectedNodeId) => {

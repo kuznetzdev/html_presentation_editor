@@ -541,11 +541,11 @@ textarea {
   white-space: nowrap;
 }
 
-.layer-status-chip.is-current {
-  border-color: color-mix(in srgb, var(--text-accent) 40%, var(--border-subtle));
-  background: color-mix(in srgb, var(--surface-accent-soft) 34%, transparent);
-  color: var(--text-primary);
-}
+/* [v2.0.6] Removed: .layer-status-chip.is-current.
+   The "Текущий" chip duplicated the .is-active row highlight +
+   aria-current="true" without adding information. Leaving the rule
+   would leave a dead selector; removing it cleans the inspector
+   sheet and matches the row template. */
 
 /* [v2.0.5] Use shell-text (theme-adaptive) instead of hardcoded white —
    was creating a washed-out light-grey island on dark panels. Dark-mode
@@ -573,24 +573,12 @@ textarea {
   gap: 6px;
 }
 
-.layer-z-field {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: var(--text-secondary);
-}
-
-.layer-z-input {
-  width: 56px;
-  padding: 2px 4px;
-  font-size: 12px;
-  text-align: center;
-  border: 1px solid var(--border-subtle);
-  border-radius: 6px;
-  background: var(--shell-bg);
-  color: var(--text-primary);
-}
+/* [v2.0.6] Removed: .layer-z-field + .layer-z-input inline z-index editor.
+   The row-level z-index field was redundant with the inspector's dedicated
+   #zIndexInput + "Упорядочить стек" normalization + Ctrl+Shift+Arrow
+   shortcuts + drag-handle reorder. Removing it reclaims trailing-area
+   width for the chips + eye + lock cluster and eliminates the confusing
+   "z: auto" default value that most users could not interpret. */
 
 .layer-action-btn {
   width: 28px;
