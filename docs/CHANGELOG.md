@@ -1,5 +1,42 @@
 # CHANGELOG
 
+## [1.5.4] — 2026-04-24 — Golden export contract + recovery scenarios
+
+Hardening sprint #5. Two contract test suites that lock the existing
+behavior in place so future refactors can't silently regress export
+cleanliness or recovery flows.
+
+### Tests added
+
+- `tests/playwright/specs/golden-export-clean.spec.js` — 7 tests:
+  - No `data-editor-*` attrs in serialized export
+  - No `contenteditable=` / `spellcheck=` attrs
+  - No bridge script / helper styles tags
+  - No `base[data-editor-preview-base]`
+  - Zero duplicate IDs in exported HTML
+  - User-authored `data-layer-name` is preserved
+- `tests/playwright/specs/recovery-scenarios.spec.js` — 7 tests:
+  - Invalid pixelSize input rejected (no model mutation)
+  - Invalid hexColor input rejected
+  - withActionBoundary rolls back partial mutations on throw
+  - Undo restores deleted slide (snapshot-based history)
+  - Undo strips a duplicate slide
+  - Autosave writes to sessionStorage at the canonical key
+  - tryRestoreDraftPrompt is exposed for restore-prompt flows
+
+### Non-breaking
+
+- No production code changes — pure verification.
+- Gate-A: target ≥ 232/5/0.
+- Typecheck: clean.
+
+### Related
+
+- "Golden export checks" + "Recovery tests" lines of the must-have
+  list closed.
+
+---
+
 ## [1.5.3] — 2026-04-24 — Bridge schema strictness + import corpus
 
 Hardening sprint #4. Locks down two contracts that are foundational
