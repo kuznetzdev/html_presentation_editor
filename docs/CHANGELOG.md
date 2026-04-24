@@ -1,5 +1,70 @@
 # CHANGELOG
 
+## [2.0.4] — 2026-04-24 — Import-report modal opacity + dark-theme readability
+
+User screenshot again caught a real bug the previous visual
+regressions missed:
+
+### Fixed
+
+**Import report modal was visually transparent** — the `.modal-dialog`
+element had no background, letting the empty-state card underneath
+bleed through. The report text overlapped with "Откройте HTML-
+презентацию" headline and the empty-state CTA button.
+Root cause: `import-report-modal.css` left `.modal-dialog` styling
+empty, relying on a `.modal-card` class from `modal.css` — but my
+modal HTML uses `.modal-dialog` (standard Bootstrap-ish naming),
+NOT `.modal-card`.
+
+Fix: full `.import-report-modal .modal-dialog` treatment matching
+`.modal-card` — shell-panel background, border, border-radius 16px,
+max-height 80vh, modal shadow. Plus dedicated styles for
+`.modal-header` (border-bottom + title treatment),
+`.modal-close-btn` (hover/focus-visible states),
+`.modal-body` (padding + scroll), `.modal-footer` (border-top,
+sticky bottom, gap for actions).
+
+**Dark-theme readability** in the modal was also broken:
+- `--text-muted` / `--text-primary` / `--surface-subtle` references
+  fell back to light-mode rgb() hardcodes, unreadable on dark panel.
+  Replaced with `--shell-text` / `--shell-text-muted` /
+  `--shell-field-muted` tokens that adapt to theme.
+- Complexity pills (low/medium/high/severe) had dark-tinted text
+  on light backgrounds — illegible on dark panel. Added
+  `[data-theme="dark"]` overrides with higher-contrast lighter
+  tones for text.
+- Warning chip ("inline-script", etc.) same treatment — dark-mode
+  override for the blue chip background + text.
+
+### Tests
+
+- `import-pipeline-v2.spec.js` — new test "Report modal dialog has
+  opaque background (empty-state not bleeding through)": asserts
+  computed `background-color` is not `rgba(0, 0, 0, 0)` or
+  `transparent`.
+
+### Non-breaking
+
+- import-pipeline-v2: 18/0 passing (up from 17).
+- Typecheck: clean.
+
+### Files
+
+- `editor/styles/import-report-modal.css` — full modal dialog +
+  dark-theme readability overrides
+- `tests/playwright/specs/import-pipeline-v2.spec.js` — opacity
+  regression test
+
+### Honest note
+
+v2.0.0 shipped with a transparent modal for 5 days. The
+import-pipeline-v2 spec covered BEHAVIOR (modal opens, Continue
+loads, Cancel aborts) but not VISUAL correctness (is it readable).
+Adding a computed-style assertion is cheap and lasting. Will apply
+the same pattern to other modals in follow-up.
+
+---
+
 ## [2.0.3] — 2026-04-24 — Critical v2 layout fixes (empty-state + split-pane grid)
 
 User-reported visual regression fix. Three real layout bugs that

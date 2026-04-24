@@ -256,6 +256,26 @@ test.describe("Smart Import Pipeline v2 — report modal gating", () => {
   );
 
   test(
+    "Report modal dialog has opaque background (empty-state not bleeding through) @stage-f",
+    async ({ page }, testInfo) => {
+      test.skip(!isChromiumOnlyProject(testInfo.project.name));
+      await gotoFreshEditor(page);
+      await page.click("#openHtmlBtn");
+      await page.fill("#pasteHtmlTextarea", REVEAL_SAMPLE);
+      await page.click("#loadPastedHtmlBtn");
+      await expect(page.locator("#importReportModal.is-open")).toBeVisible();
+      // .modal-dialog must resolve to a non-transparent background.
+      const bgColor = await page.evaluate(() => {
+        const dlg = document.querySelector("#importReportModal .modal-dialog");
+        return window.getComputedStyle(dlg).backgroundColor;
+      });
+      // Color should NOT be 'rgba(0, 0, 0, 0)' or 'transparent'.
+      expect(bgColor).not.toBe("rgba(0, 0, 0, 0)");
+      expect(bgColor).not.toBe("transparent");
+    },
+  );
+
+  test(
     "Clicking Cancel aborts the load without updating state.modelDoc @stage-f",
     async ({ page }, testInfo) => {
       test.skip(!isChromiumOnlyProject(testInfo.project.name));

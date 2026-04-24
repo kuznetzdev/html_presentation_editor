@@ -9,9 +9,74 @@
     /* Reuse .modal from modal.css — this namespace only sets local styles. */
   }
 
+  /* [v2.0.4] Fully opaque modal-dialog — was transparent before, letting
+     the empty-state card underneath bleed through. Matches .modal-card
+     treatment from modal.css plus this modal's own max-width. */
   .import-report-modal .modal-dialog {
-    max-width: 640px;
-    width: calc(100% - 48px);
+    width: min(640px, calc(100% - 48px));
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--shell-border);
+    border-radius: var(--radius-lg, 16px);
+    background: var(--shell-panel);
+    color: var(--shell-text);
+    box-shadow: var(--shell-modal-shadow, var(--shadow-modal, 0 24px 60px rgba(0, 0, 0, 0.35)));
+  }
+
+  .import-report-modal .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--shell-border);
+  }
+
+  .import-report-modal .modal-header h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--shell-text);
+  }
+
+  .import-report-modal .modal-close-btn {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--shell-text-muted);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background var(--motion-micro, 120ms) var(--ease-out, ease);
+  }
+
+  .import-report-modal .modal-close-btn:hover,
+  .import-report-modal .modal-close-btn:focus-visible {
+    background: var(--state-hover, rgba(0, 0, 0, 0.06));
+  }
+
+  .import-report-modal .modal-body {
+    padding: 16px 20px;
+    overflow: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .import-report-modal .modal-footer,
+  .import-report-modal .import-report-footer {
+    padding: 12px 20px 16px;
+    border-top: 1px solid var(--shell-border);
+    background: var(--shell-panel);
+    gap: 8px;
+    display: flex;
+    justify-content: flex-end;
   }
 
   .import-report-summary {
@@ -27,9 +92,11 @@
     gap: 2px;
   }
 
+  /* [v2.0.4] Text colors use shell-text tokens so they adapt to dark
+     mode. Previous hardcoded rgb() values were legible only in light. */
   .import-report-summary dt {
     font-size: 12px;
-    color: var(--text-muted, rgba(29, 29, 31, 0.56));
+    color: var(--shell-text-muted);
     text-transform: uppercase;
     letter-spacing: 0.04em;
   }
@@ -38,17 +105,17 @@
     font-size: 16px;
     font-weight: 500;
     margin: 0;
-    color: var(--text-primary, #1d1d1f);
+    color: var(--shell-text);
   }
 
   .import-report-confidence {
-    color: var(--text-muted, rgba(29, 29, 31, 0.56));
+    color: var(--shell-text-muted);
     font-weight: 400;
     font-size: 14px;
   }
 
   .import-report-muted {
-    color: var(--text-muted, rgba(29, 29, 31, 0.56));
+    color: var(--shell-text-muted);
     font-weight: 400;
     font-size: 13px;
   }
@@ -62,6 +129,8 @@
     font-size: 15px;
   }
 
+  /* [v2.0.4] Complexity pills — light-mode tones; dark-mode overrides
+     below keep text readable on dark surfaces. */
   .import-report-complexity-low {
     background: rgba(46, 184, 124, 0.15);
     color: rgb(24, 110, 73);
@@ -82,12 +151,29 @@
     color: rgb(164, 22, 34);
   }
 
+  [data-theme="dark"] .import-report-complexity-low {
+    background: rgba(46, 184, 124, 0.22);
+    color: rgb(140, 220, 180);
+  }
+  [data-theme="dark"] .import-report-complexity-medium {
+    background: rgba(255, 175, 38, 0.28);
+    color: rgb(255, 210, 140);
+  }
+  [data-theme="dark"] .import-report-complexity-high {
+    background: rgba(255, 95, 46, 0.30);
+    color: rgb(255, 170, 140);
+  }
+  [data-theme="dark"] .import-report-complexity-severe {
+    background: rgba(215, 38, 46, 0.32);
+    color: rgb(255, 150, 160);
+  }
+
   .import-report-section-title {
     margin: 16px 0 8px;
     font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--text-muted, rgba(29, 29, 31, 0.56));
+    color: var(--shell-text-muted);
   }
 
   .import-report-warning-list {
@@ -104,10 +190,11 @@
     gap: 8px;
     align-items: flex-start;
     padding: 8px 10px;
-    background: var(--surface-subtle, rgba(0, 0, 0, 0.02));
+    background: var(--shell-field-muted, rgba(0, 0, 0, 0.04));
     border-radius: 6px;
     font-size: 13px;
     line-height: 1.4;
+    color: var(--shell-text);
   }
 
   .import-report-warning .chip {
@@ -121,9 +208,14 @@
     white-space: nowrap;
   }
 
+  [data-theme="dark"] .import-report-warning .chip {
+    background: rgba(77, 163, 255, 0.22);
+    color: rgb(170, 210, 255);
+  }
+
   .import-report-noop {
     margin: 0;
-    color: var(--text-muted, rgba(29, 29, 31, 0.56));
+    color: var(--shell-text-muted);
     font-size: 13px;
   }
 
