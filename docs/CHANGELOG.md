@@ -1,5 +1,63 @@
 # CHANGELOG
 
+## [2.0.0] — 2026-04-24 — General Availability 🎉
+
+The polished no-code HTML presentation editor. Everything from the
+v1.0.3 → v2.0.0 trajectory consolidated into a stable release.
+
+See **[docs/RELEASE-v2.0.md](./RELEASE-v2.0.md)** for the full release
+notes. Highlights below.
+
+### Headline capabilities
+
+- Persistent **Layers panel** with tree view, inline rename, context
+  menu — visible in basic + advanced modes (V2-01).
+- **Smart Import Pipeline v2** — 8 framework detectors, 4 inference
+  strategies, 0–10 complexity score, pre-flight report modal, deck
+  health badge.
+- **Multi-select** + **alignment toolbar** + Ctrl+G group + Shift+R
+  rotate cycle + 4 PPT-style shortcuts (Ctrl+G, Ctrl+Shift+G/↑/↓).
+- **PPTX Fidelity v2** helpers (font/svg/gradient/preflight). Pre-flight
+  runs before legacy export. Marked Beta.
+- **Error recovery** — `withActionBoundary` snapshot/rollback +
+  `InputValidators` registry wired to inspector inputs.
+- **Unified Undo toast** with ≥ 5s TTL on all destructive slide ops.
+- **Onboarding v2** first-session hints; **aria-live** on save/loading
+  surfaces; **focus-visible** ring across the shell.
+- **SVG icon sprite** with 35 currentColor icons; **dark-theme parity**
+  with refreshed visual baselines.
+- **Experimental badges** mark beta-stage features honestly.
+
+### Quality
+
+- Gate-A grew from 65 → 240+ tests across 22 specs.
+- 10-deck import corpus regression suite.
+- Golden export contract + recovery scenarios + long-session sync +
+  docs-sync gate.
+- Bridge mutation schema verified across all message types.
+
+### Defaults
+
+```js
+{ layoutVersion: "v2", layersStandalone: true, treeLayers: true,
+  multiSelect: true, pptxV2: true, smartImport: "report",
+  svgIcons: true }
+```
+
+### Compatibility
+
+- Existing `data-editor-*` model preserved.
+- All keyboard shortcuts additive (no chord rebound).
+- localStorage flag persistence — pre-v1.1.4 users keep their stored
+  prefs; reset via `window.resetFeatureFlags()` to opt into v2 defaults.
+
+### Tag history
+
+22 incremental tags (v1.1.0 → v1.5.5) with one-logical-unit-per-tag
+rhythm. Full sequence in `docs/RELEASE-v2.0.md`.
+
+---
+
 ## [1.5.5] — 2026-04-24 — Long-session sync + docs-sync gate
 
 Hardening sprint #6 — final pre-v2.0 verification layer. Two new

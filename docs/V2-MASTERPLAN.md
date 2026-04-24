@@ -138,7 +138,8 @@ These cannot be violated at any point in any phase. Gate-A enforces most.
 | v1.5.2 | 2026-04-24 | Hardening | 5ea40a6 | 187/5/0 | Undo toast + onboarding wired + boundary on duplicate/delete (+6 specs) |
 | v1.5.3 | 2026-04-24 | Hardening | e9d5a72 | 219/5/0 | Bridge schema strictness + 10-deck import corpus (+32 specs) |
 | v1.5.4 | 2026-04-24 | Hardening | 4b047f8 | 232/5/0 | Golden export contract + recovery scenarios (+13 specs) |
-| v1.5.5 | 2026-04-24 | Hardening | (pending) | 242/5/0 | Long-session sync + docs-sync gate (+10 specs) |
+| v1.5.5 | 2026-04-24 | Hardening | 354d37f | 242/5/0 | Long-session sync + docs-sync gate (+10 specs) |
+| **v2.0.0** | **2026-04-24** | **GA** | **(pending)** | **≥240/5/0** | **General Availability — see docs/RELEASE-v2.0.md** |
 
 ### Current baseline (as of 2026-04-23)
 
