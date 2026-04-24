@@ -1,5 +1,41 @@
 # CHANGELOG
 
+## [1.3.0] — 2026-04-24 — Phase C3: visual regression baseline + reduce-motion (ADR-033)
+
+Ninth tag and Phase C minor bump. Refreshes the visual regression
+baselines to match the v2 layout shift (split-pane left column,
+persistent Layers panel, SVG icons). Extends `prefers-reduced-motion`
+coverage to v2 redesign surfaces.
+
+### Added / Updated
+
+- `editor/styles/responsive.css`: extended `@media (prefers-reduced-motion:
+  reduce)` selector list to include the v2 surfaces — `.layer-row`,
+  `.layer-tree-node > summary` (and arrow `::before`), `.layer-label-input`,
+  `.left-pane-resizer`, `.layers-region`, `#layersRegion`,
+  `.import-report-modal` + `.modal-dialog`, `.icon`. Animations and
+  transforms are nuked in this mode.
+- Visual baselines (15 surfaces ×2 themes already covered by
+  `tests/visual/shell-visual.spec.js`): regenerated for v2 layout where
+  the split-pane / standalone-layers shift moves DOM around.
+
+### Non-breaking
+
+- Gate-A: 102/5/0 preserved.
+- gate-visual: 15/0/0 (×2 themes already in original set).
+- Typecheck: clean.
+
+### Notes
+
+- Full AAA contrast verification + axe-color-contrast rule deferred to
+  E3 a11y gate expansion. Existing dark-theme tokens already meet AA.
+
+### Related
+
+- ADR-033 Theme System v3 — V2-09 (focus consistency) + reduce-motion shipped.
+
+---
+
 ## [1.2.2] — 2026-04-24 — Phase C2: focus-visible ring + motion tokens
 
 Eighth tag toward v2.0. Formalizes the focus-visible treatment across

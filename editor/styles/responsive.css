@@ -483,7 +483,19 @@ body[data-complexity-mode="basic"] [data-ui-level="advanced"]:not([data-force-ba
   .quick-palette,
   .toast,
   .spinner,
-  .section-toggle .section-caret {
+  .section-toggle .section-caret,
+  /* [v1.3.0 / Phase C3] Extended coverage for v2 redesign surfaces. */
+  .layer-row,
+  .layer-tree-node > summary,
+  .layer-tree-node > summary::before,
+  .layer-label-input,
+  .left-pane-resizer,
+  .left-pane-resizer::before,
+  .layers-region,
+  #layersRegion,
+  .import-report-modal,
+  .import-report-modal .modal-dialog,
+  .icon {
     transition: none !important;
     animation: none !important;
     transform: none !important;

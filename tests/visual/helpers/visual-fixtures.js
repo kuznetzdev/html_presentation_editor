@@ -103,8 +103,25 @@ async function loadBasicDeck(page) {
   await page.fill("#baseUrlInput", BASIC_MANUAL_BASE_URL);
   await page.setInputFiles("#fileInput", BASIC_DECK_PATH);
   await page.locator("#loadFileBtn").click();
+  // [v1.3.0] Auto-dismiss the Smart Import preprocessing report modal
+  // (featureFlags.smartImport === "report" by default). Visual tests
+  // assert the loaded shell, not the modal itself.
+  await dismissImportReportModalIfPresent(page);
   await waitForPreviewReady(page);
   await page.locator("#previewFrame").waitFor({ state: "visible", timeout: 10_000 });
+}
+
+async function dismissImportReportModalIfPresent(page) {
+  const modal = page.locator("#importReportModal.is-open");
+  try {
+    await modal.waitFor({ state: "visible", timeout: 2_000 });
+  } catch {
+    return;
+  }
+  await page
+    .locator("#importReportModal [data-import-report-continue]")
+    .click();
+  await modal.waitFor({ state: "hidden", timeout: 4_000 }).catch(() => {});
 }
 
 /**
