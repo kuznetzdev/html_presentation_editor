@@ -104,6 +104,12 @@ interface Window {
   clearMultiSelect?: () => boolean;
   selectAllOnSlide?: () => boolean;
   bindMultiSelectShortcuts?: () => void;
+  /** [v1.3.2] Alignment toolbar (Phase D2). */
+  alignSelection?: (direction: string) => boolean;
+  distributeSelection?: (axis: "horizontal" | "vertical") => boolean;
+  refreshAlignmentToolbar?: () => void;
+  bindAlignmentShortcuts?: () => void;
+  ensureAlignmentToolbarRoot?: () => HTMLElement;
   /** [v1.1.0] Feature flag registry (ADR-031..037). */
   featureFlags?: {
     layoutVersion?: "v1" | "v2";

@@ -1,0 +1,61 @@
+/* =============================================================================
+ * alignment-toolbar.css — surfaces over the canvas when ≥ 2 nodes selected
+ * Phase D2 (ADR-031 / ADR-033 polish).
+ * ===========================================================================
+ */
+
+@layer alignment-toolbar {
+  .alignment-toolbar {
+    position: fixed;
+    top: 110px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 6px;
+    background: var(--surface-elevated, #fff);
+    border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.08));
+    border-radius: 8px;
+    box-shadow: var(--shadow-floating, 0 8px 24px rgba(0, 0, 0, 0.12));
+    z-index: 980;
+    transition:
+      opacity var(--motion-base, 180ms) var(--ease-out, ease),
+      transform var(--motion-base, 180ms) var(--ease-out, ease);
+  }
+
+  .alignment-toolbar[hidden] {
+    display: none !important;
+  }
+
+  .alignment-toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 6px;
+    color: var(--text-primary, #1d1d1f);
+    cursor: pointer;
+    transition: background var(--motion-micro, 120ms) var(--ease-out, ease);
+    font-size: 14px;
+  }
+
+  .alignment-toolbar-btn:hover:not(:disabled),
+  .alignment-toolbar-btn:focus-visible {
+    background: var(--state-hover, rgba(0, 0, 0, 0.04));
+  }
+
+  .alignment-toolbar-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .alignment-toolbar-btn .icon {
+    width: 18px;
+    height: 18px;
+  }
+}

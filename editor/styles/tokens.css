@@ -7,7 +7,9 @@
    report modal (ADR-035). Activated by featureFlags.smartImport !== "off". */
 /* [v1.2.1] Added `icons` layer for SVG icon sprite sizing / currentColor
    fallback styles (ADR-033). Activated by featureFlags.svgIcons === true. */
-@layer banners, tokens, base, layout, preview, broken-asset-banner, layers-region, inspector, precision, overlay, modal, split-pane, import-report-modal, icons, responsive;
+/* [v1.3.2] Added `alignment-toolbar` layer for Phase D2 multi-select toolbar
+   (8 align/distribute actions). Activated by featureFlags.multiSelect. */
+@layer banners, tokens, base, layout, preview, broken-asset-banner, layers-region, inspector, precision, overlay, modal, split-pane, import-report-modal, icons, alignment-toolbar, responsive;
 
 @layer tokens {
 /* ======================================================================

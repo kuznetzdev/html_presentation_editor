@@ -24,9 +24,13 @@
   function refreshMultiSelectAnchor() {
     if (!Array.isArray(state.multiSelectNodeIds) || state.multiSelectNodeIds.length === 0) {
       state.multiSelectAnchorNodeId = null;
-      return;
+    } else {
+      state.multiSelectAnchorNodeId = state.multiSelectNodeIds[0];
     }
-    state.multiSelectAnchorNodeId = state.multiSelectNodeIds[0];
+    // [v1.3.2 / Phase D2] Refresh alignment toolbar visibility.
+    if (typeof window.refreshAlignmentToolbar === "function") {
+      window.refreshAlignmentToolbar();
+    }
   }
 
   function clearMultiSelect() {
@@ -37,6 +41,10 @@
     state.multiSelectNodeIds = [];
     state.multiSelectAnchorNodeId = null;
     if (typeof refreshUi === "function") refreshUi();
+    // [v1.3.2 / Phase D2] Hide alignment toolbar on clear.
+    if (typeof window.refreshAlignmentToolbar === "function") {
+      window.refreshAlignmentToolbar();
+    }
     return true;
   }
 
@@ -61,6 +69,9 @@
     state.multiSelectNodeIds = ids.slice();
     state.multiSelectAnchorNodeId = ids[0];
     if (typeof refreshUi === "function") refreshUi();
+    if (typeof window.refreshAlignmentToolbar === "function") {
+      window.refreshAlignmentToolbar();
+    }
     return true;
   }
 

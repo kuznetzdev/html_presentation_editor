@@ -60,6 +60,9 @@
         bindGlobalShortcuts();
         // [v1.3.1 / Phase D1] Multi-select keyboard shortcuts (Ctrl+A, Escape).
         window.bindMultiSelectShortcuts?.();
+        // [v1.3.2 / Phase D2] Alignment toolbar shortcuts + initial mount.
+        window.ensureAlignmentToolbarRoot?.();
+        window.bindAlignmentShortcuts?.();
         bindClipboardAndDnD();
         bindContextMenu();
         bindLayerPicker();

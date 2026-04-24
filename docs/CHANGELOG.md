@@ -1,5 +1,58 @@
 # CHANGELOG
 
+## [1.3.2] — 2026-04-24 — Phase D2: alignment toolbar
+
+Eleventh tag — extends Phase D direct-manipulation work with a floating
+alignment toolbar that appears when ≥ 2 nodes are multi-selected.
+6 alignment actions + 2 distribute actions, with keyboard parity.
+
+### Added
+
+- `editor/src/alignment-toolbar.js`:
+  - `align(direction)` — left / centerH / right / top / middle / bottom.
+    Computes combined bounds, moves each unlocked node, commits + bridges.
+  - `distribute(axis)` — horizontal / vertical. Equalizes spacing
+    between first and last sorted item; needs ≥ 3 selected.
+  - `ensureToolbarRoot()` — lazy DOM mount of `#alignmentToolbar`.
+  - `refreshToolbarVisibility()` — surfaces / hides + disables distribute
+    buttons when only 2 selected.
+  - `bindAlignmentShortcuts()` — Ctrl+Shift+L/E/R/T/M/B for align,
+    Ctrl+Shift+H/V for distribute.
+- `editor/styles/alignment-toolbar.css` — floating chip-row, hover/disabled
+  states, motion tokens, focus-visible.
+- `tokens.css`: `alignment-toolbar` layer added (between `icons` and
+  `responsive`).
+- `editor/src/multi-select.js`: `selectAllOnSlide` and `clearMultiSelect`
+  now call `window.refreshAlignmentToolbar()` so the surface stays in
+  sync with the selection set.
+- `tests/playwright/specs/alignment-toolbar.spec.js` — 10 tests.
+
+### UX rules
+
+- Locked nodes (`data-editor-locked="true"`) are read-only; the toolbar
+  still counts them in bounding-box math but doesn't move them.
+- Distribute needs ≥ 3 nodes; buttons disabled below the threshold.
+- Shortcuts are no-op when fewer than 2 nodes are selected.
+
+### Wiring
+
+- `presentation-editor.html` loads `alignment-toolbar.js` after
+  `multi-select.js`; CSS link added.
+- `boot.js init()` calls `ensureAlignmentToolbarRoot()` +
+  `bindAlignmentShortcuts()`.
+
+### Non-breaking
+
+- Gate-A: target ≥ 120/5/0.
+- Typecheck: clean.
+
+### Related
+
+- Phase D2 contract: 6 align + 2 distribute actions surfaces with
+  multiSelect.
+
+---
+
 ## [1.3.1] — 2026-04-24 — Phase D1: multi-select coordination
 
 Tenth tag toward v2.0 — kicks off Phase D (direct manipulation). Allows
