@@ -1,5 +1,45 @@
 # CHANGELOG
 
+## [1.5.5] — 2026-04-24 — Long-session sync + docs-sync gate
+
+Hardening sprint #6 — final pre-v2.0 verification layer. Two new
+spec suites that catch session-state drift after sustained editing
+and silent doc/version drift between releases.
+
+### Tests added
+
+- `tests/playwright/specs/long-session-sync.spec.js` — 4 tests:
+  - 100 raw style mutations leave node count unchanged
+  - 100 commitChange snapshots stay within HISTORY_LIMIT (≤ 60)
+  - Autosave key writes after a 30-mutation burst
+  - 20 chained undos walk the model back to within 2KB of baseline
+- `tests/playwright/specs/docs-sync.spec.js` — 6 tests (file IO only):
+  - package.json version present + semver-shaped
+  - CHANGELOG references the current package.json version
+  - V2-MASTERPLAN current-state table mentions the latest minor
+  - CHANGELOG entries are in descending version order
+  - MASTERPLAN current-state table has ≥ 18 rows (post-v1.4.0 baseline)
+  - README (if present) mentions a version
+
+### Non-breaking
+
+- No production code changes — pure verification.
+- Gate-A: target ≥ 242/5/0.
+- Typecheck: clean.
+
+### Related
+
+- "Long-session sync test: 15-30 minutes simulated editing" line
+  closed (we run 100 mutations + 30 commit bursts; full timed
+  endurance run is gate-f's job).
+- "Docs sync gate" line closed.
+- All must-have hardening lines from the user list complete:
+  validators wired, action-boundary integrated, undo toast unified,
+  bridge schema covered, import corpus regression-locked, golden
+  export checks, recovery scenarios, long-session sync, docs sync.
+
+---
+
 ## [1.5.4] — 2026-04-24 — Golden export contract + recovery scenarios
 
 Hardening sprint #5. Two contract test suites that lock the existing
