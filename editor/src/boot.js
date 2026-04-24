@@ -58,6 +58,8 @@
         bindRuntimeGuards();
         bindUnloadWarning();
         bindGlobalShortcuts();
+        // [v1.3.1 / Phase D1] Multi-select keyboard shortcuts (Ctrl+A, Escape).
+        window.bindMultiSelectShortcuts?.();
         bindClipboardAndDnD();
         bindContextMenu();
         bindLayerPicker();

@@ -172,12 +172,15 @@
               case "document-sync":
                 applyDocumentSyncFromBridge(data.payload || {}, bridgeSeq);
                 break;
-              // [v0.18.0] Multi-select support — [WO-31] mode-gate + basic-mode honesty toast
+              // [v0.18.0] Multi-select support — [WO-31] basic mode now also
+              // honors multi-select when featureFlags.multiSelect is on (D1).
               case "multi-select-add": {
                 const nodeId = data.payload?.nodeId;
                 if (!nodeId) break;
-                if (state.complexityMode !== "advanced") {
-                  // Basic mode: show a toast once per session explaining the current state.
+                const multiSelectEnabled = Boolean(
+                  window.featureFlags && window.featureFlags.multiSelect,
+                );
+                if (!multiSelectEnabled && state.complexityMode !== "advanced") {
                   if (!sessionStorage.getItem("editor:multi-select-toast-shown")) {
                     showToast(
                       "Мульти-выбор — в разработке. Временно доступно в продвинутом режиме: Правка → Группировать.",
@@ -186,10 +189,17 @@
                     );
                     sessionStorage.setItem("editor:multi-select-toast-shown", "1");
                   }
-                  break; // do not mutate state.multiSelectNodeIds in basic mode
+                  break;
                 }
-                if (!state.multiSelectNodeIds.includes(nodeId)) {
+                // Toggle: shift-click on already-selected element removes it.
+                const idx = state.multiSelectNodeIds.indexOf(nodeId);
+                if (idx >= 0) {
+                  state.multiSelectNodeIds.splice(idx, 1);
+                } else {
                   state.multiSelectNodeIds.push(nodeId);
+                }
+                if (typeof window.refreshMultiSelectAnchor === "function") {
+                  window.refreshMultiSelectAnchor();
                 }
                 break;
               }

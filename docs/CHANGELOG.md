@@ -1,5 +1,55 @@
 # CHANGELOG
 
+## [1.3.1] — 2026-04-24 — Phase D1: multi-select coordination
+
+Tenth tag toward v2.0 — kicks off Phase D (direct manipulation). Allows
+selecting multiple elements on a slide via shift-click toggle or Ctrl+A;
+exposes a clean module API (`window.selectAllOnSlide`, `clearMultiSelect`,
+`refreshMultiSelectAnchor`) that future Phase D tags will consume.
+
+### Added
+
+- `editor/src/multi-select.js` — new module:
+  - `selectAllOnSlide()` — populates `state.multiSelectNodeIds` with every
+    editable node on the active slide; sets anchor.
+  - `clearMultiSelect()` — empties set + anchor; returns true if anything
+    was cleared.
+  - `refreshMultiSelectAnchor()` — pins anchor to first id (used by
+    bridge.js after a shift-click toggle).
+  - `bindMultiSelectShortcuts()` — Ctrl/Cmd+A → select-all; Escape → clear.
+    Skips form-control targets so text editing still works.
+- `editor/src/state.js`: `state.multiSelectAnchorNodeId: null` field
+  (typed in `globals.d.ts`).
+- `editor/src/globals.d.ts`: extended `interface Window` with all v2
+  redesign helpers (Phase B/C/D), `featureFlags`, `resetFeatureFlags`.
+- `tests/playwright/specs/multi-select.spec.js` — 8 tests: flag default,
+  selectAllOnSlide success/empty cases, anchor placement, clearMultiSelect,
+  Ctrl+A keyboard, Escape clear, bridge toggle behavior.
+- Gate-A expanded with the spec.
+
+### Changed
+
+- `editor/src/feature-flags.js`: `multiSelect` default `false` → `true`.
+- `editor/src/bridge.js`: `multi-select-add` handler now toggles (not just
+  appends) and honors `featureFlags.multiSelect` for basic-mode
+  multi-select.
+- `editor/src/boot.js`: `init()` calls `bindMultiSelectShortcuts()`.
+
+### Non-breaking
+
+- Shift-click toast in basic mode is gated by the flag — when off (manual
+  override), the legacy "in development" toast still appears.
+- Combined bounding-box overlay deferred to D2 alignment-toolbar work.
+- Gate-A: target ≥ 110/5/0.
+- Typecheck: clean.
+
+### Related
+
+- ADR contracts: state extension is the foundation for D2 (alignment
+  toolbar) and D4 (group/duplicate keyboard shortcuts).
+
+---
+
 ## [1.3.0] — 2026-04-24 — Phase C3: visual regression baseline + reduce-motion (ADR-033)
 
 Ninth tag and Phase C minor bump. Refreshes the visual regression

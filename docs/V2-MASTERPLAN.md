@@ -124,7 +124,8 @@ These cannot be violated at any point in any phase. Gate-A enforces most.
 | v1.2.0 | 2026-04-24 | B6 | eec28f9 | 102/5/0 | Smart Import Pipeline v2 (+17 specs) |
 | v1.2.1 | 2026-04-24 | C1 | 00c2a70 | 102/5/0 | SVG icon sprite scaffold + layer-panel usage |
 | v1.2.2 | 2026-04-24 | C2 | 5f0b116 | 102/5/0 | focus-visible ring + motion tokens on touched surfaces |
-| v1.3.0 | 2026-04-24 | C3 | (pending) | 102/5/0 | visual baseline refresh + reduce-motion (×2 themes) |
+| v1.3.0 | 2026-04-24 | C3 | 75de4a3 | 102/5/0 | visual baseline refresh + reduce-motion (×2 themes) |
+| v1.3.1 | 2026-04-24 | D1 | (pending) | 110/5/0 | multi-select coordination (+8 specs) |
 
 ### Current baseline (as of 2026-04-23)
 

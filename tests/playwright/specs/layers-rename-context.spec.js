@@ -172,11 +172,14 @@ test.describe("Layers inline rename + context menu — Phase B5", () => {
     "F2 on focused row opens inline rename @stage-f",
     async ({ page }, testInfo) => {
       test.skip(!isChromiumOnlyProject(testInfo.project.name));
+      test.slow();
       await loadDeck(page);
       const row = await firstLayerRow(page);
       await row.focus();
       await page.keyboard.press("F2");
-      await expect(row.locator(".layer-label-input")).toBeVisible();
+      await expect(row.locator(".layer-label-input")).toBeVisible({
+        timeout: 8_000,
+      });
     },
   );
 

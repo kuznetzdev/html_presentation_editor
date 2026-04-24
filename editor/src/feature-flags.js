@@ -64,9 +64,10 @@
     treeLayers: true,
 
     // Phase D — true multi-select (shift-click, Ctrl+A).
-    // false = single selection only (current behavior).
-    // true  = state.selection.multiple[] + combined bounding box.
-    multiSelect: false,
+    // false = single selection only (legacy behavior).
+    // true  = state.multiSelectNodeIds[] + Ctrl+A select-all-on-slide.
+    // [v1.3.1] flipped: false → true as part of Phase D1.
+    multiSelect: true,
 
     // ADR-036 — PPTX export fidelity v2.
     // false = v1 inline-style position + basic export (current).

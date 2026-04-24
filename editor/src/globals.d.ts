@@ -73,4 +73,47 @@ interface Window {
   _stateProxy: unknown;
   /** Callback injected by precision.js to handle sibling-rects bridge response. */
   precisionHandleSiblingRectsResponse?: (payload: unknown) => void;
+  /** [v1.1.1] Apply layoutVersion body attr (ADR-032). */
+  applyLayoutVersionAttribute?: () => void;
+  /** [v1.1.1] Apply layersStandalone body attr (ADR-031). */
+  applyLayersStandaloneAttribute?: () => void;
+  /** [v1.1.1] Initialize the left-pane resizer when v2 layout is active. */
+  initLeftPaneSplitter?: () => void;
+  /** [v1.1.3] Reparent the layers list container per layersStandalone flag. */
+  ensureLayersContainerPlacement?: () => void;
+  /** [v1.1.6] Open the layer-row context menu. */
+  openLayerRowContextMenu?: (opts: { nodeId: string; clientX: number; clientY: number }) => void;
+  /** [v1.1.6] Start inline rename on a layer label. */
+  startInlineLayerRename?: (label: HTMLElement, nodeId: string) => void;
+  /** [v1.1.6] Persist user-authored layer name. */
+  renameLayerNode?: (nodeId: string, name: string) => void;
+  /** [v1.1.6] Move a layer forward/backward in the slide z-order. */
+  moveLayerInStack?: (nodeId: string, direction: "forward" | "backward") => void;
+  /** [v1.2.0] Smart Import Pipeline v2 namespace + entry point. */
+  ImportPipelineV2?: Record<string, unknown>;
+  runImportPipelineV2?: (htmlString: string) => Record<string, unknown>;
+  showImportReportModal?: (
+    report: Record<string, unknown>,
+    callbacks: { onContinue?: () => void; onCancel?: () => void },
+  ) => unknown;
+  /** [v1.2.1] SVG icon sprite helpers. */
+  injectIconSprite?: () => void;
+  iconMarkup?: (name: string, fallbackEmoji?: string) => string;
+  /** [v1.3.1] Multi-select coordination (Phase D1). */
+  refreshMultiSelectAnchor?: () => void;
+  clearMultiSelect?: () => boolean;
+  selectAllOnSlide?: () => boolean;
+  bindMultiSelectShortcuts?: () => void;
+  /** [v1.1.0] Feature flag registry (ADR-031..037). */
+  featureFlags?: {
+    layoutVersion?: "v1" | "v2";
+    layersStandalone?: boolean;
+    treeLayers?: boolean;
+    multiSelect?: boolean;
+    pptxV2?: boolean;
+    smartImport?: "off" | "report" | "full";
+    svgIcons?: boolean;
+    [key: string]: unknown;
+  };
+  resetFeatureFlags?: () => void;
 }
