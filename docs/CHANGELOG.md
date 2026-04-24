@@ -1,5 +1,52 @@
 # CHANGELOG
 
+## [1.5.3] — 2026-04-24 — Bridge schema strictness + import corpus
+
+Hardening sprint #4. Locks down two contracts that are foundational
+for v2.0:
+1. Every BRIDGE_MESSAGES mutation type has a real validator (or is
+   explicitly schema-free).
+2. The Smart Import detector + inference behavior is now regressed
+   against a 10-deck reference corpus.
+
+### Added — `tests/fixtures/import-corpus/index.js`
+
+Ten reference HTML strings (one per detector + 2 generic edge cases),
+each tagged with expected framework, expected slide-inference strategy,
+and minimum slide count. Cases:
+- reveal, impress, spectacle, marp, slidev, mso-pptx, canva, notion
+- generic-h1-split (multiple <h1> → h1-split inference)
+- generic-section (explicit `<section data-slide-id>`)
+
+### Tests
+
+- `tests/playwright/specs/import-corpus.spec.js` — 22 tests:
+  - Corpus has ≥ 10 entries
+  - For each entry: detector picks the expected framework + inference
+    picks the expected strategy + complexity score in [0..10] range
+- `tests/playwright/specs/bridge-mutation-schema.spec.js` — 10 tests:
+  - BRIDGE_SCHEMA exposed
+  - validateMessage rejects unknown type
+  - validateDeleteElement / validateDuplicateElement reject empty
+    payload, accept payload with nodeId
+  - validateApplyStyle rejects empty styleName, accepts well-formed
+  - validateUpdateAttributes rejects payload missing nodeId+attrs
+  - validateNudgeElement rejects payload without dx/dy
+  - BRIDGE_MESSAGES has ≥ 25 mutation types
+
+### Non-breaking
+
+- No production code changes — pure verification.
+- Gate-A: target ≥ 219/5/0.
+- Typecheck: clean.
+
+### Related
+
+- "Bridge mutation schemas for mutations" + "Import corpus" lines of
+  the must-have list closed.
+
+---
+
 ## [1.5.2] — 2026-04-24 — Unified Undo toast + onboarding wired + boundary on duplicate/delete
 
 Hardening sprint #3. Closes V2-07 ("Every destructive action has Undo

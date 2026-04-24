@@ -135,7 +135,8 @@ These cannot be violated at any point in any phase. Gate-A enforces most.
 | v1.4.3 | 2026-04-24 | E3 | f2c6921 | 168/5/0 | onboarding v2 + aria-live surfaces (+8 specs) |
 | v1.5.0 | 2026-04-24 | Hardening | 9b84a57 | 176/5/0 | Validators wired + experimental badges (+8 specs) |
 | v1.5.1 | 2026-04-24 | Hardening | 48992a0 | 181/5/0 | Deck health badge + action-boundary on slide ops (+5 specs) |
-| v1.5.2 | 2026-04-24 | Hardening | (pending) | 187/5/0 | Undo toast + onboarding wired + boundary on duplicate/delete (+6 specs) |
+| v1.5.2 | 2026-04-24 | Hardening | 5ea40a6 | 187/5/0 | Undo toast + onboarding wired + boundary on duplicate/delete (+6 specs) |
+| v1.5.3 | 2026-04-24 | Hardening | (pending) | 219/5/0 | Bridge schema strictness + 10-deck import corpus (+32 specs) |
 
 ### Current baseline (as of 2026-04-23)
 
