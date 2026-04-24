@@ -1,5 +1,61 @@
 # CHANGELOG
 
+## [1.4.3] — 2026-04-24 — Phase E3: onboarding v2 + aria-live surfaces
+
+Sixteenth tag and the last 1.4.x step before v2.0.0 GA. Adds a
+first-session hint module and wires `aria-live` on the save-state and
+preview-loading indicators so screen readers get SR-friendly updates.
+
+### Added
+
+- `editor/src/onboarding-v2.js`:
+  - `showHintOnce(key, message, options)` — emits a toast once per
+    storage key (`presentation-editor:onboarding-v2:v1`); returns true
+    on first fire, false after.
+  - `resetOnboardingV2()` — wipes seen keys so hints replay.
+  - `hintAfterFirstLoad` / `hintAfterFirstSelect` / `hintAfterFirstEdit`
+    — named entry points for the 3 canonical hint moments.
+  - `primeOnboardingV2()` — picks the right hint based on current
+    state, defers by 1 rAF so first paint is complete.
+- `tests/playwright/specs/onboarding-v2.spec.js` — 8 tests:
+  - API presence
+  - Once-only emission semantics
+  - Reset wiping state
+  - Named-entry-point types
+  - primeOnboardingV2 is a no-op when all seen
+  - aria-live = "polite" on #saveStatePill
+  - aria-atomic = "true" on #saveStatePill
+  - role = "status" + aria-live = "polite" on #previewLoading
+
+### Changed
+
+- `presentation-editor.html`:
+  - `#saveStatePill` got `aria-live="polite"` + `aria-atomic="true"`.
+  - `#previewLoading` got `role="status"` + `aria-live="polite"` +
+    `aria-atomic="true"`.
+
+### Deferred
+
+- Empty-state welcome card CSS animation (visual polish; queued
+  post-v2.0).
+- Keyboard-only full-journey gate-a11y expansion (27 → 50 tests) —
+  MASTERPLAN target. The foundation shipped here (aria-live +
+  onboarding hints + focus-visible ring from C2) is sufficient for
+  v2.0 GA; the corpus expansion is a separate polish iteration.
+- `resetOnboardingV2` wiring to a "Settings → Reset" UI control.
+
+### Non-breaking
+
+- Gate-A: target ≥ 168/5/0.
+- Typecheck: clean.
+
+### Related
+
+- ADR-033 V2-09 (focus-visible — Phase C2) + aria-live (Phase E3)
+  together satisfy the core screen-reader contract for v2.0.
+
+---
+
 ## [1.4.2] — 2026-04-24 — Phase E2: error recovery layers 4 + 5 (V2-03 / V2-08)
 
 Fifteenth tag. Adds two foundational error-recovery primitives used

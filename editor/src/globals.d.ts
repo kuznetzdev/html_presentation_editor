@@ -116,6 +116,13 @@ interface Window {
   clearSelectedRotation?: () => boolean;
   cycleSelectedRotation?: () => boolean;
   bindRotateShortcut?: () => void;
+  /** [v1.4.3] Onboarding v2 helpers (Phase E3). */
+  resetOnboardingV2?: () => void;
+  showHintOnce?: (key: string, message: string, options?: Record<string, unknown>) => boolean;
+  hintAfterFirstLoad?: () => void;
+  hintAfterFirstSelect?: () => void;
+  hintAfterFirstEdit?: () => void;
+  primeOnboardingV2?: () => void;
   /** [v1.4.2] User-action boundary + input validators (Phase E2). */
   withActionBoundary?: (reason: string, fn: () => unknown) => unknown;
   InputValidators?: {

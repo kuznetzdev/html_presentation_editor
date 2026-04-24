@@ -91,7 +91,11 @@
           role="group"
           aria-label="Состояние рабочей области"
         >
-          <span id="saveStatePill" class="status-pill save-pill"
+          <span
+            id="saveStatePill"
+            class="status-pill save-pill"
+            aria-live="polite"
+            aria-atomic="true"
             >Автосохранение неактивно</span
           >
           <span
@@ -565,6 +569,9 @@
               id="previewLoading"
               class="preview-loading is-visible"
               aria-hidden="false"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
             >
               <div>
                 <div class="spinner"></div>
@@ -1951,6 +1958,8 @@
     <!-- [v1.4.2 / Phase E2] Error recovery layers 4 + 5. -->
     <script src="src/user-action-boundary.js"></script>
     <script src="src/input-validators.js"></script>
+    <!-- [v1.4.3 / Phase E3] First-session hint bubbles (onboarding v2). -->
+    <script src="src/onboarding-v2.js"></script>
     <script src="src/floating-toolbar.js"></script>
     <script src="src/toolbar.js"></script>
     <script src="src/context-menu.js"></script>
