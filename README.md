@@ -236,18 +236,40 @@ See `docs/GITHUB_PACKAGES.md` for the exact recommendation and tradeoffs.
 
 ## Recent milestone tags
 
-- `v0.17.0`
-- `v0.18.0`
-- `v0.18.1`
-- `v0.18.2`
-- `v0.18.3`
-- `v0.19.0`
-- `v0.19.1`
-- `v0.19.2`
-- `v0.19.3`
-- `v0.19.4`
-- `v0.19.5`
-- `v0.19.6`
-- `ux-regression-baseline-v1`
-- `ux-direct-manipulation-v1`
-- `ux-slide-structure-v1`
+Current: **v2.0.0 — General Availability** (2026-04-24).
+Full release notes: [`docs/RELEASE-v2.0.md`](docs/RELEASE-v2.0.md).
+Post-v2 roadmap: [`docs/POST_V2_ROADMAP.md`](docs/POST_V2_ROADMAP.md).
+
+The v1.0.3 → v2.0.0 redesign trajectory: **26 incremental release
+points** (v1.1.0 → v2.0.0 inclusive) across Phases A–E + 6 hardening
+sprints.
+
+### v2.0 trajectory
+
+- `v2.0.0` — General Availability ceremony
+- `v1.5.0` … `v1.5.5` — Hardening sprints (validators wired, deck
+  health, undo toast, bridge schema, golden export, recovery,
+  long-session sync, docs-sync)
+- `v1.4.0` … `v1.4.3` — Phase D5 (PPTX Fidelity v2) + Phase E1–E3
+  (progressive disclosure, error recovery, onboarding v2)
+- `v1.3.0` … `v1.3.4` — Phase C3 (visual baseline) + Phase D1–D4
+  (multi-select, alignment toolbar, opacity/rotate, PPT shortcuts)
+- `v1.2.0` … `v1.2.2` — Phase B6 (Smart Import Pipeline v2) + Phase
+  C1–C2 (SVG icon sprite, focus-visible, motion tokens)
+- `v1.1.0` … `v1.1.6` — Phase A (foundation) + Phase B1–B5 (split-pane,
+  layers panel, tree view, rename, context menu)
+
+### Beta capabilities (visible in UI)
+
+- **PPTX export** — `pptxV2` flag is on, helpers active, but the
+  actual archive build still delegates to legacy. Marked Beta in the
+  topbar via `attachExperimentalBadge`.
+- **Smart Import "full" mode** — opt-in only via
+  `window.featureFlags.smartImport = "full"`. Default `"report"` is
+  stable.
+
+### Pre-v2 history
+
+For pre-v2 milestones (v0.17 → v1.0.3), see `git log --oneline` and
+the PAIN-MAP / Work Order registry referenced in
+`docs/SOURCE_OF_TRUTH.md`.

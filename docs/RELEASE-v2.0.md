@@ -1,8 +1,9 @@
 # Release v2.0.0 — HTML Presentation Editor
 
 **Date:** 2026-04-24
-**Trajectory:** v1.0.3 → v2.0.0 over 22 incremental tags (Phases A–E + 6
-hardening sprints).
+**Trajectory:** v1.0.3 → v2.0.0 over **26 incremental release points**
+(v1.1.0 through v2.0.0 inclusive) across Phases A–E + 6 hardening
+sprints. See the **Tag history** section below for the complete list.
 
 ---
 
@@ -147,7 +148,7 @@ Override at runtime: `window.featureFlags.X = ...`. Reset:
 
 | Gate | v1.0.3 baseline | v2.0.0 |
 |---|---|---|
-| Gate-A (chromium-desktop) | 65/5/0 | ≥ 240/5/0 (across 22 specs) |
+| Gate-A (chromium-desktop) | 65/5/0 | 242/8/0 (across 24 spec files) |
 | Gate-visual (×2 themes)   | 15/0/0 | 15/0/0 (refreshed for v2) |
 | Typecheck                 | clean  | clean |
 

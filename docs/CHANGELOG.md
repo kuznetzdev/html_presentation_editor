@@ -1,5 +1,69 @@
 # CHANGELOG
 
+## [2.0.1] — 2026-04-24 — Release integrity patch
+
+Post-v2.0 audit caught two doc-drift artifacts and one arithmetic
+mismatch. This patch closes them and strengthens the docs-sync gate
+so the same drift can't happen silently again.
+
+### Fixed
+
+- `docs/SOURCE_OF_TRUTH.md` Release-state section was still pinned to
+  `Current: v0.37.0-rc.0 — RC freeze declared 2026-04-22` and `Target
+  GA: v1.0.0 on 2026-05-06`. Updated to v2.0.0 GA with proper
+  deferred-items list. Old anchors moved to a Historical anchors
+  subsection so PAIN-MAP / WO / ADR archaeology still works.
+- `README.md` "Recent milestone tags" listed only `v0.17.0` →
+  `v0.19.6` plus three `ux-*` tags. Replaced with the v2.0 trajectory
+  summary (26 release points, beta capabilities chart, link to
+  release notes + roadmap).
+- Tag arithmetic in `docs/RELEASE-v2.0.md` and `docs/CHANGELOG.md`
+  said "22" / "23" incremental tags; actual count is **26 release
+  points** (v1.1.0 → v2.0.0 inclusive). All occurrences corrected.
+- "Across 22 specs" updated to "across 24 spec files" (gate-a actual
+  unique spec count).
+
+### Added
+
+- `docs/POST_V2_ROADMAP.md` — living document tracking the gap between
+  internal v2 GA (current state) and a true public production GA.
+  Sections: P0 (PPTX composition / a11y expansion / real-deck corpus),
+  P1 (Smart Import full / settings reset / Alt+drag / etc.), P2
+  (token migration / multi-browser gates / endurance), P3 (strategic).
+
+### Strengthened — `tests/playwright/specs/docs-sync.spec.js`
+
+- New assertions catching the exact drift this patch fixed:
+  - SOURCE_OF_TRUTH.md mentions current major.minor
+  - SOURCE_OF_TRUTH.md does not still claim v0.37 RC freeze as
+    "Current" or v1.0.0 as "Target GA"
+  - README milestone list mentions v2 trajectory or current major
+  - RELEASE-v2.0.md exists when current major is 2
+  - Tag arithmetic in RELEASE-v2.0.md matches actual tag-history
+    block contents
+  - POST_V2_ROADMAP.md exists for post-v2 trajectory
+- Total docs-sync tests: 6 → 12.
+
+### Non-breaking
+
+- No production code changes — pure docs + verification.
+- Gate-A: target ≥ 248/8/0 (12 → 12 from docs-sync, +6 net new).
+- Typecheck: clean.
+
+### Released as
+
+Internal v2 GA / public beta — same as v2.0.0. v2.0.1 is a
+release-integrity patch, not a feature bump. Public production GA
+remains gated on the P0 items in `docs/POST_V2_ROADMAP.md`.
+
+### Credit
+
+User audit caught the SoT/README drift and the tag arithmetic
+mismatch. This patch closes them within the same day as the v2.0.0
+ship.
+
+---
+
 ## [2.0.0] — 2026-04-24 — General Availability 🎉
 
 The polished no-code HTML presentation editor. Everything from the
@@ -30,7 +94,7 @@ notes. Highlights below.
 
 ### Quality
 
-- Gate-A grew from 65 → 240+ tests across 22 specs.
+- Gate-A grew from 65 → 242 tests across 24 spec files.
 - 10-deck import corpus regression suite.
 - Golden export contract + recovery scenarios + long-session sync +
   docs-sync gate.
@@ -53,8 +117,9 @@ notes. Highlights below.
 
 ### Tag history
 
-22 incremental tags (v1.1.0 → v1.5.5) with one-logical-unit-per-tag
-rhythm. Full sequence in `docs/RELEASE-v2.0.md`.
+26 incremental release points (v1.1.0 → v2.0.0 inclusive) with the
+one-logical-unit-per-tag rhythm. Full sequence in
+`docs/RELEASE-v2.0.md`.
 
 ---
 

@@ -219,11 +219,50 @@ The preview zoom feature uses the CSS `zoom:` property which is on the W3C stand
 
 ## Release state
 
-**Current**: v0.37.0-rc.0 — RC freeze declared 2026-04-22
+**Current**: v2.0.0 — General Availability shipped 2026-04-24.
 
-All 38 Work Orders (W1–W8) merged to main. All 15 P0 PAIN-MAP items resolved.
-All 20 ADRs: Accepted or Deferred (0 Proposed). Gate matrix: 9/10 gates GREEN.
+The v1.0.3 → v2.0.0 redesign trajectory is complete: 26 incremental
+release points (v1.1.0 through v2.0.0 inclusive) across Phases A–E
+plus 6 hardening sprints. All v2 feature flags default to v2 behavior;
+full feature surface stable. Gate-A: 242/8/0 across 22 spec files.
 
-**Target GA**: v1.0.0 on 2026-05-06 (14-day freeze window).
+See `docs/RELEASE-v2.0.md` for full release notes and the complete
+tag-by-tag history.
 
-See `docs/RELEASE_CRITERIA.md` and `docs/RC_FREEZE_CHECKLIST.md` for binding criteria.
+**Status flavor**: internal v2 GA / public beta. Production-ready for
+internal pilots and demos on real decks. Public GA still gated on the
+deferred items below.
+
+### Deferred to post-v2.0 (tracked in `docs/POST_V2_ROADMAP.md`)
+
+- PPTX export composition integration (`ExportPptxV2` runs pre-flight,
+  but archive build still delegates to legacy `exportPptx()`). The
+  `#exportPptxBtn` is marked **Beta** via `attachExperimentalBadge`.
+- Smart Import "full" mode — pipeline-v2 as primary loader. Default
+  remains `"report"` (modal between Open and load).
+- gate-a11y expansion to 50+ keyboard-only tests (current 27 baseline
+  preserved; foundation focus-visible + aria-live shipped).
+- 5-deck PPTX manual QA corpus.
+- Real-deck import corpus expansion beyond the 10 minimal regression
+  fixtures.
+- Mass `data-ui-level="advanced"` migration to entity-groups
+  (~15 attrs; most remaining correctly target HTML editing /
+  raw IDs / diagnostics — intentional advanced-only).
+- Settings → Reset onboarding UI control. Function
+  `resetOnboardingV2()` available via devtools.
+- Empty-state welcome card CSS animation.
+- Alt+drag clone during direct manipulation.
+- `feedback.js getBlockReasonAction()` actionable buttons for every
+  block reason. Toast-driven recovery already exists.
+
+### Historical anchors (pre-v2 trajectory — for archaeological reference only)
+
+- v0.37.0-rc.0 — RC freeze declared 2026-04-22 → became v1.0.0 on
+  2026-04-22 (38 Work Orders merged, 15 P0 PAIN-MAP items resolved,
+  20 ADRs Accepted or Deferred).
+- v1.0.0 GA — 2026-04-22.
+- v1.0.3 → v2.0.0 — see `docs/RELEASE-v2.0.md`.
+
+These anchors are preserved so a fresh agent can trace any decision
+back to the PAIN-MAP / WO / ADR registry. They no longer drive the
+release plan.
