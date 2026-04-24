@@ -26,6 +26,9 @@
         ) {
           const report = window.runImportPipelineV2(htmlString);
           if (report && report.ok) {
+            // [v1.5.1] Stash for later UI surfaces (health badge, etc.).
+            state.importReport = report;
+            window.refreshDeckHealthBadge?.();
             window.showImportReportModal(report, {
               onContinue() {
                 loadHtmlString(htmlString, sourceLabel, {
@@ -34,7 +37,8 @@
                 });
               },
               onCancel() {
-                // User declined — leave the editor in its prior state.
+                state.importReport = null;
+                window.refreshDeckHealthBadge?.();
                 setPreviewLoading(false);
               },
             });

@@ -108,6 +108,15 @@
           <span id="workspaceStateBadge" class="status-pill"
             >Редактор ждёт HTML</span
           >
+          <!-- [v1.5.1] Deck health badge populated from
+               state.importReport.complexity (Smart Import pipeline-v2). -->
+          <span
+            id="deckHealthBadge"
+            class="status-pill deck-health-badge"
+            role="status"
+            aria-live="polite"
+            hidden
+          ></span>
         </div>
       </div>
 
@@ -1962,6 +1971,8 @@
     <script src="src/onboarding-v2.js"></script>
     <!-- [v1.5.0] Experimental badge helper — marks beta capabilities. -->
     <script src="src/experimental-badge.js"></script>
+    <!-- [v1.5.1] Deck health badge — reads state.importReport. -->
+    <script src="src/deck-health.js"></script>
     <script src="src/floating-toolbar.js"></script>
     <script src="src/toolbar.js"></script>
     <script src="src/context-menu.js"></script>

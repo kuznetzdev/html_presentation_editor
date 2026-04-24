@@ -884,6 +884,17 @@
           );
           return;
         }
+        // [v1.5.1] Wrap mutation in user-action-boundary so a partial failure
+        // restores the modelDoc instead of leaving a half-inserted slide.
+        if (typeof window.withActionBoundary === "function") {
+          return window.withActionBoundary("slide-template:" + kind, function () {
+            return _insertSlideFromTemplateImpl(kind);
+          });
+        }
+        return _insertSlideFromTemplateImpl(kind);
+      }
+
+      function _insertSlideFromTemplateImpl(kind) {
         const currentSlide = getCurrentSlideModelNode();
         const staticSlides = getStaticSlideModelNodes();
         const parent = currentSlide?.parentElement || staticSlides[0]?.parentElement;

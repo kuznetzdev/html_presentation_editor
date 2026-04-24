@@ -101,6 +101,37 @@ textarea:disabled {
   cursor: not-allowed;
 }
 
+/* [v1.5.1] Deck health badge — surfaces complexity score from Smart
+   Import pipeline-v2 in the topbar. Clickable → re-open report modal. */
+.deck-health-badge {
+  cursor: pointer;
+  transition: background var(--motion-micro, 120ms) var(--ease-out, ease);
+}
+
+.deck-health-badge-low {
+  background: rgba(46, 184, 124, 0.14);
+  color: rgb(24, 110, 73);
+  border-color: rgba(46, 184, 124, 0.25);
+}
+
+.deck-health-badge-medium {
+  background: rgba(255, 175, 38, 0.18);
+  color: rgb(138, 95, 0);
+  border-color: rgba(255, 175, 38, 0.30);
+}
+
+.deck-health-badge-high {
+  background: rgba(255, 95, 46, 0.18);
+  color: rgb(164, 46, 8);
+  border-color: rgba(255, 95, 46, 0.30);
+}
+
+.deck-health-badge-severe {
+  background: rgba(215, 38, 46, 0.18);
+  color: rgb(164, 22, 34);
+  border-color: rgba(215, 38, 46, 0.30);
+}
+
 /* [v1.5.0] "Experimental" badge — small chip rendered next to feature
    labels that are gated on a flag still defaulting to off-by-default
    states or that have known sharp edges. Use:

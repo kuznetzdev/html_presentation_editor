@@ -120,6 +120,8 @@ interface Window {
   attachExperimentalBadge?: (target: HTMLElement, label?: string, tooltip?: string) => HTMLElement | null;
   removeExperimentalBadge?: (target: HTMLElement) => boolean;
   refreshExperimentalBadges?: () => void;
+  /** [v1.5.1] Deck health badge — reads state.importReport. */
+  refreshDeckHealthBadge?: () => void;
   /** [v1.4.3] Onboarding v2 helpers (Phase E3). */
   resetOnboardingV2?: () => void;
   showHintOnce?: (key: string, message: string, options?: Record<string, unknown>) => boolean;

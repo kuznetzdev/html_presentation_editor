@@ -430,6 +430,7 @@
        * @property {number} layerPickerActiveIndex - Active index in the layer picker list
        * @property {string[]} multiSelectNodeIds - Node IDs in the current multi-selection
        * @property {string|null} multiSelectAnchorNodeId - Anchor for combined-bbox math (Phase D1)
+       * @property {Record<string, unknown> | null} importReport - Latest Smart Import preprocessing report (v1.5.1)
        * @property {LayersPanelDragState} layersPanelDragState - Drag state for the layers panel
        *
        * — UI panels & tooltips
@@ -678,6 +679,9 @@
         // [v1.3.1 / Phase D1] Anchor node for combined-bbox math when
         // shift-click extends a selection. null when multi-select is empty.
         multiSelectAnchorNodeId: null,
+        // [v1.5.1] Latest Smart Import preprocessing report (pipeline-v2).
+        // null when no deck loaded or smartImport flag is off.
+        importReport: null,
         // [v0.18.0] Layers panel drag state
         layersPanelDragState: {
           draggedNodeId: null,

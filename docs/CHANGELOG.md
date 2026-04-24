@@ -1,5 +1,53 @@
 # CHANGELOG
 
+## [1.5.1] — 2026-04-24 — Deck health badge + action-boundary on slide ops
+
+Hardening sprint #2. Surfaces the Smart Import complexity score as a
+clickable badge in the topbar, and routes high-risk slide mutations
+through `withActionBoundary` so partial failures restore cleanly.
+
+### Added
+
+- `editor/src/deck-health.js`: `refreshDeckHealthBadge()` — reads
+  `state.importReport`, colors the badge by complexity bucket
+  (low/medium/high/severe), and binds a click handler that re-opens
+  the full report modal.
+- `editor/styles/base.css`: `.deck-health-badge` + 4 severity color
+  variants (green/amber/orange/red).
+- `editor/presentation-editor.html`: `<span id="deckHealthBadge">`
+  inserted after `#workspaceStateBadge` (hidden by default).
+- `state.importReport` field added (typed in `state.js` typedef).
+- `tests/playwright/specs/deck-health-boundary.spec.js` — 5 tests.
+
+### Changed
+
+- `editor/src/import.js`: stashes pipeline-v2 result on
+  `state.importReport`; calls `refreshDeckHealthBadge` after both the
+  Continue and Cancel paths so the chip reflects current state.
+- `editor/src/boot.js`: `insertSlideFromTemplate` now wraps its body
+  in `withActionBoundary("slide-template:" + kind, ...)`. If the
+  insertion throws (e.g. clone fails, parent gone), the modelDoc is
+  restored from the pre-mutation snapshot and the user sees a
+  rollback toast.
+
+### Wiring
+
+- `experimental-badge.js` already loaded; `deck-health.js` loads after.
+- `globals.d.ts` extended with `refreshDeckHealthBadge?`.
+
+### Non-breaking
+
+- Gate-A: target ≥ 181/5/0.
+- Typecheck: clean.
+
+### Related
+
+- Closes "deck health score after import" line of the must-have list.
+- Action-boundary integration kicks off — duplicateSlideById /
+  deleteSlideById receive the same treatment in v1.5.2.
+
+---
+
 ## [1.5.0] — 2026-04-24 — Validators wired + experimental badges
 
 Pre-v2.0 hardening sprint kicks off. Wires `InputValidators` from
