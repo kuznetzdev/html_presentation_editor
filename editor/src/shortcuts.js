@@ -82,6 +82,31 @@
       function _handleZoomReset(e) { e.preventDefault(); setPreviewZoom(1.0, true); }
       function _handleFind(e) { e.preventDefault(); openElementFinder(); }
       function _handleDelete(e) { e.preventDefault(); deleteSelectedElement(); }
+      // [v1.3.4 / Phase D4] Group / ungroup / z-order keyboard shortcuts.
+      function _handleGroup(e) {
+        if (typeof groupSelectedElements !== "function") return;
+        if (!state.multiSelectNodeIds || state.multiSelectNodeIds.length < 2) return;
+        e.preventDefault();
+        groupSelectedElements();
+      }
+      function _handleUngroup(e) {
+        if (typeof ungroupSelectedElement !== "function") return;
+        if (!state.selectedNodeId) return;
+        e.preventDefault();
+        ungroupSelectedElement();
+      }
+      function _handleBringForward(e) {
+        if (!state.selectedNodeId) return;
+        if (typeof window.moveLayerInStack !== "function") return;
+        e.preventDefault();
+        window.moveLayerInStack(state.selectedNodeId, "forward");
+      }
+      function _handleSendBackward(e) {
+        if (!state.selectedNodeId) return;
+        if (typeof window.moveLayerInStack !== "function") return;
+        e.preventDefault();
+        window.moveLayerInStack(state.selectedNodeId, "backward");
+      }
 
       function _handleNudge(e) {
         // If focus is inside the slide rail, let the rail own arrow keys.
@@ -330,6 +355,50 @@
             return _isMod(e) && e.key.toLowerCase() === "f" && state.mode === "edit";
           },
           handler: _handleFind,
+        }),
+        // [v1.3.4 / Phase D4] Ctrl+G — group multi-selection
+        Object.freeze({
+          id: "group",
+          chord: "Ctrl+G",
+          label: "Сгруппировать выделение",
+          group: "Элементы",
+          when: function(e) {
+            return _isMod(e) && !e.shiftKey && e.key.toLowerCase() === "g" && state.mode === "edit";
+          },
+          handler: _handleGroup,
+        }),
+        // Ctrl+Shift+G — ungroup
+        Object.freeze({
+          id: "ungroup",
+          chord: "Ctrl+Shift+G",
+          label: "Расформировать группу",
+          group: "Элементы",
+          when: function(e) {
+            return _isMod(e) && e.shiftKey && e.key.toLowerCase() === "g" && state.mode === "edit";
+          },
+          handler: _handleUngroup,
+        }),
+        // Ctrl+Shift+ArrowUp — bring forward
+        Object.freeze({
+          id: "bring-forward",
+          chord: "Ctrl+Shift+↑",
+          label: "Перенести слой вперёд",
+          group: "Элементы",
+          when: function(e) {
+            return _isMod(e) && e.shiftKey && e.key === "ArrowUp" && state.mode === "edit";
+          },
+          handler: _handleBringForward,
+        }),
+        // Ctrl+Shift+ArrowDown — send backward
+        Object.freeze({
+          id: "send-backward",
+          chord: "Ctrl+Shift+↓",
+          label: "Отправить слой назад",
+          group: "Элементы",
+          when: function(e) {
+            return _isMod(e) && e.shiftKey && e.key === "ArrowDown" && state.mode === "edit";
+          },
+          handler: _handleSendBackward,
         }),
       ]);
 

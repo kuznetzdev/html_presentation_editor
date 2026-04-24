@@ -1,5 +1,58 @@
 # CHANGELOG
 
+## [1.3.4] — 2026-04-24 — Phase D4: PPT-style keyboard shortcuts
+
+Thirteenth tag — adds the remaining PowerPoint-style keyboard shortcuts
+and relaxes group/ungroup/reorder gating so they work under the
+`multiSelect` flag (Phase D1 default) instead of requiring advanced mode.
+
+### Added bindings (editor/src/shortcuts.js)
+
+- `Ctrl+G` — group the current multi-selection
+- `Ctrl+Shift+G` — ungroup the selected group
+- `Ctrl+Shift+ArrowUp` — bring selected layer forward
+- `Ctrl+Shift+ArrowDown` — send selected layer backward
+
+All four are rendered automatically in the cheat-sheet modal
+(`renderShortcutsModalFromKeybindings`).
+
+### Pre-existing (no-op change, for reference)
+
+- `Ctrl+D` — duplicate (already in registry)
+- `Shift+Arrow` — 10px fast nudge (constant already = 10)
+- `Ctrl+Z` / `Ctrl+Y` / `Ctrl+Shift+Z` — undo/redo
+
+### Changed
+
+- `editor/src/layers-panel.js`: `groupSelectedElements`,
+  `ungroupSelectedElement`, and `reorderLayers` now accept the
+  `featureFlags.multiSelect` flag as an alternative gate to
+  `complexityMode === "advanced"`. Keyboard parity for Phase D4.
+
+### Deferred
+
+- Alt+drag clone — requires mouse-interaction integration in
+  selection.js; scheduled for a follow-up patch.
+
+### Tests
+
+- `tests/playwright/specs/keyboard-shortcuts-ppt.spec.js` — 7 tests:
+  registry presence, handler types, Shift+Arrow constants, Ctrl+G
+  groups, modal auto-render includes new bindings.
+- Gate-A expanded with the spec.
+
+### Non-breaking
+
+- Gate-A: target ≥ 136/5/0.
+- Typecheck: clean.
+
+### Related
+
+- Phase D4 foundation complete — remaining Phase D work (D5 PPTX v2)
+  doesn't depend on shortcuts.
+
+---
+
 ## [1.3.3] — 2026-04-24 — Phase D3: opacity + rotate APIs
 
 Twelfth tag — adds opacity / rotate manipulation APIs and a Shift+R

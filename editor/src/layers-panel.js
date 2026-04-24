@@ -161,7 +161,10 @@
       }
 
       function reorderLayers(fromIndex, toIndex) {
-        if (!state.modelDoc || state.complexityMode !== "advanced") return;
+        if (!state.modelDoc) return;
+        // [v1.3.4] Gate by mode OR multiSelect flag (Phase D4 keyboard parity).
+        var multiSelectFlag = Boolean(window.featureFlags && window.featureFlags.multiSelect);
+        if (state.complexityMode !== "advanced" && !multiSelectFlag) return;
         const layerNodeIds = Array.from(
           els.layersListContainer?.querySelectorAll(".layer-row[data-layer-node-id]") || [],
         )
@@ -823,7 +826,10 @@
       }
 
       function groupSelectedElements() {
-        if (!state.multiSelectNodeIds.length || state.complexityMode !== "advanced" || !state.modelDoc || !state.activeSlideId) return;
+        if (!state.multiSelectNodeIds.length || !state.modelDoc || !state.activeSlideId) return;
+        // [v1.3.4] Gate by mode OR multiSelect flag (Phase D4 keyboard parity).
+        var multiSelectFlag = Boolean(window.featureFlags && window.featureFlags.multiSelect);
+        if (state.complexityMode !== "advanced" && !multiSelectFlag) return;
         const slideEl = state.modelDoc.querySelector(`[data-editor-slide-id="${cssEscape(state.activeSlideId)}"]`);
         if (!slideEl) return;
         const groupWrapper = state.modelDoc.createElement("div");
@@ -845,7 +851,10 @@
       }
 
       function ungroupSelectedElement() {
-        if (!state.selectedNodeId || state.complexityMode !== "advanced" || !state.modelDoc) return;
+        if (!state.selectedNodeId || !state.modelDoc) return;
+        // [v1.3.4] Gate by mode OR multiSelect flag (Phase D4 keyboard parity).
+        var multiSelectFlag = Boolean(window.featureFlags && window.featureFlags.multiSelect);
+        if (state.complexityMode !== "advanced" && !multiSelectFlag) return;
         const groupNode = state.modelDoc.querySelector(`[data-editor-node-id="${cssEscape(state.selectedNodeId)}"]`);
         if (!groupNode || !groupNode.classList.contains("editor-group")) return;
         const parent = groupNode.parentElement;
