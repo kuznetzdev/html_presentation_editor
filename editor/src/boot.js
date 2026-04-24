@@ -63,6 +63,8 @@
         // [v1.3.2 / Phase D2] Alignment toolbar shortcuts + initial mount.
         window.ensureAlignmentToolbarRoot?.();
         window.bindAlignmentShortcuts?.();
+        // [v1.3.3 / Phase D3] Shift+R rotate cycle.
+        window.bindRotateShortcut?.();
         bindClipboardAndDnD();
         bindContextMenu();
         bindLayerPicker();

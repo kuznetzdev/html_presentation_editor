@@ -1,5 +1,53 @@
 # CHANGELOG
 
+## [1.3.3] — 2026-04-24 — Phase D3: opacity + rotate APIs
+
+Twelfth tag — adds opacity / rotate manipulation APIs and a Shift+R
+keyboard shortcut that cycles common rotation angles.
+
+### Added
+
+- `editor/src/opacity-rotate.js`:
+  - `setSelectedOpacity(value)` — clamps to [0..1]; writes inline
+    `opacity`. value=1 strips the property entirely.
+  - `setSelectedRotation(deg)` — preserves other inline transforms,
+    only the rotate(...) chunk is replaced.
+  - `clearSelectedRotation()` — convenience for the 0° reset.
+  - `cycleSelectedRotation()` — Shift+R steps 0 → 15 → 45 → 90 → 0.
+  - `bindRotateShortcut()` — global Shift+R; ignored in form fields.
+- `tests/playwright/specs/opacity-rotate.spec.js` — 9 tests covering
+  inline write, range clamp, transform preservation, cycle progression,
+  Shift+R keyboard, locked-node rejection, no-selection rejection.
+- `globals.d.ts` extended with the new helpers.
+
+### Wiring
+
+- `presentation-editor.html` loads opacity-rotate.js after
+  alignment-toolbar.js.
+- `boot.js init()` calls `bindRotateShortcut()`.
+
+### UX rules
+
+- Locked nodes reject both opacity and rotation changes.
+- Form-control / contenteditable targets are skipped so Shift+R inside
+  text edit doesn't steal the keystroke.
+- Mutations route through the bridge as `update-attributes` so the
+  iframe preview stays in sync.
+
+### Non-breaking
+
+- Floating-toolbar opacity slider + on-canvas rotate handle UI surfaces
+  are deferred to follow-up polish; the API is stable + tested.
+- Gate-A: target ≥ 130/5/0 (after the spec is added).
+- Typecheck: clean.
+
+### Related
+
+- ADR-004 block-reason "own-transform" recovery foundation; full
+  resolution path lands with E2 error-recovery.
+
+---
+
 ## [1.3.2] — 2026-04-24 — Phase D2: alignment toolbar
 
 Eleventh tag — extends Phase D direct-manipulation work with a floating

@@ -110,6 +110,12 @@ interface Window {
   refreshAlignmentToolbar?: () => void;
   bindAlignmentShortcuts?: () => void;
   ensureAlignmentToolbarRoot?: () => HTMLElement;
+  /** [v1.3.3] Opacity + rotate APIs (Phase D3). */
+  setSelectedOpacity?: (value: number) => boolean;
+  setSelectedRotation?: (deg: number) => boolean;
+  clearSelectedRotation?: () => boolean;
+  cycleSelectedRotation?: () => boolean;
+  bindRotateShortcut?: () => void;
   /** [v1.1.0] Feature flag registry (ADR-031..037). */
   featureFlags?: {
     layoutVersion?: "v1" | "v2";
