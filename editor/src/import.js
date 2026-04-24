@@ -29,6 +29,9 @@
             // [v1.5.1] Stash for later UI surfaces (health badge, etc.).
             state.importReport = report;
             window.refreshDeckHealthBadge?.();
+            // [v1.5.2] First-session hint (idempotent — fires only once
+            // per local storage key); deferred via rAF inside primer.
+            window.primeOnboardingV2?.();
             window.showImportReportModal(report, {
               onContinue() {
                 loadHtmlString(htmlString, sourceLabel, {

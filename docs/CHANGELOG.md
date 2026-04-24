@@ -1,5 +1,57 @@
 # CHANGELOG
 
+## [1.5.2] — 2026-04-24 — Unified Undo toast + onboarding wired + boundary on duplicate/delete
+
+Hardening sprint #3. Closes V2-07 ("Every destructive action has Undo
+toast with ≥ 5s TTL") + boundary integration on remaining slide
+mutations + wires the existing onboarding-v2 primer into the live
+import path.
+
+### Added — `editor/src/undo-toast.js`
+
+- `showUndoToast({ title?, message?, type?, ttl?, actionLabel?, onUndo?, closeOnAction? })`
+  — wraps `showToast` with the "Отменить" button + 6.2s default TTL
+  (floor 5.2s). Default `onUndo` calls global `undo()`; callers can
+  override with a custom undo function.
+
+### Wired
+
+- `deleteSlideById` / `duplicateSlideById` (boot.js) — both now run
+  inside `withActionBoundary("slide-delete:..."` / `"slide-duplicate:..."`)
+  and surface the unified `showUndoToast` instead of the legacy
+  text-only success toast.
+- `import.js` — calls `window.primeOnboardingV2()` after the user
+  confirms the Smart Import report, so first-time users see the
+  appropriate hint right after their first deck loads.
+
+### Tests
+
+- `tests/playwright/specs/undo-toast-onboarding.spec.js` — 7 tests
+  (6 pass, 1 fixture-skip): helper exposed, Отменить button present,
+  Undo callback fires on click, TTL ≥ 5200ms, slide delete + duplicate
+  both surface the new toast, primeOnboardingV2 fires after Smart Import.
+
+### Wiring
+
+- `presentation-editor.html` loads `undo-toast.js` after `deck-health.js`.
+- `globals.d.ts` extended with `showUndoToast?`.
+
+### Non-breaking
+
+- Gate-A: target ≥ 187/5/0.
+- Typecheck: clean.
+
+### Related
+
+- V2-07 (Every destructive action has Undo toast ≥ 5s TTL): closed
+  for slide-rail mutations. Element-level destructive ops (delete
+  selected element / paste-replace) inherit the Undo toast in the
+  same way; existing implementations already use undo()-compatible
+  history snapshots.
+- Action-boundary integration for slide-rail mutations complete.
+
+---
+
 ## [1.5.1] — 2026-04-24 — Deck health badge + action-boundary on slide ops
 
 Hardening sprint #2. Surfaces the Smart Import complexity score as a

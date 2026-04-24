@@ -992,6 +992,16 @@
 
       function duplicateSlideById(slideId) {
         if (!canUseStaticSlideModel()) return;
+        // [v1.5.1] Wrap in user-action-boundary; [v1.5.2] unified undo toast.
+        if (typeof window.withActionBoundary === "function") {
+          return window.withActionBoundary("slide-duplicate:" + slideId, function () {
+            return _duplicateSlideByIdImpl(slideId);
+          });
+        }
+        return _duplicateSlideByIdImpl(slideId);
+      }
+
+      function _duplicateSlideByIdImpl(slideId) {
         const currentSlide = getSlideModelNodeById(slideId);
         const duplicatePayload = cloneSlideForDuplicate(slideId);
         const clone = duplicatePayload?.clone || null;
@@ -1010,9 +1020,16 @@
         syncSlideRegistry({ currentActiveId: cloneId });
         commitChange("slide-duplicate", { snapshotMode: "immediate" });
         rebuildPreviewKeepingContext(cloneId);
-        showToast("Текущий слайд продублирован.", "success", {
-          title: "Слайды",
-        });
+        if (typeof window.showUndoToast === "function") {
+          window.showUndoToast({
+            title: "Слайд продублирован",
+            message: "Копия добавлена сразу после оригинала.",
+          });
+        } else {
+          showToast("Текущий слайд продублирован.", "success", {
+            title: "Слайды",
+          });
+        }
       }
 
       function duplicateCurrentSlide() {
@@ -1030,6 +1047,19 @@
           });
           return;
         }
+        // [v1.5.1] Wrap in user-action-boundary; [v1.5.2] use unified undo toast.
+        if (typeof window.withActionBoundary === "function") {
+          return window.withActionBoundary("slide-delete:" + slideId, function () {
+            return _deleteSlideByIdImpl(slideId);
+          });
+        }
+        return _deleteSlideByIdImpl(slideId);
+      }
+
+      function _deleteSlideByIdImpl(slideId) {
+        const slides = getStaticSlideModelNodes();
+        const currentSlide = getSlideModelNodeById(slideId);
+        if (!currentSlide) return;
         const currentIndex = slides.findIndex(
           (slide) =>
             slide.getAttribute("data-editor-slide-id") === slideId,
@@ -1048,9 +1078,16 @@
         syncSlideRegistry({ currentActiveId: nextSlideId });
         commitChange("slide-delete", { snapshotMode: "immediate" });
         rebuildPreviewKeepingContext(nextSlideId);
-        showToast("Слайд удалён. При необходимости используй Undo.", "success", {
-          title: "Слайды",
-        });
+        if (typeof window.showUndoToast === "function") {
+          window.showUndoToast({
+            title: "Слайд удалён",
+            message: "Можно отменить — Undo (Ctrl+Z) вернёт его.",
+          });
+        } else {
+          showToast("Слайд удалён. При необходимости используй Undo.", "success", {
+            title: "Слайды",
+          });
+        }
       }
 
       function deleteCurrentSlide() {
