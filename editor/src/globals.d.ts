@@ -116,6 +116,17 @@ interface Window {
   clearSelectedRotation?: () => boolean;
   cycleSelectedRotation?: () => boolean;
   bindRotateShortcut?: () => void;
+  /** [v1.4.2] User-action boundary + input validators (Phase E2). */
+  withActionBoundary?: (reason: string, fn: () => unknown) => unknown;
+  InputValidators?: {
+    pixelSize: (raw: unknown, options?: { min?: number; max?: number }) => { ok: boolean; value?: number; message?: string };
+    opacity: (raw: unknown) => { ok: boolean; value?: number; message?: string };
+    url: (raw: unknown) => { ok: boolean; value?: string; message?: string };
+    hexColor: (raw: unknown) => { ok: boolean; value?: string; message?: string };
+    cssLength: (raw: unknown) => { ok: boolean; value?: string; message?: string };
+  };
+  __actionBoundarySnapshot?: () => string | null;
+  __actionBoundaryRestore?: (snapshot: string) => boolean;
   /** [v1.4.0] PPTX Fidelity v2 helpers (Phase D5). */
   ExportPptxV2?: {
     resolveFontFallback?: (cssFamily: string) => string;

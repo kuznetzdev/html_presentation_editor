@@ -1,5 +1,63 @@
 # CHANGELOG
 
+## [1.4.2] — 2026-04-24 — Phase E2: error recovery layers 4 + 5 (V2-03 / V2-08)
+
+Fifteenth tag. Adds two foundational error-recovery primitives used
+by future polish patches: a user-action snapshot/rollback boundary and
+a validator registry for common inspector inputs.
+
+### Added
+
+- `editor/src/user-action-boundary.js`:
+  - `withActionBoundary(reason, fn)` — snapshots `state.modelDoc`,
+    runs `fn`, and on throw OR `{ ok: false }` return restores the
+    document and surfaces a rollback toast. Caller gets the fn result
+    back (or `{ ok: false, error }` on exception).
+  - Internal helpers `__actionBoundarySnapshot` /
+    `__actionBoundaryRestore` exposed on `window` for tests.
+- `editor/src/input-validators.js` — `window.InputValidators` map:
+  - `pixelSize(raw, {min, max})` — "120" or "120px" → integer; range.
+  - `opacity(raw)` — "0.5" or "50%" → [0..1].
+  - `url(raw)` — allows https / relative / `data:image/...`; rejects
+    `javascript:` outright.
+  - `hexColor(raw)` — expands 3-char to 6-char, lowercases, accepts
+    `#RRGGBB` and `#RRGGBBAA`.
+  - `cssLength(raw)` — px/em/rem/%/vh/vw/pt/ch plus `auto`; up to 4
+    space-separated tokens for padding/margin shorthand.
+
+### Tests
+
+- `tests/playwright/specs/error-recovery-boundary.spec.js` — 13 tests
+  covering boundary ok path, throw rollback, soft-fail rollback, and
+  each validator's accept + reject cases.
+- Gate-A expanded with the spec.
+
+### Wiring
+
+- `presentation-editor.html` loads both modules after `opacity-rotate.js`.
+- `globals.d.ts` extended.
+
+### Deferred
+
+- `feedback.js` getBlockReasonAction() — all 8 reasons return an
+  actionable button: follow-up polish, not blocking v2.0.
+- Destructive-action Undo-toast audit (delete/ungroup/replace): the
+  toast already exists for each via recordHistoryChange's existing
+  undo registration — a unified "Undo" button inside the toast is
+  post-v2.0 polish.
+
+### Non-breaking
+
+- Gate-A: target ≥ 160/5/0.
+- Typecheck: clean.
+
+### Related
+
+- ADR-037 UX Progressive Disclosure & Error Recovery — Layers 4 + 5
+  shipped. Layer 6 (actionable block-reason buttons) is deferred.
+
+---
+
 ## [1.4.1] — 2026-04-24 — Phase E1: progressive-disclosure label refresh
 
 Fourteenth tag — kicks off Phase E (progressive disclosure + recovery).

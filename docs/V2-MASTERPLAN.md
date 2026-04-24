@@ -130,7 +130,8 @@ These cannot be violated at any point in any phase. Gate-A enforces most.
 | v1.3.3 | 2026-04-24 | D3 | 4ae792e | 129/5/0 | opacity + rotate APIs (+9 specs) |
 | v1.3.4 | 2026-04-24 | D4 | c713c1e | 136/5/0 | PPT-style shortcuts (Ctrl+G, Ctrl+Shift+G/↑/↓) (+7 specs) |
 | v1.4.0 | 2026-04-24 | D5 | 6faf61c | 147/5/0 | PPTX Fidelity v2 helpers (font/svg/gradient/preflight) (+11 specs) |
-| v1.4.1 | 2026-04-24 | E1 | (pending) | 147/5/0 | Inspector mode-toggle copy refresh (Простой/Полный) |
+| v1.4.1 | 2026-04-24 | E1 | 428d4d9 | 147/5/0 | Inspector mode-toggle copy refresh (Простой/Полный) |
+| v1.4.2 | 2026-04-24 | E2 | (pending) | 160/5/0 | user-action-boundary + input-validators (+13 specs) |
 
 ### Current baseline (as of 2026-04-23)
 
