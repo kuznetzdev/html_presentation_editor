@@ -1,5 +1,81 @@
 # CHANGELOG
 
+## [2.0.3] — 2026-04-24 — Critical v2 layout fixes (empty-state + split-pane grid)
+
+User-reported visual regression fix. Three real layout bugs that
+slipped past Gate-A because gate-a didn't assert on cross-rule
+specificity interactions:
+
+### Fixed
+
+**Empty-state had huge dead left gutter.**
+`split-pane.css` `@layer split-pane` loads AFTER `layout.css` `@layer
+layout`. The empty-state override `body[data-editor-workflow="empty"]
+.workspace { grid-template-columns: 1fr }` in layout.css was silently
+overridden by the split-pane v2 3-column grid. Hidden `slidesPanel` /
+`inspectorPanel` still reserved column tracks → the preview panel got
+squeezed into the middle column with a huge empty left and right.
+Fix: explicit empty-state override inside the `split-pane` layer.
+Also hides `.left-pane-wrapper` + `#inspectorPanel` on empty state
+so they don't cover preview.
+
+**`calc(var(--left-split, 0.55) * 1fr)` is invalid CSS.**
+You cannot multiply a unitless number by `1fr`. Browser fell back
+to near-equal track sizing → slides panel got ~30% instead of 55%,
+layers panel got ~65% instead of 45%. Fix: JS splitter now writes
+`--left-split-fr` (e.g. `0.55fr`) and `--left-remaining-fr`
+(e.g. `0.45fr`) as direct fr values. CSS uses them through normal
+`var(...)` substitution. Both tracks now get their proper share.
+
+**Tree-indent in narrow layer panel truncated labels to 2-3 chars.**
+14px per depth level accumulated fast ("01 из 12..." → "01...",
+"Проект..." → "П...") in the persistent Layers shell column.
+Fix: reduced to 10px per level + capped at `min(depth * 10px, 80px)`
+so deep trees still leave room for the label.
+
+### Files changed
+
+- `editor/styles/split-pane.css` — v2 grid empty-state collapse +
+  correct fr-based track sizing
+- `editor/src/left-pane-splitter.js` — `applyRatio` now writes
+  `-fr`-suffixed CSS vars
+- `editor/styles/layers-region.css` — tree indent cap
+
+### Visual regression baselines updated
+
+7 snapshots refreshed to reflect the actual correct layout:
+- `empty-light` / `empty-dark` — proper full-width empty-state card
+- `loaded-preview-light` / `loaded-preview-dark` — proper 55/45 split
+- `layer-picker-light` / `layer-picker-dark` — layers in correct slot
+- `selected-text-dark` — inspector panel no longer chopped
+
+### Non-breaking
+
+- Gate-A sanity: shell.smoke + layers-tree-nav + workspace-settings
+  35/4/0 passing after fix.
+- Gate-visual: 15/15 passing after baseline refresh.
+- Typecheck: clean.
+
+### Honest note
+
+These bugs were in the repo since v1.1.3 (the `#layersRegion` shell
+region introduction) but hidden because:
+- The "huge left gutter" empty-state bug only surfaces visually,
+  and gate-visual baselines were captured with the bug already
+  present (so regression tests passed against a broken baseline).
+- The `calc(X * 1fr)` CSS error was a browser fallback, not a hard
+  error — silently wrong sizing.
+
+User screenshot audit caught both. This patch closes them within
+the same day.
+
+### Related
+
+- Closes "UX quality / elements in their place" feedback loop from
+  post-v2.0 audit.
+
+---
+
 ## [2.0.2] — 2026-04-24 — UX polish + broken-gate recovery
 
 Post-v2.0 self-test caught real gaps. This patch closes them:

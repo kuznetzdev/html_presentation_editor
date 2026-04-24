@@ -68,7 +68,15 @@
   function applyRatio(ratio) {
     var clamped = Math.max(SPLIT_MIN, Math.min(SPLIT_MAX, ratio));
     splitterState.currentRatio = clamped;
-    document.documentElement.style.setProperty("--left-split", String(clamped));
+    // [v2.0.3] Expose both the plain ratio AND the grid-ready `fr` values.
+    // CSS cannot multiply `1fr` by a unitless number — previous
+    // `calc(var(--left-split) * 1fr)` was invalid and grid fell back to
+    // near-equal tracks, squeezing the slides panel. Set `--left-split-fr`
+    // and `--left-remaining-fr` as direct fr units for grid-template-rows.
+    var root = document.documentElement;
+    root.style.setProperty("--left-split", String(clamped));
+    root.style.setProperty("--left-split-fr", clamped + "fr");
+    root.style.setProperty("--left-remaining-fr", (1 - clamped).toFixed(4) + "fr");
     if (splitterState.resizerEl) {
       splitterState.resizerEl.setAttribute("aria-valuenow", String(Math.round(clamped * 100)));
     }

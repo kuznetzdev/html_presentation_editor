@@ -30,10 +30,14 @@
     display: grid;
     grid-row: 1 / -1;
     grid-column: 1 / 2;
+    /* [v2.0.3] --left-split-fr / --left-remaining-fr are set by JS
+       (left-pane-splitter.js) as direct `fr` values. Previous attempt
+       used `calc(var(--left-split) * 1fr)` which is invalid CSS and
+       caused slides panel to lose its 55% share. */
     grid-template-rows:
-      minmax(var(--left-pane-min-height), calc(var(--left-split, 0.55) * 1fr))
+      minmax(var(--left-pane-min-height, 160px), var(--left-split-fr, 0.55fr))
       var(--left-resizer-thickness)
-      minmax(var(--left-pane-min-height), 1fr);
+      minmax(var(--left-pane-min-height, 160px), var(--left-remaining-fr, 0.45fr));
     gap: 0;
     min-height: 0;
     height: 100%;
@@ -116,5 +120,29 @@
     body[data-layout-version="v2"] .left-pane-wrapper {
       display: contents;
     }
+  }
+
+  /* [v2.0.3] Empty-state must collapse to single-column even under v2 layout.
+     Without this, the hidden slidesPanel + layersRegion reserve a left
+     column track and the preview gets squeezed into the middle with a
+     huge dead gutter. split-pane @layer order loads AFTER layout, so the
+     layout.css empty-state rule lost without this override.
+
+     The inspector-panel column is also collapsed — inspector is hidden on
+     empty state and should not reserve space. */
+  body[data-layout-version="v2"][data-editor-workflow="empty"] .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body[data-layout-version="v2"][data-editor-workflow="empty"] .left-pane-wrapper {
+    display: none;
+  }
+
+  body[data-layout-version="v2"][data-editor-workflow="empty"] #mainPreviewPanel {
+    grid-column: 1 / -1;
+  }
+
+  body[data-layout-version="v2"][data-editor-workflow="empty"] #inspectorPanel {
+    display: none;
   }
 }

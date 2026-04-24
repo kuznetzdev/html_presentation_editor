@@ -58,9 +58,11 @@
    * ----------------------------------------------------------------------- */
 
   /* Depth-based left padding on rows. --layer-depth is 0 for roots, grows +1
-     per nesting level. 14px per level matches the selection-rail inset. */
+     per nesting level. 10px per level keeps labels readable in narrow
+     columns; capped at min(depth * 10px, 80px) so very deep trees still
+     leave room for the label. [v2.0.3] reduced from 14px → 10px + cap. */
   .layer-row[data-layer-depth] {
-    padding-left: calc(var(--layer-depth, 0) * 14px);
+    padding-left: min(calc(var(--layer-depth, 0) * 10px), 80px);
   }
 
   /* Collapsible sub-tree wrapper. Summary acts as the clickable row; children
