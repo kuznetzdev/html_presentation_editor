@@ -65,6 +65,8 @@
         window.bindAlignmentShortcuts?.();
         // [v1.3.3 / Phase D3] Shift+R rotate cycle.
         window.bindRotateShortcut?.();
+        // [v1.5.0] Experimental badges based on current flag state.
+        window.refreshExperimentalBadges?.();
         bindClipboardAndDnD();
         bindContextMenu();
         bindLayerPicker();

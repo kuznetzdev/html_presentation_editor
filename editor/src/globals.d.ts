@@ -116,6 +116,10 @@ interface Window {
   clearSelectedRotation?: () => boolean;
   cycleSelectedRotation?: () => boolean;
   bindRotateShortcut?: () => void;
+  /** [v1.5.0] Experimental badge helpers. */
+  attachExperimentalBadge?: (target: HTMLElement, label?: string, tooltip?: string) => HTMLElement | null;
+  removeExperimentalBadge?: (target: HTMLElement) => boolean;
+  refreshExperimentalBadges?: () => void;
   /** [v1.4.3] Onboarding v2 helpers (Phase E3). */
   resetOnboardingV2?: () => void;
   showHintOnce?: (key: string, message: string, options?: Record<string, unknown>) => boolean;

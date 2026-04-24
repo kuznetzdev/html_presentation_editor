@@ -78,18 +78,27 @@
         els.zIndexInput.addEventListener("change", () =>
           applyStyle("zIndex", els.zIndexInput.value),
         );
-        els.widthInput.addEventListener("change", () =>
-          applyStyle("width", normalizeCssInput(els.widthInput.value)),
-        );
-        els.heightInput.addEventListener("change", () =>
-          applyStyle("height", normalizeCssInput(els.heightInput.value)),
-        );
-        els.leftInput.addEventListener("change", () =>
-          applyStyle("left", normalizeCssInput(els.leftInput.value)),
-        );
-        els.topInput.addEventListener("change", () =>
-          applyStyle("top", normalizeCssInput(els.topInput.value)),
-        );
+        // [v1.5.0] Validate inspector dimensions through InputValidators.cssLength
+        // when available (Phase E2 module). Falls through to legacy normalizeCssInput
+        // when validator missing or input is empty.
+        function _applyCssLengthInput(field, inputEl) {
+          var raw = inputEl.value || "";
+          if (!raw.trim()) { applyStyle(field, ""); return; }
+          var v = window.InputValidators && window.InputValidators.cssLength
+            ? window.InputValidators.cssLength(raw)
+            : { ok: true, value: normalizeCssInput(raw) };
+          if (!v.ok) {
+            if (typeof showToast === "function") {
+              showToast(v.message || ("Некорректное значение " + field), "error", { ttl: 3500 });
+            }
+            return;
+          }
+          applyStyle(field, v.value);
+        }
+        els.widthInput.addEventListener("change", () => _applyCssLengthInput("width", els.widthInput));
+        els.heightInput.addEventListener("change", () => _applyCssLengthInput("height", els.heightInput));
+        els.leftInput.addEventListener("change", () => _applyCssLengthInput("left", els.leftInput));
+        els.topInput.addEventListener("change", () => _applyCssLengthInput("top", els.topInput));
         // [WO-26] Transform input: validate + write-through via applyStyle
         {
           const transformEl = document.getElementById("transformInput");
@@ -132,15 +141,26 @@
             normalizeCssInput(els.borderWidthInput.value),
           ),
         );
-        els.marginInput.addEventListener("change", () =>
-          applyStyle("margin", els.marginInput.value.trim()),
-        );
-        els.paddingInput.addEventListener("change", () =>
-          applyStyle("padding", els.paddingInput.value.trim()),
-        );
+        els.marginInput.addEventListener("change", () => _applyCssLengthInput("margin", els.marginInput));
+        els.paddingInput.addEventListener("change", () => _applyCssLengthInput("padding", els.paddingInput));
+        // [v1.5.0] Opacity input validated via InputValidators.opacity (handles
+        // % and decimal). Range clamp + format normalization in one call.
         els.opacityInput.addEventListener("change", () => {
-          const v = parseFloat(els.opacityInput.value);
-          if (!isNaN(v)) applyStyle("opacity", String(Math.min(100, Math.max(0, v)) / 100));
+          var raw = els.opacityInput.value;
+          if (raw === "" || raw == null) { applyStyle("opacity", ""); return; }
+          // Input is a number 0..100; convert to a value the validator accepts.
+          var num = parseFloat(raw);
+          var asPercent = Number.isFinite(num) ? String(num) + "%" : raw;
+          var v = window.InputValidators && window.InputValidators.opacity
+            ? window.InputValidators.opacity(asPercent)
+            : { ok: Number.isFinite(num), value: Math.min(100, Math.max(0, num)) / 100 };
+          if (!v.ok) {
+            if (typeof showToast === "function") {
+              showToast(v.message || "Прозрачность должна быть 0–100", "error", { ttl: 3500 });
+            }
+            return;
+          }
+          applyStyle("opacity", String(v.value));
         });
         els.borderRadiusInput.addEventListener("change", () =>
           applyStyle("borderRadius", normalizeCssInput(els.borderRadiusInput.value)),
@@ -156,12 +176,24 @@
         els.imageAltInput.addEventListener("change", () =>
           updateAttributes({ alt: els.imageAltInput.value }),
         );
-        els.imageSrcInput.addEventListener("change", () =>
-          updateAttributes({ src: els.imageSrcInput.value.trim() }),
-        );
-        els.applyImageSrcBtn.addEventListener("click", () =>
-          updateAttributes({ src: els.imageSrcInput.value.trim() }),
-        );
+        // [v1.5.0] Validate image src through InputValidators.url so
+        // javascript: schemes and other unsafe inputs never reach the model.
+        function _applyImageSrc() {
+          var raw = (els.imageSrcInput.value || "").trim();
+          if (!raw) { updateAttributes({ src: "" }); return; }
+          var v = window.InputValidators && window.InputValidators.url
+            ? window.InputValidators.url(raw)
+            : { ok: true, value: raw };
+          if (!v.ok) {
+            if (typeof showToast === "function") {
+              showToast(v.message || "Некорректный URL изображения", "error", { ttl: 3500 });
+            }
+            return;
+          }
+          updateAttributes({ src: v.value });
+        }
+        els.imageSrcInput.addEventListener("change", _applyImageSrc);
+        els.applyImageSrcBtn.addEventListener("click", _applyImageSrc);
 
         els.alignButtons.forEach((button) => {
           button.addEventListener("click", () =>

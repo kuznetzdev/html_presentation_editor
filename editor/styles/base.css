@@ -101,6 +101,28 @@ textarea:disabled {
   cursor: not-allowed;
 }
 
+/* [v1.5.0] "Experimental" badge — small chip rendered next to feature
+   labels that are gated on a flag still defaulting to off-by-default
+   states or that have known sharp edges. Use:
+     <span class="experimental-badge">Beta</span>
+   or via the helper window.attachExperimentalBadge(el, "Beta"). */
+.experimental-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  padding: 0 6px;
+  height: 16px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgb(138, 95, 0);
+  background: rgba(255, 175, 38, 0.18);
+  border: 1px solid rgba(255, 175, 38, 0.35);
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
 /* [v1.2.2 / V2-09] Formalized focus-visible ring — one source of truth.
    Uses the semantic --focus-ring-width (3px default) token from tokens.css
    so theme swaps keep the ring consistent. Every interactive surface in

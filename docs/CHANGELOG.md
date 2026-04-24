@@ -1,5 +1,62 @@
 # CHANGELOG
 
+## [1.5.0] — 2026-04-24 — Validators wired + experimental badges
+
+Pre-v2.0 hardening sprint kicks off. Wires `InputValidators` from
+v1.4.2 into 6 real inspector inputs and ships an `attachExperimentalBadge`
+helper that visibly marks beta-stage features.
+
+### Wired validators (editor/src/dom.js)
+
+- `widthInput` / `heightInput` / `leftInput` / `topInput` / `marginInput`
+  / `paddingInput` → `InputValidators.cssLength` via local
+  `_applyCssLengthInput()` helper. Bad input → toast + skip apply.
+- `opacityInput` (number 0–100) → `InputValidators.opacity` (handles %
+  and decimal). Range clamp; surface error toast on invalid.
+- `imageSrcInput` + `applyImageSrcBtn` → `InputValidators.url`. Rejects
+  `javascript:` outright; accepts https / relative / data:image/.
+
+### Added — `editor/src/experimental-badge.js`
+
+- `attachExperimentalBadge(target, label?, tooltip?)` — appends a
+  small "Beta" chip; idempotent (no duplicate badges).
+- `removeExperimentalBadge(target)` — clears the chip.
+- `refreshExperimentalBadges()` — re-applies markers per current flag
+  state. Currently marks:
+  - `#exportPptxBtn` (pptxV2=true → still on legacy delegate)
+  - `#openHtmlBtn` (only when smartImport === "full", since "report"
+    is stable today)
+- `editor/styles/base.css` — `.experimental-badge` chip style.
+
+### Wiring
+
+- `presentation-editor.html` loads `experimental-badge.js` after
+  `onboarding-v2.js`.
+- `boot.js init()` calls `refreshExperimentalBadges()` once flags are
+  applied.
+- `globals.d.ts` extended.
+
+### Tests
+
+- `tests/playwright/specs/inspector-validators-badges.spec.js` — 9
+  tests (1 skip, 8 pass): bad/good cssLength, javascript: src reject,
+  opacity 50→0.5 conversion, badge present on PPTX, absent on Open by
+  default, present after switching to smartImport=full, idempotent
+  attach, remove.
+
+### Non-breaking
+
+- Gate-A: target ≥ 176/5/0.
+- Typecheck: clean.
+
+### Related
+
+- Closes user-facing gap between Phase E2 (validators exist) and
+  actual usage (validators wired). Recovery primitives now flow
+  through real input paths.
+
+---
+
 ## [1.4.3] — 2026-04-24 — Phase E3: onboarding v2 + aria-live surfaces
 
 Sixteenth tag and the last 1.4.x step before v2.0.0 GA. Adds a
