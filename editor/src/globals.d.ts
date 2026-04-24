@@ -116,6 +116,24 @@ interface Window {
   clearSelectedRotation?: () => boolean;
   cycleSelectedRotation?: () => boolean;
   bindRotateShortcut?: () => void;
+  /** [v1.4.0] PPTX Fidelity v2 helpers (Phase D5). */
+  ExportPptxV2?: {
+    resolveFontFallback?: (cssFamily: string) => string;
+    pxToEmu?: (px: number) => number;
+    emuToPx?: (emu: number) => number;
+    pxToInch?: (px: number) => number;
+    resolveSlideRelativeRect?: (slideRoot: Element, el: Element) => Record<string, number> | null;
+    resolveAllRects?: (slideRoot: Element) => Record<string, Record<string, number>>;
+    describeSvgRoot?: (svg: Element) => Record<string, unknown>;
+    describeSvgPrimitive?: (shape: Element) => Record<string, unknown> | null;
+    parseLinearGradient?: (value: string) => Record<string, unknown> | null;
+    describeBackgroundImage?: (value: string) => Record<string, unknown> | null;
+    directionToDegrees?: (direction: string) => number | null;
+    buildPreflightReport?: (modelDoc: Document) => Record<string, unknown>;
+    preflight?: () => Record<string, unknown> | null;
+    run?: () => unknown;
+    [key: string]: unknown;
+  };
   /** [v1.1.0] Feature flag registry (ADR-031..037). */
   featureFlags?: {
     layoutVersion?: "v1" | "v2";

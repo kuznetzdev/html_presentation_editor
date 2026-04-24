@@ -1926,6 +1926,15 @@
     <script src="src/slide-rail.js"></script>
     <script src="src/style-app.js"></script>
     <script src="src/export.js"></script>
+    <!-- [v1.4.0 / Phase D5 / ADR-036] PPTX Fidelity v2 helpers — must
+         load AFTER export.js so preflight orchestrator can call
+         exportPptx() as fallback. -->
+    <script src="src/export-pptx/font-fallback.js"></script>
+    <script src="src/export-pptx/position-resolver.js"></script>
+    <script src="src/export-pptx/svg-shapes.js"></script>
+    <script src="src/export-pptx/gradients.js"></script>
+    <script src="src/export-pptx/preflight.js"></script>
+    <script src="src/export-pptx/index.js"></script>
     <script src="src/history.js"></script>
     <script src="src/feedback.js"></script>
     <script src="src/broken-asset-banner.js"></script>

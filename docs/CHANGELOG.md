@@ -1,5 +1,77 @@
 # CHANGELOG
 
+## [1.4.0] — 2026-04-24 — Phase D5: PPTX Fidelity v2 helpers (ADR-036)
+
+Major feature, minor bump. Phase D wraps with the PPTX fidelity v2
+helper layer: detector + classifier + structured pre-flight report
+running BEFORE the existing exportPptx flow when `pptxV2` flag is on.
+Visual pre-flight modal UI deferred — toast surface for now.
+
+### Added — `editor/src/export-pptx/` directory
+
+- `font-fallback.js` — `resolveFontFallback(cssFamilyValue)` maps ~35
+  popular web fonts (Inter, Roboto, Lato, Poppins, Merriweather,
+  JetBrains Mono, etc.) to PowerPoint-safe targets (Segoe UI, Calibri,
+  Georgia, Consolas).
+- `position-resolver.js` — `pxToEmu / pxToInch` conversions and
+  `resolveSlideRelativeRect / resolveAllRects` for mapping every
+  editable child to slide-local CSS pixels via `getBoundingClientRect`.
+- `svg-shapes.js` — `describeSvgRoot` returns either `{ kind:
+  "primitives", primitives: [...] }` or `{ kind: "rasterize", reason }`.
+  Native primitives: rect, circle, ellipse, line, polygon (3 points →
+  triangle).
+- `gradients.js` — `parseLinearGradient` (angle + color stops),
+  `directionToDegrees` for `to right` / `to top left` keywords,
+  `describeBackgroundImage` — flags radial / conic for raster fallback.
+- `preflight.js` — `buildPreflightReport(modelDoc)` walks every
+  `[data-editor-node-id]` and emits `{ slideCount, elementCount,
+  replacements: { fonts }, losses: [...], preserved: { positions,
+  gradients, svgPrimitives, svgRasterized, images, texts }, warnings }`.
+- `index.js` — orchestrator. `ExportPptxV2.preflight()` returns the
+  report; `ExportPptxV2.run()` surfaces a toast then delegates to the
+  legacy `exportPptx()` for the actual archive write.
+
+### Wiring
+
+- `presentation-editor.html` loads the 6 modules AFTER `export.js` so
+  `ExportPptxV2.run()` can call back into `exportPptx()`.
+- `globals.d.ts` extended with the namespace + 14 helper signatures.
+
+### Defaults
+
+- `featureFlags.pptxV2` flipped `false` → `true`.
+
+### Tests
+
+- `tests/playwright/specs/pptx-fidelity-v2.spec.js` — 11 tests:
+  flag default, namespace surface, font mapping (known + unknown),
+  px→EMU conversion, gradient parsing (linear + radial flag), SVG
+  classification (rasterize for path-bearing, native primitive
+  describe for rect), preflight report shape, parity between
+  `preflight()` and `buildPreflightReport()`.
+- Gate-A expanded with the spec.
+
+### Deferred (post-v2.0 polish)
+
+- Full pre-flight modal UI (V2-06) — toast surface used for now.
+- Direct integration with PptxGenJS slide composition (currently
+  the legacy exporter still builds the archive).
+- Post-export JSZip validator.
+- 5-deck reference corpus for manual fidelity QA.
+
+### Non-breaking
+
+- Gate-A: target ≥ 147/5/0.
+- Typecheck: clean.
+
+### Related
+
+- ADR-036 PPTX Fidelity v2 — helper modules + classifier shipped.
+  Slide-composition integration scheduled for the post-v2.0 polish
+  iteration.
+
+---
+
 ## [1.3.4] — 2026-04-24 — Phase D4: PPT-style keyboard shortcuts
 
 Thirteenth tag — adds the remaining PowerPoint-style keyboard shortcuts

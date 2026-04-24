@@ -128,7 +128,8 @@ These cannot be violated at any point in any phase. Gate-A enforces most.
 | v1.3.1 | 2026-04-24 | D1 | 63582f7 | 110/5/0 | multi-select coordination (+8 specs) |
 | v1.3.2 | 2026-04-24 | D2 | 6fa816d | 120/5/0 | alignment toolbar (+10 specs) |
 | v1.3.3 | 2026-04-24 | D3 | 4ae792e | 129/5/0 | opacity + rotate APIs (+9 specs) |
-| v1.3.4 | 2026-04-24 | D4 | (pending) | 136/5/0 | PPT-style shortcuts (Ctrl+G, Ctrl+Shift+G/↑/↓) (+7 specs) |
+| v1.3.4 | 2026-04-24 | D4 | c713c1e | 136/5/0 | PPT-style shortcuts (Ctrl+G, Ctrl+Shift+G/↑/↓) (+7 specs) |
+| v1.4.0 | 2026-04-24 | D5 | (pending) | 147/5/0 | PPTX Fidelity v2 helpers (font/svg/gradient/preflight) (+11 specs) |
 
 ### Current baseline (as of 2026-04-23)
 

@@ -70,9 +70,11 @@
     multiSelect: true,
 
     // ADR-036 — PPTX export fidelity v2.
-    // false = v1 inline-style position + basic export (current).
-    // true  = getBoundingClientRect resolver + SVG shapes + gradients + font map.
-    pptxV2: false,
+    // false = v1 inline-style position + basic export.
+    // true  = pre-flight report + getBoundingClientRect resolver + SVG
+    //         shape mapping + gradient parser + font fallback.
+    // [v1.4.0] flipped: false → true as part of Phase D5.
+    pptxV2: true,
 
     // ADR-035 — smart import pipeline v2.
     // "off"    = use existing import.js only.
