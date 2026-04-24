@@ -1,5 +1,47 @@
 # CHANGELOG
 
+## [1.4.1] — 2026-04-24 — Phase E1: progressive-disclosure label refresh
+
+Fourteenth tag — kicks off Phase E (progressive disclosure + recovery).
+Refreshes the inspector mode toggle copy and audits the existing
+section-collapse persistence story.
+
+### Changed
+
+- `editor/presentation-editor.html`: inspector mode toggle relabeled
+  from "Быстро/Точно" → "Простой/Полный"; aria-label updated to
+  "Уровень инспектора". Plain-language copy reads as the level of
+  detail rather than perceived speed.
+
+### Confirmed (no code change)
+
+- `state.inspectorSections` persistence to `INSPECTOR_SECTIONS_KEY`
+  in localStorage already covers V2-08 "section collapse persistence";
+  `initInspectorSections` in `editor/src/toolbar.js` reads + writes
+  on every disclosure click.
+
+### Deferred
+
+- Wholesale migration of 19 `data-ui-level="advanced"` attributes to
+  `data-entity-groups` is paused: most remaining attrs target HTML
+  editing, raw node IDs, transform fields, diagnostics, and telemetry
+  — all explicitly listed by MASTERPLAN as advanced-only. The four
+  candidate `field-group compact` attrs require entity-kind-specific
+  decisions (image vs text vs container) that are post-v2.0 polish.
+  Marking the audit complete with a follow-up task.
+
+### Non-breaking
+
+- Gate-A: 147/5/0 preserved (no test regressions; no spec mentions the
+  old toggle labels).
+- Typecheck: clean.
+
+### Related
+
+- ADR-037 UX Progressive Disclosure — copy half shipped.
+
+---
+
 ## [1.4.0] — 2026-04-24 — Phase D5: PPTX Fidelity v2 helpers (ADR-036)
 
 Major feature, minor bump. Phase D wraps with the PPTX fidelity v2
