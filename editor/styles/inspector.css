@@ -425,14 +425,19 @@ textarea {
   user-select: none;
 }
 
+/* [v2.0.5] --shell-hover-bg / --shell-accent-bg were never defined as
+   tokens — referencing them resolved to "guaranteed invalid" which
+   falls back to initial (transparent). Result: hovered + active rows
+   had NO background highlight, making layer selection feel dead.
+   Using the existing --state-hover + --shell-accent-soft tokens. */
 .layer-row:hover {
-  background: var(--shell-hover-bg);
+  background: var(--state-hover, rgba(0, 0, 0, 0.04));
   border-color: color-mix(in srgb, var(--text-accent) 34%, var(--border-subtle));
 }
 
 .layer-row.is-active {
-  background: var(--shell-accent-bg);
-  border-color: var(--text-accent); /* TODO(tokens-v3): accent border fill — keep semantic for now */
+  background: var(--shell-accent-soft, color-mix(in srgb, var(--shell-accent) 12%, transparent));
+  border-color: var(--text-accent);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--text-accent) 24%, transparent);
 }
 
@@ -542,9 +547,13 @@ textarea {
   color: var(--text-primary);
 }
 
+/* [v2.0.5] Use shell-text (theme-adaptive) instead of hardcoded white —
+   was creating a washed-out light-grey island on dark panels. Dark-mode
+   override keeps the chip readable without bleeding into background. */
 .layer-status-chip.is-hidden {
   border-color: color-mix(in srgb, var(--text-secondary) 28%, var(--border-subtle));
-  background: color-mix(in srgb, var(--shell-bg-secondary) 76%, white);
+  background: color-mix(in srgb, var(--shell-bg-secondary) 76%, var(--shell-text) 24%);
+  color: var(--text-secondary);
 }
 
 .layer-status-chip.is-locked {

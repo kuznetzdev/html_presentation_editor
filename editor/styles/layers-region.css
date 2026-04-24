@@ -75,6 +75,14 @@
     list-style: none;
     cursor: pointer;
     position: relative;
+    /* [v2.0.5] Summary has .layer-row grid (32px | 1fr | auto). We MUST
+       keep the ::before disclosure arrow OUT of the grid flow — otherwise
+       it occupies the first cell, shifts every other child right by one
+       column, and trailing actions (eye/lock) overflow into an implicit
+       2nd row on the LEFT edge. Pseudo stays position:absolute so grid
+       cell assignment is unaffected. Extra left padding reserves space
+       for the arrow so labels don't collide with it. */
+    padding-left: 14px;
   }
 
   .layers-list-container.is-tree-mode .layer-tree-node > summary::-webkit-details-marker {
@@ -82,23 +90,25 @@
   }
 
   /* Custom disclosure arrow — rotates 90° when <details open>. Positioned
-     in the gutter to the LEFT of depth-indented content, so deeper levels
-     still get a consistent visual hierarchy. */
+     absolute so it does not participate in the grid row/column layout. */
   .layers-list-container.is-tree-mode .layer-tree-node > summary::before {
     content: "";
-    display: inline-block;
+    position: absolute;
+    left: 0;
+    top: 50%;
     width: 0;
     height: 0;
     border: 4px solid transparent;
     border-left-color: currentColor;
-    margin-right: 6px;
+    transform: translateY(-50%);
+    transform-origin: 2px 50%;
     transition: transform var(--motion-micro, 120ms) var(--ease-out, ease);
-    vertical-align: middle;
     opacity: 0.6;
+    pointer-events: none;
   }
 
   .layers-list-container.is-tree-mode .layer-tree-node[open] > summary::before {
-    transform: rotate(90deg);
+    transform: translateY(-50%) rotate(90deg);
   }
 
   .layers-list-container.is-tree-mode .layer-tree-children {

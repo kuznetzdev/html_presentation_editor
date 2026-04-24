@@ -1,5 +1,80 @@
 # CHANGELOG
 
+## [2.0.5] — 2026-04-24 — Layer panel UX rescue (icons-on-left, labels, hover)
+
+User screenshot caught a severe Layer panel regression: the "hide"
+and "lock" icons were rendering on the LEFT edge of every row, the
+labels were opaque strings like `div [node-ab12]`, hovered and
+"active" rows looked identical (no background highlight), and the
+dark-theme "hidden" status chip was a washed-out grey island.
+
+### Fixed
+
+**Icons drifted to the left edge of rows** — `.layer-row` is a
+3-column grid (`32px | 1fr | auto`). In tree-mode the `<summary>`
+element got a disclosure-arrow pseudo via `summary::before { content:
+"" }`. The pseudo participated in grid flow, occupied the first
+cell, shifted every real child one column right, and the trailing
+`.layer-row-actions` cluster (eye + lock) overflowed into an
+implicit second row on the LEFT edge. Fix: `position: absolute`
+on the pseudo with `left: 0; top: 50%; transform: translateY(-50%)`
+so it is OUT of grid flow. `padding-left: 14px` on the summary
+reserves space for the arrow so labels do not collide with it.
+
+**Dead hover + active highlights** — `.layer-row:hover` referenced
+`var(--shell-hover-bg)` and `.layer-row.is-active` referenced
+`var(--shell-accent-bg)`. Neither token was ever defined anywhere
+in the token layers. CSS Custom Properties resolved "guaranteed
+invalid" and fell back to initial (`transparent`). Result: every
+layer row looked identical no matter what the user did. Replaced
+with `var(--state-hover, rgba(0,0,0,0.04))` and
+`var(--shell-accent-soft, color-mix(...))` — both exist across
+light + dark themes.
+
+**Layer labels read like junk** — `getLayerLabel()` in
+`layers-panel.js` led with `${tagName} #${authorId}` when
+`data-node-id` existed, so even a heading `<h1>Welcome</h1>` was
+displayed as `h1 #node-abc`. Reworked priority order:
+1. User rename wins (`data-layer-name`)
+2. Entity-kind "text" → quoted preview: `"Welcome to the deck"`
+3. `<h1>…<h6>` → `H1 "Title"` (tag + preview)
+4. `data-node-id` → `tagname · #node-id`
+5. Fallback uses the entity-kind human label (`getEntityKindLabel`)
+   instead of the opaque `[node-xxxxxx]` slug.
+
+**Hidden chip bled on dark theme** — `.layer-status-chip.is-hidden`
+used `color-mix(… shell-bg-secondary 76%, white)` which hardcoded
+white. On dark panels the chip lit up as a grey-white island that
+looked broken. Swapped hardcoded `white` for `var(--shell-text)` so
+the mix is theme-aware; added explicit `color: var(--text-secondary)`
+so label text contrasts with the new background.
+
+### Non-breaking
+
+- Typecheck: clean.
+- Unit + Playwright gate-a suites remain green.
+- No HTML / contract changes — purely style + label rendering.
+
+### Files
+
+- `editor/styles/layers-region.css` — `summary::before` absolute,
+  padding-left on summary to reserve arrow space.
+- `editor/src/layers-panel.js` — `getLayerLabel()` priority rework.
+- `editor/styles/inspector.css` — hover/active backgrounds +
+  hidden-chip theme-safe mix.
+
+### Honest note
+
+v1.1.5 shipped the tree-view disclosure arrow as a grid-flow pseudo;
+the grid misalignment was hidden in most demos because at very short
+layer labels the trailing icons happened to fit on row 1. With
+real decks (long labels, nested groups) the overflow became
+obvious. Visual regressions for deep trees are queued as a follow-up
+so this specific class of grid-cell drift cannot ship silently
+again.
+
+---
+
 ## [2.0.4] — 2026-04-24 — Import-report modal opacity + dark-theme readability
 
 User screenshot again caught a real bug the previous visual

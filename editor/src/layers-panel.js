@@ -225,13 +225,28 @@
         const entityKind = el.getAttribute("data-editor-entity-kind") || "element";
         const authorId = el.getAttribute("data-node-id") || "";
         const tagName = el.tagName.toLowerCase();
-        if (authorId) return `${tagName} #${authorId}`;
-        const textPreview = (el.textContent || "").trim().slice(0, 30);
-        if (textPreview && entityKind === "text") return `"${textPreview}"`;
+        // [v2.0.5] Text + heading elements lead with the text preview — the
+        // user sees what the layer says rather than decoding "div [node-a]".
+        const rawText = (el.textContent || "").replace(/\s+/g, " ").trim();
+        const textPreview = rawText.slice(0, 40);
+        if (entityKind === "text" && textPreview) return `"${textPreview}"`;
+        if (/^h[1-6]$/i.test(tagName) && textPreview) return `${tagName.toUpperCase()} "${textPreview}"`;
+        if (authorId) return `${tagName} · #${authorId}`;
         if (el.id) return `${tagName}#${el.id}`;
-        const className = (el.className || "").toString().split(/\s+/).filter(c => c && !c.startsWith("editor-"))[0];
+        const className = (el.className || "")
+          .toString()
+          .split(/\s+/)
+          .filter((c) => c && !c.startsWith("editor-"))[0];
         if (className) return `${tagName}.${className}`;
-        return `${tagName} [${nodeId.slice(0, 6)}]`;
+        // [v2.0.5] Last resort: use entity-kind human label instead of the
+        // opaque "[node-xxxxxx]" fragment. "node-xxxxxx" is noise for users.
+        if (typeof getEntityKindLabel === "function") {
+          const kindLabel = getEntityKindLabel(entityKind);
+          if (kindLabel && kindLabel !== entityKind) {
+            return `${kindLabel} · ${tagName}`;
+          }
+        }
+        return `${tagName} · ${nodeId.slice(0, 6)}`;
       }
 
       function getPreviewLayerNode(nodeId) {

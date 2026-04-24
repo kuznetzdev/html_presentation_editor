@@ -236,16 +236,23 @@ See `docs/GITHUB_PACKAGES.md` for the exact recommendation and tradeoffs.
 
 ## Recent milestone tags
 
-Current: **v2.0.0 — General Availability** (2026-04-24).
+Current: **v2.0.5 — Layer panel UX rescue** (2026-04-24) on top of
+**v2.0.0 GA**.
 Full release notes: [`docs/RELEASE-v2.0.md`](docs/RELEASE-v2.0.md).
 Post-v2 roadmap: [`docs/POST_V2_ROADMAP.md`](docs/POST_V2_ROADMAP.md).
 
 The v1.0.3 → v2.0.0 redesign trajectory: **26 incremental release
 points** (v1.1.0 → v2.0.0 inclusive) across Phases A–E + 6 hardening
-sprints.
+sprints, plus **5 post-GA polish tags** (v2.0.1–v2.0.5).
 
 ### v2.0 trajectory
 
+- `v2.0.5` — Layer panel UX (icons drift fix, label readability,
+  hover/active restore, dark-theme chip)
+- `v2.0.4` — Import-report modal opacity + dark-theme readability
+- `v2.0.3` — Empty-state grid collapse + split-pane fr calc
+- `v2.0.2` — Settings Reset UI + empty-state animation + recovery
+- `v2.0.1` — Release integrity (SoT/README drift + docs-sync gate)
 - `v2.0.0` — General Availability ceremony
 - `v1.5.0` … `v1.5.5` — Hardening sprints (validators wired, deck
   health, undo toast, bridge schema, golden export, recovery,

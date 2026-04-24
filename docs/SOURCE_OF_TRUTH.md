@@ -219,12 +219,15 @@ The preview zoom feature uses the CSS `zoom:` property which is on the W3C stand
 
 ## Release state
 
-**Current**: v2.0.0 — General Availability shipped 2026-04-24.
+**Current**: v2.0.5 — Layer panel UX rescue shipped 2026-04-24
+(v2.0.0 GA + five post-GA polish tags).
 
 The v1.0.3 → v2.0.0 redesign trajectory is complete: 26 incremental
 release points (v1.1.0 through v2.0.0 inclusive) across Phases A–E
-plus 6 hardening sprints. All v2 feature flags default to v2 behavior;
-full feature surface stable. Gate-A: 242/8/0 across 22 spec files.
+plus 6 hardening sprints; the GA has since absorbed 5 user-reported
+polish tags (v2.0.1–v2.0.5). All v2 feature flags default to v2
+behavior; full feature surface stable. Gate-A: 254/8/0 across 25
+spec files.
 
 See `docs/RELEASE-v2.0.md` for full release notes and the complete
 tag-by-tag history.
