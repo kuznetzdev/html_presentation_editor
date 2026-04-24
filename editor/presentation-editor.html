@@ -1519,6 +1519,34 @@
             «Редактирование», чтобы выбирать и менять элементы.
           </div>
 
+          <!-- [v2.0.2] Workspace settings — quick actions for per-user prefs. -->
+          <div class="inspector-section" id="workspaceSettingsSection">
+            <h3>Настройки рабочего пространства</h3>
+            <div class="inspector-actions">
+              <button
+                type="button"
+                id="resetOnboardingBtn"
+                class="ghost-btn"
+                title="Покажет подсказки первого запуска заново при следующей загрузке deck"
+              >
+                Сбросить подсказки
+              </button>
+              <button
+                type="button"
+                id="resetFeatureFlagsBtn"
+                class="ghost-btn"
+                data-ui-level="advanced"
+                title="Вернёт feature flags к дефолтам v2; страница перезагрузится"
+              >
+                Сбросить feature flags
+              </button>
+            </div>
+            <p class="small-note">
+              Подсказки показываются один раз на установку. Feature flags
+              управляют UI-слоями v2 и обычно не требуют ручной настройки.
+            </p>
+          </div>
+
           <div
             class="diagnostics-box"
             id="diagnosticsBox"

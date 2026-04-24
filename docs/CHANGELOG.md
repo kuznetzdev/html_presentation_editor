@@ -1,5 +1,63 @@
 # CHANGELOG
 
+## [2.0.2] — 2026-04-24 — UX polish + broken-gate recovery
+
+Post-v2.0 self-test caught real gaps. This patch closes them:
+
+### Fixed
+
+- `scripts/validate-export-asset-parity.js` — silently broken since
+  v1.2.0 (Smart Import report modal introduction). The headless
+  validator was hanging on the modal (no user to click Continue).
+  Fix: pass `bypassReport: true` so the contract validator walks
+  straight through. Asset-parity now passes.
+- `test:gate-a11y` npm script — Unix-style env-var syntax
+  (`PLAYWRIGHT_TEST_SERVER_PORT=41735 npx …`) doesn't work on
+  Windows cmd. Wrapped in a `node -e` shim so the script runs
+  cross-platform.
+- `tests/playwright/specs/layers-rename-context.spec.js` F2-on-focused
+  test — intermittent flake under parallel-worker load resolved by
+  dispatching the keydown directly on the focused row via
+  `page.evaluate`, bypassing any shell-level focus-race.
+
+### Added
+
+- **Settings → Reset onboarding** UI — new `#workspaceSettingsSection`
+  in the inspector with:
+  - `#resetOnboardingBtn` (basic + advanced modes)
+  - `#resetFeatureFlagsBtn` (advanced only, confirm-then-reload)
+- **Empty-state welcome animation** — 2.4s subtle pulse on
+  `#emptyOpenBtn` (fires twice after a 600ms delay) plus a staggered
+  120/240/360ms fade-in on the three "How to start" steps. Respects
+  `prefers-reduced-motion` — animations nuked under that preference.
+- `tests/playwright/specs/workspace-settings.spec.js` — 5 tests:
+  section attached, reset-onboarding button visible/enabled/clears
+  localStorage, reset-flags button advanced-only, section hidden on
+  empty state.
+
+### Non-breaking
+
+- Gate-A: target ≥ 255/8/0 (+5 from workspace-settings).
+- Asset-parity: now passes (was silently red since v1.2.0).
+- gate-a11y: runnable on Windows (was broken on Windows since spec
+  introduction).
+- Typecheck: clean.
+
+### Honest note
+
+v2.0.0 was shipped with a broken asset-parity validator. This was not
+caught because gate-a only exercises Playwright specs, not the
+standalone Node validator. v2.0.2 fixes it + keeps the original
+contract intact.
+
+### Related
+
+- Closes "Settings → Reset onboarding UI control" line of the
+  POST_V2_ROADMAP.
+- Closes "Empty-state welcome card CSS animation" line.
+
+---
+
 ## [2.0.1] — 2026-04-24 — Release integrity patch
 
 Post-v2.0 audit caught two doc-drift artifacts and one arithmetic

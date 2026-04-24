@@ -16,3 +16,43 @@
   margin-top: var(--space-2); padding: var(--space-3);
   background: var(--shell-field-bg); border-radius: var(--radius-md);
 }
+
+/* [v2.0.2] Empty-state welcome — subtle attention-grabbing animation on
+   the primary CTA. Respects prefers-reduced-motion. */
+body[data-editor-workflow="empty"] #emptyOpenBtn {
+  animation: emptyStatePulse 2.4s ease-in-out 0.6s 2;
+}
+
+@keyframes emptyStatePulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--shell-accent, #0071e3) 18%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--shell-accent, #0071e3) 0%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-editor-workflow="empty"] #emptyOpenBtn {
+    animation: none;
+  }
+}
+
+/* Step number chips get a tiny staggered fade-in when empty state opens. */
+body[data-editor-workflow="empty"] .empty-state-step {
+  animation: emptyStateStepFadeIn 400ms var(--ease-out, ease) backwards;
+}
+body[data-editor-workflow="empty"] .empty-state-step:nth-child(1) { animation-delay: 120ms; }
+body[data-editor-workflow="empty"] .empty-state-step:nth-child(2) { animation-delay: 240ms; }
+body[data-editor-workflow="empty"] .empty-state-step:nth-child(3) { animation-delay: 360ms; }
+
+@keyframes emptyStateStepFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-editor-workflow="empty"] .empty-state-step {
+    animation: none;
+  }
+}

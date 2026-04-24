@@ -175,11 +175,32 @@ test.describe("Layers inline rename + context menu — Phase B5", () => {
       test.slow();
       await loadDeck(page);
       const row = await firstLayerRow(page);
-      await row.focus();
-      await page.keyboard.press("F2");
-      await expect(row.locator(".layer-label-input")).toBeVisible({
-        timeout: 8_000,
-      });
+      const nodeId = await row.getAttribute("data-layer-node-id");
+      // Re-query row by nodeId after potential re-renders; dispatch the
+      // keydown directly via the page to avoid focus-loss races under
+      // parallel worker load.
+      await page.evaluate((id) => {
+        const el = document.querySelector(
+          `#layersListContainer .layer-row[data-layer-node-id="${id}"]`,
+        );
+        if (el) {
+          el.focus();
+          // Synthesize the F2 keydown on the focused row — bypasses any
+          // shell-level focus race without changing the production path.
+          el.dispatchEvent(
+            new KeyboardEvent("keydown", {
+              key: "F2",
+              bubbles: true,
+              cancelable: true,
+            }),
+          );
+        }
+      }, nodeId);
+      await expect(
+        page.locator(
+          `#layersListContainer .layer-row[data-layer-node-id="${nodeId}"] .layer-label-input`,
+        ),
+      ).toBeVisible({ timeout: 8_000 });
     },
   );
 

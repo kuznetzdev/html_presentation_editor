@@ -209,9 +209,12 @@ async function loadHtmlCase(page, html, manualBaseUrl = "") {
   await page.evaluate(
     ({ htmlString, baseUrl }) => {
       els.baseUrlInput.value = baseUrl;
+      // [v2.0.2] bypassReport skips the Smart Import preprocessing modal
+      // — this script is a headless contract validator, not a user path.
       loadHtmlString(htmlString, "asset-parity-case", {
         resetHistory: true,
         dirty: true,
+        bypassReport: true,
       });
     },
     { htmlString: html, baseUrl: manualBaseUrl },

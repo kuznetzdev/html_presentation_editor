@@ -140,7 +140,8 @@ These cannot be violated at any point in any phase. Gate-A enforces most.
 | v1.5.4 | 2026-04-24 | Hardening | 4b047f8 | 232/5/0 | Golden export contract + recovery scenarios (+13 specs) |
 | v1.5.5 | 2026-04-24 | Hardening | 354d37f | 242/5/0 | Long-session sync + docs-sync gate (+10 specs) |
 | **v2.0.0** | **2026-04-24** | **GA** | 7c93262 | **242/8/0** | **General Availability — see docs/RELEASE-v2.0.md** |
-| v2.0.1 | 2026-04-24 | Release integrity | (pending) | 248/8/0 | SoT + README drift fix + POST_V2_ROADMAP + docs-sync gate strengthened |
+| v2.0.1 | 2026-04-24 | Release integrity | ca86dff | 248/8/0 | SoT + README drift fix + POST_V2_ROADMAP + docs-sync gate strengthened |
+| v2.0.2 | 2026-04-24 | Polish + recovery | (pending) | 255/8/0 | Settings→Reset + empty-state animation + asset-parity fix + gate-a11y Windows env + F2 flake |
 
 ### Current baseline (as of 2026-04-23)
 

@@ -80,7 +80,37 @@
         startBridgeWatchdog();
         updateAssetDirectoryStatus();
         bindTelemetryToggleUi();
+        // [v2.0.2] Workspace settings — Reset onboarding hints + feature flags.
+        bindWorkspaceSettingsActions();
         refreshUi();
+      }
+
+      function bindWorkspaceSettingsActions() {
+        els.resetOnboardingBtn?.addEventListener("click", () => {
+          if (typeof window.resetOnboardingV2 === "function") {
+            window.resetOnboardingV2();
+          }
+          if (typeof showToast === "function") {
+            showToast(
+              "Подсказки первого запуска будут показаны заново при следующей загрузке deck.",
+              "success",
+              { title: "Подсказки" },
+            );
+          }
+        });
+        els.resetFeatureFlagsBtn?.addEventListener("click", () => {
+          if (!window.confirm(
+            "Сбросить все feature flags к дефолтам v2 и перезагрузить редактор?\n\n" +
+            "Ваши переопределения (если вы что-то меняли через devtools) будут удалены."
+          )) return;
+          if (typeof window.resetFeatureFlags === "function") {
+            window.resetFeatureFlags();
+          }
+          try {
+            window.localStorage.removeItem("presentation-editor:feature-flags:v1");
+          } catch (_) {}
+          window.location.reload();
+        });
       }
 
       /* ======================================================================

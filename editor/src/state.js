@@ -1176,6 +1176,9 @@
         pasteStyleBtn: document.getElementById("pasteStyleBtn"),
         inspectorHelp: document.getElementById("inspectorHelp"),
         diagnosticsBox: document.getElementById("diagnosticsBox"),
+        // [v2.0.2] Workspace settings quick actions (Settings → Reset).
+        resetOnboardingBtn: document.getElementById("resetOnboardingBtn"),
+        resetFeatureFlagsBtn: document.getElementById("resetFeatureFlagsBtn"),
         alignButtons: Array.from(document.querySelectorAll("[data-align]")),
         openHtmlModal: document.getElementById("openHtmlModal"),
         shortcutsModal: document.getElementById("shortcutsModal"),
