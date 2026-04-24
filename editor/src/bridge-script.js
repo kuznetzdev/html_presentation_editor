@@ -716,20 +716,52 @@
             : '[data-editor-slide-id]{opacity:1!important;pointer-events:auto!important;transform:none!important;transition:none!important;animation:none!important;}';
 
           style.textContent = STATE.editMode
-            ? '[data-editor-selected="true"] {' +
-              'outline: 2px solid rgba(38, 103, 255, 0.92) !important;' +
+            ? /* [v2.0.7] Selection / hover rings beefed up so they read
+                 against busy slide backgrounds. The previous values
+                 (2px solid 92% alpha + 8% bg tint) disappeared on
+                 photo backgrounds and dark hero sections.
+
+                 - Outline alpha bumped 0.92 → 0.96.
+                 - Outer halo box-shadow added: a 4px translucent ring
+                   that creates contrast even when the inner outline
+                   fights with element color.
+                 - Background tint 0.08 → 0.10 — still subtle, but
+                   actually visible on light slides.
+                 - Smooth transition so selection changes don't snap. */
+              '[data-editor-selected="true"] {' +
+              'outline: 2px solid rgba(38, 103, 255, 0.96) !important;' +
               'outline-offset: 2px !important;' +
-              'background: rgba(38, 103, 255, 0.08) !important;' +
+              'background: rgba(38, 103, 255, 0.10) !important;' +
+              'box-shadow: 0 0 0 4px rgba(38, 103, 255, 0.18) !important;' +
+              'transition: outline-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease !important;' +
               '}' +
+              /* [v2.0.7] Hover ring goes from 1px dashed @ 0.5 alpha
+                 (basically invisible on dark backgrounds) to 1.5px
+                 dashed @ 0.7 alpha + a soft 2px halo. Still visually
+                 lighter than the selected ring, but unmistakable. */
               '[data-editor-hover="true"] {' +
-              'outline: 1px dashed rgba(38, 103, 255, 0.5) !important;' +
+              'outline: 1.5px dashed rgba(38, 103, 255, 0.7) !important;' +
               'outline-offset: 2px !important;' +
+              'box-shadow: 0 0 0 2px rgba(38, 103, 255, 0.10) !important;' +
+              'transition: outline-color 90ms ease, box-shadow 90ms ease !important;' +
               '}' +
               '[data-editor-highlight="ghost"]:not([data-editor-selected="true"]) {' +
-              'outline: 2px dashed rgba(38, 103, 255, 0.6) !important;' +
+              'outline: 2px dashed rgba(38, 103, 255, 0.7) !important;' +
               'outline-offset: 3px !important;' +
-              'background: rgba(38, 103, 255, 0.08) !important;' +
-              'transition: background 120ms ease, outline 120ms ease;' +
+              'background: rgba(38, 103, 255, 0.10) !important;' +
+              'box-shadow: 0 0 0 4px rgba(38, 103, 255, 0.14) !important;' +
+              'transition: background 120ms ease, outline 120ms ease, box-shadow 120ms ease;' +
+              '}' +
+              /* [v2.0.7] Locked elements show a not-allowed cursor so
+                 the user understands WHY the click did not select.
+                 Previously the click silently fell through to the
+                 parent which felt like a broken hit-test. The hover
+                 attribute itself is never set on locked nodes
+                 (resolveSelectionFromTarget filters them), so we
+                 cannot draw a dedicated locked-hover ring here —
+                 the cursor change is the affordance. */
+              '[data-editor-locked="true"] {' +
+              'cursor: not-allowed !important;' +
               '}' +
               '[data-editor-flash="true"] {' +
               'animation: presentation-editor-flash 720ms ease-out;' +

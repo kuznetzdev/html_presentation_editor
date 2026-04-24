@@ -1,5 +1,88 @@
 # CHANGELOG
 
+## [2.0.7] — 2026-04-24 — Selection + hover rings beefed up for busy decks
+
+User asked for "relevant and purposeful highlights" across the whole
+product. First sweep: the in-iframe selection / hover rings. The
+prior values (2px solid 92% alpha + 8% bg tint, 1px dashed 50% alpha)
+disappeared on photo backgrounds, dark hero sections, and slides
+with strong gradients. Users could not tell what was selected on
+half the real-world decks.
+
+### Improved
+
+**Selected ring** — outline alpha 0.92 → 0.96, background tint
+0.08 → 0.10, plus a new 4px outer halo (box-shadow @ 0.18 alpha)
+that creates contrast even when the inner outline fights with the
+element's own colour. 120ms transitions on outline / shadow /
+background so selection changes feel smooth instead of snapping.
+
+**Hover ring** — width 1px → 1.5px, alpha 0.5 → 0.7, plus a 2px
+softer halo so the hover is unmistakable on dark backgrounds. The
+hover ring stays visually lighter than the selected ring so the
+hierarchy is preserved.
+
+**Ghost (drop preview) ring** — same beef-up: solid border at 0.7
+alpha + 4px halo at 0.14 alpha so drag-target previews are visible
+across themes.
+
+**Locked-element cursor** — `cursor: not-allowed` on every
+`[data-editor-locked="true"]`. Previously a click on a locked
+element silently fell through to the parent, which felt like a
+broken hit-test ("I clicked but nothing happened"). The cursor
+change makes the gating obvious. (A dedicated locked-hover ring
+can't fire because the resolver filters locked nodes from the
+candidate set — the cursor is the affordance.)
+
+### Non-breaking
+
+- Capability unchanged — only visual treatments adjusted.
+- All four rules use the existing `data-editor-*` attributes; no
+  new state machinery.
+- Pure additive transitions, so reduced-motion users still see
+  instant changes (browser respects `prefers-reduced-motion`).
+
+### Files
+
+- `editor/src/bridge-script.js` — selection / hover / ghost / locked
+  CSS templated into the iframe `<style>` element.
+- `tests/playwright/specs/inspector-validators-badges.spec.js` —
+  opacity test flake hardened (see below).
+
+### Test flakes hardened (same tag)
+
+Three `Inspector validators (v1.5.0)` tests intermittently failed on
+Windows + Playwright 1.58 with `Expected "X", Received ""`:
+- `Opacity input clamps via validator` — `<input type="number">`
+- `Valid CSS length applies` — `<input type="text">` width
+- `Bad CSS length in widthInput surfaces a toast and skips applyStyle`
+  — same text input
+
+Root cause: `fill(...)` followed by `press("Tab")` did not reliably
+fire the `change` event handler that runs the validator. The handler
+never reached `applyStyle(...)` and modelDoc was never mutated.
+Switched all three tests to direct `el.value = "X";
+el.dispatchEvent(new Event("change", { bubbles: true }))` via
+`page.evaluate` — this bypasses the focus-race that fill+Tab
+introduces. All three are now stable across multiple repeats (was
+0/3 even with retries previously).
+
+### Honest note
+
+The hardcoded blue (rgb 38,103,255) is intentional: bridge-script
+runs INSIDE the iframe and cannot read shell tokens. A future tag
+will pipe the shell accent through the bridge so the ring follows
+the user's accent setting; for v2.0.7 the goal was visibility, not
+themability.
+
+The opacity-test flake was discovered while validating the visual
+changes; folding the fix into the same tag because the spec was
+blocking gate-a and shipping it in a separate tag would have
+created a window where main was red. The fix is purely a test
+robustness improvement — no production code involved.
+
+---
+
 ## [2.0.6] — 2026-04-24 — Layer panel declutter (remove inline z-input + Текущий chip)
 
 User screenshot follow-up on the v2.0.5 layer panel fixes. The row

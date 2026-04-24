@@ -145,7 +145,8 @@ These cannot be violated at any point in any phase. Gate-A enforces most.
 | v2.0.3 | 2026-04-24 | Critical UX fix | cd40b0e | 253/8/0 | Empty-state v2 grid collapse + split-pane fr calc + tree-indent cap (+7 visual baselines refreshed) |
 | v2.0.4 | 2026-04-24 | Modal fix | d263b3e | 254/8/0 | Import-report modal opacity + dark-theme readability + opacity regression test |
 | v2.0.5 | 2026-04-24 | Layer panel UX | 0d04386 | 254/8/0 | Icons-on-left grid fix + label readability + dead hover/active restore + hidden-chip dark-theme |
-| v2.0.6 | 2026-04-24 | Layer panel declutter | (pending) | 254/8/0 | Remove inline z-input (redundant with inspector) + Текущий chip (redundant with is-active) |
+| v2.0.6 | 2026-04-24 | Layer panel declutter | 779670a | 254/8/0 | Remove inline z-input (redundant with inspector) + Текущий chip (redundant with is-active) |
+| v2.0.7 | 2026-04-24 | Selection rings polish | (pending) | 254/8/0 | Beefier outline + halo for selected/hover/ghost, locked cursor, opacity-test flake hardened |
 
 ### Current baseline (as of 2026-04-23)
 

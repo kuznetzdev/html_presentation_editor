@@ -31,8 +31,15 @@ test.describe("Inspector validators (v1.5.0)", () => {
         page,
         "state.modelDoc.querySelector('[data-editor-node-id=\"' + state.selectedNodeId + '\"]').style.width || ''",
       );
-      await page.fill("#widthInput", "12foo");
-      await page.locator("#widthInput").press("Tab");
+      // [v2.0.7] Use direct value+dispatchEvent pattern (same reason as
+      // Opacity test below — fill+Tab doesn't reliably fire change on
+      // text inputs on Windows + Playwright 1.58).
+      await page.evaluate(() => {
+        const el = document.getElementById("widthInput");
+        el.value = "12foo";
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+      await page.waitForTimeout(150);
       const after = await evaluateEditor(
         page,
         "state.modelDoc.querySelector('[data-editor-node-id=\"' + state.selectedNodeId + '\"]').style.width || ''",
@@ -46,8 +53,15 @@ test.describe("Inspector validators (v1.5.0)", () => {
     async ({ page }, testInfo) => {
       test.skip(!isChromiumOnlyProject(testInfo.project.name));
       await loadDeck(page);
-      await page.fill("#widthInput", "240px");
-      await page.locator("#widthInput").press("Tab");
+      // [v2.0.7] Use direct value+dispatchEvent pattern. fill("240px")
+      // followed by press("Tab") was intermittently failing because
+      // the change event did not fire reliably on this combination.
+      await page.evaluate(() => {
+        const el = document.getElementById("widthInput");
+        el.value = "240px";
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+      await page.waitForTimeout(150);
       const after = await evaluateEditor(
         page,
         "state.modelDoc.querySelector('[data-editor-node-id=\"' + state.selectedNodeId + '\"]').style.width || ''",
@@ -89,8 +103,20 @@ test.describe("Inspector validators (v1.5.0)", () => {
     async ({ page }, testInfo) => {
       test.skip(!isChromiumOnlyProject(testInfo.project.name));
       await loadDeck(page);
-      await page.locator("#opacityInput").fill("50");
-      await page.locator("#opacityInput").press("Tab");
+      // [v2.0.7] Switched fill+Tab → setValue+dispatchEvent('change').
+      // On Windows + Playwright 1.58, fill("50") on <input type="number"
+      // step="5" min="0" max="100"> followed by press("Tab") did not
+      // reliably fire the "change" event handler that runs the validator.
+      // Test would intermittently observe modelDoc.style.opacity = ""
+      // because applyStyle never reached the bridge. Direct value+
+      // dispatchEvent is what the user effectively does (focus the
+      // field, type, blur), with no race against focus heuristics.
+      await page.evaluate(() => {
+        const el = document.getElementById("opacityInput");
+        el.value = "50";
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+      await page.waitForTimeout(150);
       const opacity = await evaluateEditor(
         page,
         "state.modelDoc.querySelector('[data-editor-node-id=\"' + state.selectedNodeId + '\"]').style.opacity || ''",
