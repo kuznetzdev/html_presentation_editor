@@ -290,6 +290,55 @@ textarea {
   display: none !important;
 }
 
+/* [v2.0.11] Empty-state guidance card inside #insertSection.
+   Shown when the user has loaded a deck in edit mode but hasn't
+   selected anything. Answers the unspoken question "how do I
+   edit something that's already here?". */
+.inspector-empty-hint {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--shell-accent) 20%, var(--shell-border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--shell-accent-soft) 70%, transparent);
+  color: var(--text-primary);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.inspector-empty-hint-title {
+  margin: 0 0 8px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.inspector-empty-hint-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+}
+
+.inspector-empty-hint-list li {
+  color: var(--text-secondary);
+}
+
+.inspector-empty-hint-list strong {
+  color: var(--text-primary);
+}
+
+.inspector-empty-hint-list kbd {
+  display: inline-block;
+  min-width: 22px;
+  padding: 1px 6px;
+  border: 1px solid var(--shell-border-strong);
+  border-radius: 6px;
+  background: var(--shell-field-bg);
+  color: var(--text-primary);
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  text-align: center;
+}
+
 .selection-policy-note {
   padding: 12px;
   border: 1px solid var(--intent-warning-border);

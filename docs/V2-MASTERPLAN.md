@@ -149,7 +149,8 @@ These cannot be violated at any point in any phase. Gate-A enforces most.
 | v2.0.7 | 2026-04-24 | Selection rings polish | c7d5728 | 254/8/0 | Beefier outline + halo for selected/hover/ghost, locked cursor, opacity-test flake hardened |
 | v2.0.8 | 2026-04-24 | Click-blocked toast | b927564 | 260/8/0 | Bridge → shell `click-blocked` message + contextual toast (locked/protected/unknown) + 1.5s throttle + 6 specs |
 | v2.0.9 | 2026-04-24 | Shortcut discovery hints | 35ce9b5 | 266/8/0 | Contextual one-shot toasts on first overlap-cycle / multi-select / alt-click + 6 specs |
-| v2.0.10 | 2026-04-24 | W/H in basic mode | (pending) | 273/8/0 | Geometry section root no longer advanced-only; W/H BASIC-visible; display/position/z/X/Y stay advanced + 7 specs |
+| v2.0.10 | 2026-04-24 | W/H in basic mode | d6e93ef | 273/8/0 | Geometry section root no longer advanced-only; W/H BASIC-visible; display/position/z/X/Y stay advanced + 7 specs |
+| v2.0.11 | 2026-04-24 | Inspector empty-state hint | (pending) | 278/8/0 | Persistent guidance card in #insertSection answering "how do I edit what's already here?" + 5 specs |
 
 ### Current baseline (as of 2026-04-23)
 

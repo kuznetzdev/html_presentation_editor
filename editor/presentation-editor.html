@@ -1124,6 +1124,34 @@
               <button type="button" id="addImageBtn">Картинка / GIF</button>
               <button type="button" id="addVideoBtn">Видео</button>
             </div>
+            <!-- [v2.0.11] Empty-state guidance. The insertSection is the
+                 only inspector card visible when the user has loaded a
+                 deck in edit mode but hasn't selected anything yet.
+                 Without this card, the user sees four "add new" buttons
+                 and may wonder how to EDIT the elements that are
+                 already on the slide. The card answers that. -->
+            <div class="inspector-empty-hint" id="insertEmptyHint" role="note">
+              <p class="inspector-empty-hint-title">
+                💡 Хотите изменить то, что уже на слайде?
+              </p>
+              <ul class="inspector-empty-hint-list">
+                <li>
+                  <strong>Кликните</strong> по любому элементу — здесь
+                  появятся его свойства.
+                </li>
+                <li>
+                  <strong>Двойной клик</strong> по тексту → правка прямо
+                  в превью.
+                </li>
+                <li>
+                  <strong>Правый клик</strong> → меню действий
+                  (дубль / удалить / порядок).
+                </li>
+                <li>
+                  <kbd>?</kbd> — список всех горячих клавиш.
+                </li>
+              </ul>
+            </div>
             <div class="field-group compact" data-ui-level="advanced">
               <label for="insertHtmlTextarea"
                 >Вставить произвольный HTML в текущий слайд</label

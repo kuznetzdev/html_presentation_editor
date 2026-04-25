@@ -1,5 +1,58 @@
 # CHANGELOG
 
+## [2.0.11] — 2026-04-24 — Inspector empty-state guidance card
+
+When a user has loaded a deck in edit mode but hasn't selected
+anything yet, the only inspector card visible was "Вставка" with
+four "add new" buttons. New users wondered "but how do I edit
+what's already on the slide?" — there was no answer in the UI.
+
+### Added
+
+`#insertEmptyHint` info card inside `#insertSection`, shown
+together with the insert buttons whenever no element is selected.
+Lists four guidance items in plain language:
+
+1. **Кликните** по любому элементу — появятся свойства.
+2. **Двойной клик** по тексту → правка прямо в превью.
+3. **Правый клик** → меню действий (дубль / удалить / порядок).
+4. <kbd>?</kbd> — список горячих клавиш.
+
+Styled as a soft accent-tinted card so it reads as guidance, not
+as a control. Vanishes the moment a selection is made (it lives
+inside `insertSection` which the workflow logic hides on
+selection).
+
+### Files
+
+- `editor/presentation-editor.html` — `<div class="inspector-empty-hint">`
+  block with the four-item list.
+- `editor/styles/inspector.css` — `.inspector-empty-hint` +
+  `.inspector-empty-hint-title` + `.inspector-empty-hint-list` +
+  `.inspector-empty-hint-list kbd` rules. Theme-token-driven
+  (works in both light and dark).
+- `tests/playwright/specs/inspector-empty-hint.spec.js` — 5 specs
+  cover: card present in DOM, title text, exactly four items,
+  `?` kbd token included, hint hidden when an element is selected.
+- `package.json` — `test:gate-a` script + `version` 2.0.11.
+
+### Non-breaking
+
+- Pure additive: HTML + CSS only, no behavior change to existing
+  flows. The card lives inside an existing section so the workflow
+  visibility cascade (see `syncInspectorWorkflowSections`) hides
+  it for free when a selection is made.
+
+### Honest note
+
+Onboarding-v2 toasts (v1.4.3 + v2.0.9) cover discovery for power
+shortcuts, but they fire ONCE per user and disappear. New users
+who reset onboarding or land on a fresh device benefit from a
+persistent in-place card. Together: toast for first-time hint,
+card for "I forgot, remind me where to start."
+
+---
+
 ## [2.0.10] — 2026-04-24 — Width/Height visible in basic mode
 
 The user complaint "сложно редактировать" had a concrete root cause:
