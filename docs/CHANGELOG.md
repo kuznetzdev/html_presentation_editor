@@ -1,5 +1,88 @@
 # CHANGELOG
 
+## [2.0.8] — 2026-04-24 — Click-blocked feedback toast (locked/protected silent fail)
+
+User-reported #1 usability complaint:
+> "сложно редактировать и натыкаюсь постоянно на нередактируемые
+> элементы"
+
+When the user clicked on the preview iframe and the click resolved
+to nothing (target was locked or protected from selection),
+bridge-script's `if (!selection?.selectedEl) return;` silently
+short-circuited. The cursor stayed normal, no toast appeared, the
+selection didn't change — the editor felt broken. The user had no
+way to know WHY their click did nothing.
+
+### Added
+
+**Bridge → shell `click-blocked` message** — when click resolves to
+nothing, bridge-script walks the original event target's ancestry
+and detects whether a `[data-editor-locked="true"]` or
+`[data-editor-protected="true"]` ancestor blocked the selection.
+Posts `click-blocked` with `{ reason, nodeId }` to the shell.
+
+**Shell receiver `applyClickBlockedFromBridge(payload)`** —
+contextual toast per reason:
+- `locked` → "Слой заблокирован — Снимите блок (🔒 в инспекторе
+  или панели слоёв) и кликните снова."
+- `protected` → "Защищённый блок — Этот элемент помечен как
+  защищённый — редактирование запрещено в этой презентации."
+- unknown → "Клик не выбрал элемент — Цель клика не доступна для
+  выделения. Попробуйте Alt+клик чтобы выбрать предка."
+
+**1.5 s throttle per `(reason, nodeId)` pair** — rapid double-
+clicks don't stack toasts. Identical payload within 1.5 s is
+swallowed.
+
+**Bridge schema entry** — `BRIDGE_MESSAGES.CLICK_BLOCKED` registered
+in `bridge-schema.js` and added to `SCHEMA_FREE_TYPES` so message
+validation accepts it.
+
+### Tests
+
+`tests/playwright/specs/click-blocked-feedback.spec.js` (new) —
+6 specs:
+1. `applyClickBlockedFromBridge` is exposed on window
+2. `locked` reason → "Снимите блок" toast visible
+3. `protected` reason → "Защищённый блок" toast visible
+4. Unknown reason → fallback toast with "Цель клика не доступна"
+5. Empty reason is a no-op (no toast spawned)
+6. Identical (reason, nodeId) within 1.5 s is throttled
+
+Added to `npm run test:gate-a` so the gate is canonical.
+
+### Non-breaking
+
+- New message type only flows iframe → shell. No mutation contract
+  changes. Existing decks render identically.
+- Throttle state lives on `state.__clickBlockedThrottle` (separate
+  bag) so it survives selection changes without polluting the main
+  state shape.
+
+### Files
+
+- `editor/src/bridge-script.js` — click handler detects locked /
+  protected ancestor and posts `click-blocked`.
+- `editor/src/bridge.js` — switch case routes `click-blocked` to
+  the receiver.
+- `editor/src/feedback.js` — `applyClickBlockedFromBridge`
+  implementation + window export.
+- `editor/src/bridge-schema.js` — `CLICK_BLOCKED` registered as
+  schema-free message.
+- `editor/src/globals.d.ts` — typed declaration for the receiver.
+- `tests/playwright/specs/click-blocked-feedback.spec.js` — new spec.
+- `package.json` — `test:gate-a` script + `version` 2.0.8.
+
+### Honest note
+
+The user's complaint was about `cursor: not-allowed` showing on
+locked elements (added in v2.0.7) being too quiet — you only
+notice it AFTER the click. The toast in v2.0.8 fires AT the click,
+so it can't be missed. Together the cursor + toast form a clear
+"here is the gate, here is how to lift it" pair.
+
+---
+
 ## [2.0.7] — 2026-04-24 — Selection + hover rings beefed up for busy decks
 
 User asked for "relevant and purposeful highlights" across the whole

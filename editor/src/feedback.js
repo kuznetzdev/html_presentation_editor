@@ -685,6 +685,42 @@
         return getBlockReason() !== "none";
       }
 
+      // [v2.0.8] Bridge sends 'click-blocked' when a click on the
+      // preview iframe resolved to nothing because the target (or
+      // an ancestor) is locked / protected from selection. The shell
+      // shows a one-shot toast per session per reason so the user
+      // understands WHY their click did nothing — previously the
+      // click silently fell through and the editor felt broken.
+      // Throttling: identical (reason, nodeId) is swallowed within
+      // 1500ms so rapid double-clicks don't stack toasts.
+      function applyClickBlockedFromBridge(payload) {
+        if (typeof showToast !== "function") return;
+        const reason = String(payload && payload.reason || "").trim();
+        const nodeId = String(payload && payload.nodeId || "").trim();
+        if (!reason) return;
+        const throttleKey = "editor:click-blocked:" + reason + ":" + nodeId;
+        const now = Date.now();
+        const lastAt = Number(state.__clickBlockedThrottle && state.__clickBlockedThrottle[throttleKey] || 0);
+        if (lastAt && now - lastAt < 1500) return;
+        if (!state.__clickBlockedThrottle) state.__clickBlockedThrottle = {};
+        state.__clickBlockedThrottle[throttleKey] = now;
+        let title = "";
+        let message = "";
+        if (reason === "locked") {
+          title = "Слой заблокирован";
+          message = "Снимите блок (🔒 в инспекторе или панели слоёв) и кликните снова.";
+        } else if (reason === "protected") {
+          title = "Защищённый блок";
+          message = "Этот элемент помечен как защищённый — редактирование запрещено в этой презентации.";
+        } else {
+          // Unknown reason — fall back to a quiet info note.
+          title = "Клик не выбрал элемент";
+          message = "Цель клика не доступна для выделения. Попробуйте Alt+клик чтобы выбрать предка.";
+        }
+        showToast(message, "info", { title: title, ttl: 4500 });
+      }
+      window.applyClickBlockedFromBridge = applyClickBlockedFromBridge;
+
       // [WO-29] Centralized mode-gating for block reason action visibility
       function getBlockReasonActionVisibleIn(reason, mode) {
         if (mode === "advanced") return true;

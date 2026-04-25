@@ -12,6 +12,7 @@
       /* global applySlideActivationFromBridge, applyElementSelection, applyElementUpdateFromBridge */
       /* global applySelectionGeometry, applySlideUpdateFromBridge, applySlideRemovedFromBridge */
       /* global openContextMenuFromBridge, handleBridgeShortcut, applyDocumentSyncFromBridge */
+      /* global applyClickBlockedFromBridge */
       /* global cleanupExportValidationUrl, getAllowedBridgeOrigins, setPreviewLifecycleState */
       /* global BRIDGE_PROTOCOL_VERSION */
 
@@ -146,6 +147,15 @@
                 break;
               case "shortcut":
                 handleBridgeShortcut(data.payload || {});
+                break;
+              // [v2.0.8] Click landed on an element that is locked or
+              // protected from selection. Bridge-script detected the
+              // reason from the DOM target's ancestry chain. Show a
+              // contextual toast so the user understands WHY their
+              // click did nothing — previously the click silently fell
+              // through, making the editor feel broken.
+              case "click-blocked":
+                applyClickBlockedFromBridge(data.payload || {});
                 break;
               case "runtime-error":
                 addDiagnostic(

@@ -28,6 +28,7 @@ declare function applyElementUpdateFromBridge(payload: unknown, seq: number): vo
 declare function applySelectionGeometry(payload: unknown): void;
 declare function applySlideUpdateFromBridge(payload: unknown, seq: number): void;
 declare function applySlideRemovedFromBridge(payload: unknown, seq: number): void;
+declare function applyClickBlockedFromBridge(payload: { reason?: string; nodeId?: string }): void;
 declare function openContextMenuFromBridge(payload: unknown): void;
 declare function handleBridgeShortcut(payload: unknown): void;
 declare function applyDocumentSyncFromBridge(payload: unknown, seq: number): void;

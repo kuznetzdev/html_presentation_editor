@@ -3188,7 +3188,33 @@
             deepSelect: Boolean(_isMod && !event.altKey),
             containerMode: STATE.containerMode, // [LAYER-MODEL v2]
           });
-          if (!selection?.selectedEl) return;
+          if (!selection?.selectedEl) {
+            // [v2.0.8] Click resolved to no selectable target. Detect the
+            // most likely reason and notify the shell so it can show a
+            // contextual toast. Previously the click silently fell
+            // through and the user had no clue why their click did
+            // nothing — the #1 user-reported usability complaint.
+            const _directTarget = event.target instanceof Element ? event.target : null;
+            if (_directTarget) {
+              const _lockedAncestor = _directTarget.closest('[data-editor-locked="true"]');
+              if (_lockedAncestor) {
+                post('click-blocked', {
+                  reason: 'locked',
+                  nodeId: _lockedAncestor.getAttribute(EDITOR_MARKER) || '',
+                });
+                return;
+              }
+              const _protectedAncestor = _directTarget.closest('[data-editor-protected="true"]');
+              if (_protectedAncestor) {
+                post('click-blocked', {
+                  reason: 'protected',
+                  nodeId: _protectedAncestor.getAttribute(EDITOR_MARKER) || '',
+                });
+                return;
+              }
+            }
+            return;
+          }
           if (event.target.closest('a[href]')) event.preventDefault();
           if (event.altKey) event.preventDefault();
           if (_isMod && !event.altKey) event.preventDefault();
