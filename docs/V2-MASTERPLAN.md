@@ -147,7 +147,8 @@ These cannot be violated at any point in any phase. Gate-A enforces most.
 | v2.0.5 | 2026-04-24 | Layer panel UX | 0d04386 | 254/8/0 | Icons-on-left grid fix + label readability + dead hover/active restore + hidden-chip dark-theme |
 | v2.0.6 | 2026-04-24 | Layer panel declutter | 779670a | 254/8/0 | Remove inline z-input (redundant with inspector) + Текущий chip (redundant with is-active) |
 | v2.0.7 | 2026-04-24 | Selection rings polish | c7d5728 | 254/8/0 | Beefier outline + halo for selected/hover/ghost, locked cursor, opacity-test flake hardened |
-| v2.0.8 | 2026-04-24 | Click-blocked toast | (pending) | 260/8/0 | Bridge → shell `click-blocked` message + contextual toast (locked/protected/unknown) + 1.5s throttle + 6 specs |
+| v2.0.8 | 2026-04-24 | Click-blocked toast | b927564 | 260/8/0 | Bridge → shell `click-blocked` message + contextual toast (locked/protected/unknown) + 1.5s throttle + 6 specs |
+| v2.0.9 | 2026-04-24 | Shortcut discovery hints | (pending) | 266/8/0 | Contextual one-shot toasts on first overlap-cycle / multi-select / alt-click + 6 specs |
 
 ### Current baseline (as of 2026-04-23)
 

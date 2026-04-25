@@ -166,6 +166,7 @@
     CONTEXT_MENU:      'context-menu',
     SHORTCUT:          'shortcut',
     CLICK_BLOCKED:     'click-blocked',
+    HINT_SHORTCUT:     'hint-shortcut',
 
     // Ack (v2 structured response, ADR-012 §5)
     ACK:               'ack',
@@ -831,6 +832,7 @@
     BRIDGE_MESSAGES.CONTEXT_MENU,
     BRIDGE_MESSAGES.SHORTCUT,
     BRIDGE_MESSAGES.CLICK_BLOCKED,
+    BRIDGE_MESSAGES.HINT_SHORTCUT,
     BRIDGE_MESSAGES.HIGHLIGHT_NODE,
     BRIDGE_MESSAGES.SET_SELECTION_MODE,
     BRIDGE_MESSAGES.RESET_CLICK_THROUGH,

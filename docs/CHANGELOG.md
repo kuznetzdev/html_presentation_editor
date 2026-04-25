@@ -1,5 +1,85 @@
 # CHANGELOG
 
+## [2.0.9] — 2026-04-24 — Contextual shortcut discovery hints
+
+The existing onboarding-v2 primer covers only first-load,
+first-select, first-edit. Power-user shortcuts (Ctrl+G group,
+Ctrl+click deep-select, Alt+click parent cycle, Shift+click
+multi-select) were undocumented in-product — users had to press
+`?` and read the modal. They didn't.
+
+### Added
+
+Three contextual hint helpers in `onboarding-v2.js`:
+
+- `hintAfterFirstOverlapCycle()` — fires when shell receives
+  `element-selected` with `overlapIndex > 0` (user actually cycled
+  through overlapping candidates). Tip: "Ctrl+клик — сразу глубже,
+  Alt+клик — к предку, повторный клик — следующий кандидат."
+- `hintAfterFirstMultiSelect()` — fires when bridge processes
+  `multi-select-add` and the selection just grew to ≥ 2 nodes. Tip:
+  "Ctrl+G — сгруппировать, Ctrl+Shift+G — разгруппировать."
+- `hintAfterFirstAltClick()` — fires when bridge-script processes a
+  click with `altKey: true`. Tip: "Alt+клик ↔ Shift+Enter parity,
+  Enter — вглубь."
+
+All three follow the existing `showHintOnce(key, message, options)`
+pattern → fire AT MOST once per user via localStorage tracking
+(`presentation-editor:onboarding-v2:v1`). `resetOnboardingV2()`
+re-arms all of them.
+
+### Wiring
+
+- `editor/src/bridge-commands.js` — overlap hint trigger inside
+  `applyElementSelection` after computing `nextOverlapIndex`.
+- `editor/src/bridge.js` — multi-select hint trigger inside the
+  `multi-select-add` case after the addition succeeds.
+- `editor/src/bridge.js` — new `hint-shortcut` message case routes
+  `{ kind: 'alt-click' }` → `hintAfterFirstAltClick()`.
+- `editor/src/bridge-script.js` — posts `hint-shortcut` with
+  `kind: 'alt-click'` when the click handler ran with `altKey: true`.
+- `editor/src/bridge-schema.js` — `BRIDGE_MESSAGES.HINT_SHORTCUT`
+  registered in schema + SCHEMA_FREE_TYPES so message validation
+  accepts it.
+
+### Tests
+
+`tests/playwright/specs/shortcut-discovery-hints.spec.js` (new) — 6
+specs:
+1. All three hint helpers exposed on window
+2. Overlap hint shows the correct text
+3. Multi-select hint shows the correct text
+4. Alt-click hint shows the correct text
+5. Idempotency — second call returns false, no second toast
+6. `resetOnboardingV2()` re-arms (third call returns true again)
+
+Added to `npm run test:gate-a`.
+
+### Bonus fix
+
+`hintAfterFirst*` helpers now `return` the boolean result of
+`showHintOnce(...)` (was `undefined`). Required so the tests can
+distinguish "fired" from "swallowed". Existing primer call sites
+(`primeOnboardingV2`) ignore the return value — non-breaking for
+prod.
+
+### Non-breaking
+
+- New iframe → shell message `hint-shortcut` is schema-registered
+  but optional. Existing decks render identically.
+- Hints rely entirely on the existing toast infrastructure; no new
+  CSS surface introduced.
+
+### Honest note
+
+These hints land at the moment of first use, when the relevant
+shortcut becomes useful. The user is most likely to internalize a
+shortcut RIGHT after manually doing the slow version of the same
+action. Pre-emptive hints (a Tour-style overlay) would be louder
+and more annoying — the trade-off here is intentional.
+
+---
+
 ## [2.0.8] — 2026-04-24 — Click-blocked feedback toast (locked/protected silent fail)
 
 User-reported #1 usability complaint:

@@ -219,14 +219,14 @@ The preview zoom feature uses the CSS `zoom:` property which is on the W3C stand
 
 ## Release state
 
-**Current**: v2.0.8 — Click-blocked feedback toast shipped 2026-04-24
-(v2.0.0 GA + eight post-GA polish tags).
+**Current**: v2.0.9 — Contextual shortcut discovery hints shipped
+2026-04-24 (v2.0.0 GA + nine post-GA polish tags).
 
 The v1.0.3 → v2.0.0 redesign trajectory is complete: 26 incremental
 release points (v1.1.0 through v2.0.0 inclusive) across Phases A–E
-plus 6 hardening sprints; the GA has since absorbed 8 user-reported
-polish tags (v2.0.1–v2.0.8). All v2 feature flags default to v2
-behavior; full feature surface stable. Gate-A: 260/8/0 across 26
+plus 6 hardening sprints; the GA has since absorbed 9 user-reported
+polish tags (v2.0.1–v2.0.9). All v2 feature flags default to v2
+behavior; full feature surface stable. Gate-A: 266/8/0 across 27
 spec files.
 
 See `docs/RELEASE-v2.0.md` for full release notes and the complete

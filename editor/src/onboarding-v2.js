@@ -85,6 +85,35 @@
     );
   }
 
+  // [v2.0.9] Contextual hints triggered by specific user actions.
+  // Each fires AT MOST once per user (localStorage-tracked) and only
+  // when the corresponding action has just succeeded. Designed to
+  // surface power-user shortcuts in the moment they become useful.
+
+  function hintAfterFirstOverlapCycle() {
+    return showHintOnce(
+      "first-overlap-cycle",
+      "💡 Несколько элементов под кликом? Ctrl+клик — сразу глубже. Alt+клик — к предку. Повторный клик — следующий кандидат.",
+      { ttl: 6500 },
+    );
+  }
+
+  function hintAfterFirstMultiSelect() {
+    return showHintOnce(
+      "first-multi-select",
+      "💡 Мульти-выбор активен. Ctrl+G — сгруппировать. Ctrl+Shift+G — разгруппировать. Стрелки — выровнять через панель.",
+      { ttl: 6500 },
+    );
+  }
+
+  function hintAfterFirstAltClick() {
+    return showHintOnce(
+      "first-alt-click",
+      "💡 Alt+клик ходит вверх по предкам. Shift+Enter — то же с клавиатуры. Enter — вглубь.",
+      { ttl: 6500 },
+    );
+  }
+
   // Convenience: fire all three "appropriate-moment" hints when there is
   // nothing better wiring them in. Called from boot.js post-init.
   function primeOnboardingV2() {
@@ -106,4 +135,8 @@
   window.hintAfterFirstSelect = hintAfterFirstSelect;
   window.hintAfterFirstEdit = hintAfterFirstEdit;
   window.primeOnboardingV2 = primeOnboardingV2;
+  // [v2.0.9] Contextual shortcut discovery hints.
+  window.hintAfterFirstOverlapCycle = hintAfterFirstOverlapCycle;
+  window.hintAfterFirstMultiSelect = hintAfterFirstMultiSelect;
+  window.hintAfterFirstAltClick = hintAfterFirstAltClick;
 })();

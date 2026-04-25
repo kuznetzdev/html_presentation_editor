@@ -381,6 +381,17 @@
           ? { candidates: { length: payload.overlapCount }, index: nextOverlapIndex }
           : null;
 
+        // [v2.0.9] First time the user actually cycles through overlapping
+        // candidates → fire a contextual shortcut hint so they discover
+        // Ctrl+click (deep) and Alt+click (parent) without reading docs.
+        if (
+          nextOverlapIndex > 0 &&
+          typeof window !== 'undefined' &&
+          typeof window.hintAfterFirstOverlapCycle === 'function'
+        ) {
+          window.hintAfterFirstOverlapCycle();
+        }
+
         // --- Phase 2: dual-write — raw state fields (backward compat) + store slice ---
         // Raw state writes keep all existing modules that read `state.selectedNodeId` etc.
         // working without modification. The store.update call notifies store subscribers.

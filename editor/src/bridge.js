@@ -157,6 +157,18 @@
               case "click-blocked":
                 applyClickBlockedFromBridge(data.payload || {});
                 break;
+              // [v2.0.9] Iframe → shell shortcut discovery hint. Bridge-
+              // script signals when the user just performed an action
+              // that has a related power-user shortcut (alt-click, etc.)
+              // and the shell renders a one-shot toast (idempotent via
+              // localStorage in onboarding-v2.js).
+              case "hint-shortcut": {
+                const _kind = String(data.payload && data.payload.kind || "").trim();
+                if (_kind === "alt-click" && typeof window.hintAfterFirstAltClick === "function") {
+                  window.hintAfterFirstAltClick();
+                }
+                break;
+              }
               case "runtime-error":
                 addDiagnostic(
                   `iframe-error: ${data.payload?.message || "unknown"} @ ${data.payload?.source || ""}:${data.payload?.line || ""}`,
@@ -203,6 +215,7 @@
                 }
                 // Toggle: shift-click on already-selected element removes it.
                 const idx = state.multiSelectNodeIds.indexOf(nodeId);
+                const _wasAddition = idx < 0;
                 if (idx >= 0) {
                   state.multiSelectNodeIds.splice(idx, 1);
                 } else {
@@ -210,6 +223,16 @@
                 }
                 if (typeof window.refreshMultiSelectAnchor === "function") {
                   window.refreshMultiSelectAnchor();
+                }
+                // [v2.0.9] First successful multi-select-add → contextual
+                // shortcut discovery hint (Ctrl+G / Ctrl+Shift+G). Only
+                // fires once per user via localStorage tracking.
+                if (
+                  _wasAddition &&
+                  state.multiSelectNodeIds.length >= 2 &&
+                  typeof window.hintAfterFirstMultiSelect === "function"
+                ) {
+                  window.hintAfterFirstMultiSelect();
                 }
                 break;
               }

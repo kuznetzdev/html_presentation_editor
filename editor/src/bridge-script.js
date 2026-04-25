@@ -3228,6 +3228,14 @@
             selectionLeafEl: selection.selectionLeafEl,
             selectionPathEntries: selection.pathEntries,
           });
+          // [v2.0.9] If the user just used Alt+click and it actually
+          // moved selection up the ancestor chain, signal the shell so
+          // it can fire a one-shot shortcut discovery hint. Posted as
+          // a separate lightweight message rather than piggy-backed
+          // on element-selected so unaffected handlers stay unchanged.
+          if (event.altKey) {
+            post('hint-shortcut', { kind: 'alt-click' });
+          }
         }, true);
 
         document.addEventListener('dblclick', (event) => {

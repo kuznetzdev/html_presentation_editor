@@ -236,17 +236,19 @@ See `docs/GITHUB_PACKAGES.md` for the exact recommendation and tradeoffs.
 
 ## Recent milestone tags
 
-Current: **v2.0.8 — Click-blocked feedback toast** (2026-04-24) on top
-of **v2.0.0 GA**.
+Current: **v2.0.9 — Contextual shortcut discovery hints** (2026-04-24)
+on top of **v2.0.0 GA**.
 Full release notes: [`docs/RELEASE-v2.0.md`](docs/RELEASE-v2.0.md).
 Post-v2 roadmap: [`docs/POST_V2_ROADMAP.md`](docs/POST_V2_ROADMAP.md).
 
 The v1.0.3 → v2.0.0 redesign trajectory: **26 incremental release
 points** (v1.1.0 → v2.0.0 inclusive) across Phases A–E + 6 hardening
-sprints, plus **8 post-GA polish tags** (v2.0.1–v2.0.8).
+sprints, plus **9 post-GA polish tags** (v2.0.1–v2.0.9).
 
 ### v2.0 trajectory
 
+- `v2.0.9` — Contextual shortcut discovery hints (one-shot toasts on
+  first overlap-cycle, multi-select, alt-click)
 - `v2.0.8` — Click-blocked feedback toast (locked/protected silent
   fail explained; bridge → shell click-blocked message + 1.5s
   throttle; 6 specs)
