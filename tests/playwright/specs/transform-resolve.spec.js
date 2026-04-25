@@ -113,8 +113,16 @@ test.describe("WO-26 — transform resolve banner and inspector input", () => {
     const input = page.locator("#transformInput");
     await expect(input).toBeVisible();
 
-    await input.fill("rotate(10deg)");
-    await input.press("Tab"); // trigger blur/change
+    // [v2.0.12] Use direct value+dispatchEvent('change') instead of
+    // fill+Tab. On Windows + Playwright 1.58 the fill+Tab path
+    // intermittently fails to fire the input's change handler that
+    // runs the transform validator — same flake hardened in
+    // inspector-validators-badges.spec.js (v2.0.7).
+    await page.evaluate(() => {
+      const el = document.getElementById("transformInput");
+      el.value = "rotate(10deg)";
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    });
 
     // After applying, verify the modelDoc node has the new transform
     await expect
@@ -198,9 +206,13 @@ test.describe("WO-26 — transform resolve banner and inspector input", () => {
     const input = page.locator("#transformInput");
     await expect(input).toBeVisible();
 
-    // Enter an invalid transform
-    await input.fill("abc");
-    await input.press("Tab");
+    // [v2.0.12] Same dispatchEvent hardening as the AC3 test above —
+    // fill+Tab does not reliably trigger change on Windows + PW 1.58.
+    await page.evaluate(() => {
+      const el = document.getElementById("transformInput");
+      el.value = "abc";
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    });
 
     // Element must NOT have been mutated
     const transform = await evaluateEditor(

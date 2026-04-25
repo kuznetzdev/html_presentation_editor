@@ -454,12 +454,7 @@
           });
           relatedConflicts.forEach((entry) => {
             [entry.bottomNodeId, entry.topNodeId].forEach((nodeId) => {
-              if (!nodeId || !state.modelDoc) return;
-              collect(
-                state.modelDoc.querySelector(
-                  `[data-editor-node-id="${cssEscape(nodeId)}"]`,
-                ),
-              );
+              collect(findModelNode(nodeId));
             });
           });
         }

@@ -32,6 +32,10 @@ declare function applyClickBlockedFromBridge(payload: { reason?: string; nodeId?
 declare function hintAfterFirstOverlapCycle(): boolean;
 declare function hintAfterFirstMultiSelect(): boolean;
 declare function hintAfterFirstAltClick(): boolean;
+// [v2.0.12] Model query helpers in dom.js — centralize the
+// state.modelDoc.querySelector('[data-editor-*-id="..."]') pattern.
+declare function findModelNode(nodeId: string | null | undefined): HTMLElement | null;
+declare function findModelSlide(slideId: string | null | undefined): HTMLElement | null;
 declare function openContextMenuFromBridge(payload: unknown): void;
 declare function handleBridgeShortcut(payload: unknown): void;
 declare function applyDocumentSyncFromBridge(payload: unknown, seq: number): void;

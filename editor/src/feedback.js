@@ -500,10 +500,7 @@
       }
 
       function getSelectedModelNode() {
-        if (!state.modelDoc || !state.selectedNodeId) return null;
-        return state.modelDoc.querySelector(
-          `[data-editor-node-id="${cssEscape(state.selectedNodeId)}"]`,
-        );
+        return findModelNode(state.selectedNodeId);
       }
       /* ======================================================================
        selection/direct-manip feedback

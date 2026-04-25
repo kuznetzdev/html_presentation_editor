@@ -45,9 +45,7 @@
           if (canDragSlideRail) item.setAttribute("draggable", "true");
           const main = document.createElement("div");
           main.className = "slide-item-main";
-          const slideNode = state.modelDoc?.querySelector(
-            `[data-editor-slide-id="${cssEscape(slide.id)}"]`,
-          );
+          const slideNode = findModelSlide(slide.id);
           const metaTags = buildSlideMetaTags(slide, slideNode);
           const hasSevereOverlap =
             isBasicMode() &&
@@ -214,12 +212,7 @@
       }
 
       function hasStaticSlide(slideId) {
-        return Boolean(
-          slideId &&
-          state.modelDoc?.querySelector(
-            `[data-editor-slide-id="${cssEscape(slideId)}"]`,
-          ),
-        );
+        return Boolean(findModelSlide(slideId));
       }
 
       function getSlidePresetLabel(preset) {

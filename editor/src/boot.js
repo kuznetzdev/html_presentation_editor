@@ -634,17 +634,11 @@
       }
 
       function getCurrentSlideModelNode() {
-        if (!state.modelDoc || !state.activeSlideId) return null;
-        return state.modelDoc.querySelector(
-          `[data-editor-slide-id="${cssEscape(state.activeSlideId)}"]`,
-        );
+        return findModelSlide(state.activeSlideId);
       }
 
       function getSlideModelNodeById(slideId) {
-        if (!state.modelDoc || !slideId) return null;
-        return state.modelDoc.querySelector(
-          `[data-editor-slide-id="${cssEscape(slideId)}"]`,
-        );
+        return findModelSlide(slideId);
       }
 
       function getStaticSlideModelNodes() {

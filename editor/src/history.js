@@ -842,10 +842,7 @@
       }
 
       function getActiveSlideModelElement() {
-        if (!state.modelDoc || !state.activeSlideId) return null;
-        return state.modelDoc.querySelector(
-          "[data-editor-slide-id=\"" + cssEscape(state.activeSlideId) + "\"]"
-        );
+        return findModelSlide(state.activeSlideId);
       }
 
       function getLayerScopeInfo() {

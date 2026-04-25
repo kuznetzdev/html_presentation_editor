@@ -1,5 +1,102 @@
 # CHANGELOG
 
+## [2.0.12] — 2026-04-24 — Model-query helpers (DRY) + transform-resolve flake fix
+
+Two related janitorial moves picked up from the post-v2 audit:
+
+### Added — `findModelNode` / `findModelSlide` helpers
+
+Centralize the `state.modelDoc.querySelector('[data-editor-*-id="…"]')`
++ `cssEscape(id)` pattern that was hand-rolled at 31 call sites
+across 12 shell modules:
+
+- `editor/src/dom.js` now exports two helpers (top-level functions,
+  visible to all classic-script modules):
+  - `findModelNode(nodeId)` → `HTMLElement | null`
+  - `findModelSlide(slideId)` → `HTMLElement | null`
+- Both return `null` for any miss and tolerate undefined/missing
+  `state.modelDoc` so call sites no longer need defensive guards.
+- `editor/src/globals.d.ts` declares both ambient signatures so tsc
+  sees them across files.
+
+### Replaced — 31 call sites across 12 files
+
+| File | Sites |
+|---|---|
+| `layers-panel.js` | 7 |
+| `bridge-commands.js` | 4 |
+| `context-menu.js` | 4 |
+| `style-app.js` | 3 |
+| `boot.js` | 2 |
+| `slide-rail.js` | 2 |
+| `alignment-toolbar.js` | 2 |
+| `feedback.js` | 1 |
+| `selection.js` | 1 |
+| `shell-overlays.js` | 1 |
+| `multi-select.js` | 1 |
+| `slides.js` | 1 |
+| `opacity-rotate.js` | 1 |
+| `history.js` | 1 |
+
+Net diff: removed ~120 lines of repetitive `state.modelDoc.querySelector(\`[data-editor-node-id="${cssEscape(id)}"]\`)` boilerplate plus their inline null-guards. Many wrappers like `getSelectedModelNode()`, `getActiveSlideModelElement()`, `getSelectedNode()` collapsed to one-liners.
+
+### NOT touched
+
+- `editor/src/bridge-script.js` — its `findNodeById` / `findSlideById`
+  helpers live inside the bridge-script template string and run
+  inside the iframe document. They cannot share the shell-side
+  `state.modelDoc` reference and are correctly local to the iframe.
+- 5 sites that query `state.modelDoc` for "any node with the
+  attribute" (no specific id) — different semantics; not what the
+  helpers are for. Leaving them inline.
+
+### Fixed — `transform-resolve.spec.js` fill+Tab flake
+
+Same flake pattern that hardened `inspector-validators-badges.spec.js`
+in v2.0.7 also lived at lines 116-117 and 202-203 of
+`transform-resolve.spec.js`. On Windows + Playwright 1.58, `fill(...)`
+followed by `press("Tab")` on `#transformInput` did not reliably fire
+the change handler that runs the transform validator.
+
+Switched both sites to direct `el.value = ...; el.dispatchEvent(new
+Event("change", { bubbles: true }))` via `page.evaluate`. 5/5 specs
+in the file pass standalone now (was intermittent).
+
+### Non-breaking
+
+- Helpers preserve exact behavior (same selector, same cssEscape,
+  same `state.modelDoc` source). Pure refactor.
+- Gate-A: 278/8/0 — same as v2.0.11.
+- Typecheck: clean.
+- No public API / contract / saved-deck format change.
+
+### Files
+
+- `editor/src/dom.js` — `findModelNode` + `findModelSlide` helpers.
+- `editor/src/globals.d.ts` — ambient declarations.
+- 12 shell-side .js files in `editor/src/` — call site replacements.
+- `tests/playwright/specs/transform-resolve.spec.js` — flake hardened.
+- `package.json` — version 2.0.12.
+- `docs/{CHANGELOG, V2-MASTERPLAN, SOURCE_OF_TRUTH}.md`, `README.md`.
+
+### Honest note
+
+The architecture audit (v2.0.11 review) flagged the `state` god-object
+as the #1 structural risk: 393 mutation sites across 60% of modules.
+This tag does not migrate state to the store-slice (much bigger
+project), but it removes one specific class of repetition that was
+making the god-object even harder to reason about. Concrete: 31
+identical query-shapes turned into 31 single-call-site invocations.
+Migration of the underlying state.modelDoc-itself is a separate ADR.
+
+The transform-resolve fix is included in this tag because it's the
+same class-of-flake the architecture audit's code-quality review
+called out as still surviving (after my v2.0.7 inspector-validators
+fix). Folding both into one tag because they are both "DRY +
+fragility" cleanups, not user-visible changes.
+
+---
+
 ## [2.0.11] — 2026-04-24 — Inspector empty-state guidance card
 
 When a user has loaded a deck in edit mode but hasn't selected

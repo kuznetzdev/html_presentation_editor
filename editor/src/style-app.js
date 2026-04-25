@@ -88,9 +88,7 @@
           alert("Сначала загрузи презентацию и выбери слайд.");
           return;
         }
-        const slide = state.modelDoc?.querySelector(
-          `[data-editor-slide-id="${cssEscape(state.activeSlideId)}"]`,
-        );
+        const slide = findModelSlide(state.activeSlideId);
         if (!slide) {
           alert("Для текущего слайда нет безопасной модели редактирования.");
           return;
@@ -132,9 +130,7 @@
         const nodeId = state.htmlEditorTargetId;
         if (!nodeId || !state.modelDoc)
           throw new Error("Нет активного элемента для замены.");
-        const current = state.modelDoc.querySelector(
-          `[data-editor-node-id="${cssEscape(nodeId)}"]`,
-        );
+        const current = findModelNode(nodeId);
         if (!current)
           throw new Error("Исходный элемент не найден в модели документа.");
         preserveAuthoredMarkerContract(current, replacement);
@@ -155,9 +151,7 @@
         const slideId = state.htmlEditorTargetId;
         if (!slideId || !state.modelDoc)
           throw new Error("Нет активного слайда для замены.");
-        const current = state.modelDoc.querySelector(
-          `[data-editor-slide-id="${cssEscape(slideId)}"]`,
-        );
+        const current = findModelSlide(slideId);
         if (!current) throw new Error("Слайд не найден в модели документа.");
         preserveAuthoredMarkerContract(current, replacement);
         replacement.setAttribute("data-editor-slide-id", slideId);

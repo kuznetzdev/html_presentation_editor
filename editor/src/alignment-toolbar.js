@@ -14,13 +14,9 @@
   "use strict";
 
   function getMultiSelectNodes() {
-    if (!state.modelDoc || !Array.isArray(state.multiSelectNodeIds)) return [];
+    if (!Array.isArray(state.multiSelectNodeIds)) return [];
     return state.multiSelectNodeIds
-      .map(function (id) {
-        return state.modelDoc.querySelector(
-          '[data-editor-node-id="' + cssEscape(id) + '"]',
-        );
-      })
+      .map(function (id) { return findModelNode(id); })
       .filter(function (el) { return el instanceof Element; });
   }
 
@@ -144,9 +140,7 @@
     if (typeof commitChange === "function") commitChange(reason, { snapshotMode: "immediate" });
     // Sync each touched node back to the iframe via bridge.
     state.multiSelectNodeIds.forEach(function (id) {
-      var node = state.modelDoc?.querySelector(
-        '[data-editor-node-id="' + cssEscape(id) + '"]',
-      );
+      var node = findModelNode(id);
       if (!node) return;
       var attrs = {};
       if (node.style.left) attrs.style = node.style.cssText;

@@ -50,10 +50,7 @@
 
   function selectAllOnSlide() {
     if (!isMultiSelectEnabled() && state.complexityMode !== "advanced") return false;
-    if (!state.modelDoc || !state.activeSlideId) return false;
-    var slide = state.modelDoc.querySelector(
-      '[data-editor-slide-id="' + cssEscape(state.activeSlideId) + '"]',
-    );
+    var slide = findModelSlide(state.activeSlideId);
     if (!slide) return false;
     var ids = Array.from(slide.querySelectorAll("[data-editor-node-id]"))
       .filter(function (el) {

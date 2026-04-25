@@ -10,9 +10,7 @@
         // own nodeId (selected beforehand by openLayerRowContextMenu).
         if (payload?.menuScope === "layer-row") {
           const targetNodeId = String(payload.nodeId || "");
-          const node = targetNodeId && state.modelDoc
-            ? state.modelDoc.querySelector(`[data-editor-node-id="${cssEscape(targetNodeId)}"]`)
-            : null;
+          const node = findModelNode(targetNodeId);
           const isLocked = Boolean(node?.getAttribute("data-editor-locked") === "true");
           const isHidden = targetNodeId
             ? (typeof isLayerSessionHidden === "function"
@@ -441,7 +439,7 @@
           });
         }
         if (isAdvanced && state.selectedNodeId && state.modelDoc) {
-          const node = state.modelDoc.querySelector(`[data-editor-node-id="${cssEscape(state.selectedNodeId)}"]`);
+          const node = findModelNode(state.selectedNodeId);
           if (node?.classList.contains("editor-group")) {
             items.push({
               section: "structure",
@@ -829,9 +827,7 @@
       function openElementFinder() {
         const query = prompt("Поиск элемента по tag / id / class / тексту");
         if (!query || !state.modelDoc || !state.activeSlideId) return;
-        const slide = state.modelDoc.querySelector(
-          `[data-editor-slide-id="${cssEscape(state.activeSlideId)}"]`,
-        );
+        const slide = findModelSlide(state.activeSlideId);
         if (!slide) return;
         const q = query.trim().toLowerCase();
         const match = slide.querySelectorAll("[data-editor-node-id]");
@@ -942,9 +938,7 @@
           markPreviewDesync(`document-sync-stale:${slideId}:${seq}`, { toast: false });
           return;
         }
-        const currentSlide = state.modelDoc.querySelector(
-          `[data-editor-slide-id="${cssEscape(slideId)}"]`,
-        );
+        const currentSlide = findModelSlide(slideId);
         if (!currentSlide) return;
         if (currentSlide.outerHTML === html) return;
         try {

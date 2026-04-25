@@ -17,10 +17,7 @@
   "use strict";
 
   function getSelectedNode() {
-    if (!state.modelDoc || !state.selectedNodeId) return null;
-    return state.modelDoc.querySelector(
-      '[data-editor-node-id="' + cssEscape(state.selectedNodeId) + '"]',
-    );
+    return findModelNode(state.selectedNodeId);
   }
 
   function clamp(value, min, max) {

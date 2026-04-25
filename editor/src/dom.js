@@ -1,6 +1,36 @@
 // dom.js
 // Layer: DOM Cache
 // Initializes the `els` object with references to all shell DOM elements.
+//
+// Also hosts two model-query helpers used by every shell-side module
+// that needs to look up a node or slide in `state.modelDoc`:
+//   findModelNode(nodeId)  → HTMLElement | null
+//   findModelSlide(slideId) → HTMLElement | null
+// Both centralize the cssEscape + selector-string pattern that was
+// previously hand-rolled at 30+ call sites across 14 files. Bridge-side
+// (live preview iframe) keeps its own findNodeById / findSlideById
+// inside the bridge-script template — those run in a different document
+// (the iframe) and live in a string, so they cannot share this helper.
+
+      // ZONE: Model query helpers
+      // =====================================================================
+      // [v2.0.12] Centralize state.modelDoc lookups by data-editor-* id.
+      // Both helpers tolerate a missing modelDoc, return `null` for any
+      // miss, and quietly fail on undefined ids — the call sites used
+      // to repeat the same null guards inline. Now they don't.
+      function findModelNode(nodeId) {
+        if (!state.modelDoc || !nodeId) return null;
+        return state.modelDoc.querySelector(
+          '[data-editor-node-id="' + cssEscape(nodeId) + '"]',
+        );
+      }
+
+      function findModelSlide(slideId) {
+        if (!state.modelDoc || !slideId) return null;
+        return state.modelDoc.querySelector(
+          '[data-editor-slide-id="' + cssEscape(slideId) + '"]',
+        );
+      }
 
       // ZONE: Inspector Wiring
       // Event listeners for all inspector fields — typography, geometry, appearance, media

@@ -810,10 +810,7 @@
       // the pasted clone entirely fresh IDs (no ID collision).
       // ====================================================================
       function copySelectedElement() {
-        if (!state.modelDoc || !state.selectedNodeId) return;
-        const el = state.modelDoc.querySelector(
-          `[data-editor-node-id="${cssEscape(state.selectedNodeId)}"]`,
-        );
+        const el = findModelNode(state.selectedNodeId);
         if (!el) return;
         const clone = el.cloneNode(true);
         // Strip all editor-node IDs so the pasted clone gets fresh ones

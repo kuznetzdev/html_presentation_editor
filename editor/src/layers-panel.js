@@ -11,8 +11,8 @@
       // [v0.18.0] Lock, Visibility, Layers Panel, Grouping (Advanced Mode)
       // ====================================================================
       function toggleLayerLock(nodeId) {
-        if (!nodeId || !state.modelDoc || state.complexityMode !== "advanced") return;
-        const node = state.modelDoc.querySelector(`[data-editor-node-id="${cssEscape(nodeId)}"]`);
+        if (state.complexityMode !== "advanced") return;
+        const node = findModelNode(nodeId);
         if (!node) return;
         const isLocked = node.getAttribute("data-editor-locked") === "true";
         if (isLocked) {
@@ -35,8 +35,7 @@
       // Empty string clears the attr → getLayerLabel falls back to the auto
       // derivation (tag + author id / class / text preview).
       function renameLayerNode(nodeId, rawName) {
-        if (!nodeId || !state.modelDoc) return;
-        const node = state.modelDoc.querySelector(`[data-editor-node-id="${cssEscape(nodeId)}"]`);
+        const node = findModelNode(nodeId);
         if (!node) return;
         const nextName = String(rawName || "").trim();
         const prev = node.getAttribute("data-layer-name") || "";
@@ -183,11 +182,7 @@
         const [moved] = reorderedIds.splice(fromIndex, 1);
         reorderedIds.splice(toIndex, 0, moved);
         const orderedNodes = reorderedIds
-          .map((nodeId) =>
-            state.modelDoc.querySelector(
-              `[data-editor-node-id="${cssEscape(nodeId)}"]`,
-            ),
-          )
+          .map((nodeId) => findModelNode(nodeId))
           .filter((node) => node instanceof Element);
         applyLayerVisualOrder(
           orderedNodes.slice().reverse(),
@@ -288,10 +283,7 @@
       }
 
       function clearSessionOnlyVisibilityFromModelNode(nodeId) {
-        if (!nodeId || !state.modelDoc) return;
-        const modelNode = state.modelDoc.querySelector(
-          `[data-editor-node-id="${cssEscape(nodeId)}"]`,
-        );
+        const modelNode = findModelNode(nodeId);
         if (!(modelNode instanceof HTMLElement)) return;
         if (modelNode.style.visibility === "hidden") {
           modelNode.style.removeProperty("visibility");
@@ -425,7 +417,7 @@
           if (els.normalizeLayersBtn) els.normalizeLayersBtn.disabled = true;
           return;
         }
-        const slideEl = state.modelDoc.querySelector(`[data-editor-slide-id="${cssEscape(state.activeSlideId)}"]`);
+        const slideEl = findModelSlide(state.activeSlideId);
         if (!slideEl) {
           activeHost.hidden = true;
           if (els.normalizeLayersBtn) els.normalizeLayersBtn.disabled = true;
@@ -834,7 +826,7 @@
         // [v1.3.4] Gate by mode OR multiSelect flag (Phase D4 keyboard parity).
         var multiSelectFlag = Boolean(window.featureFlags && window.featureFlags.multiSelect);
         if (state.complexityMode !== "advanced" && !multiSelectFlag) return;
-        const slideEl = state.modelDoc.querySelector(`[data-editor-slide-id="${cssEscape(state.activeSlideId)}"]`);
+        const slideEl = findModelSlide(state.activeSlideId);
         if (!slideEl) return;
         const groupWrapper = state.modelDoc.createElement("div");
         groupWrapper.className = "editor-group";
@@ -859,7 +851,7 @@
         // [v1.3.4] Gate by mode OR multiSelect flag (Phase D4 keyboard parity).
         var multiSelectFlag = Boolean(window.featureFlags && window.featureFlags.multiSelect);
         if (state.complexityMode !== "advanced" && !multiSelectFlag) return;
-        const groupNode = state.modelDoc.querySelector(`[data-editor-node-id="${cssEscape(state.selectedNodeId)}"]`);
+        const groupNode = findModelNode(state.selectedNodeId);
         if (!groupNode || !groupNode.classList.contains("editor-group")) return;
         const parent = groupNode.parentElement;
         if (!parent) return;

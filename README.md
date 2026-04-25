@@ -236,17 +236,20 @@ See `docs/GITHUB_PACKAGES.md` for the exact recommendation and tradeoffs.
 
 ## Recent milestone tags
 
-Current: **v2.0.11 — Inspector empty-state guidance card** (2026-04-24)
-on top of **v2.0.0 GA**.
+Current: **v2.0.12 — Model-query helpers DRY + transform-resolve
+flake fix** (2026-04-24) on top of **v2.0.0 GA**.
 Full release notes: [`docs/RELEASE-v2.0.md`](docs/RELEASE-v2.0.md).
 Post-v2 roadmap: [`docs/POST_V2_ROADMAP.md`](docs/POST_V2_ROADMAP.md).
 
 The v1.0.3 → v2.0.0 redesign trajectory: **26 incremental release
 points** (v1.1.0 → v2.0.0 inclusive) across Phases A–E + 6 hardening
-sprints, plus **11 post-GA polish tags** (v2.0.1–v2.0.11).
+sprints, plus **12 post-GA polish tags** (v2.0.1–v2.0.12).
 
 ### v2.0 trajectory
 
+- `v2.0.12` — Model-query helpers DRY (findModelNode +
+  findModelSlide in dom.js, 31 call sites collapsed across 12
+  files) + transform-resolve.spec.js fill+Tab flake hardened
 - `v2.0.11` — Inspector empty-state guidance card (persistent
   "how do I edit what's already here?" answer when no selection)
 - `v2.0.10` — W/H in basic mode (geometry section no longer

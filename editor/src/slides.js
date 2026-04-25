@@ -263,12 +263,7 @@
 
       function resolvePreferredSlideTarget(options = {}) {
         const preferSlideId = String(options.preferSlideId || "").trim();
-        if (
-          preferSlideId &&
-          state.modelDoc?.querySelector(
-            `[data-editor-slide-id="${cssEscape(preferSlideId)}"]`,
-          )
-        ) {
+        if (preferSlideId && findModelSlide(preferSlideId)) {
           return preferSlideId;
         }
         if (

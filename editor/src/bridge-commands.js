@@ -528,12 +528,7 @@
       }
 
       function selectedNodeExistsInModel() {
-        return Boolean(
-          state.selectedNodeId &&
-          state.modelDoc?.querySelector(
-            `[data-editor-node-id="${cssEscape(state.selectedNodeId)}"]`,
-          ),
-        );
+        return Boolean(findModelNode(state.selectedNodeId));
       }
 
       function applyElementUpdateFromBridge(payload, seq = 0) {
@@ -547,9 +542,7 @@
           addDiagnostic(`element-update-stale:${slideId || "n/a"}:${seq}`);
           return;
         }
-        const node = state.modelDoc.querySelector(
-          `[data-editor-node-id="${cssEscape(nodeId)}"]`,
-        );
+        const node = findModelNode(nodeId);
         if (!node) return;
         try {
           const replacement = parseSingleRootElement(payload.html || "");
@@ -644,9 +637,7 @@
           markPreviewDesync(`slide-update-stale:${slideId}:${seq}`, { toast: false });
           return;
         }
-        const currentSlide = state.modelDoc.querySelector(
-          `[data-editor-slide-id="${cssEscape(slideId)}"]`,
-        );
+        const currentSlide = findModelSlide(slideId);
         if (!currentSlide) return;
         try {
           const replacement = parseSingleRootElement(html);
@@ -677,9 +668,7 @@
           addDiagnostic(`slide-remove-stale:${slideId}:${seq}`);
           return;
         }
-        const slide = state.modelDoc.querySelector(
-          `[data-editor-slide-id="${cssEscape(slideId)}"]`,
-        );
+        const slide = findModelSlide(slideId);
         if (!slide) return;
         slide.remove();
         if (state.activeSlideId === slideId) state.activeSlideId = null;
