@@ -1293,11 +1293,38 @@
           <div
             class="inspector-section"
             id="geometryInspectorSection"
-            data-ui-level="advanced"
             data-entity-groups="text,image,video,container,element,slide-root"
           >
             <h3>Размер и позиция</h3>
-            <div class="field-grid-3">
+            <!-- [v2.0.10] Width + Height now BASIC-visible. The
+                 user complaint was that resizing required switching
+                 to "Полный". Drag handles work but a typed value is
+                 the only way to hit pixel-perfect dimensions. -->
+            <div class="field-grid-2">
+              <div class="field-group compact">
+                <label for="widthInput">Ширина</label>
+                <input
+                  id="widthInput"
+                  type="text"
+                  placeholder="320px / 50% / auto"
+                />
+              </div>
+              <div class="field-group compact">
+                <label for="heightInput">Высота</label>
+                <input
+                  id="heightInput"
+                  type="text"
+                  placeholder="180px / auto"
+                />
+              </div>
+            </div>
+            <!-- [v2.0.10] display / position / z-index moved BEHIND
+                 advanced gating. They are CSS-shape decisions that
+                 a basic user shouldn't have to think about; they
+                 also frequently break layouts when set wrong. The
+                 entire row is gated together so the grid stays
+                 visually clean in basic mode. -->
+            <div class="field-grid-3" data-ui-level="advanced">
               <div class="field-group compact">
                 <label for="displaySelect">display</label>
                 <select id="displaySelect">
@@ -1325,25 +1352,11 @@
                 <input id="zIndexInput" type="text" placeholder="10" />
               </div>
             </div>
-            <div class="field-grid-2">
-              <div class="field-group compact">
-                <label for="widthInput">Ширина</label>
-                <input
-                  id="widthInput"
-                  type="text"
-                  placeholder="320px / 50% / auto"
-                />
-              </div>
-              <div class="field-group compact">
-                <label for="heightInput">Высота</label>
-                <input
-                  id="heightInput"
-                  type="text"
-                  placeholder="180px / auto"
-                />
-              </div>
-            </div>
-            <div class="field-grid-2">
+            <!-- [v2.0.10] X / Y stay advanced — they only matter
+                 for absolutely-positioned elements which basic users
+                 rarely create. Drag-and-drop on the canvas works
+                 in basic mode for everyone else. -->
+            <div class="field-grid-2" data-ui-level="advanced">
               <div class="field-group compact">
                 <label for="leftInput">Left / X</label>
                 <input id="leftInput" type="text" placeholder="40px" />

@@ -1,5 +1,71 @@
 # CHANGELOG
 
+## [2.0.10] — 2026-04-24 — Width/Height visible in basic mode
+
+The user complaint "сложно редактировать" had a concrete root cause:
+the entire `#geometryInspectorSection` was gated behind
+`data-ui-level="advanced"` so basic users could only resize via
+drag handles. Pixel-perfect dimensions required typing into a field,
+and the field was hidden until you switched to "Полный". Most
+users never discover that toggle.
+
+### Changed
+
+- `#geometryInspectorSection` lost its section-level `advanced`
+  gate. The section now renders for all editable entity kinds in
+  both modes.
+- Width + Height inputs are BASIC-visible. Pixel-perfect resize
+  works without mode switching.
+- `display`, `position`, `z-index` row gated as `advanced` together.
+  These are CSS-shape decisions that often break layouts when
+  set wrong; they belong in the power-user surface.
+- `Left / X` and `Top / Y` row gated as `advanced` together. They
+  only matter for absolutely-positioned elements, which basic
+  users rarely create. Drag-and-drop on the canvas covers the
+  basic case.
+- Transform row stays `advanced` (unchanged).
+
+### Removed
+
+- `inspector-sync.js` transform-family escape hatch for the
+  geometry section. The hatch existed because the section was
+  hidden in basic mode and needed to auto-reveal when direct
+  manipulation was blocked by a transform. The section is no
+  longer hidden in basic mode, so the hatch is dead logic.
+
+### Tests
+
+`tests/playwright/specs/inspector-basic-geometry.spec.js` (new) —
+7 specs:
+1. Width input visible in basic
+2. Height input visible in basic
+3. display / position / z-index hidden in basic
+4. Left / Top hidden in basic
+5. Section title visible in basic (matched via `.section-toggle span`
+   because `toolbar.js` rewrites `<h3>` at runtime)
+6. Switching to advanced reveals display + Left
+7. Width set via input persists in modelDoc
+
+Added to `npm run test:gate-a`.
+
+### Non-breaking
+
+- Advanced mode still surfaces every field that existed before.
+- Saved decks render identically — no HTML/CSS contract changes.
+- `geometryInspectorSection` ID and `entity-groups` attribute
+  unchanged; downstream JS that targets the section by ID still
+  works.
+
+### Honest note
+
+The "Простой / Полный" complexity-mode toggle was meant to hide
+nuclear-option fields like raw HTML editing, transform matrices,
+and z-index normalization. It accidentally gated W/H — the most
+common geometry edit users make — behind that wall. This tag
+moves W/H to where it belongs.
+
+---
+
 ## [2.0.9] — 2026-04-24 — Contextual shortcut discovery hints
 
 The existing onboarding-v2 primer covers only first-load,

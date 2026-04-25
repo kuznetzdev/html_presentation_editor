@@ -73,17 +73,17 @@
             section === els.selectionPolicySection
               ? selectionPolicyVisible
               : hasSelection && visibleKinds.has(kind);
-          if (section === els.geometryInspectorSection) {
-            // [WO-29 P1-02] Only auto-unhide geometry for transform-family reasons.
-            // locked/hidden/zoom reasons must NOT leak geometry into basic mode.
-            const transformFamily = ["own-transform", "parent-transform", "slide-transform", "transform"];
-            const shouldUnhideGeometry =
-              hasBlockedDirectManipulationContext() &&
-              transformFamily.includes(getBlockReason());
-            visible =
-              visible &&
-              (isAdvancedMode() || shouldUnhideGeometry);
-          }
+          // [v2.0.10] geometryInspectorSection used to be ADVANCED-ONLY
+          // at the section level, with a transform-family escape hatch
+          // that auto-unhid it when direct manipulation was blocked.
+          // Now W/H live in the BASIC tier (the user complaint was
+          // "I can't resize without switching to Полный"). The section
+          // is therefore always visible per entity-groups; inner
+          // field-groups (display, position, z, X, Y, transform) keep
+          // their own data-ui-level="advanced" gating via the global
+          // basic/advanced cascade. The transform-family escape hatch
+          // is no longer needed because the section is no longer hidden
+          // in basic mode.
           setInspectorSectionVisibility(section, visible);
         });
       }
