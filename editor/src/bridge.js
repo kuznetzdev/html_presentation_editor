@@ -66,6 +66,36 @@
           state.lastBridgeHeartbeatAt = Date.now();
 
           const bridgeSeq = Number(data.seq || data.payload?.seq || 0);
+
+          // [v2.0.14 / SEC-004] Inbound schema validation — every message
+          // (not just hello) is validated before dispatch. Schema-free types
+          // pass through as { ok: true } from validateMessage rule 4. Per-
+          // type validators (hello, ack, etc.) gate their own payloads. A
+          // rejected inbound message is dropped with a diagnostic and never
+          // reaches the per-case handler. Defence against malformed/hostile
+          // messages from a compromised iframe.
+          //
+          // Mirror the v2.0.13 hello pattern: flatten payload into the same
+          // object as type so per-type validators can read sibling fields.
+          // Object.create(null) prevents prototype-keyed payload smuggling.
+          //
+          // Hello is exempt from top-level rejection because its case already
+          // owns the bespoke "protocol mismatch" toast / read-only degradation
+          // path. Dropping a malformed hello at this layer would silently
+          // leave the user without feedback.
+          if (window.BRIDGE_SCHEMA && data.type !== 'hello') {
+            const _flat = Object.assign(Object.create(null), data.payload || {});
+            _flat.type = data.type;
+            const _validation = window.BRIDGE_SCHEMA.validateMessage(_flat);
+            if (!_validation.ok) {
+              addDiagnostic(
+                'inbound-rejected:' + (data.type || 'unknown') + ':' +
+                  _validation.errors.join(',')
+              );
+              return;
+            }
+          }
+
           try {
             switch (data.type) {
               // ADR-012 §1 — Bridge v2 hello handshake (WO-12)

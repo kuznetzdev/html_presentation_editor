@@ -236,19 +236,24 @@ See `docs/GITHUB_PACKAGES.md` for the exact recommendation and tradeoffs.
 
 ## Recent milestone tags
 
-Current: **v2.0.13 — Audit-driven security + contract fixes**
-(2026-04-26) on top of **v2.0.0 GA**.
+Current: **v2.0.14 — SEC-004 inbound schema validation**
+(2026-04-25) on top of **v2.0.0 GA**.
 See [`docs/AUDIT-REPORT-2026-04-26.md`](docs/AUDIT-REPORT-2026-04-26.md)
-for the full audit that drove this tag.
+for the full audit that drove the post-v2 polish track.
 Full release notes: [`docs/RELEASE-v2.0.md`](docs/RELEASE-v2.0.md).
 Post-v2 roadmap: [`docs/POST_V2_ROADMAP.md`](docs/POST_V2_ROADMAP.md).
 
 The v1.0.3 → v2.0.0 redesign trajectory: **26 incremental release
 points** (v1.1.0 → v2.0.0 inclusive) across Phases A–E + 6 hardening
-sprints, plus **13 post-GA polish tags** (v2.0.1–v2.0.13).
+sprints, plus **14 post-GA polish tags** (v2.0.1–v2.0.14).
 
 ### v2.0 trajectory
 
+- `v2.0.14` — SEC-004 closed: inbound bridge messages now
+  schema-validated (every type except hello which keeps its bespoke
+  protocol-mismatch UX). Object.create(null) flatten blocks
+  prototype-keyed payload smuggling. 9 new specs. Phase 1 of 9
+  polish phases.
 - `v2.0.13` — Audit fixes: BUG-001 (contract helper drift) +
   SEC-001/002/003 (apply-style cssText, update-attributes URL,
   replace-image-src URL) + SEC-005 (3 unregistered msg types) +

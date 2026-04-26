@@ -1,5 +1,46 @@
 # CHANGELOG
 
+## [2.0.14] — 2026-04-25 — SEC-004 inbound schema validation (post-v2.0.13 polish ph.1)
+
+First of nine post-audit polish tags driving v2.0.13 → public-GA quality.
+Closes the remaining HIGH item from `docs/AUDIT-REPORT-2026-04-26.md`:
+SEC-004 — inbound bridge messages were only schema-validated for `hello`.
+
+### Fixed — High-severity
+
+**SEC-004 — Every inbound bridge message is now schema-validated.**
+`editor/src/bridge.js:bindMessages` previously ran `BRIDGE_SCHEMA.validateMessage`
+exclusively on the `hello` handshake. All other inbound types (ack, slide-*,
+runtime-*, context-menu, hint-shortcut, multi-select-add, etc.) reached their
+case handlers without shape verification — a malicious or buggy iframe could
+send a malformed `ack` (string for `refSeq`, missing `ok`) that corrupted
+`state.bridgeAcks` or trip a TypeError. Now every message except `hello` is
+flattened (`Object.create(null)` to block prototype-keyed payload smuggling)
+and run through `validateMessage` before dispatch. Failures are dropped with
+an `inbound-rejected:<type>:<reason>` diagnostic. Hello stays exempt because
+its case owns the bespoke "Несовместимый bridge" toast / read-only degradation
+path that a top-level rejection would silently bypass.
+
+### Tests
+
+New spec `tests/playwright/specs/bridge-inbound-validation.spec.js` (9 tests):
+- accepts valid bridge-heartbeat (schema-free)
+- accepts valid ack with proper shape
+- rejects ack missing refSeq
+- rejects ack with wrong type for ok field
+- rejects unknown message type
+- rejects empty-string type
+- schema-free types (slide-activation) pass through unchanged
+- prototype-pollution payload key rejected for ack
+- regression-guard for context-menu (must NOT be over-tightened)
+
+Wired into `npm run test:gate-a`.
+
+### Gates
+
+- Gate-A: 289 + 9 = 298/8/0 (target).
+- Gate-contract: 152/0 (unchanged).
+
 ## [2.0.13] — 2026-04-26 — Audit-driven security + contract fixes (post-AUDIT-2026-04-26)
 
 Direct response to `docs/AUDIT-REPORT-2026-04-26.md` (deep testing
