@@ -438,7 +438,8 @@
         state.runtimeSlides = [];
         state.runtimeActiveSlideId = null;
         setPreviewLifecycleState("recovering", { reason: "rebuild-preview" });
-        state.slideSyncLocks = {};
+        // [v2.0.15 / SEC-006] null-prototype dict
+        state.slideSyncLocks = Object.create(null);
         clearRequestedSlideActivation();
         if (preferredSlideId) {
           stageSlideActivationRequest(preferredSlideId, {

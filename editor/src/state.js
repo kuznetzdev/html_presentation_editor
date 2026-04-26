@@ -631,7 +631,11 @@
         staticSlideSelector: null,
         slides: [],
         runtimeSlides: [],
-        slideRegistryById: {},
+        // [v2.0.15 / SEC-006] Slide-keyed dictionaries use Object.create(null)
+        // so attacker-controlled slide IDs (e.g. data-editor-slide-id="__proto__")
+        // cannot reach Object.prototype. Combined with explicit ID guards in
+        // findSlideById and slides.js registry assignment.
+        slideRegistryById: Object.create(null),
         slideRegistryOrder: [],
         activeSlideId: null,
         pendingActiveSlideId: null,
@@ -728,8 +732,9 @@
         lastSavedAt: 0,
         commandSeq: 0,
         lastAppliedSeq: 0,
-        lastAppliedSeqBySlide: {},
-        slideSyncLocks: {},
+        // [v2.0.15 / SEC-006] See slideRegistryById comment above.
+        lastAppliedSeqBySlide: Object.create(null),
+        slideSyncLocks: Object.create(null),
         toolbarPinned: false,
         toolbarPos: null,
         toolbarCollapsed: false,

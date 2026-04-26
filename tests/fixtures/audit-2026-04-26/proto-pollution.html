@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Proto-Pollution Slide IDs (audit fixture)</title>
+    <!--
+      v2.0.15 / SEC-006 fixture.
+      Three slides:
+        - Normal slide (id "real-slide-1") — must register normally
+        - Slide with id="__proto__"  — must NOT poison Object.prototype
+        - Slide with id="constructor" — must NOT poison Object.prototype
+      The shell's slides.js / state.js use Object.create(null) for the
+      registry dict and reject reserved IDs at the registry-write site.
+      The iframe's findSlideById() also rejects reserved IDs as defence-
+      in-depth.
+    -->
+    <style>
+      body { margin: 0; font-family: sans-serif; }
+      .slide { min-height: 480px; padding: 32px; border-bottom: 1px solid #ccc; }
+    </style>
+  </head>
+  <body>
+    <section class="slide" data-editor-slide-id="real-slide-1" data-slide-title="Real">
+      <h1>Normal slide</h1>
+      <p>This slide must register in slideRegistryById.</p>
+    </section>
+    <section class="slide" data-editor-slide-id="__proto__" data-slide-title="Proto attack">
+      <h1>Proto-pollution attempt</h1>
+      <p>This slide ID must be rejected by the registry write guard.</p>
+    </section>
+    <section class="slide" data-editor-slide-id="constructor" data-slide-title="Constructor attack">
+      <h1>Constructor pollution attempt</h1>
+      <p>This slide ID must be rejected by the registry write guard.</p>
+    </section>
+  </body>
+</html>

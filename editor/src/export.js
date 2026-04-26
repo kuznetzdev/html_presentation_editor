@@ -536,15 +536,17 @@
         setPreviewLifecycleState("idle", { reason: "reset-runtime" });
         state.slides = [];
         state.runtimeSlides = [];
-        state.slideRegistryById = {};
+        // [v2.0.15 / SEC-006] null-prototype dict
+        state.slideRegistryById = Object.create(null);
         state.slideRegistryOrder = [];
         state.activeSlideId = null;
         state.pendingActiveSlideId = null;
         state.runtimeActiveSlideId = null;
         clearRequestedSlideActivation();
         state.pendingPreviewSelection = null;
-        state.slideSyncLocks = {};
-        state.lastAppliedSeqBySlide = {};
+        // [v2.0.15 / SEC-006] null-prototype dicts
+        state.slideSyncLocks = Object.create(null);
+        state.lastAppliedSeqBySlide = Object.create(null);
         state.lastAppliedSeq = 0;
         clearSelectedElementState();
         state.manipulationContext = null;

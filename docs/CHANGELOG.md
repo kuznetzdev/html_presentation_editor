@@ -1,5 +1,55 @@
 # CHANGELOG
 
+## [2.0.15] — 2026-04-25 — SEC-006 prototype-pollution hardening (polish ph.2)
+
+Slide-keyed dictionaries on the shell `state` singleton are now
+`Object.create(null)` instances and the slide registry write site
+explicitly skips reserved IDs. Defence against attacker-controlled
+slide IDs (`data-editor-slide-id="__proto__"`) reaching
+`Object.prototype`.
+
+### Fixed — Medium-severity (defensive hardening)
+
+**SEC-006 — Prototype-pollution surface closed.**
+Three slide-keyed dicts in `editor/src/state.js` were plain `{}`:
+`slideRegistryById`, `lastAppliedSeqBySlide`, `slideSyncLocks`. A deck
+with `<section data-editor-slide-id="__proto__">` would, on registry
+write, mutate `Object.prototype.<entry-fields>` (`isActive`,
+`stateLabel`, `isRequested`, …) — every plain `{}` allocated afterward
+would inherit those keys. Three reset sites also now use
+`Object.create(null)`: `editor/src/slides.js:41,66` and
+`editor/src/export.js:539`.
+
+The registry write loop in `slides.js` rejects `__proto__`,
+`constructor`, and `prototype` slide IDs at the boundary (entry is
+returned to callers but never assigned to the dict). The iframe-side
+`findSlideById()` in `bridge-script.js:2618` rejects the same set
+defence-in-depth (DOM querySelector lookup, not a dict access — but
+keeps semantics symmetric and surfaces the rejection in a single
+place).
+
+### Tests
+
+New spec `tests/playwright/specs/bridge-proto-pollution.spec.js`
+(8 tests). Fixture `tests/fixtures/audit-2026-04-26/proto-pollution.html`
+loads three slides, two with reserved IDs.
+
+- `slideRegistryById` / `slideSyncLocks` / `lastAppliedSeqBySlide`
+  have null prototypes (3 tests).
+- Real slide is registered.
+- `__proto__` and `constructor` slide IDs are NOT in the registry
+  (verified via `Object.prototype.hasOwnProperty.call`).
+- `Object.prototype` is NOT polluted (negative assertion).
+- Real slide lookup still works after attack-laden load (regression
+  guard).
+
+Wired into `npm run test:gate-a`.
+
+### Gates
+
+- Gate-A: 298 + 8 = 306/8/0 (target).
+- Gate-contract: 152/0 (unchanged).
+
 ## [2.0.14] — 2026-04-25 — SEC-004 inbound schema validation (post-v2.0.13 polish ph.1)
 
 First of nine post-audit polish tags driving v2.0.13 → public-GA quality.

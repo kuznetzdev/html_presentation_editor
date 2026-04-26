@@ -2616,6 +2616,13 @@
         }
 
         function findSlideById(slideId) {
+          // [v2.0.15 / SEC-006] Reject reserved prototype-pollution IDs at
+          // the iframe boundary. Defence-in-depth even though querySelector
+          // is a DOM lookup (not a dict access). Keeps lookup semantics
+          // symmetric with shell.state.slideRegistryById guards in slides.js.
+          if (slideId === '__proto__' || slideId === 'constructor' || slideId === 'prototype') {
+            return null;
+          }
           return slideId ? document.querySelector('[' + SLIDE_MARKER + '="' + cssEscape(slideId) + '"]') : null;
         }
 

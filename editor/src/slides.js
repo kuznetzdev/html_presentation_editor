@@ -38,7 +38,8 @@
         });
 
         if (!mergedSlides.length) {
-          state.slideRegistryById = {};
+          // [v2.0.15 / SEC-006] null-prototype dict
+          state.slideRegistryById = Object.create(null);
           state.slideRegistryOrder = [];
           state.slides = [];
           state.activeSlideId = null;
@@ -63,7 +64,8 @@
           currentActiveId: options.currentActiveId ?? state.activeSlideId,
         });
 
-        state.slideRegistryById = {};
+        // [v2.0.15 / SEC-006] null-prototype dict + reject reserved names
+        state.slideRegistryById = Object.create(null);
         state.slideRegistryOrder = mergedSlides.map((slide) => slide.id);
         state.activeSlideId = nextActiveId;
         state.pendingActiveSlideId = nextRequestedId;
@@ -82,6 +84,16 @@
             isRequested: slide.id === nextRequestedId,
             isRuntimeActive: slide.id === nextRuntimeActiveId,
           };
+          // [v2.0.15 / SEC-006] Reject prototype-pollution slide IDs.
+          // A deck author with `data-editor-slide-id="__proto__"` would
+          // otherwise corrupt Object.prototype if the dict were a plain {}.
+          if (
+            slide.id === '__proto__' ||
+            slide.id === 'constructor' ||
+            slide.id === 'prototype'
+          ) {
+            return entry;
+          }
           state.slideRegistryById[slide.id] = entry;
           return entry;
         });
