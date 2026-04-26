@@ -106,6 +106,13 @@ async function gotoEditorShell(page) {
 
 /**
  * Load the basic deck and wait for the preview to reach the ready state.
+ *
+ * [v2.0.13 / BUG-001] Since v1.2.0 made `featureFlags.smartImport === "report"`
+ * the default, the Import-report modal pops up between #loadFileBtn and the
+ * deck actually rendering. Without dismissing it, this helper would block
+ * forever waiting for previewReady. The shared helper at
+ * tests/playwright/helpers/editorApp.js:190 (dismissImportReportModalIfPresent)
+ * has the same workaround; this contract spec used to hand-roll its own.
  */
 async function loadBasicDeckAndWait(page) {
   await gotoEditorShell(page);
@@ -115,6 +122,16 @@ async function loadBasicDeckAndWait(page) {
   await page.fill('#baseUrlInput', '/tests/fixtures/playwright/');
   await page.setInputFiles('#fileInput', path.resolve(__dirname, '../fixtures/playwright/basic-deck.html'));
   await page.click('#loadFileBtn');
+  // [v2.0.13] Dismiss Smart Import report modal if it appears.
+  const modal = page.locator('#importReportModal.is-open');
+  try {
+    await modal.waitFor({ state: 'visible', timeout: 2_000 });
+    await page.locator('#importReportModal [data-import-report-continue]').click();
+    await modal.waitFor({ state: 'hidden', timeout: 4_000 }).catch(() => {});
+  } catch {
+    // No modal — feature flag may have been disabled in this run, or this
+    // deck didn't trigger a report. Either way, proceed to ready-wait.
+  }
   await page.waitForFunction(
     () => globalThis.eval(`Boolean(state.previewReady) && state.previewLifecycle === "ready"`),
     undefined,

@@ -32,8 +32,19 @@
         // Do NOT add kinds here — update entity-kinds.js instead.
         const __injectedKinds = window.__KNOWN_ENTITY_KINDS;
         if (!__injectedKinds) {
+          // [v2.0.13 / ARCH-003] Use the shell's precise origin instead of
+          // broadcast '*'. The main post() helper (line 239) computes
+          // _SHELL_TARGET once at startup, but this warn fires BEFORE
+          // that helper is defined. Inline the same try/catch so the
+          // warn doesn't leak the bridge token to any incidental window
+          // listening on '*'. AUDIT-D-04 parity.
+          let __earlyShellTarget = '*';
+          try {
+            const __o = parent.location.origin;
+            if (__o && __o !== 'null') __earlyShellTarget = __o;
+          } catch (_) { /* file:// or sandboxed — '*' is the only valid target */ }
           (typeof parent !== 'undefined' && parent && parent.postMessage)
-            ? parent.postMessage({ __presentationEditor: true, token: TOKEN, type: 'runtime-warn', seq: 0, payload: { code: 'entity-kinds-fallback', message: 'window.__KNOWN_ENTITY_KINDS not injected; using built-in fallback list' } }, '*')
+            ? parent.postMessage({ __presentationEditor: true, token: TOKEN, type: 'runtime-warn', seq: 0, payload: { code: 'entity-kinds-fallback', message: 'window.__KNOWN_ENTITY_KINDS not injected; using built-in fallback list' } }, __earlyShellTarget)
             : console.warn('[bridge] window.__KNOWN_ENTITY_KINDS not injected; using built-in fallback list');
         }
         const KNOWN_ENTITY_KINDS = new Set(__injectedKinds || ['text','image','video','container','element','slide-root','protected','table','table-cell','code-block','svg','fragment']);
@@ -82,6 +93,39 @@
         // NOTE: RegExp constructor used (not literal) because a regex literal with /
         //       inside a template literal string would be prematurely terminated.
         const UNSAFE_URL_PROTOCOLS = new RegExp('^(?:javascript|vbscript|data:(?!image/))', 'i');
+
+        // [v2.0.13 / SEC-001] CSSOM "shorthand" setters that overwrite the
+        // entire inline-style declaration in one assignment. These bypass
+        // every per-property validator (input-validators, future per-key
+        // sanitizers) and let an attacker reach el.style.cssText = "..."
+        // via the apply-style / apply-styles bridge messages. Reject as
+        // styleName at the bridge boundary. (Backticks intentionally
+        // avoided in this comment — bridge-script.js entire body lives
+        // inside a template literal in buildBridgeScript and any backtick
+        // here would terminate the outer template prematurely.)
+        const UNSAFE_STYLE_SHORTHANDS = new Set([
+          'cssText',     // mass-overwrite of all inline styles
+          'cssFloat',    // CSSOM alias for "float"; not malicious itself
+                         //   but inconsistent with the rest of the API
+          'parentRule',  // read-only in browsers but blocking is cheap
+        ]);
+
+        // [v2.0.13 / SEC-002 + SEC-003] Reusable URL-attribute validator.
+        // Checks UNSAFE_URL_PROTOCOLS after stripping whitespace, the same
+        // way sanitizeFragment does at line 154. Used by both
+        // updateAttributes (SEC-002) and replaceImageSrc (SEC-003) so the
+        // mutation-path parity matches what parseSingleRoot already
+        // enforces for replace-node-html / insert-element.
+        function isSafeUrlAttributeValue(value) {
+          if (value == null) return true;
+          const trimmed = String(value).replace(/[\\t\\n\\r ]/g, '').toLowerCase();
+          return !UNSAFE_URL_PROTOCOLS.test(trimmed);
+        }
+        const URL_BEARING_ATTRS = new Set([
+          'href', 'src', 'action', 'formaction', 'poster', 'background',
+          'srcdoc', 'data', 'manifest', 'cite', 'longdesc', 'usemap',
+          'profile', 'codebase', 'classid', 'icon',
+        ]);
 
         // ALLOWED_HTML_TAGS: explicit allow-list for parseSingleRoot fragment walking.
         // Tags not in this set are removed by sanitizeFragment().
@@ -2986,13 +3030,28 @@
           const el = findNodeById(nodeId);
           if (!el || !attrs || typeof attrs !== 'object') return;
           if (!createProtectionPolicy(el).canEditAttributes) return;
-          Object.entries(attrs).forEach(([name, rawValue]) => {
-            const attrName = String(name || '').trim();
+          // [v2.0.13 / SEC-002] Iterate via Object.keys so prototype-chain
+          // pollution (e.g. attrs={"__proto__": {polluted: 1}}) cannot
+          // smuggle in extra keys; Object.entries on a tampered object
+          // would still report inherited keys.
+          const safeKeys = Object.keys(attrs);
+          safeKeys.forEach((name) => {
+            const attrName = String(name || '').trim().toLowerCase();
             if (!attrName || BLOCKED_ATTR_NAMES.has(attrName) || UNSAFE_ATTR_NAME.test(attrName) || !VALID_ATTR_NAME.test(attrName)) return;
+            const rawValue = attrs[name];
             const value = rawValue == null ? '' : String(rawValue).trim();
             if (!value) {
               el.removeAttribute(attrName);
               return;
+            }
+            // [v2.0.13 / SEC-002] URL-bearing attributes (href / src /
+            // action / formaction / poster / background / srcdoc / data
+            // / cite / longdesc) must reject javascript:, vbscript: and
+            // non-image data: protocols. Mirrors parseSingleRoot's
+            // sanitizeFragment URL_ATTRS check so the bridge mutation
+            // path has parity with the HTML-fragment ingest path.
+            if (URL_BEARING_ATTRS.has(attrName) && !isSafeUrlAttributeValue(value)) {
+              return; // silently drop — caller's intent is impossible to apply safely
             }
             if (attrName === 'class') {
               const normalized = value.split(/\\s+/).filter(Boolean).join(' ');
@@ -3023,14 +3082,23 @@
           notifySelectionGeometry();
         }
 
+        // [v2.0.13 / SEC-003] Returns true if the src was applied (or no
+        // src was supplied), false if rejected for unsafe protocol. The
+        // case handler uses the return value to ack with the correct
+        // refSeq (postAck needs inboundSeq from the message-handler
+        // closure, which this standalone function cannot access).
         function replaceImageSrc(nodeId, src, alt) {
           const el = findNodeById(nodeId);
-          if (!el || el.tagName !== 'IMG') return;
-          if (!createProtectionPolicy(el).canReplaceMedia) return;
-          if (typeof src === 'string' && src) el.setAttribute('src', src);
+          if (!el || el.tagName !== 'IMG') return true;
+          if (!createProtectionPolicy(el).canReplaceMedia) return true;
+          if (typeof src === 'string' && src) {
+            if (!isSafeUrlAttributeValue(src)) return false;
+            el.setAttribute('src', src);
+          }
           if (typeof alt === 'string') el.setAttribute('alt', alt);
           selectElement(el, { focusText: false });
           notifyElementUpdated(el);
+          return true;
         }
 
         function parseElementZIndex(el) {
@@ -3546,6 +3614,17 @@
                 break;
               }
               case 'apply-style': {
+                // [v2.0.13 / SEC-001] Reject CSSOM shorthands that overwrite
+                // every inline style at once. styleName must be a real CSS
+                // property; the JS-API setters cssText / cssFloat (and
+                // similar shorthands of the entire style object) bypass
+                // every per-property validator. Schema also rejects, but
+                // we double-check here so a future schema-bypass cannot
+                // reach the live DOM.
+                if (UNSAFE_STYLE_SHORTHANDS.has(String(payload.styleName))) {
+                  postAck(inboundSeq, false, 'apply-style.shorthand-rejected', payload.styleName);
+                  return;
+                }
                 const el = findNodeById(payload.nodeId);
                 if (!el || !createProtectionPolicy(el).canEditStyles) return;
                 el.style[payload.styleName] = payload.value || '';
@@ -3557,6 +3636,10 @@
                 const el = findNodeById(payload.nodeId);
                 if (!el || !createProtectionPolicy(el).canEditStyles) return;
                 Object.entries(payload.styles || {}).forEach(([name, value]) => {
+                  // [v2.0.13 / SEC-001] Same shorthand-rejection contract
+                  // as apply-style — silently drop unsafe keys instead of
+                  // throwing so legitimate keys still apply.
+                  if (UNSAFE_STYLE_SHORTHANDS.has(String(name))) return;
                   el.style[name] = value || '';
                 });
                 selectElement(el, { focusText: false });
@@ -3568,7 +3651,14 @@
                 break;
               }
               case 'replace-image-src': {
-                replaceImageSrc(payload.nodeId, payload.src, payload.alt || '');
+                // [v2.0.13 / SEC-003] Ack with rejection if URL had unsafe
+                // protocol (replaceImageSrc returns false then). Done at
+                // the case-handler scope so postAck has access to
+                // inboundSeq from the message-handler closure.
+                const _appliedOk = replaceImageSrc(payload.nodeId, payload.src, payload.alt || '');
+                if (!_appliedOk) {
+                  postAck(inboundSeq, false, 'replace-image-src.unsafe-protocol', String(payload.src || '').slice(0, 80));
+                }
                 break;
               }
               case 'reset-inline-styles': {

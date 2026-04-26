@@ -151,7 +151,8 @@ These cannot be violated at any point in any phase. Gate-A enforces most.
 | v2.0.9 | 2026-04-24 | Shortcut discovery hints | 35ce9b5 | 266/8/0 | Contextual one-shot toasts on first overlap-cycle / multi-select / alt-click + 6 specs |
 | v2.0.10 | 2026-04-24 | W/H in basic mode | d6e93ef | 273/8/0 | Geometry section root no longer advanced-only; W/H BASIC-visible; display/position/z/X/Y stay advanced + 7 specs |
 | v2.0.11 | 2026-04-24 | Inspector empty-state hint | aa4d685 | 278/8/0 | Persistent guidance card in #insertSection answering "how do I edit what's already here?" + 5 specs |
-| v2.0.12 | 2026-04-24 | DRY: model-query helpers | (pending) | 278/8/0 | findModelNode + findModelSlide in dom.js, 31 call sites collapsed across 12 files; transform-resolve.spec.js fill+Tab flake hardened |
+| v2.0.12 | 2026-04-24 | DRY: model-query helpers | 075f9a9 | 278/8/0 | findModelNode + findModelSlide in dom.js, 31 call sites collapsed across 12 files; transform-resolve.spec.js fill+Tab flake hardened |
+| v2.0.13 | 2026-04-26 | Audit fixes (security + contract) | (pending) | 289/8/0 | Closes BUG-001 (contract drift) + SEC-001/002/003 (cssText, update-attributes URL, replace-image-src URL) + SEC-005 (3 unregistered msg types) + BUG-003 (gate-visual port) + ARCH-003 (runtime-warn target). 11 new security specs. gate-contract 149/3 → 152/0 |
 
 ### Current baseline (as of 2026-04-23)
 

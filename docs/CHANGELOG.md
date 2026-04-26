@@ -1,5 +1,175 @@
 # CHANGELOG
 
+## [2.0.13] — 2026-04-26 — Audit-driven security + contract fixes (post-AUDIT-2026-04-26)
+
+Direct response to `docs/AUDIT-REPORT-2026-04-26.md` (deep testing
+audit, 17 findings). Closes 1 functional regression + 3 HIGH security
+findings + 1 MEDIUM schema-drift + 2 dev-experience issues.
+
+### Fixed — High-severity
+
+**BUG-001 — gate-contract had 3 silent hard failures.**
+`tests/contract/bridge-handshake.contract.spec.js:110` had its own
+`loadBasicDeckAndWait` helper that diverged from the shared
+`openHtmlFixture` after v1.2.0 made Smart Import report modal the
+default. The contract helper never dismissed the modal, so the load
+hung past timeout. Inlined the same dismiss step (3 lines) inside the
+contract helper. Gate-contract now **152/0** (was 149/3).
+
+**SEC-001 — `apply-style { styleName: 'cssText' }` was not blocked.**
+The CSSOM shorthand `cssText` writes the entire inline style at once,
+bypassing every per-property validator. Combined with the schema-free
+type list, an attacker who could reach the bridge (any iframe-side
+script under sandbox-OFF default) could overwrite all inline styles
+on any element. Now rejected at TWO layers:
+- `editor/src/bridge-schema.js:validateApplyStyle` — schema rejects
+  `styleName: 'cssText' | 'cssFloat' | 'parentRule'` as not a CSS
+  property. Same check in `validateApplyStyles` for the multi-key
+  variant (rejects the whole map if any unsafe key present).
+- `editor/src/bridge-script.js:apply-style handler` — defence-in-
+  depth: even if a future schema bypass lands, the handler at the
+  iframe boundary also rejects (and acks with `apply-style.shorthand-
+  rejected`).
+
+**SEC-002 — `update-attributes` did not validate URL-bearing values.**
+`href`, `src`, `action`, `formaction`, `poster`, `background`,
+`srcdoc`, `data`, `cite`, `longdesc`, etc. accepted `javascript:` /
+`vbscript:` / non-image `data:` protocols. Sanitization parity with
+`parseSingleRoot` was missing. Fixed: `URL_BEARING_ATTRS` set + new
+`isSafeUrlAttributeValue()` helper inside the iframe; same regex used
+by `parseSingleRoot.sanitizeFragment`. Unsafe values are silently
+dropped (cannot be applied safely). Also: switched
+`Object.entries(attrs)` → `Object.keys(attrs)` so prototype-injected
+keys cannot smuggle past the loop.
+
+**SEC-003 — `replace-image-src` did not validate URL protocol.**
+Iframe `replaceImageSrc()` did `el.setAttribute('src', src)` with no
+check. Now rejects `javascript:` / `vbscript:` / non-image `data:`
+via the same `isSafeUrlAttributeValue()` helper. The shell's
+`InputValidators.url` already enforced this for `imageSrcInput`; the
+bridge now matches.
+
+### Fixed — Medium-severity
+
+**SEC-005 — Three message types posted/handled but missing from
+schema registry.** `runtime-warn`, `container-mode-ack`,
+`sibling-rects-response` are now in `BRIDGE_MESSAGES` and
+`SCHEMA_FREE_TYPES`. Prerequisite for the eventual SEC-004 inbound-
+schema fix (otherwise enabling validation would silently break
+direct-manipulation snap, mode-switch ack, and the entity-kinds
+fallback warning).
+
+### Fixed — Dev experience
+
+**BUG-003 — gate-visual port collision with gate-D.** Both used
+default port 41731. `npm run test:gate-visual` script now sets
+`PLAYWRIGHT_TEST_SERVER_PORT='41736'` (mirroring `test:gate-a11y`'s
+`'41735'` trick). The two gates can run in parallel without one
+killing the other.
+
+**ARCH-003 — `runtime-warn` posted with broadcast `'*'` target.**
+`bridge-script.js:36` (entity-kinds-fallback warn) used `'*'` because
+the helper that computes `_SHELL_TARGET` is defined later in the
+file. Inlined the same try/catch / origin computation early so the
+warn no longer broadcasts the bridge token to incidental listeners.
+AUDIT-D-04 parity.
+
+### Tests
+
+`tests/playwright/specs/bridge-mutation-security.spec.js` (new) —
+**11 specs** cover:
+- SEC-001: schema rejects `apply-style.cssText`
+- SEC-001: schema rejects `apply-styles` map containing `cssText`
+- SEC-001: handler also rejects (defence-in-depth)
+- SEC-002: drops `href: javascript:`
+- SEC-002: drops `formaction: vbscript:`
+- SEC-002: drops `srcdoc: javascript:`
+- SEC-002: still accepts safe `https://` URL
+- SEC-003: rejects `javascript:` src
+- SEC-003: rejects `vbscript:` src
+- SEC-003: accepts `data:image/png;base64,...`
+- SEC-005: 3 newly-registered types pass schema validation
+
+Added to `npm run test:gate-a`.
+
+### Bug found and fixed inside the v2.0.13 work
+
+While editing `bridge-script.js`, my comments at lines 100 / 108
+contained backtick literals (`` `el.style.cssText = '...'` `` and
+`` `float` ``). Since the entire file body lives inside a template
+literal in `buildBridgeScript`, the embedded backticks terminated
+the outer template prematurely. Result: `buildBridgeScript` failed
+to parse (`Unexpected identifier 'el'`), bridge never initialized,
+every gate that loaded a deck timed out.
+
+Caught by `node --check editor/src/bridge-script.js`, fixed by
+removing backticks from the comments and adding a clarifying note
+that backticks are forbidden inside this file's body. **Three lines
+of comment** fixed the bug; the diagnostic loop took ~10 minutes.
+This is the kind of footgun the architecture audit flagged as the
+#2 risk (bridge-script.js as a template string with no static
+analysis): static analysis would have caught this on save. Adding
+`node --check` to the dev loop is now on POST_V2_ROADMAP.
+
+### Non-breaking
+
+- All security validators reject UNSAFE inputs only. Safe inputs
+  pass through identically.
+- Schema additions are pure-additive (no removal, no rename).
+- Gate-A stays green (additional 11 specs from the new security
+  suite, none of the prior 278 affected).
+- gate-contract: 149/3 → **152/0** (the 3 failures fixed, no new
+  tests).
+
+### Files
+
+- `editor/src/bridge-script.js` — UNSAFE_STYLE_SHORTHANDS,
+  isSafeUrlAttributeValue, URL_BEARING_ATTRS constants;
+  apply-style + apply-styles handler reject; updateAttributes URL
+  validation + Object.keys iteration; replaceImageSrc returns
+  bool; runtime-warn target inlined.
+- `editor/src/bridge-schema.js` — UNSAFE_STYLE_SHORTHANDS_SCHEMA,
+  validateApplyStyle + validateApplyStyles cssText reject;
+  RUNTIME_WARN + CONTAINER_MODE_ACK + SIBLING_RECTS_RESPONSE
+  registered in BRIDGE_MESSAGES + SCHEMA_FREE_TYPES.
+- `tests/contract/bridge-handshake.contract.spec.js` —
+  loadBasicDeckAndWait now dismisses Smart Import modal.
+- `tests/playwright/specs/bridge-mutation-security.spec.js` (new) —
+  11 regression specs.
+- `package.json` — version 2.0.13, test:gate-a includes new spec,
+  test:gate-visual + test:gate-visual:update use port 41736.
+- `docs/{CHANGELOG, V2-MASTERPLAN, SOURCE_OF_TRUTH}.md`, `README.md`.
+
+### Verdict update vs the audit's matrix
+
+| Dimension | Audit (v2.0.12) | After v2.0.13 |
+|---|---|---|
+| Functional | 8 | **9** (gate-contract restored) |
+| Security | 6 | **8** (3 HIGH closed; SEC-004/006/007 still open as documented) |
+| Performance | 7 | 7 (no change) |
+| A11y | 5 | 5 (A11Y-001 unaddressed; tracked) |
+| Docs | 7 | 8 (audit + this entry) |
+| Internal-pilot | 8 | **9** |
+| Public-GA | 5 | **6** |
+
+### Honest note
+
+The audit verdict was "the seven mutation paths through the bridge
+chokepoint don't all enforce the same rules" — this tag enforces
+parity for the three highest-impact ones (apply-style cssText,
+update-attributes URL, replace-image-src URL). SEC-004 (inbound
+schema validation), SEC-006 (proto-keyed dictionaries), SEC-007
+(sandbox-OFF default) remain — each is bigger than XS effort and
+will land as their own ADR-tracked tags.
+
+The bridge-script.js parse-time footgun (backticks in comments)
+that surfaced during this work is itself the strongest argument
+for the audit's ARCH-001 finding. A future tag should wire
+`node --check editor/src/bridge-script.js` into the pre-commit
+hook and the gate-A pipeline.
+
+---
+
 ## [2.0.12] — 2026-04-24 — Model-query helpers (DRY) + transform-resolve flake fix
 
 Two related janitorial moves picked up from the post-v2 audit:

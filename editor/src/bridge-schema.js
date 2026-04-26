@@ -167,6 +167,14 @@
     SHORTCUT:          'shortcut',
     CLICK_BLOCKED:     'click-blocked',
     HINT_SHORTCUT:     'hint-shortcut',
+    // [v2.0.13 / SEC-005] Three message types that were posted/handled in
+    // production but missing from the schema registry. Adding them to
+    // SCHEMA_FREE_TYPES below enables future inbound-validation (SEC-004
+    // fix) without breaking direct-manipulation snap, mode-switch ack,
+    // or the entity-kinds-fallback warning.
+    RUNTIME_WARN:           'runtime-warn',
+    CONTAINER_MODE_ACK:     'container-mode-ack',
+    SIBLING_RECTS_RESPONSE: 'sibling-rects-response',
 
     // Ack (v2 structured response, ADR-012 §5)
     ACK:               'ack',
@@ -417,6 +425,13 @@
    * @param {unknown} payload
    * @returns {{ ok: boolean, errors: string[] }}
    */
+  // [v2.0.13 / SEC-001] CSSOM "shorthand" setters that overwrite the
+  // entire inline-style declaration in one assignment. Rejected at the
+  // schema layer in addition to the bridge handler so unauthenticated
+  // callers (devtools console, future plugin authors, pasted styles)
+  // get a clear validation error, not silent dropped writes.
+  var UNSAFE_STYLE_SHORTHANDS_SCHEMA = ['cssText', 'cssFloat', 'parentRule'];
+
   function validateApplyStyle(payload) {
     var errors = [];
     if (!payload || typeof payload !== 'object') {
@@ -428,6 +443,13 @@
     }
     if (!isNonEmptyString(payload.styleName)) {
       errors.push('apply-style.styleName must be a non-empty string');
+    } else if (UNSAFE_STYLE_SHORTHANDS_SCHEMA.indexOf(String(payload.styleName)) !== -1) {
+      // [v2.0.13 / SEC-001] cssText overwrites every inline style at once,
+      // bypassing every per-property validator. Reject at schema.
+      errors.push(
+        'apply-style.styleName must be a CSS property, not "' +
+        payload.styleName + '" (CSSOM shorthand)',
+      );
     }
     if (typeof payload.value !== 'string') {
       errors.push('apply-style.value must be a string');
@@ -458,6 +480,20 @@
     }
     if (!payload.styles || typeof payload.styles !== 'object' || Array.isArray(payload.styles)) {
       errors.push('apply-styles.styles must be a non-null object');
+    } else {
+      // [v2.0.13 / SEC-001] Reject map containing CSSOM shorthand keys.
+      // Iterate via Object.keys so prototype-injected keys cannot smuggle
+      // shorthands through Object.entries inheritance.
+      var keys = Object.keys(payload.styles);
+      for (var i = 0; i < keys.length; i++) {
+        if (UNSAFE_STYLE_SHORTHANDS_SCHEMA.indexOf(keys[i]) !== -1) {
+          errors.push(
+            'apply-styles.styles must not contain CSSOM shorthand "' +
+            keys[i] + '"',
+          );
+          break;
+        }
+      }
     }
     return { ok: errors.length === 0, errors: errors };
   }
@@ -833,6 +869,10 @@
     BRIDGE_MESSAGES.SHORTCUT,
     BRIDGE_MESSAGES.CLICK_BLOCKED,
     BRIDGE_MESSAGES.HINT_SHORTCUT,
+    // [v2.0.13 / SEC-005] Newly-registered iframe→shell types.
+    BRIDGE_MESSAGES.RUNTIME_WARN,
+    BRIDGE_MESSAGES.CONTAINER_MODE_ACK,
+    BRIDGE_MESSAGES.SIBLING_RECTS_RESPONSE,
     BRIDGE_MESSAGES.HIGHLIGHT_NODE,
     BRIDGE_MESSAGES.SET_SELECTION_MODE,
     BRIDGE_MESSAGES.RESET_CLICK_THROUGH,

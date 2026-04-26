@@ -219,15 +219,17 @@ The preview zoom feature uses the CSS `zoom:` property which is on the W3C stand
 
 ## Release state
 
-**Current**: v2.0.12 — Model-query helpers DRY + transform-resolve
-flake fix shipped 2026-04-24 (v2.0.0 GA + twelve post-GA polish tags).
+**Current**: v2.0.13 — Audit-driven security + contract fixes shipped
+2026-04-26 (v2.0.0 GA + thirteen post-GA polish tags).
+Closes 4 HIGH + 1 MEDIUM + 2 dev-issues from
+`docs/AUDIT-REPORT-2026-04-26.md` (deep testing audit, 17 findings).
 
 The v1.0.3 → v2.0.0 redesign trajectory is complete: 26 incremental
 release points (v1.1.0 through v2.0.0 inclusive) across Phases A–E
-plus 6 hardening sprints; the GA has since absorbed 12 post-GA
-polish tags (v2.0.1–v2.0.12). All v2 feature flags default to v2
-behavior; full feature surface stable. Gate-A: 278/8/0 across 29
-spec files.
+plus 6 hardening sprints; the GA has since absorbed 13 post-GA
+polish tags (v2.0.1–v2.0.13). All v2 feature flags default to v2
+behavior; full feature surface stable. Gate-A: 289/8/0 across 30
+spec files. Gate-contract: 152/0 (was 149/3 pre-v2.0.13).
 
 See `docs/RELEASE-v2.0.md` for full release notes and the complete
 tag-by-tag history.
