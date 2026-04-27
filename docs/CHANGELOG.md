@@ -1,5 +1,34 @@
 # CHANGELOG
 
+## [2.0.20] — 2026-04-25 — CI workflows: gate-A on every PR + gate-secondary nightly (polish ph.7)
+
+Adds GitHub Actions workflows so every push and pull request gets the
+fast feedback signal (typecheck + unit + gate-contract + gate-A across
+Node 18/20/22) and the broader gates (B/C/D/E + a11y + visual) run
+nightly + on demand.
+
+### Added
+
+`.github/workflows/gate-a.yml`:
+- triggers: push to any branch + PR to main + manual dispatch.
+- jobs: typecheck (5min), unit (5min), gate-contract (10min), gate-a
+  (30min, matrix on Node 18/20/22).
+- Playwright browsers cached via `actions/cache@v4` keyed on
+  `package-lock.json` so subsequent runs skip the ~1.5min install.
+- artifacts/ uploaded on failure (7d retention).
+
+`.github/workflows/gate-secondary.yml`:
+- triggers: nightly cron at 03:00 UTC + manual dispatch.
+- jobs: gate-b, gate-c (firefox + webkit), gate-d (mobile/tablet),
+  gate-e (asset parity), gate-a11y, gate-visual. Each one is
+  independent and uploads its own artifacts on failure.
+
+### Gates
+
+- Gate-A: 315/8/0 (unchanged).
+- Both workflow YAMLs structurally valid. CI runs themselves will be
+  validated on the next push to a feature branch.
+
 ## [2.0.19] — 2026-04-25 — PPTX export end-to-end roundtrip (polish ph.6)
 
 Closes FN-001 from `docs/AUDIT-REPORT-2026-04-26.md` and removes the

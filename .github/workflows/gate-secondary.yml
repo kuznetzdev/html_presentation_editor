@@ -1,0 +1,171 @@
+name: Gate-secondary (B/C/D/E/A11Y/Visual)
+
+# Slow / wide-coverage gates run nightly + on demand. Gate-A on the
+# main `gate-a.yml` workflow gives the fast PR signal; this one gives
+# breadth: cross-browser, mobile breakpoints, asset-parity, axe-core,
+# visual regression.
+
+on:
+  schedule:
+    - cron: "0 3 * * *" # 03:00 UTC daily
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gate-b:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: playwright-${{ runner.os }}-
+      - run: npx playwright install --with-deps chromium
+      - name: Run gate-B
+        run: npm run test:gate-b
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gate-b-failure
+          path: artifacts/
+
+  gate-c:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: playwright-${{ runner.os }}-
+      - run: npx playwright install --with-deps
+      - name: Run gate-C (firefox + webkit)
+        run: npm run test:gate-c
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gate-c-failure
+          path: artifacts/
+
+  gate-d:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: playwright-${{ runner.os }}-
+      - run: npx playwright install --with-deps chromium
+      - name: Run gate-D (mobile / tablet breakpoints)
+        run: npm run test:gate-d
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gate-d-failure
+          path: artifacts/
+
+  gate-e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: playwright-${{ runner.os }}-
+      - run: npx playwright install --with-deps chromium
+      - name: Run gate-E (asset parity)
+        run: npm run test:gate-e
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gate-e-failure
+          path: artifacts/
+
+  gate-a11y:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: playwright-${{ runner.os }}-
+      - run: npx playwright install --with-deps chromium
+      - name: Run gate-a11y (axe-core)
+        run: npm run test:gate-a11y
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gate-a11y-failure
+          path: artifacts/
+
+  gate-visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: playwright-${{ runner.os }}-
+      - run: npx playwright install --with-deps chromium
+      - name: Run gate-visual
+        run: npm run test:gate-visual
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gate-visual-failure
+          path: artifacts/

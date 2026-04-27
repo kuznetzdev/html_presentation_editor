@@ -236,7 +236,7 @@ See `docs/GITHUB_PACKAGES.md` for the exact recommendation and tradeoffs.
 
 ## Recent milestone tags
 
-Current: **v2.0.19 — PPTX export end-to-end roundtrip**
+Current: **v2.0.20 — CI workflows for gate-A + gate-secondary**
 (2026-04-25) on top of **v2.0.0 GA**.
 See [`docs/AUDIT-REPORT-2026-04-26.md`](docs/AUDIT-REPORT-2026-04-26.md)
 for the full audit that drove the post-v2 polish track.
@@ -245,10 +245,13 @@ Post-v2 roadmap: [`docs/POST_V2_ROADMAP.md`](docs/POST_V2_ROADMAP.md).
 
 The v1.0.3 → v2.0.0 redesign trajectory: **26 incremental release
 points** (v1.1.0 → v2.0.0 inclusive) across Phases A–E + 6 hardening
-sprints, plus **19 post-GA polish tags** (v2.0.1–v2.0.19).
+sprints, plus **20 post-GA polish tags** (v2.0.1–v2.0.20).
 
 ### v2.0 trajectory
 
+- `v2.0.20` — CI workflows: gate-A runs on every push + PR
+  (Node 18/20/22 matrix, Playwright browser cache); gate-secondary
+  (B/C/D/E/A11Y/Visual) runs nightly. Phase 7 of 9.
 - `v2.0.19` — FN-001 closed: PPTX export end-to-end roundtrip
   (`pptx-export-roundtrip.spec.js`). Click → download → adm-zip
   unpack → assert 3 slide XML + `<a:t>` runs. Beta badge
