@@ -1,5 +1,94 @@
 # CHANGELOG
 
+## [2.0.24] — 2026-04-27 — bridge-script iframe content extraction (ADR-031)
+
+Closes audit finding ARCH-001 ("`bridge-script.js` is 3 906 lines living
+inside a template-string"). The iframe-side JavaScript is now a real,
+lint-visible, tsc-visible source file — `editor/src/bridge-script-iframe.js`
+— and `editor/src/bridge-script.js` regenerates from it via a deterministic
+pre-commit-time script. No runtime change; no platform change; no
+bundler. Phase A2 of the post-v2 perfection sprint Track A.
+
+### Added
+
+- `editor/src/bridge-script-iframe.js` — source-of-truth for the iframe
+  bridge code (3 928 lines after un-escaping template-literal
+  backslashes). Standalone valid JS: passes `node --check` and
+  `tsc --noEmit`. Header carries 4 placeholder defaults
+  (`__BRIDGE_TOKEN_PLACEHOLDER__`, `__ROOT_SELECTORS_PLACEHOLDER__`,
+  `__MAX_HTML_BYTES_PLACEHOLDER__`, `__SHELL_BUILD_PLACEHOLDER__`)
+  inside a sentinel-bracketed defaults block so the file runs as
+  standalone JS.
+- `scripts/sync-bridge-script.js` — pre-commit-time generator. Reads the
+  iframe source, strips the placeholder-defaults block, re-escapes
+  every `\\` → `\\\\` for the wrapping template-literal context,
+  reverse-substitutes the 4 placeholder identifiers back to their
+  original `${JSON.stringify(...)}` expressions, splices the result
+  into `bridge-script.js` between sentinel comments. Idempotent;
+  exits non-zero on missing source / missing sentinels / orphan
+  placeholders.
+- `docs/ADR-031-bridge-script-iframe-extraction.md` — strategy ADR.
+  Documents the rejected alternatives (runtime fetch — blocked by
+  Chromium for `file://`; `<script src=…>` inside iframe — defers
+  token handshake; bundler — banned by ADR-015) and the chosen
+  develop-time copy approach.
+
+### Changed
+
+- `editor/src/bridge-script.js` — restructured. The wrapper template
+  literal now sits between `// __BEGIN_IFRAME_CONTENT__` and
+  `// __END_IFRAME_CONTENT__` sentinel comments. Body bytes are
+  identical to the previous version (3 documented bug-preservation
+  comment blocks added inline; runtime behaviour unchanged).
+- `scripts/precommit-bridge-script-syntax.js` — extended FILES list
+  to include `editor/src/bridge-script-iframe.js`. 12 files now
+  syntax-checked (was 11).
+- `package.json scripts.precommit` — chains sync first, then syntax
+  guard. Drift between iframe source and wrapper is caught at commit
+  time. `npm run test:gate-a` continues to call only the syntax
+  guard at its head (no double-sync) since gate-A operates on
+  already-committed code.
+
+### Preserved (NOT fixed in this tag)
+
+3 pre-existing latent regex bugs at original lines 1384/1707/1833 of
+`bridge-script.js` (single-backslash `\s+` consumed by template literal
+→ runtime regex `/s+/g` matches literal `s` chars instead of whitespace).
+Phase A2 brief mandates "same behaviour" — bugs are kept as-is with
+explicit `// PRESERVED runtime semantics` comments pointing future
+phases at the fix. Tracked for a separate phase to evaluate impact and
+ship the 3-byte fix with regression tests.
+
+### Architecture
+
+The pattern fits ADR-015's "Generated asset manifests (compile-time
+only, no runtime impact)" allowed-list — same shape as the pptxgenjs
+vendoring decision. `file://` double-click workflow is preserved; no
+`type="module"` introduced; no bundler added; no runtime fetch.
+
+### Verification
+
+- Gate-A: 315/8/0 (parity with v2.0.23 baseline; preserved across the
+  refactor — 16.2 min on Windows). Verified twice end-to-end.
+- Manual smoke flow (open → load reference deck → select → check
+  bridge state → export clean HTML): pass. Bridge alive, schema
+  exposed, protocol v2 active, `state.bridgeBuild` populated from
+  `${SHELL_BUILD}` interpolation, slide selectors flowed from
+  `${STATIC_SLIDE_SELECTORS}` interpolation, exported HTML strips
+  editor artifacts (5 647 bytes for v1-selection-engine-v2 deck).
+- Round-trip byte-identicality proof (`scripts/_spike-sync-bridge-
+  script.js`, committed in `f28daf6`): forward + reverse substitution
+  of all 5 interpolation occurrences yields a byte-identical wrapper.
+- Pre-commit chain idempotency: running `npm run precommit` twice
+  produces no changes the second time.
+
+### Closes
+
+- AUDIT-A item #15 (`docs/audit/AUDIT-A-architecture.md`): "Bridge-script
+  as a real source file."
+- AUDIT-REPORT-2026-04-26.md ARCH-001 ("3 906 lines living inside a
+  template-string"): closed.
+
 ## [2.0.23] — 2026-04-27 — FLAKE-sweep: spec waitForTimeout migrated to state-based waits
 
 Eliminated the `waitForTimeout` flake reservoir in `tests/playwright/specs/`.

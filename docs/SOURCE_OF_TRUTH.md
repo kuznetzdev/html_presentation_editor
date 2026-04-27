@@ -219,9 +219,16 @@ The preview zoom feature uses the CSS `zoom:` property which is on the W3C stand
 
 ## Release state
 
-**Current**: v2.0.23 — FLAKE-sweep complete: spec `waitForTimeout`
-migrated to state-based waits (2026-04-27). v2.0.0 GA + twenty-three
-post-GA polish tags. Closes 5 HIGH + 2 MEDIUM + 1 A11Y + 1 PERF-budget +
+**Current**: v2.0.24 — bridge-script iframe content extraction
+(2026-04-27). v2.0.0 GA + twenty-four post-GA polish tags. Phase A2
+of the post-v2 perfection sprint Track A: iframe-side JavaScript
+extracted from a template-literal string into a real lint-visible
+source file (`editor/src/bridge-script-iframe.js`); wrapper
+`bridge-script.js` now regenerates via `scripts/sync-bridge-script.js`
+at pre-commit time. Closes AUDIT-REPORT-2026-04-26.md ARCH-001
+(3 906-line template-string) and AUDIT-A item #15. No runtime change;
+no platform change; no bundler. Architecture: ADR-031.
+v2.0.23 had closed 5 HIGH + 2 MEDIUM + 1 A11Y + 1 PERF-budget +
 1 FLAKE + 1 FN + 1 CI-gap + 1 DEV-tooling + 2 dev-issues from
 `docs/AUDIT-REPORT-2026-04-26.md` (deep testing audit, 17 findings) +
 HIG-polish-1/2 from Phase 9 dual-agent spawn + spec FLAKE-sweep
