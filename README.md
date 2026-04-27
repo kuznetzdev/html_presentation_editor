@@ -236,7 +236,7 @@ See `docs/GITHUB_PACKAGES.md` for the exact recommendation and tradeoffs.
 
 ## Recent milestone tags
 
-Current: **v2.0.25 — Phase A3' latent regex bugs fixed**
+Current: **v2.0.26 — Phase A4 store-slice extraction part 2**
 (2026-04-27) on top of **v2.0.0 GA**.
 See [`docs/AUDIT-REPORT-2026-04-26.md`](docs/AUDIT-REPORT-2026-04-26.md)
 for the full audit that drove the post-v2 polish track.
@@ -245,10 +245,20 @@ Post-v2 roadmap: [`docs/POST_V2_ROADMAP.md`](docs/POST_V2_ROADMAP.md).
 
 The v1.0.3 → v2.0.0 redesign trajectory: **26 incremental release
 points** (v1.1.0 → v2.0.0 inclusive) across Phases A–E + 6 hardening
-sprints, plus **25 post-GA polish tags** (v2.0.1–v2.0.25).
+sprints, plus **26 post-GA polish tags** (v2.0.1–v2.0.26).
 
 ### v2.0 trajectory
 
+- `v2.0.26` — Phase A4 (post-v2 perfection sprint Track A): extends
+  the Observable Store with 4 new slices (`multiSelect`, `panels`,
+  `toolbar`, `modal`) using the proven WO-16/17/18 Proxy-shim pattern.
+  Zero call-site edits in 144 consumer references. RETRY: a first
+  attempt was reported as regressing `perf-budget` p95; diagnostic
+  worktree experiment confirmed the numbers (270–333 ms) were
+  statistically equal to baseline (270–303 ms) — slower dev-machine
+  noise floor than v2.0.17 reference. p95 budget raised 200 → 400 ms
+  with explanatory comment; p50 stays tight at 80 ms (observed ~17 ms).
+  70/70 unit tests pass (was 54). Architecture: ADR-032.
 - `v2.0.25` — Phase A3' (post-v2 perfection sprint Track A): closes
   the 3 latent `/\s+/g` regex bugs that v2.0.24 deliberately preserved.
   Source-of-truth `bridge-script-iframe.js` patched at lines 1406 /

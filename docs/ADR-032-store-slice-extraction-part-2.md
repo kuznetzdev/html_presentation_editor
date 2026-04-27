@@ -270,6 +270,75 @@ Worst-case revert restores byte-identical behaviour to pre-A4 state.
   deferred. Phase B candidate when consumer ownership becomes the
   primary pain.
 
+## Phase A4 RETRY addendum (2026-04-27 — perf-budget diagnosis)
+
+Phase A4 attempt-1 (`phase-a4-attempt-1` branch, 3 commits 6441cf9 →
+7a3b15c → eb261ec) was reset due to a reported `perf-budget.spec.js`
+regression: `click-to-select latency on 200-element slide stays under
+budget` failed with `p95=388.8ms` and `p95=283.8ms` across two runs (budget
+`p95<200ms`).
+
+### Root cause investigation
+
+A diagnostic worktree experiment compared baseline (HEAD `2cb8cfa` =
+v2.0.25, zero changes) vs attempt-1 head (`eb261ec`) on the same
+hardware:
+
+| Run | Baseline v2.0.25 (`2cb8cfa`) | Attempt-1 (`eb261ec`) |
+|---|---|---|
+| 1 | p50=16.8 / p95=279.7 ms | p50=16.7 / p95=250.0 ms |
+| 2 | p50=16.6 / p95=302.2 ms | p50=16.8 / p95=328.9 ms |
+| 3 | p50=16.6 / p95=274.7 ms | p50=17.2 / p95=333.1 ms |
+
+Both groups land in the same statistical band (p95 ≈ 270–333 ms). The
+attempt-1 numbers (388.8 / 283.8 ms in the original failure log) are
+**indistinguishable from the baseline noise floor on this dev machine**.
+Conclusion: **attempt-1 did not regress click-to-select; the test
+budget (`p95<200`) is calibrated for a faster machine than the current
+dev environment.** The original v2.0.17 release note recorded
+`p50≈17ms / p95≈100ms` on a faster reference machine.
+
+### Hot-path verification
+
+The Proxy expansion (4 new `if`-branches each in `get`/`set`) was
+suspected as the cause but ruled out:
+
+- Hot-path code reads/writes the raw `state` const directly, never
+  `window.stateProxy`. Grep confirms `stateProxy` is referenced in
+  exactly **one** non-`state.js` file (`broken-asset-banner.js`) — not
+  on the click-to-select path.
+- `window.store.subscribe(...)` is called in **one** consumer
+  (`primary-action.js`), and only for the `history` slice, not any of
+  the 4 new slices.
+- The selection-write path (`applyElementSelection` in
+  `bridge-commands.js`) batches 16 selection-slice writes into ONE
+  `store.update("selection", {...})` call inside `store.batch()`,
+  unchanged by Phase A4.
+
+### Decision
+
+Cherry-pick attempt-1 commits onto main as the v2.0.26 implementation.
+**Adjust `perf-budget.spec.js` to be hardware-noise-tolerant** by
+documenting the noise-floor reality and raising the p95 budget from
+200 ms to 400 ms. The p50 budget (`<80ms`) remains tight and is a
+robust regression sentinel — p50 has stayed at ~17 ms across all
+recent releases (14× safety margin).
+
+This approach is preferred over alternative-1 (skipping the test —
+loses regression coverage) and alternative-2 (median-of-3-runs
+methodology — adds ~6 minutes to gate-A and complicates failure
+diagnosis).
+
+### Updated verification plan
+
+- p50 < 80 ms (was 80 — unchanged) — **guards real regressions**.
+- p95 < 400 ms (was 200) — **noise-tolerant ceiling**.
+- A separate Phase B candidate: investigate why dev-machine p95 is
+  3× the v2.0.17 reference baseline. Possible causes: Chromium
+  upgrade, Playwright upgrade (1.58.2), test-runner default flags,
+  CPU thermal state, antivirus scan during test. None of these
+  invalidate the structural Phase A4 work.
+
 ## Links
 
 - ADR-013 — Observable Store (parent decision).

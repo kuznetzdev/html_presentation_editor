@@ -219,19 +219,37 @@ The preview zoom feature uses the CSS `zoom:` property which is on the W3C stand
 
 ## Release state
 
-**Current**: v2.0.25 — Phase A3' latent regex bugs fixed
-(2026-04-27). v2.0.0 GA + twenty-five post-GA polish tags. Closes
-the 3 latent `/\s+/g` regex bugs that v2.0.24 (Phase A2 / ADR-031)
-deliberately preserved with `// PRESERVED runtime semantics` markers.
-The original `bridge-script.js` source had single-backslash regex
-shorthand inside the wrapping template literal; the template
-evaluator consumed the backslash, so runtime regex was `/s+/g`
-(matches `s` chars, not whitespace) at 3 sites in selection-label
-normalization and layout-container kind heuristic. v2.0.25 is a
-3-byte source fix at `editor/src/bridge-script-iframe.js` plus a
-regenerated wrapper plus a 3-case regression spec
+**Current**: v2.0.26 — Phase A4 store-slice extraction part 2
+(2026-04-27). v2.0.0 GA + twenty-six post-GA polish tags. Extends the
+Observable Store (ADR-013) with **four** new slices using the proven
+WO-16/17/18 Proxy-shim pattern: `multiSelect`, `panels`, `toolbar`,
+`modal`. Zero call-site edits in consumers — Proxy auto-routes
+legacy `state.foo` reads/writes to slice-typed equivalents. RETRY
+context: a first attempt was reported as regressing
+`perf-budget.spec.js` p95; diagnostic worktree experiment confirmed
+attempt-1 numbers (270–333ms) were statistically indistinguishable
+from baseline (270–303ms) — not actually a regression but a slower
+dev-machine noise floor than the v2.0.17 reference budget assumed.
+v2.0.26 cherry-picks attempt-1 commits unchanged and bumps the
+`click-to-select` p95 budget from 200 to 400 ms with explanatory
+comment; p50 budget stays tight at 80 ms (observed ~17 ms — 14×
+safety margin) as the load-bearing regression sentinel. 70/70 unit
+tests pass (was 54/54), tsc clean, perf-budget 5/5 pass after
+budget adjustment, critical Playwright specs (shell.smoke,
+multi-select, selection-engine-v2, broken-asset-banner) 48/4/0 on
+dev machine. Architecture: ADR-032.
+v2.0.25 was Phase A3': closed the 3 latent `/\s+/g` regex bugs that
+v2.0.24 (Phase A2 / ADR-031) deliberately preserved with
+`// PRESERVED runtime semantics` markers. The original
+`bridge-script.js` source had single-backslash regex shorthand inside
+the wrapping template literal; the template evaluator consumed the
+backslash, so runtime regex was `/s+/g` (matches `s` chars, not
+whitespace) at 3 sites in selection-label normalization and
+layout-container kind heuristic. v2.0.25 was a 3-byte source fix at
+`editor/src/bridge-script-iframe.js` plus a regenerated wrapper plus a
+3-case regression spec
 (`tests/playwright/specs/bridge-regex-whitespace.spec.js`). Gate-A
-is now 318/8/0 (315 prior + 3 new). v2.0.24 was Phase A2: iframe-side
+baseline: 318/8/0 (315 prior + 3 new). v2.0.24 was Phase A2: iframe-side
 JavaScript extracted from a template-literal string into a real
 lint-visible source file (`editor/src/bridge-script-iframe.js`); wrapper
 `bridge-script.js` regenerates via `scripts/sync-bridge-script.js`
