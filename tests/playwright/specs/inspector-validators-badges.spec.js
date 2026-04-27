@@ -128,15 +128,20 @@ test.describe("Inspector validators (v1.5.0)", () => {
 
 test.describe("Experimental badges (v1.5.0)", () => {
   test(
-    "PPTX export button gets the Beta badge by default (pptxV2=true) @stage-f",
+    "PPTX export button has NO Beta badge (v2.0.19+ — verified by roundtrip spec) @stage-f",
     async ({ page }, testInfo) => {
       test.skip(!isChromiumOnlyProject(testInfo.project.name));
       await loadDeck(page);
+      // [v2.0.19 / FN-001] The Beta badge was removed once the PPTX
+      // export pipeline got an end-to-end roundtrip test
+      // (tests/playwright/specs/pptx-export-roundtrip.spec.js). The
+      // badge said "Полная интеграция export-конвейера — после v2.0",
+      // but the user-visible function (PptxGenJS legacy path) works.
       const hasBadge = await evaluateEditor(
         page,
         "Boolean(document.querySelector('#exportPptxBtn .experimental-badge'))",
       );
-      expect(hasBadge).toBe(true);
+      expect(hasBadge).toBe(false);
     },
   );
 

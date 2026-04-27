@@ -236,7 +236,7 @@ See `docs/GITHUB_PACKAGES.md` for the exact recommendation and tradeoffs.
 
 ## Recent milestone tags
 
-Current: **v2.0.18 — file:// origin BO3 automated**
+Current: **v2.0.19 — PPTX export end-to-end roundtrip**
 (2026-04-25) on top of **v2.0.0 GA**.
 See [`docs/AUDIT-REPORT-2026-04-26.md`](docs/AUDIT-REPORT-2026-04-26.md)
 for the full audit that drove the post-v2 polish track.
@@ -245,10 +245,15 @@ Post-v2 roadmap: [`docs/POST_V2_ROADMAP.md`](docs/POST_V2_ROADMAP.md).
 
 The v1.0.3 → v2.0.0 redesign trajectory: **26 incremental release
 points** (v1.1.0 → v2.0.0 inclusive) across Phases A–E + 6 hardening
-sprints, plus **18 post-GA polish tags** (v2.0.1–v2.0.18).
+sprints, plus **19 post-GA polish tags** (v2.0.1–v2.0.19).
 
 ### v2.0 trajectory
 
+- `v2.0.19` — FN-001 closed: PPTX export end-to-end roundtrip
+  (`pptx-export-roundtrip.spec.js`). Click → download → adm-zip
+  unpack → assert 3 slide XML + `<a:t>` runs. Beta badge
+  removed from `#exportPptxBtn`. adm-zip devDep added.
+  Phase 6 of 9.
 - `v2.0.18` — FLAKE-002 closed: file:// origin BO3 now an
   automated spec (`bridge-file-origin.spec.js`) using
   `chromium.launchPersistentContext`. Asserts editor loads via

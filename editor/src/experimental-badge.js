@@ -39,19 +39,17 @@
   // Called once at boot and any time featureFlags change.
   function refreshExperimentalBadges() {
     if (!window.featureFlags) return;
-    // PPTX export button — flag is on by default but the actual writer
-    // still delegates to legacy. Mark as Beta until full integration.
+    // [v2.0.19 / FN-001] PPTX export button — Beta badge removed. Legacy
+    // export pipeline (PptxGenJS via export.js:exportPptx()) is verified
+    // by `tests/playwright/specs/pptx-export-roundtrip.spec.js` to produce
+    // a valid .pptx archive containing slide titles + correct slide count.
+    // ExportPptxV2 helpers (preflight, position-resolver, gradients,
+    // svg-shapes, font-fallback) ship as instrumentation but the writer
+    // intentionally stays on the proven legacy path for v2.0.x. The badge
+    // was misleading — the user-visible function works.
     var pptxBtn = document.getElementById("exportPptxBtn");
     if (pptxBtn) {
-      if (window.featureFlags.pptxV2) {
-        attachExperimentalBadge(
-          pptxBtn,
-          "Beta",
-          "PPTX Fidelity v2 helpers активны. Полная интеграция export-конвейера — после v2.0.",
-        );
-      } else {
-        removeExperimentalBadge(pptxBtn);
-      }
+      removeExperimentalBadge(pptxBtn);
     }
     // Smart Import "full" mode is opt-in only — when "report", we don't
     // badge (stable). Badge when "full".

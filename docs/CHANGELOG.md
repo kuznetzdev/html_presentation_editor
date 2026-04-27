@@ -1,5 +1,57 @@
 # CHANGELOG
 
+## [2.0.19] — 2026-04-25 — PPTX export end-to-end roundtrip (polish ph.6)
+
+Closes FN-001 from `docs/AUDIT-REPORT-2026-04-26.md` and removes the
+"Beta" badge on `#exportPptxBtn`. The user-visible PPTX export
+function (legacy PptxGenJS path) is now under regression coverage and
+verified to produce a valid .pptx archive with the expected slide
+count + hero text.
+
+### Added
+
+- New devDependency: `adm-zip` (small pure-JS zip reader, MIT) for
+  unzipping the .pptx archive in tests.
+- `tests/playwright/specs/pptx-export-roundtrip.spec.js` (2 tests):
+  - **Export PPTX produces a valid .pptx archive with hero text + 3
+    slides** — clicks `#exportPptxBtn` on basic-deck, captures the
+    Playwright download, unzips via adm-zip, asserts
+    `[Content_Types].xml` is present, exactly 3
+    `ppt/slides/slide*.xml` files exist, and slide1.xml contains
+    `<a:t>` (PPTX text-run tag — proves real text content).
+  - **Export PPTX button is no longer marked Beta (v2.0.19+)** —
+    `#exportPptxBtn` does not contain a `.experimental-badge` child,
+    nor does its aria-label or text contain "beta".
+
+### Changed
+
+- `editor/src/experimental-badge.js`: removed the Beta-badge
+  attachment for `#exportPptxBtn`. Comment explains the rationale —
+  the legacy PPTX writer is verified-working, so the "Полная
+  интеграция export-конвейера — после v2.0" message was misleading.
+  ExportPptxV2 helpers (preflight, position-resolver, gradients,
+  svg-shapes, font-fallback) ship as instrumentation but the writer
+  intentionally stays on the proven legacy path for v2.0.x.
+- `tests/playwright/specs/inspector-validators-badges.spec.js`:
+  inverted the "PPTX export button gets the Beta badge" assertion —
+  now asserts the badge is absent (was a P0 expectation; the badge
+  removal would otherwise break gate-A).
+
+### Gates
+
+- Gate-A: 313 + 2 - 0 = 315/8/0 (target). The previous
+  `inspector-validators-badges.spec.js` test for the badge stays
+  but with inverted polarity (still 1 test, now passing for the
+  opposite reason), so net +2.
+- All new tests pass standalone in 6.2s.
+
+### Documentation
+
+- `docs/POST_V2_ROADMAP.md` — "PPTX export composition integration"
+  is no longer flagged as a public-GA gate (legacy export is
+  end-to-end verified). Will follow up if / when the v2 writer is
+  needed for higher fidelity.
+
 ## [2.0.18] — 2026-04-25 — file:// origin BO3 automated (polish ph.5)
 
 Closes FLAKE-002 from `docs/AUDIT-REPORT-2026-04-26.md`. The
