@@ -37,7 +37,10 @@
   --shell-text-muted: rgba(60, 60, 67, 0.78);
   --shell-accent: #0071e3;
   --shell-accent-soft: rgba(0, 113, 227, 0.1);
-  --shell-focus: rgba(0, 113, 227, 0.18);
+  /* [v2.0.22 / HIG-polish] Focus ring boosted from 0.18 → 0.32 alpha for
+     stronger visibility per WCAG 2.4.7 (focus visible) + Apple HIG
+     keyboard guidance. Old value was barely perceptible on dark surfaces. */
+  --shell-focus: rgba(0, 113, 227, 0.32);
   --on-accent: #ffffff;
   --state-accent-border: rgba(0, 113, 227, 0.18);
   --shell-success: #247a4d;

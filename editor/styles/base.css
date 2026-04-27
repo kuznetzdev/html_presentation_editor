@@ -93,6 +93,19 @@ button:hover:not(:disabled) {
   background: var(--shell-field-muted);
 }
 
+/* [v2.0.22 / HIG-polish] Apple HIG / Material 3 tactile press feedback.
+   Subtle scale-down on :active (98% — barely perceptible but feels
+   responsive to the tap). Skip when reduced-motion is requested. */
+button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button:active:not(:disabled) {
+    transform: none;
+  }
+}
+
 button:disabled,
 input:disabled,
 select:disabled,

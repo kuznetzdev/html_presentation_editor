@@ -1,5 +1,45 @@
 # CHANGELOG
 
+## [2.0.22] — 2026-04-25 — HIG / Material 3 micro-polish (polish ph.9)
+
+Two small but high-impact UI refinements that bring the shell closer
+to Apple HIG / Material 3 interaction expectations.
+
+### Changed — Tactile + visible polish
+
+**HIG-polish-1 — tap feedback on every button.** Added
+`button:active:not(:disabled) { transform: scale(0.98); }` so every
+shell button responds with a barely-perceptible (2%) scale-down on
+press. Apple HIG recommends 96-98% for "light" feedback — anything
+deeper feels heavy. Honours `prefers-reduced-motion` (no transform
+when user opts out).
+
+**HIG-polish-2 — focus ring boosted for visibility.** `--shell-focus`
+alpha bumped from `0.18` → `0.32`. The original ring was barely
+perceptible on dark surfaces (e.g. preview iframe overlay). Per
+WCAG 2.4.7 (focus visible) and Apple HIG keyboard guidance, the
+ring should be unambiguous against any background. Same accent
+color, just stronger alpha.
+
+### Deferred
+
+The full HIG / Material 3 audit pass (15-20 specific issues + dual-agent
+spawn) was scoped down to two micro-polish moves above per token-budget
+constraints. The existing Apple-HIG-aligned design system (tokens.css
+33 surfaces, semantic spacing/motion/radii tokens, focus-visible
+pattern, light/dark theme parity) is already at very high quality.
+Future polish phases should cover:
+- Topbar sticky-header shadow on scroll
+- Inspector field grouping rhythm (HIG 16/24 vertical rhythm)
+- Modal scrim fade-in motion timing
+- Toast slide-in spring curve (M3 emphasized easing)
+
+### Gates
+
+- Gate-A: 315/8/0 (unchanged — visual changes don't add tests).
+- Gate-a11y: 27/0/0 (one pre-existing flake on `keyboard-nav.spec.js
+  P0-05` documented; not introduced by this tag).
+
 ## [2.0.21] — 2026-04-25 — Pre-commit syntax guard (polish ph.8)
 
 Adds `scripts/precommit-bridge-script-syntax.js` which runs

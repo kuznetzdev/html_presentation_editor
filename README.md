@@ -236,7 +236,7 @@ See `docs/GITHUB_PACKAGES.md` for the exact recommendation and tradeoffs.
 
 ## Recent milestone tags
 
-Current: **v2.0.21 — Pre-commit syntax guard**
+Current: **v2.0.22 — HIG / Material 3 micro-polish**
 (2026-04-25) on top of **v2.0.0 GA**.
 See [`docs/AUDIT-REPORT-2026-04-26.md`](docs/AUDIT-REPORT-2026-04-26.md)
 for the full audit that drove the post-v2 polish track.
@@ -245,10 +245,14 @@ Post-v2 roadmap: [`docs/POST_V2_ROADMAP.md`](docs/POST_V2_ROADMAP.md).
 
 The v1.0.3 → v2.0.0 redesign trajectory: **26 incremental release
 points** (v1.1.0 → v2.0.0 inclusive) across Phases A–E + 6 hardening
-sprints, plus **21 post-GA polish tags** (v2.0.1–v2.0.21).
+sprints, plus **22 post-GA polish tags** (v2.0.1–v2.0.22).
 
 ### v2.0 trajectory
 
+- `v2.0.22` — HIG / Material 3 micro-polish: button:active scale
+  98% (honours prefers-reduced-motion); `--shell-focus` alpha
+  bumped 0.18 → 0.32 for WCAG 2.4.7 visibility on dark surfaces.
+  Phase 9 of 9 (FINAL).
 - `v2.0.21` — Pre-commit syntax guard:
   `scripts/precommit-bridge-script-syntax.js` runs `node --check`
   on the 11 hot editor JS files (most critical:
