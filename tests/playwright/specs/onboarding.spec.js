@@ -65,7 +65,8 @@ test.describe("Empty-state landing — WO-25 / v2.0.29 @onboarding", () => {
         : null;
     });
 
-    expect(starterHref).toBe("/editor/fixtures/basic-deck.html");
+    // v2.0.30 — paths are now RELATIVE to the editor HTML (file:// support).
+    expect(starterHref).toBe("fixtures/basic-deck.html");
   });
 
   test("Попробовать на примере loads starter deck and renders at least 1 slide", async ({

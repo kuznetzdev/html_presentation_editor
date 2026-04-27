@@ -219,7 +219,20 @@ The preview zoom feature uses the CSS `zoom:` property which is on the W3C stand
 
 ## Release state
 
-**Current**: v2.0.29 — True landing mode: editor chrome hidden at empty state
+**Current**: v2.0.30 — Selection-frame click-through + starter-deck file:// fix
+(2026-04-28). v2.0.0 GA + thirty post-GA polish tags.
+Two UX bugfixes from user testing. (1) Selection frame on slide-root with
+CSS `transform` (direct-manip-blocked) and on protected elements no longer
+captures clicks — hit-area now `pointer-events: none` when overlay locked,
+so users can click child elements through the frame and click outside to
+deselect (frame border + label remain visible decoratively). (2) Starter
+deck "попробуйте на примере" works on `file://` — `STARTER_DECKS.basic.href`
+converted from absolute `/editor/fixtures/...` to relative `fixtures/...`;
+`manualBaseUrl` resolved via `document.baseURI` instead of
+`window.location.origin` (which is `"null"` on `file://`). Smoke + onboarding
++ selection-engine-v2 + honest-feedback **52/5/0**.
+
+**Previous**: v2.0.29 — True landing mode: editor chrome hidden at empty state
 (2026-04-28). v2.0.0 GA + twenty-nine post-GA polish tags.
 All editing chrome (`.panel-header` with zoom controls, `.preview-note`
 with status pills + editing buttons) is hidden via

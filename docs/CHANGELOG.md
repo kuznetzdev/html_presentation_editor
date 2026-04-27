@@ -1,5 +1,66 @@
 # CHANGELOG
 
+## [2.0.30] — 2026-04-28 — Two UX bugfixes from user testing
+
+User-reported issues during interactive editing session.
+
+### Fix #1 — Selection frame on slide-root no longer blocks clicks
+
+**Problem:** When the slide root container is selected (a deck whose root
+uses CSS `transform`, which disables direct manipulation to prevent the
+canvas from drifting), the selection frame's hit-area was capturing pointer
+events with `cursor: not-allowed`. Result: users couldn't click through the
+frame to select child elements, couldn't click outside to deselect, and the
+"Direct manipulation отключён, используй инспектор" tooltip was a dead-end.
+
+**Fix:** In `editor/src/selection.js`, when the overlay is locked
+(protected element OR direct-manip-blocked slide root), the hit-area is now
+set to `pointer-events: none` with `cursor: default`. The frame border +
+label remain visible (decorative — communicates which container is
+selected); clicks pass through to underlying nodes — bridge handles
+re-selection when user clicks a child, or deselects when user clicks
+outside the slide. This applies the same passthrough behavior already used
+when Alt is held (`state.altSelectionPassthrough`).
+
+This also implicitly fixes a latent inconsistency for `is-protected` items:
+the CSS rule `.selection-frame.is-protected .selection-frame-hit-area
+{ pointer-events: none }` was being overridden by inline `pointer-events:
+auto` set by the JS. Now both protected and direct-manip-blocked frames
+correctly let clicks pass through.
+
+### Fix #2 — Starter deck "попробуйте на примере" works on `file://`
+
+**Problem:** Clicking the starter-deck text-link from the empty state
+showed toast "Пример не найден — проверьте, что папка editor/fixtures
+присутствует в сборке." This happened because `STARTER_DECKS.basic.href`
+was set to `/editor/fixtures/basic-deck.html` — an absolute URL. On
+`file://` (the project's "open via double-click" promise), the leading `/`
+binds to the FILESYSTEM root, not the editor file's sibling directory, so
+the fetch failed. Tests passed because they run on a static-server where
+the absolute path resolves correctly.
+
+**Fix:**
+- `editor/src/constants.js`: `STARTER_DECKS.basic.href` →
+  `fixtures/basic-deck.html` (relative to the editor HTML);
+  `manualBasePath` → `fixtures/`.
+- `editor/src/slides.js`: `manualBaseUrl` constructed with
+  `document.baseURI` instead of `window.location.origin` (the latter is
+  `"null"` on `file://`).
+- `tests/playwright/specs/onboarding.spec.js`: assertion updated to
+  `expect(starterHref).toBe("fixtures/basic-deck.html")`.
+
+Now resolves correctly on BOTH protocols:
+- `file:///path/to/editor/presentation-editor.html` →
+  `file:///path/to/editor/fixtures/basic-deck.html` ✓
+- `http://host/editor/presentation-editor.html` →
+  `http://host/editor/fixtures/basic-deck.html` ✓
+
+### Verification
+
+- `shell.smoke.spec.js` + `onboarding.spec.js` + `selection-engine-v2.spec.js`
+  + `honest-feedback.spec.js`: **52 passed / 5 skipped / 0 failed** (3.6m,
+  chromium-desktop).
+
 ## [2.0.29] — 2026-04-28 — True landing mode: hide editor chrome at empty state
 
 User feedback after v2.0.28: "When no HTML presentation is loaded, why show

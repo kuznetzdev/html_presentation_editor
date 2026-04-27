@@ -381,9 +381,12 @@
           return;
         }
 
+        // v2.0.30 — resolve relative manualBasePath against document.baseURI
+        // (the editor HTML's own URL). This works on file:// (where
+        // window.location.origin is "null") AND http:// (test/static-server).
         const manualBaseUrl = new URL(
           starter.manualBasePath,
-          `${window.location.origin}/`,
+          document.baseURI,
         ).toString();
 
         try {

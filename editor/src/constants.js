@@ -135,12 +135,18 @@
        */
 
       /** @type {Readonly<StarterDecksMap>} */
+      // v2.0.30 — paths are RELATIVE to the editor HTML so they resolve
+      // correctly on both `file://` (the project's "open via double-click"
+      // promise) and `http://` (static server / playwright). Previously
+      // absolute (`/editor/fixtures/...`) which broke on file:// because the
+      // leading slash binds to the filesystem root, not the editor file's
+      // sibling directory.
       const STARTER_DECKS = Object.freeze({
         basic: Object.freeze({
           key: "basic",
-          href: "/editor/fixtures/basic-deck.html",
+          href: "fixtures/basic-deck.html",
           label: "Starter Example",
-          manualBasePath: "editor/fixtures/",
+          manualBasePath: "fixtures/",
         }),
       });
       // =====================================================================

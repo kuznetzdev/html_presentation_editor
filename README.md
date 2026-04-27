@@ -236,7 +236,7 @@ See `docs/GITHUB_PACKAGES.md` for the exact recommendation and tradeoffs.
 
 ## Recent milestone tags
 
-Current: **v2.0.29 — True landing mode: editor chrome hidden at empty state**
+Current: **v2.0.30 — Selection-frame click-through + starter-deck file:// fix**
 (2026-04-28) on top of **v2.0.0 GA**.
 See [`docs/AUDIT-REPORT-2026-04-26.md`](docs/AUDIT-REPORT-2026-04-26.md)
 for the full audit that drove the post-v2 polish track.
@@ -245,10 +245,17 @@ Post-v2 roadmap: [`docs/POST_V2_ROADMAP.md`](docs/POST_V2_ROADMAP.md).
 
 The v1.0.3 → v2.0.0 redesign trajectory: **26 incremental release
 points** (v1.1.0 → v2.0.0 inclusive) across Phases A–E + 6 hardening
-sprints, plus **29 post-GA polish tags** (v2.0.1–v2.0.29).
+sprints, plus **30 post-GA polish tags** (v2.0.1–v2.0.30).
 
 ### v2.0 trajectory
 
+- `v2.0.30` — Two UX bugfixes from user testing: (1) selection frame on
+  slide-root + protected elements no longer captures clicks (was blocking
+  child-element selection and deselection); hit-area now lets clicks pass
+  through to underlying nodes when overlay is locked. (2) starter-deck
+  "попробуйте на примере" works on `file://` — paths converted from
+  absolute (`/editor/fixtures/...`) to relative (`fixtures/...`); base URL
+  resolved via `document.baseURI` instead of `window.location.origin`.
 - `v2.0.29` — True landing mode: hides ALL editor chrome (preview header
   with zoom controls, "Следующий шаг" preview note with status pills and
   editing buttons) when no deck is loaded. Empty-state restructured to

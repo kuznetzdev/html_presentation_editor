@@ -63,27 +63,33 @@
         if (els.selectionFrameLabel)
           els.selectionFrameLabel.textContent = getSelectionFrameLabel();
         if (els.selectionFrameHitArea) {
-          els.selectionFrameHitArea.style.pointerEvents = pointerTransparent
+          // v2.0.30 — when overlay is locked (protected) or direct
+          // manipulation is blocked (slide root with transform), the hit-area
+          // must NOT capture clicks. Otherwise users can't click child
+          // elements through the frame nor click outside to deselect. The
+          // frame border + label remain visible (decorative); clicks pass
+          // through to underlying nodes — bridge handles re-selection.
+          const clickBlocking = pointerTransparent || overlayLocked;
+          els.selectionFrameHitArea.style.pointerEvents = clickBlocking
             ? "none"
             : "auto";
-          els.selectionFrameHitArea.style.cursor = overlayLocked
-            ? "not-allowed"
-            : directManipBlocked
-            ? "not-allowed"
+          els.selectionFrameHitArea.style.cursor = clickBlocking
+            ? "default"
             : state.activeManipulation?.kind === "drag"
               ? "grabbing"
               : "grab";
-          els.selectionFrameHitArea.title = overlayLocked
-            ? directManipBlocked
-              ? getDirectManipulationBlockMessage()
-              : "Этот элемент защищён от перемещения и resize"
-            : state.selectedFlags.canEditText
-              ? "Перетащить элемент или дважды кликнуть для редактирования текста"
-              : "Перетащить выбранный элемент";
+          els.selectionFrameHitArea.title = directManipBlocked
+            ? getDirectManipulationBlockMessage()
+            : isProtected
+              ? "Этот элемент защищён от перемещения и resize"
+              : state.selectedFlags.canEditText
+                ? "Перетащить элемент или дважды кликнуть для редактирования текста"
+                : "Перетащить выбранный элемент";
         }
         els.selectionHandles.forEach((handle) => {
           handle.disabled = !state.selectedPolicy.canResize || directManipBlocked;
-          handle.style.pointerEvents = pointerTransparent ? "none" : "";
+          handle.style.pointerEvents =
+            pointerTransparent || overlayLocked ? "none" : "";
         });
         renderSelectionFrameTooltip(stageRect, visible);
         renderSelectionGuides();
