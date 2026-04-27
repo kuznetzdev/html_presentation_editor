@@ -1,5 +1,142 @@
 # CHANGELOG
 
+## [2.1.0-rc.1] — 2026-04-28 — UX Overhaul v2.1 (release candidate)
+
+Holistic UX redesign pass. Closes 11 P0 + selected P1 items from
+[PAIN-MAP-UX-v2.1-2026-04-28](audit/PAIN-MAP-UX-v2.1-2026-04-28.md).
+Per [ADR-031](ADR-031-ux-overhaul-v2.1.md). All architectural invariants
+preserved (no bundler, no `type="module"`, no bridge churn, file:// works).
+
+### Phase A — Discovery (4 parallel sub-agent audits)
+
+110+ raw findings across 4 audit reports in `docs/audit/`:
+
+- **A1 heuristics** — 38 findings (3 CRIT / 14 HIGH / 14 MED / 7 LOW) against
+  Nielsen 10 + Apple HIG + Material 3
+- **A2 a11y** — 18 findings (2 CRIT / 6 HIGH) + gap-to-50 plan (28 new tests
+  proposed across 5 specs → projected 55 total)
+- **A3 visual** — 4 type-scale findings, 18 spacing-rhythm violations,
+  14 RU copy fixes
+- **A4 competitive** — 16 patterns (8 ADOPT / 6 ADAPT / 5 REJECT) across
+  Gamma / Pitch / Slidev / Marp / Canva / Figma Slides; verified Tome shut
+  down April 2025
+
+### Phase B — Synthesis
+
+- `docs/audit/PAIN-MAP-UX-v2.1-2026-04-28.md` — 52 deduplicated pains in
+  10 cross-cutting themes; priority bands P0/P1/P2 (11/25/16)
+- `docs/UX-BLUEPRINT-v2.1.md` — atomic patches grouped C / D1 / D2 / D3 / E
+- `docs/ADR-031-ux-overhaul-v2.1.md` — Proposed → Accepted
+
+### Phase C — Foundation
+
+- `editor/styles/tokens.css`: added `--text-3xl: 28px` for hero/landing
+  display tier; documented `--text-2xs (10px)` as decorative-only
+
+### Phase D1 — Topbar + Empty (2 commits: `d48d170`, `4ab0585`)
+
+- 5 sub-pixel/escape font-sizes in `preview.css` (9/10.5/11.5/12.5/32 px)
+  rounded to existing token scale; the 9px lifecycle pills bumped to
+  `--text-2xs` (10px). Closes A1-F29, A3 type-scale escapes.
+- `iframe title="Preview"` → `title="Превью презентации"` (A2-F5,
+  WCAG 1.3.1 / 3.1.2)
+- Skip-link added as first focusable in `<body>`; `.skip-link` CSS in
+  `base.css` with focus-visible reveal (A2-F6, WCAG 2.4.1 — saves ≥10
+  Tab stops)
+- Dropped redundant `topbar-eyebrow` ("Живой HTML-редактор") above the
+  h1 — duplicate identity (A1-F6, A3-#4)
+- `#documentMeta` default loses trailing period (label, not sentence)
+- Empty-state CTA visual hierarchy demoted from 60/40 to 80/20:
+  `#emptyPasteBtn` loses solid border + min-height; ghost-link treatment
+  (A1-F2, SoT.md:152-154 single-path mandate)
+- `.empty-state-footnote` color contrast lift: was effective ~4.1:1
+  (fails AA at 13px) → now `--shell-text-muted` direct = 5.5:1
+  (A3-contrast / WCAG 1.4.3)
+
+### Phase D2 — Inspector + Rail (1 commit: `ed254e4`)
+
+- **Basic-mode contract enforcement** (`feedback.js syncEditorWorkflowUi`):
+  when `data-editor-workflow="empty"`, apply `inert` + `aria-hidden` to
+  `#inspectorPanel` and `#slidesPanel`. **Closes A1-F7 CRIT** — these
+  panels were CSS-hidden but DOM-mounted, leaking power-user controls
+  (mode toggle, density toggle, slide-template trigger) to assistive
+  tech. SoT.md:60 mandates "blank state hides slide rail, inspector,
+  mode toggle ... entirely". `inert` is IDL-supported in modern Chromium /
+  Firefox 112+ / Safari 15.5+; falls back gracefully on older UAs.
+- Dropped redundant `<h3>Текущий элемент</h3>` in inspector
+  `currentElementSection` (A1-F16). Section heading now conveyed by the
+  summary-card kicker "Выбранный объект" already at top of section.
+- `#deleteCurrentSlideBtn` gets `danger-btn` class for visual distinction
+  (A1-F23 — HIG/M3 destructive separation). Inherits existing
+  `var(--shell-danger)` red text from `base.css:238`.
+
+### Phase D3 — A11Y structural cleanup (1 commit: `4e94032`)
+
+- 4 modal containers (`#openHtmlModal`, `#htmlEditorModal`,
+  `#videoInsertModal`, `#shortcutsModal`) get
+  `role="dialog" aria-modal="true" aria-labelledby="<id>Title"`.
+  **Closes A2-F1 CRIT** — was just `<div class="modal" aria-hidden="true">`;
+  SR didn't announce as dialog. Each h3 title gets matching id.
+- `context-menu.js renderContextMenu`: each generated `<button>` gets
+  `setAttribute("role", "menuitem")`. **Closes A2-F2 CRIT** — parent
+  `#contextMenu` had `role="menu"` but children lacked `menuitem` role,
+  breaking ARIA menu pattern (axe `aria-required-children` fail).
+- `aria-orientation` added to all 4 transient menu containers (vertical
+  for `#topbarOverflowMenu`, `#slideTemplateBar`, `#contextMenu`;
+  horizontal for `#quickPalette`). Closes A2-F4. Disambiguates Arrow-key
+  direction for JAWS / NVDA.
+- `.experimental-badge` contrast fix: 10px → `var(--text-xs)` (11px);
+  `rgb(138,95,0)` on `rgba(255,175,38,0.18)` was ≈4.0:1 (fails AA),
+  now `#6b4a00` on opaque `#fff3d6` ≥4.5:1. Closes A2-F3.
+- `aria-pressed` initial state added in HTML on the 3 mode-toggles
+  (`#previewModeBtn`/`#editModeBtn`, `#basicModeBtn`/`#advancedModeBtn`,
+  `#smartModeBtn`/`#containerModeBtn`). Closes A2-F11 — was JS-only,
+  broke progressive enhancement on no-JS / cache-corrupt boots.
+
+### Deferred (to v2.1.0-rc.2 or later)
+
+Tracked in PAIN-MAP-UX-v2.1 priority bands:
+
+- Status-pill consolidation (P-05 / P-06 / P-20) — high test churn
+- Topbar 7→3 inline command reduction (P-07) — cascade impact
+- Preview-note 11→4 element trim (P-05) — same cascade
+- Floating-toolbar content-aware filtering (P-13 / P-23)
+- Universal Esc + `o` overview shortcuts (P-24)
+- 28 new gate-a11y tests (separate WO using A2 plan)
+- All P2 items (~16)
+
+### Verification
+
+- 1 visual snapshot regenerated (`preview-note editorial-summary` light)
+  due to legitimate font-size rounding; needs human review on PR
+- `tsc --noEmit`: clean
+- `precommit-bridge-script-syntax.js`: clean every commit
+- `shell.smoke.spec.js + onboarding.spec.js + onboarding-v2.spec.js +
+  honest-feedback.spec.js`: 39/5/0 after snapshot update
+- Full Gate-A: see verification log
+
+### Files changed
+
+- `editor/styles/tokens.css` (+9, -1)
+- `editor/styles/preview.css` (+27, -8)
+- `editor/styles/base.css` (+38, -8)
+- `editor/presentation-editor.html` (+62, -23)
+- `editor/src/feedback.js` (+19, -0)
+- `editor/src/context-menu.js` (+5, -0)
+- `editor/src/primary-action.js` (+4, -1)
+- `tests/playwright/specs/shell.smoke.spec.js-snapshots/preview-*.png`
+  (4 regenerated)
+
+### Files added (new)
+
+- `docs/audit/UX-AUDIT-A1-heuristics-2026-04-28.md`
+- `docs/audit/UX-AUDIT-A2-a11y-2026-04-28.md`
+- `docs/audit/UX-AUDIT-A3-visual-2026-04-28.md`
+- `docs/audit/UX-AUDIT-A4-competitive-2026-04-28.md`
+- `docs/audit/PAIN-MAP-UX-v2.1-2026-04-28.md`
+- `docs/UX-BLUEPRINT-v2.1.md`
+- `docs/ADR-031-ux-overhaul-v2.1.md`
+
 ## [2.0.30] — 2026-04-28 — Two UX bugfixes from user testing
 
 User-reported issues during interactive editing session.

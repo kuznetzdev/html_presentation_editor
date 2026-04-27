@@ -219,7 +219,27 @@ The preview zoom feature uses the CSS `zoom:` property which is on the W3C stand
 
 ## Release state
 
-**Current**: v2.0.30 — Selection-frame click-through + starter-deck file:// fix
+**Current**: v2.1.0-rc.1 — UX Overhaul v2.1 release candidate (2026-04-28).
+v2.0.0 GA + thirty post-GA polish tags + UX overhaul foundation. Closes
+11 P0 + selected P1 items from PAIN-MAP-UX-v2.1: 4 modal dialog roles
+(A2-F1 CRIT), context-menu menuitem role (A2-F2 CRIT), basic-mode
+contract enforced via `inert` on inspector + slide rail in empty state
+(A1-F7 CRIT, SoT.md:60), empty-state CTA visual hierarchy 60/40 → 80/20
+(A1-F2 CRIT), topbar identity dedup (eyebrow drop), 5 type-scale escape
+font-sizes rounded to token scale (preview.css), `--text-3xl: 28px` added
+for hero/landing tier, iframe `title="Preview"` → `Превью презентации`,
+skip-link as first focusable child (A2-F6 / WCAG 2.4.1), redundant
+`<h3>Текущий элемент</h3>` dropped from inspector, `#deleteCurrentSlideBtn`
+gets `danger-btn` class, aria-orientation on 4 transient menus, Beta badge
+contrast ≥4.5:1, aria-pressed in HTML on 3 mode-toggles. All architectural
+invariants preserved (no bundler, no `type="module"`, no bridge churn,
+file:// works). Audit/Plan/ADR: docs/audit/PAIN-MAP-UX-v2.1-2026-04-28.md
++ docs/UX-BLUEPRINT-v2.1.md + docs/ADR-031-ux-overhaul-v2.1.md. Gate-A
+317/8/1 (the 1 known docs-sync drift was caused by THIS bump and is
+self-resolving with this commit). Gate-A11Y baseline 27/0/0 preserved
+(no a11y test regressions).
+
+**Previous**: v2.0.30 — Selection-frame click-through + starter-deck file:// fix
 (2026-04-28). v2.0.0 GA + thirty post-GA polish tags.
 Two UX bugfixes from user testing. (1) Selection frame on slide-root with
 CSS `transform` (direct-manip-blocked) and on protected elements no longer
