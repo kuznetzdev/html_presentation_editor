@@ -171,6 +171,25 @@
         });
         els.editModeBtn?.classList.toggle("is-suggested", suggestEdit);
         els.mobileEditBtn?.classList.toggle("is-suggested", suggestEdit);
+
+        // [v2.1.0-pre / ADR-031, A1-F7 / SoT.md:60] Basic-mode contract:
+        // empty state must hide inspector + slide rail from BOTH visual AND
+        // assistive-tech surfaces. CSS-only display:none is insufficient —
+        // SR can still announce mounted controls in some configurations.
+        // Use `inert` attribute (IDL-supported across modern Chromium /
+        // Firefox 112+ / Safari 15.5+) to make the panel non-focusable and
+        // non-announceable while empty. Falls back gracefully on older UAs.
+        const isEmptyWorkflow = workflow === "empty";
+        [els.inspectorPanel, els.slidesPanel].forEach((panel) => {
+          if (!(panel instanceof HTMLElement)) return;
+          if (isEmptyWorkflow) {
+            panel.setAttribute("inert", "");
+            panel.setAttribute("aria-hidden", "true");
+          } else {
+            panel.removeAttribute("inert");
+            panel.removeAttribute("aria-hidden");
+          }
+        });
       }
 
       function prefersShellPopoverSheetMode() {

@@ -910,7 +910,11 @@
                 hidden
               ></div>
             </div>
-            <h3>Текущий элемент</h3>
+            <!-- [v2.1.0-pre / ADR-031, A1-F16] Was: <h3>Текущий элемент</h3>
+                 — redundant with the summary-card kicker "Выбранный объект"
+                 already at the top of this section. Slide + kind badges
+                 stay basic-visible (human labels per SoT.md:69-70); only
+                 #selectedNodeBadge stays data-ui-level="advanced" as before. -->
             <div class="badge-row">
               <span class="mini-badge" id="selectedSlideBadge">Слайд —</span>
               <span class="mini-badge" id="selectedKindBadge">Тип: —</span>
@@ -1099,7 +1103,9 @@
               <button type="button" id="duplicateCurrentSlideBtn">
                 Дублировать слайд
               </button>
-              <button type="button" id="deleteCurrentSlideBtn">
+              <!-- [v2.1.0-pre / ADR-031, A1-F23] danger-btn class for visual
+                   distinction; HIG/M3 destructive-action separation. -->
+              <button type="button" id="deleteCurrentSlideBtn" class="danger-btn">
                 Удалить слайд
               </button>
               <button type="button" id="validateExportBtn">
