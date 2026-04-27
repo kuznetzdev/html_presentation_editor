@@ -163,27 +163,12 @@ test.describe("bridge-origin: postMessage origin assertion gate @security", () =
   });
 
   // ── Test BO3 ──────────────────────────────────────────────────────────────
-  // file:// "null" origin note — informational only.
-  // Under the file:// protocol the browser sets event.origin to the string "null"
-  // (not JS null). getAllowedBridgeOrigins() returns ["null"] in that context,
-  // and postMessage target '*' is used because postMessage("null") is rejected
-  // by browsers. This test cannot exercise that path from the test server (which
-  // uses http://localhost) and is therefore skipped with a documentation comment.
+  // file:// "null" origin note — was previously a documentation-only skip
+  // (test.skip) because the Playwright HTTP test server cannot exercise the
+  // file:// protocol path. As of v2.0.18 / FLAKE-002 this case is covered
+  // by `bridge-file-origin.spec.js`, which launches its own
+  // chromium.launchPersistentContext (no baseURL) so the editor loads via
+  // a real file:// URL and the bridge accepts the literal "null" origin.
   //
-  // Manual verification steps for file:// workflow:
-  //   1. Open editor/presentation-editor.html as file:// in browser.
-  //   2. Load a local presentation.
-  //   3. Confirm bridge-ready appears in diagnostics (origin guard accepts "null").
-  //   4. Confirm no bridge-origin-rejected diagnostic in the log.
-  test.skip("BO3 — file:// null origin accepted (manual-only, cannot be automated from http test server)", async () => {
-    // This scenario is intentionally skipped in the automated suite.
-    // The file:// case requires opening the editor directly via the filesystem
-    // (not through the test server). The implementation in constants.js and
-    // bridge.js handles this case: getAllowedBridgeOrigins() returns ["null"]
-    // when window.location.protocol === "file:".
-    //
-    // See: editor/src/constants.js — getAllowedBridgeOrigins()
-    // See: editor/src/bridge.js — bindMessages() origin guard
-    // See: editor/src/bridge-script.js — message receive guard + _getShellTarget()
-  });
+  // See: tests/playwright/specs/bridge-file-origin.spec.js
 });

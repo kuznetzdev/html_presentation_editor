@@ -1,5 +1,37 @@
 # CHANGELOG
 
+## [2.0.18] — 2026-04-25 — file:// origin BO3 automated (polish ph.5)
+
+Closes FLAKE-002 from `docs/AUDIT-REPORT-2026-04-26.md`. The
+file:// protocol bridge-origin test (BO3) was previously
+informational-only (`test.skip` with manual-verification comment)
+because the Playwright HTTP test server cannot exercise the file://
+path. v2.0.18 adds a separate spec that launches its own
+`chromium.launchPersistentContext` (no baseURL) so the editor loads
+via a real file:// URL.
+
+### Added
+
+`tests/playwright/specs/bridge-file-origin.spec.js` (2 tests):
+
+- **editor loads via file:// and bridge accepts 'null' origin** —
+  asserts `getAllowedBridgeOrigins()` returns array containing
+  `"null"`, body workflow reaches `"empty"`, no
+  `bridge-origin-rejected` diagnostic in `state.diagnostics`.
+- **file:// editor exposes the same shell APIs as http://** —
+  sanity that `window.BRIDGE_SCHEMA`, `state`, and `#openHtmlBtn`
+  are all present in the file:// context.
+
+### Changed
+
+`tests/playwright/specs/bridge-origin.spec.js` BO3 case dropped its
+documentation-only `test.skip` and now points at the new spec.
+
+### Gates
+
+- Gate-A: 311 + 2 = 313/8/0 (target).
+- Both new tests pass standalone in 5.1s.
+
 ## [2.0.17] — 2026-04-25 — Performance budget tests + fixtures (polish ph.4)
 
 Adds an automated performance budget gate. New fixtures and a 5-test

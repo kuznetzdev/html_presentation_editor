@@ -236,7 +236,7 @@ See `docs/GITHUB_PACKAGES.md` for the exact recommendation and tradeoffs.
 
 ## Recent milestone tags
 
-Current: **v2.0.17 — Performance budget tests + fixtures**
+Current: **v2.0.18 — file:// origin BO3 automated**
 (2026-04-25) on top of **v2.0.0 GA**.
 See [`docs/AUDIT-REPORT-2026-04-26.md`](docs/AUDIT-REPORT-2026-04-26.md)
 for the full audit that drove the post-v2 polish track.
@@ -245,10 +245,15 @@ Post-v2 roadmap: [`docs/POST_V2_ROADMAP.md`](docs/POST_V2_ROADMAP.md).
 
 The v1.0.3 → v2.0.0 redesign trajectory: **26 incremental release
 points** (v1.1.0 → v2.0.0 inclusive) across Phases A–E + 6 hardening
-sprints, plus **17 post-GA polish tags** (v2.0.1–v2.0.17).
+sprints, plus **18 post-GA polish tags** (v2.0.1–v2.0.18).
 
 ### v2.0 trajectory
 
+- `v2.0.18` — FLAKE-002 closed: file:// origin BO3 now an
+  automated spec (`bridge-file-origin.spec.js`) using
+  `chromium.launchPersistentContext`. Asserts editor loads via
+  real `file://` URL, `getAllowedBridgeOrigins()` returns "null",
+  no origin-rejection. Phase 5 of 9.
 - `v2.0.17` — Performance budget tests + fixtures: 200-elem and
   50-slide fixtures, 5-test budget spec wired into gate-A.
   Observed p50 click-to-select ≈ 17ms / p95 ≈ 100ms. Phase 4 of 9.
