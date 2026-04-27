@@ -20,6 +20,10 @@ const {
   waitForPreviewReady,
   isChromiumOnlyProject,
 } = require("../helpers/editorApp");
+const {
+  waitForRafTicks,
+  waitForState,
+} = require("../helpers/waits");
 
 // ─── HTML fixture builders ────────────────────────────────────────────────────
 
@@ -356,7 +360,9 @@ test.describe("trust-banner: executable-code detection + neutralize @security", 
         maybeShowTrustBanner();
       }
     });
-    await page.waitForTimeout(400);
+    // Allow several RAFs for any deferred banner-render to flush; if the
+    // banner was going to re-appear, it would within a few frames.
+    await waitForRafTicks(page, 8);
     const stillHidden = await getBannerItemCount(page);
     expect(stillHidden).toBe(0);
   });
@@ -368,8 +374,11 @@ test.describe("trust-banner: executable-code detection + neutralize @security", 
   test("TB5 — clean reference-deck structural pattern (no scripts) → zero findings, NO banner", async ({ page }) => {
     await pasteHtmlToEditor(page, makeCleanDeckFixture("v3-prepodovai-pattern"));
 
-    // Wait long enough for the banner defer + any async activity.
-    await page.waitForTimeout(800);
+    // Wait until the trust-signals computation has run AND enough time has
+    // elapsed for the deferred banner-show (setTimeout 250ms after iframe
+    // onload) to have fired. ~20 RAFs at 60fps ≈ 333ms covers the defer.
+    await waitForState(page, "state.trustSignals !== null && state.trustSignals !== undefined");
+    await waitForRafTicks(page, 24);
 
     // No trust banner must appear.
     const itemCount = await getBannerItemCount(page);
@@ -394,8 +403,9 @@ test.describe("trust-banner: executable-code detection + neutralize @security", 
   test("TB6 — second clean reference-deck structural pattern (no scripts) → zero findings, NO banner", async ({ page }) => {
     await pasteHtmlToEditor(page, makeCleanDeckFixture("v3-selectios-pattern"));
 
-    // Wait for the 250ms banner defer.
-    await page.waitForTimeout(800);
+    // Wait until trust-signals computed + the 250ms banner-defer has elapsed.
+    await waitForState(page, "state.trustSignals !== null && state.trustSignals !== undefined");
+    await waitForRafTicks(page, 24);
 
     // Still no banner.
     const itemCount = await getBannerItemCount(page);

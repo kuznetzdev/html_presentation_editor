@@ -18,6 +18,7 @@ const {
   loadBasicDeck,
   isChromiumOnlyProject,
 } = require("../helpers/editorApp");
+const { waitForRafTicks } = require("../helpers/waits");
 
 // ─── Constants (mirror from constants.js — must stay in sync) ────────────────
 const TELEMETRY_ENABLED_KEY = "editor:telemetry:enabled";
@@ -165,7 +166,7 @@ test("TM4 — no network IO: enable/emit/exportLogJson produce zero external-hos
   })()`);
 
   // Allow any pending microtasks to settle
-  await page.waitForTimeout(200);
+  await waitForRafTicks(page, 4);
 
   expect(externalRequests).toHaveLength(0);
 });

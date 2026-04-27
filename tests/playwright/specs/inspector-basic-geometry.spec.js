@@ -105,12 +105,16 @@ test.describe("Inspector basic-mode geometry essentials (v2.0.10)", () => {
         el.value = "300px";
         el.dispatchEvent(new Event("change", { bubbles: true }));
       });
-      await page.waitForTimeout(150);
-      const after = await evaluateEditor(
-        page,
-        "state.modelDoc.querySelector('[data-editor-node-id=\"' + state.selectedNodeId + '\"]').style.width || ''",
-      );
-      expect(after).toBe("300px");
+      // apply-style does not post an ack on success; poll modelDoc instead.
+      await expect
+        .poll(() =>
+          evaluateEditor(
+            page,
+            "state.modelDoc.querySelector('[data-editor-node-id=\"' + state.selectedNodeId + '\"]').style.width || ''",
+          ),
+          { timeout: 8000 },
+        )
+        .toBe("300px");
     },
   );
 });

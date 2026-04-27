@@ -1,5 +1,65 @@
 # CHANGELOG
 
+## [2.0.23] — 2026-04-27 — FLAKE-sweep: spec waitForTimeout migrated to state-based waits
+
+Eliminated the `waitForTimeout` flake reservoir in `tests/playwright/specs/`.
+The pattern was: tests slept 150-1500ms after triggering an async operation
+(bridge mutation, banner render, telemetry event, autosave write) and then
+asserted on the result. Sleep-based waits make flake risk proportional to
+hardware speed and CI load. After this tag, specs poll real application
+state via the helpers in `tests/playwright/helpers/waits.js`.
+
+### Changed — Spec migrations
+
+- `bridge-mutation-security.spec.js`: 11 → 0 instances. SEC-001/002/003
+  flows now use `captureCommandSeq` + `waitForCommandSeqAdvance` to wait
+  for bridge ACKs. Synthesized-image tests use `waitForPreviewReady`.
+- `tablet-honest.spec.js`: 6 → 0. Banner-text assertions use
+  `waitForShellBannerText`; text-edit mode polls `state.interactionMode`.
+- `inspector-validators-badges.spec.js`: 4 → 0. Width/Opacity validators
+  wait for the bridge mutation to ack; image-src test uses `waitForSelection`.
+- `inspector-basic-geometry.spec.js`: 1 → 0.
+- `trust-banner.spec.js`: 3 → 0. False-positive guards (clean-deck +
+  no-rebanner-after-accept) poll `state.trustSignals` and use
+  `waitForRafTicks` for short post-call settle.
+- `bridge-sanitize.spec.js`: 2 → 0. S2 (script-strip) and S4 (oversize
+  reject) both ride the seq-advance pattern; iframe ACK lands in either
+  case, ok:true or ok:false.
+- `click-blocked-feedback.spec.js`: 2 → 0. RAF-based settle for negative
+  toast assertions.
+- `shortcuts-table.spec.js`: 2 → 0. Ctrl+B + ArrowUp use seq-advance.
+- `foreign-deck-compat.spec.js`: 2 → 0. ArrowRight blocked-keypress
+  asserts use RAF settle.
+- `autosave-cap.spec.js`: 1 → 0.
+- `telemetry.spec.js`: 1 → 0.
+- `telemetry-viewer.spec.js`: previously migrated.
+
+### Added — `tests/playwright/helpers/waits.js`
+
+18 reusable state-based wait helpers: `waitForState`, `waitForSelection`,
+`waitForSelectionKind`, `waitForSelectionChange`, `waitForMode`,
+`waitForSelectionMode`, `waitForNoActiveManipulation`, `waitForSlideActive`,
+`waitForBridgeAck`, `waitForOverlapMapUpdated`, `waitForContainerModeApplied`,
+`waitForThemeApplied`, `waitForPreviewReady`, `captureCommandSeq`,
+`waitForCommandSeqAdvance`, `waitForRafTicks`, `waitForLocalStorage`,
+`waitForShellBannerText`. Each accepts `{ timeout }` overrides; default 8s.
+
+### Result
+
+- `tests/playwright/specs/`: 38 → 3 `waitForTimeout` instances (target ≤5).
+  The 3 remaining sit in `broken-asset-banner.spec.js` and wait for an
+  async HEAD-fetch / onerror probe whose completion isn't observable
+  via state without a source-side instrumentation hook (out of scope for
+  this tag).
+- `tests/playwright/helpers/`: unchanged at 17 instances. All sit inside
+  drag-gesture pacing or measurement retry loops where wall-clock waits
+  are intentional.
+
+### Gates
+
+- Gate-A: 315/8/0 baseline preserved.
+- No source code changes — pure test infrastructure refactor.
+
 ## [2.0.22] — 2026-04-25 — HIG / Material 3 micro-polish (polish ph.9)
 
 Two small but high-impact UI refinements that bring the shell closer

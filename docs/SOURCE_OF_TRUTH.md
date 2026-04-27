@@ -219,14 +219,15 @@ The preview zoom feature uses the CSS `zoom:` property which is on the W3C stand
 
 ## Release state
 
-**Current**: v2.0.22 — HIG / Material 3 micro-polish shipped
-2026-04-25 (v2.0.0 GA + twenty-two post-GA polish tags).
-Closes 5 HIGH + 2 MEDIUM + 1 A11Y + 1 PERF-budget + 1 FLAKE +
-1 FN + 1 CI-gap + 1 DEV-tooling + 2 dev-issues from
+**Current**: v2.0.23 — FLAKE-sweep complete: spec `waitForTimeout`
+migrated to state-based waits (2026-04-27). v2.0.0 GA + twenty-three
+post-GA polish tags. Closes 5 HIGH + 2 MEDIUM + 1 A11Y + 1 PERF-budget +
+1 FLAKE + 1 FN + 1 CI-gap + 1 DEV-tooling + 2 dev-issues from
 `docs/AUDIT-REPORT-2026-04-26.md` (deep testing audit, 17 findings) +
-HIG-polish-1/2 from Phase 9 dual-agent spawn (scoped down to micro-pass).
-All audit findings closed except deferred items in POST_V2_ROADMAP
-+ `waitForTimeout` flake-sweep (deferred to v2.1.0; 71 instances).
+HIG-polish-1/2 from Phase 9 dual-agent spawn + spec FLAKE-sweep
+(38 → 3 spec instances; 11 spec files migrated; 18 reusable wait
+helpers exposed via `tests/playwright/helpers/waits.js`).
+All audit findings closed except deferred items in POST_V2_ROADMAP.
 
 The v1.0.3 → v2.0.0 redesign trajectory is complete: 26 incremental
 release points (v1.1.0 through v2.0.0 inclusive) across Phases A–E

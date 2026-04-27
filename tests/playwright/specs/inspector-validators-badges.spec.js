@@ -11,8 +11,6 @@ const {
   loadReferenceDeck,
 } = require("../helpers/editorApp");
 const {
-  captureCommandSeq,
-  waitForCommandSeqAdvance,
   waitForSelection,
   waitForRafTicks,
 } = require("../helpers/waits");
@@ -64,18 +62,21 @@ test.describe("Inspector validators (v1.5.0)", () => {
       // [v2.0.7] Use direct value+dispatchEvent pattern. fill("240px")
       // followed by press("Tab") was intermittently failing because
       // the change event did not fire reliably on this combination.
-      const priorSeq = await captureCommandSeq(page);
       await page.evaluate(() => {
         const el = document.getElementById("widthInput");
         el.value = "240px";
         el.dispatchEvent(new Event("change", { bubbles: true }));
       });
-      await waitForCommandSeqAdvance(page, priorSeq);
-      const after = await evaluateEditor(
-        page,
-        "state.modelDoc.querySelector('[data-editor-node-id=\"' + state.selectedNodeId + '\"]').style.width || ''",
-      );
-      expect(after).toBe("240px");
+      // apply-style does not post an ack on success; poll modelDoc instead.
+      await expect
+        .poll(() =>
+          evaluateEditor(
+            page,
+            "state.modelDoc.querySelector('[data-editor-node-id=\"' + state.selectedNodeId + '\"]').style.width || ''",
+          ),
+          { timeout: 8000 },
+        )
+        .toBe("240px");
     },
   );
 
@@ -120,18 +121,21 @@ test.describe("Inspector validators (v1.5.0)", () => {
       // because applyStyle never reached the bridge. Direct value+
       // dispatchEvent is what the user effectively does (focus the
       // field, type, blur), with no race against focus heuristics.
-      const priorSeq = await captureCommandSeq(page);
       await page.evaluate(() => {
         const el = document.getElementById("opacityInput");
         el.value = "50";
         el.dispatchEvent(new Event("change", { bubbles: true }));
       });
-      await waitForCommandSeqAdvance(page, priorSeq);
-      const opacity = await evaluateEditor(
-        page,
-        "state.modelDoc.querySelector('[data-editor-node-id=\"' + state.selectedNodeId + '\"]').style.opacity || ''",
-      );
-      expect(opacity).toBe("0.5");
+      // apply-style does not post an ack on success; poll modelDoc instead.
+      await expect
+        .poll(() =>
+          evaluateEditor(
+            page,
+            "state.modelDoc.querySelector('[data-editor-node-id=\"' + state.selectedNodeId + '\"]').style.opacity || ''",
+          ),
+          { timeout: 8000 },
+        )
+        .toBe("0.5");
     },
   );
 });

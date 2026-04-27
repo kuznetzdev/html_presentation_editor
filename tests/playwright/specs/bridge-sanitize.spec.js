@@ -12,6 +12,10 @@ const {
   loadBasicDeck,
   isChromiumOnlyProject,
 } = require("../helpers/editorApp");
+const {
+  captureCommandSeq,
+  waitForCommandSeqAdvance,
+} = require("../helpers/waits");
 
 // ─── Helper: get first node-id from a CSS selector in the preview frame ────
 async function getPreviewNodeId(page, selector) {
@@ -124,14 +128,13 @@ test.describe("bridge-sanitize: parseSingleRoot security gate @security", () => 
 
     // The replacement wraps a <script> inside a <div>. sanitizeFragment strips
     // the <script> (not in ALLOWED_HTML_TAGS) before importNode.
+    const priorSeq = await captureCommandSeq(page);
     await sendReplaceNodeHtml(
       page,
       nodeId,
       '<div id="hero-copy"><script>window.__xss_probe=1;<\/script>Visible text</div>',
     );
-
-    // Allow a tick for bridge roundtrip.
-    await page.waitForTimeout(500);
+    await waitForCommandSeqAdvance(page, priorSeq);
 
     // No <script> tags inside the node.
     const scriptCount = await countTagInPreviewNode(page, nodeId, "script");
@@ -207,8 +210,10 @@ test.describe("bridge-sanitize: parseSingleRoot security gate @security", () => 
     // Build a >256 KB payload string.
     const oversizedHtml = `<h1 id="hero-title">${"A".repeat(300000)}</h1>`;
 
-    // This call must not throw and must return falsy or true (shell won't throw).
-    const result = await evaluateEditor(
+    // This call must not throw. The shell schema accepts it (size guard lives
+    // in the iframe), so seq advances; the iframe ACKs with ok:false.
+    const priorSeq = await captureCommandSeq(page);
+    await evaluateEditor(
       page,
       `(() => {
         if (typeof sendToBridge !== "function") return "no-fn";
@@ -218,9 +223,7 @@ test.describe("bridge-sanitize: parseSingleRoot security gate @security", () => 
         });
       })()`,
     );
-    // sendToBridge sends the message; the guard is in the iframe.
-    // We only check that no DOM mutation occurred.
-    await page.waitForTimeout(400);
+    await waitForCommandSeqAdvance(page, priorSeq);
 
     const textAfter = await evaluateEditor(
       page,

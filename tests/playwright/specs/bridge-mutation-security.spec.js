@@ -26,6 +26,7 @@ const {
   captureCommandSeq,
   waitForCommandSeqAdvance,
   waitForPreviewReady,
+  waitForRafTicks,
 } = require("../helpers/waits");
 
 async function loadDeck(page) {
@@ -75,15 +76,17 @@ test.describe("Bridge mutation-path security (v2.0.13)", () => {
         page,
         "state.modelDoc.querySelector('[data-editor-node-id=\"' + state.selectedNodeId + '\"]').getAttribute('style') || ''",
       );
-      // Force-send the message at the bridge boundary, bypassing schema
-      // (sendToBridge calls validateMessage; we want to confirm the
-      // handler ALSO rejects in case schema is ever bypassed).
-      const priorSeq = await captureCommandSeq(page);
-      await evaluateEditor(
+      // Force-send the message at the bridge boundary. sendToBridge calls
+      // validateMessage which rejects cssText at the schema layer (returns
+      // false WITHOUT advancing commandSeq), so the seq-advance pattern is
+      // not applicable here. RAF settle is enough — the rejection is sync.
+      const result = await evaluateEditor(
         page,
         "sendToBridge('apply-style', { nodeId: state.selectedNodeId, styleName: 'cssText', value: 'pointer-events:none;background:red' })",
       );
-      await waitForCommandSeqAdvance(page, priorSeq);
+      // Schema must reject (sendToBridge returns false).
+      expect(result).toBe(false);
+      await waitForRafTicks(page, 4);
       const after = await evaluateEditor(
         page,
         "state.modelDoc.querySelector('[data-editor-node-id=\"' + state.selectedNodeId + '\"]').getAttribute('style') || ''",
@@ -108,12 +111,14 @@ test.describe("Bridge mutation-path security (v2.0.13)", () => {
         page,
         `(() => { const el = state.modelDoc.querySelector('[data-editor-node-id="' + ${JSON.stringify(targetId)} + '"]'); return el ? (el.getAttribute('href') || '') : ''; })()`,
       );
-      const priorSeq = await captureCommandSeq(page);
       await evaluateEditor(
         page,
         `sendToBridge('update-attributes', { nodeId: ${JSON.stringify(targetId)}, attrs: { href: 'javascript:alert(1)' } })`,
       );
-      await waitForCommandSeqAdvance(page, priorSeq);
+      // update-attributes does NOT post an ack on the success path (silent
+      // drop or apply); RAF settle is the right wait for the iframe round-trip
+      // to complete and any element-updated message to land.
+      await waitForRafTicks(page, 6);
       const after = await evaluateEditor(
         page,
         `(() => { const el = state.modelDoc.querySelector('[data-editor-node-id="' + ${JSON.stringify(targetId)} + '"]'); return el ? (el.getAttribute('href') || '') : ''; })()`,
@@ -129,12 +134,13 @@ test.describe("Bridge mutation-path security (v2.0.13)", () => {
       test.skip(!isChromiumOnlyProject(testInfo.project.name));
       await loadDeck(page);
       const targetId = await evaluateEditor(page, "state.selectedNodeId");
-      const priorSeq = await captureCommandSeq(page);
       await evaluateEditor(
         page,
         `sendToBridge('update-attributes', { nodeId: ${JSON.stringify(targetId)}, attrs: { formaction: 'vbscript:msgbox(1)' } })`,
       );
-      await waitForCommandSeqAdvance(page, priorSeq);
+      // update-attributes posts no ack on success path; RAF settle covers
+      // the silent-drop round-trip.
+      await waitForRafTicks(page, 6);
       const value = await evaluateEditor(
         page,
         `(() => { const el = state.modelDoc.querySelector('[data-editor-node-id="' + ${JSON.stringify(targetId)} + '"]'); return el ? (el.getAttribute('formaction') || '') : ''; })()`,
@@ -151,12 +157,11 @@ test.describe("Bridge mutation-path security (v2.0.13)", () => {
       const targetId = await evaluateEditor(page, "state.selectedNodeId");
       // srcdoc with javascript: as content — full fragment is treated as URL
       // by URL_BEARING_ATTRS path; should drop.
-      const priorSeq = await captureCommandSeq(page);
       await evaluateEditor(
         page,
         `sendToBridge('update-attributes', { nodeId: ${JSON.stringify(targetId)}, attrs: { srcdoc: 'javascript:alert(1)' } })`,
       );
-      await waitForCommandSeqAdvance(page, priorSeq);
+      await waitForRafTicks(page, 6);
       const value = await evaluateEditor(
         page,
         `(() => { const el = state.modelDoc.querySelector('[data-editor-node-id="' + ${JSON.stringify(targetId)} + '"]'); return el ? (el.getAttribute('srcdoc') || '') : ''; })()`,
@@ -174,17 +179,21 @@ test.describe("Bridge mutation-path security (v2.0.13)", () => {
         page,
         "(() => { const el = state.modelDoc.querySelector('a[data-editor-node-id]'); return el ? el.getAttribute('data-editor-node-id') : state.selectedNodeId; })()",
       );
-      const priorSeq = await captureCommandSeq(page);
       await evaluateEditor(
         page,
         `sendToBridge('update-attributes', { nodeId: ${JSON.stringify(targetId)}, attrs: { href: 'https://example.com/path' } })`,
       );
-      await waitForCommandSeqAdvance(page, priorSeq);
-      const value = await evaluateEditor(
-        page,
-        `(() => { const el = state.modelDoc.querySelector('[data-editor-node-id="' + ${JSON.stringify(targetId)} + '"]'); return el ? (el.getAttribute('href') || '') : ''; })()`,
-      );
-      expect(value).toBe("https://example.com/path");
+      // update-attributes does not post an ack; poll the modelDoc directly
+      // until the iframe round-trip propagates the new href.
+      await expect
+        .poll(() =>
+          evaluateEditor(
+            page,
+            `(() => { const el = state.modelDoc.querySelector('[data-editor-node-id="' + ${JSON.stringify(targetId)} + '"]'); return el ? (el.getAttribute('href') || '') : ''; })()`,
+          ),
+          { timeout: 8000 },
+        )
+        .toBe("https://example.com/path");
     },
   );
 
@@ -271,17 +280,20 @@ test.describe("Bridge mutation-path security (v2.0.13)", () => {
       test.skip(!imgId, "Could not synthesize image node for SEC-003 test");
       await waitForPreviewReady(page);
       const dataUri = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=";
-      const priorSeq = await captureCommandSeq(page);
       await evaluateEditor(
         page,
         `sendToBridge('replace-image-src', { nodeId: ${JSON.stringify(imgId)}, src: ${JSON.stringify(dataUri)} })`,
       );
-      await waitForCommandSeqAdvance(page, priorSeq);
-      const after = await evaluateEditor(
-        page,
-        `(() => { const el = state.modelDoc.querySelector('[data-editor-node-id="' + ${JSON.stringify(imgId)} + '"]'); return el ? (el.getAttribute('src') || '') : ''; })()`,
-      );
-      expect(after).toBe(dataUri);
+      // replace-image-src success path posts no explicit ack; poll modelDoc.
+      await expect
+        .poll(() =>
+          evaluateEditor(
+            page,
+            `(() => { const el = state.modelDoc.querySelector('[data-editor-node-id="' + ${JSON.stringify(imgId)} + '"]'); return el ? (el.getAttribute('src') || '') : ''; })()`,
+          ),
+          { timeout: 8000 },
+        )
+        .toBe(dataUri);
     },
   );
 

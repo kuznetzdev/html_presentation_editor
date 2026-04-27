@@ -203,11 +203,23 @@ test.describe("Shortcuts declarative table (WO-37) @stage-sct", () => {
       })()
     `);
 
-    // Press Ctrl+B
+    // Press Ctrl+B — triggers apply-style which does not post an ack on
+    // success. Poll the iframe DOM until font-weight changes from baseline.
     await page.keyboard.press("Control+B");
-
-    // Wait for style change to propagate
-    await page.waitForTimeout(300);
+    await expect
+      .poll(() =>
+        evaluateEditor(page, `
+          (function() {
+            var iframe = document.getElementById('previewFrame');
+            if (!iframe || !iframe.contentWindow) return null;
+            var el = iframe.contentDocument.querySelector('[data-editor-node-id="' + state.selectedNodeId + '"]');
+            if (!el) return null;
+            return window.getComputedStyle ? getComputedStyle(el).fontWeight : el.style.fontWeight;
+          })()
+        `),
+        { timeout: 8000 },
+      )
+      .not.toBe(originalWeight);
 
     const newWeight = await evaluateEditor(page, `
       (function() {
@@ -262,9 +274,14 @@ test.describe("Shortcuts declarative table (WO-37) @stage-sct", () => {
       })()
     `);
 
-    // Press ArrowUp once
+    // Press ArrowUp once — triggers a nudge-element mutation. The iframe
+    // does not post an ack for nudge; wait for state.history.length to
+    // advance (nudges record history entries).
+    const baseHistLen = await evaluateEditor(page, "state.history.length");
     await page.keyboard.press("ArrowUp");
-    await page.waitForTimeout(200);
+    await expect
+      .poll(() => evaluateEditor(page, "state.history.length"), { timeout: 8000 })
+      .toBeGreaterThan(baseHistLen);
 
     const after = await evaluateEditor(page, `
       (function() {

@@ -16,6 +16,7 @@ const {
   closeCompactShellPanels,
   clickPreview,
 } = require("../helpers/editorApp");
+const { waitForRafTicks } = require("../helpers/waits");
 
 async function loadDeck(page) {
   await loadReferenceDeck(page, "v1-selection-engine-v2", { mode: "edit" });
@@ -99,7 +100,7 @@ test.describe("Click-blocked feedback (v2.0.8)", () => {
         "applyClickBlockedFromBridge({ reason: '', nodeId: '' })",
       );
       // Settle briefly to confirm no toast appeared.
-      await page.waitForTimeout(300);
+      await waitForRafTicks(page, 8);
       const after = await page.locator(".toast").count();
       expect(after).toBe(before);
     },
@@ -124,7 +125,9 @@ test.describe("Click-blocked feedback (v2.0.8)", () => {
         page,
         "applyClickBlockedFromBridge({ reason: 'locked', nodeId: 'node-x' })",
       );
-      await page.waitForTimeout(200);
+      // Throttle window is 1500ms; a few RAFs is enough to confirm no
+      // immediate second toast was spawned.
+      await waitForRafTicks(page, 6);
       const secondCount = await page.locator(".toast", { hasText: "Снимите блок" }).count();
       // Throttled: same payload within 1.5s should NOT spawn a second toast.
       expect(secondCount).toBe(firstCount);

@@ -33,6 +33,7 @@ const {
   evaluateEditor,
   previewLocator,
 } = require("../helpers/editorApp");
+const { waitForRafTicks } = require("../helpers/waits");
 
 const FIXTURE_DIR = path.resolve(__dirname, "../../fixtures/playwright");
 
@@ -122,7 +123,9 @@ test.describe("Foreign deck: Ops Control Room (viewport flat) @foreign-deck", ()
     // Press ArrowRight — should be blocked by bridge, not handled by deck JS
     await page.frameLocator("#previewFrame").locator("body").focus();
     await page.keyboard.press("ArrowRight");
-    await page.waitForTimeout(300);
+    // Allow several RAFs for any deferred slide-advance handler to fire; bridge
+    // should have blocked the keypress so nothing should change.
+    await waitForRafTicks(page, 8);
 
     // Still the same slide active (deck JS did not run)
     const activeAfter = await page.frameLocator("#previewFrame")
@@ -243,7 +246,9 @@ test.describe("Foreign deck: Reveal-like nested (h-slide + v-slide + fragments) 
 
     await page.frameLocator("#previewFrame").locator("body").focus();
     await page.keyboard.press("ArrowRight");
-    await page.waitForTimeout(300);
+    // Allow several RAFs for any deferred slide-advance handler to fire; bridge
+    // should have blocked the keypress so nothing should change.
+    await waitForRafTicks(page, 8);
 
     const activeAfter = await page.frameLocator("#previewFrame")
       .locator(".h-slide.active")

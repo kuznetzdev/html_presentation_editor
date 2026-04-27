@@ -16,6 +16,7 @@ const {
   loadBasicDeck,
   isChromiumOnlyProject,
 } = require("../helpers/editorApp");
+const { waitForRafTicks } = require("../helpers/waits");
 
 // ─── Constants (mirror of constants.js — must stay in sync) ────────────────
 const AUTOSAVE_WARN_BYTES = 3 * 1024 * 1024; // 3 MB
@@ -163,8 +164,8 @@ test.describe("autosave-cap: size tiers + light-snapshot fallback @security", ()
 
     await triggerAutosave(page);
 
-    // Allow one frame for the storage write to complete.
-    await page.waitForTimeout(200);
+    // Allow microtasks + a few RAFs for the storage write to complete.
+    await waitForRafTicks(page, 4);
 
     const payload = await readStoredPayload(page);
     expect(payload).not.toBeNull();

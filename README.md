@@ -236,8 +236,8 @@ See `docs/GITHUB_PACKAGES.md` for the exact recommendation and tradeoffs.
 
 ## Recent milestone tags
 
-Current: **v2.0.22 — HIG / Material 3 micro-polish**
-(2026-04-25) on top of **v2.0.0 GA**.
+Current: **v2.0.23 — FLAKE-sweep: spec waitForTimeout migrated**
+(2026-04-27) on top of **v2.0.0 GA**.
 See [`docs/AUDIT-REPORT-2026-04-26.md`](docs/AUDIT-REPORT-2026-04-26.md)
 for the full audit that drove the post-v2 polish track.
 Full release notes: [`docs/RELEASE-v2.0.md`](docs/RELEASE-v2.0.md).
@@ -245,10 +245,14 @@ Post-v2 roadmap: [`docs/POST_V2_ROADMAP.md`](docs/POST_V2_ROADMAP.md).
 
 The v1.0.3 → v2.0.0 redesign trajectory: **26 incremental release
 points** (v1.1.0 → v2.0.0 inclusive) across Phases A–E + 6 hardening
-sprints, plus **22 post-GA polish tags** (v2.0.1–v2.0.22).
+sprints, plus **23 post-GA polish tags** (v2.0.1–v2.0.23).
 
 ### v2.0 trajectory
 
+- `v2.0.23` — FLAKE-sweep: 11 spec files migrated to state-based
+  waits via `tests/playwright/helpers/waits.js`. Spec
+  `waitForTimeout` count: 38 → 3 (target ≤5). 18 reusable wait
+  helpers exposed; gate-A 315/8/0 baseline preserved.
 - `v2.0.22` — HIG / Material 3 micro-polish: button:active scale
   98% (honours prefers-reduced-motion); `--shell-focus` alpha
   bumped 0.18 → 0.32 for WCAG 2.4.7 visibility on dark surfaces.
