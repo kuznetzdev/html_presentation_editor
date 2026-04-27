@@ -565,50 +565,38 @@ iframe {
   background: var(--canvas-stage-bg);
 }
 
+/* v2.0.28 — minimalist empty-state landing (HIG empty-state convention,
+   Material 3 elevation level-1, WCAG AA token-driven contrast). */
 .empty-state {
   margin: auto;
-  width: min(100%, 720px);
-  max-width: 720px;
+  width: min(100%, 560px);
+  max-width: 560px;
   display: grid;
-  gap: 14px;
-  padding: 30px 32px;
-  text-align: left;
+  justify-items: center;
+  gap: 20px;
+  padding: 56px 40px;
+  text-align: center;
   color: var(--shell-text-muted);
-  line-height: 1.55;
-  border: 1px solid color-mix(in srgb, var(--shell-accent) 18%, var(--shell-border));
-  border-radius: 28px;
-  background:
-    radial-gradient(circle at top, color-mix(in srgb, var(--shell-accent) 14%, transparent), transparent 58%),
-    linear-gradient(180deg, var(--shell-panel) 0%, var(--shell-panel-soft) 100%);
-  box-shadow: 0 28px 72px rgba(15, 23, 42, 0.1);
-}
-
-.empty-state-kicker {
-  display: inline-flex;
-  align-items: center;
-  width: fit-content;
-  padding: 6px 10px;
-  border: 1px solid color-mix(in srgb, var(--shell-accent) 18%, var(--shell-border));
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--shell-accent-soft) 56%, #ffffff 44%);
-  color: var(--shell-accent);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  line-height: 1.6;
+  border: 1px solid var(--shell-border);
+  border-radius: 20px;
+  background: var(--shell-panel);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
 }
 
 .empty-state strong {
   display: block;
-  font-size: 30px;
+  font-size: 32px;
+  font-weight: 600;
   line-height: 1.2;
   color: var(--shell-text);
+  letter-spacing: -0.01em;
 }
 
 .empty-state-lead {
-  max-width: 60ch;
-  font-size: 14px;
-  line-height: 1.65;
+  max-width: 44ch;
+  font-size: 15px;
+  line-height: 1.6;
 }
 
 .empty-state code {
@@ -662,16 +650,17 @@ iframe {
 
 .empty-state-actions {
   display: flex;
-  justify-content: flex-start;
+  justify-content: center;
   flex-wrap: wrap;
   gap: 12px;
+  margin-top: 4px;
 }
 
 .empty-state-footnote {
-  max-width: 58ch;
-  font-size: 12px;
+  max-width: 44ch;
+  font-size: 13px;
   line-height: 1.55;
-  color: color-mix(in srgb, var(--shell-text-muted) 92%, var(--shell-text) 8%);
+  color: color-mix(in srgb, var(--shell-text-muted) 80%, transparent);
 }
 
 .summary-card {

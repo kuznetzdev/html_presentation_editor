@@ -236,7 +236,7 @@ See `docs/GITHUB_PACKAGES.md` for the exact recommendation and tradeoffs.
 
 ## Recent milestone tags
 
-Current: **v2.0.26 — Phase A4 store-slice extraction part 2**
+Current: **v2.0.28 — Empty-state landing redesign (UX polish)**
 (2026-04-27) on top of **v2.0.0 GA**.
 See [`docs/AUDIT-REPORT-2026-04-26.md`](docs/AUDIT-REPORT-2026-04-26.md)
 for the full audit that drove the post-v2 polish track.
@@ -245,10 +245,22 @@ Post-v2 roadmap: [`docs/POST_V2_ROADMAP.md`](docs/POST_V2_ROADMAP.md).
 
 The v1.0.3 → v2.0.0 redesign trajectory: **26 incremental release
 points** (v1.1.0 → v2.0.0 inclusive) across Phases A–E + 6 hardening
-sprints, plus **26 post-GA polish tags** (v2.0.1–v2.0.26).
+sprints, plus **28 post-GA polish tags** (v2.0.1–v2.0.28).
 
 ### v2.0 trajectory
 
+- `v2.0.28` — Empty-state landing redesign (UX polish): minimalist hero
+  card with HIG empty-state convention (centered), Material 3 elevation
+  level-1 (layered shadow), WCAG AA token-driven contrast. Removed the
+  fake-affordance `.empty-state-kicker` "КАК НАЧАТЬ РАБОТУ" pill (was
+  styled as a button but non-interactive `<span>`; ~2.4:1 contrast in
+  dark theme — below AA). Card width 720→560px, padding 30→56px,
+  border-radius 28→20px. All test-required DOM IDs preserved.
+- `v2.0.27` — Phase A5 (post-v2 perfection sprint Track A): extends
+  the Observable Store with one more slice using the proven Proxy-shim
+  pattern: `assetResolver` (8 fields, identity-mapped). Zero call-site
+  edits. ADR-033 (with SEC-006 correction — `assetResolverMap` is a
+  `Map` instance, not `Object.create(null)`).
 - `v2.0.26` — Phase A4 (post-v2 perfection sprint Track A): extends
   the Observable Store with 4 new slices (`multiSelect`, `panels`,
   `toolbar`, `modal`) using the proven WO-16/17/18 Proxy-shim pattern.

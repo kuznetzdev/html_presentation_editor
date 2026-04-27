@@ -219,7 +219,16 @@ The preview zoom feature uses the CSS `zoom:` property which is on the W3C stand
 
 ## Release state
 
-**Current**: v2.0.27 — Phase A5 store-slice extraction part 3
+**Current**: v2.0.28 — Empty-state landing redesign (UX polish)
+(2026-04-27). v2.0.0 GA + twenty-eight post-GA polish tags.
+Minimalist empty-state hero per HIG/M3 — removed the fake-affordance
+"КАК НАЧАТЬ РАБОТУ" kicker pill (~2.4:1 dark-theme contrast offender
++ button-shaped non-interactive span), tightened card width 720→560px,
+padding 30→56px, layered M3 elevation level-1 shadow, centered hero,
+typography hierarchy refined (32/15/13 px). All test-required DOM IDs
+preserved; smoke + onboarding specs 32/4/0.
+
+**Previous**: v2.0.27 — Phase A5 store-slice extraction part 3
 (2026-04-27). v2.0.0 GA + twenty-seven post-GA polish tags. Extends
 the Observable Store (ADR-013) with one more slice using the proven
 WO-16/17/18 / Phase A4 Proxy-shim pattern: `assetResolver` (8 fields,

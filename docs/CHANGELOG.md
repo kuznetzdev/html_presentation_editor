@@ -1,5 +1,66 @@
 # CHANGELOG
 
+## [2.0.28] — 2026-04-27 — Empty-state landing redesign (UX polish)
+
+User-facing visual polish for the editor's first-load empty state. Applies
+HIG empty-state convention (centered hero), Material 3 elevation level-1
+(subtle layered shadow), and WCAG 2.1 AA token-driven contrast review.
+
+### Removed
+
+- `.empty-state-kicker` ("КАК НАЧАТЬ РАБОТУ" pill) — removed entirely.
+  Was a fake-affordance offender: visually styled as a button (rounded
+  pill with accent background and bold uppercase label) but actually a
+  non-interactive `<span>`. Also a contrast offender in dark theme:
+  `color: var(--shell-accent)` on `color-mix(--shell-accent-soft 56% +
+  white 44%)` produced ~2.4:1 contrast on dark backgrounds (below 4.5:1
+  AA threshold for normal text). Removing the element solves both
+  the affordance lie AND the contrast issue.
+
+### Changed — `.empty-state` card
+
+- Width: `720px` → `560px` (tighter focus, single-column emphasis)
+- Padding: `30px 32px` → `56px 40px` (generous whitespace, hero-style)
+- Alignment: `text-align: left` → `center` (HIG empty-state pattern)
+- Border-radius: `28px` → `20px` (Material 3 medium shape)
+- Border: token-driven (no accent-mixed override)
+- Background: was radial+linear gradient stack → solid `var(--shell-panel)`
+  (removes visual noise; gradient added complexity without informational gain)
+- Shadow: was `0 28px 72px rgba(15,23,42,0.1)` (heavy single drop) →
+  layered `0 2px 8px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06)`
+  (Material 3 elevation level-1 — softer, more honest depth)
+
+### Changed — typography hierarchy
+
+- Title: `30px` → `32px font-weight: 600 letter-spacing: -0.01em`
+  (Apple HIG large-title scale, tighter letter-spacing for display)
+- Lead: `14px` → `15px max-width: 60ch → 44ch` (denser line-length for
+  comfortable reading at center alignment)
+- Footnote: `12px` → `13px` with token-driven 80% opacity (subtle but
+  legible — was 92% on muted color which approached body-text weight)
+
+### Changed — `.empty-state-actions`
+
+- `justify-content: flex-start` → `center` (matches centered hero)
+- Added `margin-top: 4px` for breathing room above CTAs
+
+### DOM compatibility
+
+- All test-required IDs preserved: `#emptyOpenBtn`, `#emptyPasteBtn`,
+  `#emptyMoreToggleBtn`, `#emptyMorePanel`, `#emptyState`,
+  `#emptyStateTitle`, `#emptyStateLead`, `#emptyStateFootnote`.
+- 3-step disclosure list (`.empty-state-steps`, `hidden` by default)
+  retained — un-hide path used by novice onboarding flow.
+- Disclosure pattern (`#emptyMoreToggleBtn` → `#emptyMorePanel`)
+  retained — gives keyboard-discoverable access to paste-from-clipboard.
+
+### Verification
+
+- shell.smoke.spec.js + onboarding.spec.js + onboarding-v2.spec.js:
+  **32 passed / 4 skipped / 0 failed (1.6m)** on chromium-desktop.
+- Required DOM IDs present, click-through flows intact, novice empty-state
+  guidance still surfaces via `body[data-editor-workflow="empty"]`.
+
 ## [2.0.27] — 2026-04-27 — Phase A5: store-slice extraction part 3 (assetResolver)
 
 Phase A5 of the Perfection Sprint Track A. Extends the Observable Store
