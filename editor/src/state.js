@@ -655,6 +655,35 @@
         layerPickerActiveIndex: -1,
       });
 
+      // Register the 'assetResolver' slice — Phase A5 (ADR-033).
+      // Migrated fields: assetResolverMap, assetResolverLabel, assetObjectUrls,
+      // assetFileCount, resolvedPreviewAssets, unresolvedPreviewAssets,
+      // baseUrlDependentAssets, previewAssetAuditCounts.
+      // Naming: legacy keys preserved verbatim (identity map). The 'assetResolver'
+      // prefix already names the namespace; trimming would produce ambiguous
+      // names like 'map' or 'label'. The 'preview' qualifier on
+      // unresolvedPreviewAssets / previewAssetAuditCounts is load-bearing scoping.
+      // Note: assetResolverMap is a JavaScript Map instance once populated by
+      // setAssetDirectoryFromFiles in boot.js. The slice stores the live ref.
+      // SEC-006 prototype-pollution guard does NOT apply here — the SEC-006
+      // guard is on slideRegistryById/slideSyncLocks/lastAppliedSeqBySlide
+      // which use Object.create(null) plain dictionaries; Map instances are
+      // inherently safe against attacker-controlled string keys.
+      window.store.defineSlice("assetResolver", {
+        assetResolverMap: null,
+        assetResolverLabel: "",
+        assetObjectUrls: [],
+        assetFileCount: 0,
+        resolvedPreviewAssets: [],
+        unresolvedPreviewAssets: [],
+        baseUrlDependentAssets: [],
+        previewAssetAuditCounts: {
+          resolved: 0,
+          unresolved: 0,
+          baseUrlDependent: 0,
+        },
+      });
+
       /** @type {State} */
       const state = {
         sourceLabel: "",
@@ -955,6 +984,25 @@
       /** @type {Set<string>} */
       var _MODAL_STATE_KEYS = new Set(Object.keys(_MODAL_STATE_TO_SLICE));
 
+      // AssetResolver fields mapped from legacy state key → store 'assetResolver' slice key.
+      // Phase A5 (ADR-033). Identity map (legacy === slice key) — see ADR-033
+      // "Field naming" section for rationale. assetResolverMap stays a Map ref
+      // (no copy in get/set traps), so .has(...)/.get(...) call-sites in boot.js
+      // continue to work with O(1) lookup.
+      /** @type {Object.<string, string>} */
+      var _ASSET_RESOLVER_STATE_TO_SLICE = {
+        assetResolverMap:        "assetResolverMap",
+        assetResolverLabel:      "assetResolverLabel",
+        assetObjectUrls:         "assetObjectUrls",
+        assetFileCount:          "assetFileCount",
+        resolvedPreviewAssets:   "resolvedPreviewAssets",
+        unresolvedPreviewAssets: "unresolvedPreviewAssets",
+        baseUrlDependentAssets:  "baseUrlDependentAssets",
+        previewAssetAuditCounts: "previewAssetAuditCounts",
+      };
+      /** @type {Set<string>} */
+      var _ASSET_RESOLVER_STATE_KEYS = new Set(Object.keys(_ASSET_RESOLVER_STATE_TO_SLICE));
+
       // Install Proxy if the runtime supports it (ES6+). Falls back to direct
       // state access for very old environments (not expected for this project).
       if (typeof Proxy !== "undefined") {
@@ -993,6 +1041,10 @@
             if (_MODAL_STATE_KEYS.has(String(prop))) {
               var mSliceKey = _MODAL_STATE_TO_SLICE[String(prop)];
               return window.store.get("modal")[mSliceKey];
+            }
+            if (_ASSET_RESOLVER_STATE_KEYS.has(String(prop))) {
+              var arSliceKey = _ASSET_RESOLVER_STATE_TO_SLICE[String(prop)];
+              return window.store.get("assetResolver")[arSliceKey];
             }
             // @ts-ignore — dynamic property access on typed State object via Proxy trap
             return target[prop];
@@ -1096,6 +1148,23 @@
                 return patch;
               }()));
               // @ts-ignore — dynamic string-keyed write
+              target[prop] = value;
+              return true;
+            }
+            if (_ASSET_RESOLVER_STATE_KEYS.has(String(prop))) {
+              // Write to assetResolver store slice (triggers notification).
+              // assetResolverMap is a Map; the slice stores the live ref, no copy.
+              var arSliceKey = _ASSET_RESOLVER_STATE_TO_SLICE[String(prop)];
+              window.store.update("assetResolver", (function () {
+                /** @type {Record<string,unknown>} */
+                var patch = {};
+                // @ts-ignore — dynamic string-keyed write
+                patch[arSliceKey] = value;
+                return patch;
+              }()));
+              // Mirror to raw state for backward compat (and any code that reads
+              // _stateRaw directly without the proxy)
+              // @ts-ignore — dynamic string-keyed write on typed State via Proxy trap
               target[prop] = value;
               return true;
             }

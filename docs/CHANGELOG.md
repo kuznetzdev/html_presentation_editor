@@ -1,5 +1,98 @@
 # CHANGELOG
 
+## [2.0.27] — 2026-04-27 — Phase A5: store-slice extraction part 3 (assetResolver)
+
+Phase A5 of the Perfection Sprint Track A. Extends the Observable Store
+(ADR-013) with one more slice using the same Proxy-shim pattern proven in
+WO-16/17/18 and Phase A4 (v2.0.26): **assetResolver** carrying all 8 fields
+identified as outstanding in `ADR-032` §"What still lives on the raw state
+literal". Zero call-site edits in consumer modules — the Proxy auto-routes
+`state.assetResolverMap` reads/writes to
+`store.get("assetResolver").assetResolverMap` /
+`store.update("assetResolver", { assetResolverMap: ... })` and mirrors to
+raw state for backward compat.
+
+### Hot-path / SEC-006 facts
+
+The Phase A5 brief stated `assetResolverMap` was "already
+`Object.create(null)`-protected (SEC-006)". Direct inspection of the source
+confirmed this is **not accurate**: `assetResolverMap` is a JavaScript `Map`
+instance (not a `Object.create(null)` plain dictionary). The actual SEC-006
+guards (verified in `tests/playwright/specs/bridge-proto-pollution.spec.js`)
+are on `slideRegistryById`, `slideSyncLocks`, and `lastAppliedSeqBySlide` —
+all out of scope for Phase A5. `Map` instances are inherently safe against
+prototype-pollution from attacker-controlled string keys, so the migration
+preserves the `Map` semantics without any additional guard. SEC-006 spec
+result: 8/8 pass unchanged. See `docs/ADR-033-store-slice-extraction-part-3.md`
+for the full SEC-006 correction.
+
+`assetResolverMap` and the other 7 fields are NOT on the click-to-select
+hot path. Click-to-select goes through `applyElementSelection` → `selection`
+slice (ADR-032 diagnosis confirmed); assetResolver fields are read only on
+preview build (`buildPreviewPackage` / `buildRenderedOutputDocument`),
+import (`setAssetDirectoryFromFiles`), audit capture, action-label assembly,
+broken-asset banner UI, and history snapshot text. Slice-update fan-out is
+a no-op (no subscribers in any consumer module — same as the Phase A4
+slices), and `assetResolverMap` ref-equality is preserved (no copy in the
+get/set traps), so `boot.js` `.has()`/`.get()` keep O(1) lookup.
+
+### Added
+
+- `docs/ADR-033-store-slice-extraction-part-3.md` — strategy ADR with the
+  full consumer inventory (8 files, ~30 read sites, ~12 write sites), the
+  SEC-006 correction, and the field-naming rationale (legacy keys preserved
+  verbatim — identity map — because the `assetResolver` prefix already
+  names the namespace and trimming would produce ambiguous names like
+  `map`/`label`).
+- `tests/unit/asset-resolver-slice.spec.js` — 4 cases:
+  - (a) defineSlice initial shape (null `assetResolverMap`, empty arrays,
+    zeroed audit counts).
+  - (b) `store.update` preserves `Map` ref-equality and notifies subscribers.
+  - (c) Map semantics: `Map.set("__proto__", x)` does NOT mutate
+    `Object.prototype` (sanity check that Map prototype-poisoning safety
+    holds; this is NOT the SEC-006 guard).
+  - (d) `store.batch()` of audit-count + lists fires subscribers exactly
+    once (mirrors the `boot.js:1548-1552` audit-capture sequence).
+- 1 new `window.store.defineSlice("assetResolver", {...})` registration in
+  `editor/src/state.js`.
+
+### Changed
+
+- `editor/src/state.js` — Proxy `get`/`set` traps gain 1 new
+  `if (_ASSET_RESOLVER_STATE_KEYS.has(...))` branch (one per trap).
+  Pattern is byte-identical to the WO-17/18 (selection/history) and Phase
+  A4 (multiSelect/panels/toolbar/modal) Proxy mappings. ~50 net additional
+  lines of state.js (1 slice registration, 1 mapping table, 1 `get` branch,
+  1 `set` branch). Slice key-set count is now 8 (was 7 at v2.0.26).
+- `package.json scripts.test:unit` — adds
+  `tests/unit/asset-resolver-slice.spec.js` after the 10 existing files
+  (11 unit-test files total; 74 cases pass).
+- `docs/SOURCE_OF_TRUTH.md §Release state` — promoted to v2.0.27 with the
+  Phase A5 summary; v2.0.26 entry preserved in the historical narrative.
+
+### Verification
+
+- Unit tests: 74/74 pass (`node --test ...`) — was 70/70 at v2.0.26; the
+  4 new cases cover all aspects of the assetResolver slice.
+- Typecheck (`tsc --noEmit`): clean.
+- `node scripts/precommit-bridge-script-syntax.js`: pass (run as the first
+  step of `npm run test:gate-a`).
+- `tests/playwright/specs/perf-budget.spec.js -g "click-to-select"`: 1/1
+  pass; observed `p50 = 16.9 ms` (budget `<80 ms` — 4.7× safety margin),
+  `p95 = 340.8 ms` (budget `<400 ms` — within Phase A4 RETRY noise-tolerant
+  ceiling).
+- `tests/playwright/specs/bridge-proto-pollution.spec.js`: 8/8 pass — all
+  SEC-006 guards intact.
+- Full `npm run test:gate-a`: see commit message for the final 318+/8/0
+  count.
+
+### Closes
+
+- ADR-032 §"What still lives on the raw state literal" — assetResolver
+  cluster (8 fields) migrated. Outstanding for Phase A6: `slides`,
+  `bridge`, `autosave`, `diagnostics`.
+- Perfection Sprint Track A Phase A5 dispatch (2026-04-27).
+
 ## [2.0.26] — 2026-04-27 — Phase A4: store-slice extraction part 2 (multiSelect/panels/toolbar/modal)
 
 Phase A4 of the Perfection Sprint Track A. Extends the Observable Store

@@ -219,25 +219,37 @@ The preview zoom feature uses the CSS `zoom:` property which is on the W3C stand
 
 ## Release state
 
-**Current**: v2.0.26 — Phase A4 store-slice extraction part 2
-(2026-04-27). v2.0.0 GA + twenty-six post-GA polish tags. Extends the
-Observable Store (ADR-013) with **four** new slices using the proven
-WO-16/17/18 Proxy-shim pattern: `multiSelect`, `panels`, `toolbar`,
-`modal`. Zero call-site edits in consumers — Proxy auto-routes
-legacy `state.foo` reads/writes to slice-typed equivalents. RETRY
-context: a first attempt was reported as regressing
-`perf-budget.spec.js` p95; diagnostic worktree experiment confirmed
-attempt-1 numbers (270–333ms) were statistically indistinguishable
-from baseline (270–303ms) — not actually a regression but a slower
-dev-machine noise floor than the v2.0.17 reference budget assumed.
-v2.0.26 cherry-picks attempt-1 commits unchanged and bumps the
-`click-to-select` p95 budget from 200 to 400 ms with explanatory
+**Current**: v2.0.27 — Phase A5 store-slice extraction part 3
+(2026-04-27). v2.0.0 GA + twenty-seven post-GA polish tags. Extends
+the Observable Store (ADR-013) with one more slice using the proven
+WO-16/17/18 / Phase A4 Proxy-shim pattern: `assetResolver` (8 fields,
+identity-mapped: `assetResolverMap`, `assetResolverLabel`,
+`assetObjectUrls`, `assetFileCount`, `resolvedPreviewAssets`,
+`unresolvedPreviewAssets`, `baseUrlDependentAssets`,
+`previewAssetAuditCounts`). Zero call-site edits — Proxy auto-routes
+all 8 fields. `assetResolverMap` ref-equality preserved (Map
+instance, no copy in get/set traps), so `boot.js` `.has()`/`.get()`
+hot-path call-sites keep O(1) lookup. SEC-006 prototype-pollution
+guard is unaffected — the actual SEC-006 dictionaries
+(`slideRegistryById`, `slideSyncLocks`, `lastAppliedSeqBySlide`)
+are out of scope; assetResolverMap is a `Map` instance and inherently
+safe. 74/74 unit tests pass (was 70/70 at v2.0.26), tsc clean,
+perf-budget click-to-select p50=16.9ms / p95=340.8ms (budget <80 /
+<400), bridge-proto-pollution 8/8 pass. Architecture: ADR-033.
+v2.0.26 was Phase A4: extended the Observable Store (ADR-013) with
+**four** new slices using the proven WO-16/17/18 Proxy-shim pattern:
+`multiSelect`, `panels`, `toolbar`, `modal`. Zero call-site edits in
+consumers — Proxy auto-routes legacy `state.foo` reads/writes to
+slice-typed equivalents. RETRY context: a first attempt was reported
+as regressing `perf-budget.spec.js` p95; diagnostic worktree experiment
+confirmed attempt-1 numbers (270–333ms) were statistically
+indistinguishable from baseline (270–303ms) — not actually a regression
+but a slower dev-machine noise floor than the v2.0.17 reference budget
+assumed. v2.0.26 cherry-picked attempt-1 commits unchanged and bumped
+the `click-to-select` p95 budget from 200 to 400 ms with explanatory
 comment; p50 budget stays tight at 80 ms (observed ~17 ms — 14×
-safety margin) as the load-bearing regression sentinel. 70/70 unit
-tests pass (was 54/54), tsc clean, perf-budget 5/5 pass after
-budget adjustment, critical Playwright specs (shell.smoke,
-multi-select, selection-engine-v2, broken-asset-banner) 48/4/0 on
-dev machine. Architecture: ADR-032.
+safety margin) as the load-bearing regression sentinel. Architecture:
+ADR-032.
 v2.0.25 was Phase A3': closed the 3 latent `/\s+/g` regex bugs that
 v2.0.24 (Phase A2 / ADR-031) deliberately preserved with
 `// PRESERVED runtime semantics` markers. The original
