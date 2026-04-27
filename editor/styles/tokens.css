@@ -176,7 +176,13 @@
   --space-10: 40px;
   --space-12: 48px;
 
-  /* Typography scale */
+  /* ======================================================================
+   Typography scale (ADR-031, v2.1.0-pre)
+   --text-2xs (10) is DECORATIVE-ONLY: chips, badges, footnote labels.
+                Never use for body copy or actionable buttons.
+   --text-3xl (28) is HERO/LANDING display only — empty-state title,
+                modal hero, premium-tier section headings.
+   ====================================================================== */
   --text-2xs: 10px;
   --text-xs: 11px;
   --text-sm: 12px;
@@ -185,6 +191,7 @@
   --text-lg: 16px;
   --text-xl: 18px;
   --text-2xl: 22px;
+  --text-3xl: 28px;
 
   /* Line height scale */
   --leading-tight: 1.2;
