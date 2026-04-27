@@ -659,16 +659,39 @@ iframe {
 .empty-state-actions {
   display: flex;
   justify-content: center;
+  align-items: center;
   flex-wrap: wrap;
   gap: 12px;
   margin-top: 4px;
+}
+
+/* [v2.1.0-pre / ADR-031, A1-F2 / SoT.md:152-154] Empty-state CTA hierarchy
+   demoted from 60/40 to 80/20: paste-from-clipboard is a secondary path,
+   not a co-equal primary. Visually lighter — no solid border, no fill,
+   smaller min-height; full keyboard reachability preserved. */
+.empty-state-actions #emptyPasteBtn {
+  border-color: transparent;
+  background: transparent;
+  color: var(--shell-text-muted);
+  min-height: 32px;
+  padding: 6px 12px;
+  font-weight: 500;
+}
+
+.empty-state-actions #emptyPasteBtn:hover:not(:disabled) {
+  background: var(--shell-field-bg);
+  color: var(--shell-text);
 }
 
 .empty-state-footnote {
   max-width: 44ch;
   font-size: 13px;
   line-height: 1.55;
-  color: color-mix(in srgb, var(--shell-text-muted) 80%, transparent);
+  /* [v2.1.0-pre / ADR-031, A3-contrast / WCAG 1.4.3] Was
+     `color-mix(... 80%, transparent)` which combined with v2.0.16's
+     0.78 alpha gave effective 0.62 → ~4.1:1 contrast (fails AA for 13px).
+     Use --shell-text-muted directly (5.5:1 on white per v2.0.16). */
+  color: var(--shell-text-muted);
 }
 
 /* v2.0.29 — text-link button (used as tertiary CTA inside footnote) */

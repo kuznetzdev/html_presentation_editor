@@ -91,9 +91,12 @@
     <header class="topbar" id="topbar">
       <div class="topbar-identity">
         <div class="topbar-title">
-        <span class="topbar-eyebrow">Живой HTML-редактор</span>
+        <!-- [v2.1.0-pre / ADR-031, A1-F6 / A3-#4] Eyebrow "Живой HTML-редактор"
+             dropped: redundant with the h1 "HTML Presentation Editor" + the
+             #documentMeta line. After v2.0.29 chrome is only visible when a
+             deck is loaded, at which point the user already knows the app. -->
         <h1>HTML Presentation Editor</h1>
-        <span id="documentMeta">Откройте HTML-презентацию.</span>
+        <span id="documentMeta">Откройте HTML-презентацию</span>
         </div>
         <div
           id="topbarStateCluster"

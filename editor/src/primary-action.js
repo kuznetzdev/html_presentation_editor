@@ -319,8 +319,10 @@
 
       function syncDocumentMetaUi(hasPresentation) {
         if (!hasPresentation) {
+          // [v2.1.0-pre / ADR-031, A3-#1] No trailing period — this is a label,
+          // not a sentence; matches HTML default + onboarding.js copy.
           els.documentMeta.textContent =
-            "Откройте HTML-презентацию.";
+            "Откройте HTML-презентацию";
           return;
         }
         const lifecycleMeta = getPreviewLifecycleMeta(state.previewLifecycle);
