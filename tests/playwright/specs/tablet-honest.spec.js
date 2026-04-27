@@ -9,6 +9,10 @@ const {
   evaluateEditor,
   loadBasicDeck,
 } = require("../helpers/editorApp");
+const {
+  waitForShellBannerText,
+  waitForState,
+} = require("../helpers/waits");
 
 // Returns true when the current project is one of the 3 compact viewport projects.
 function isCompactProject(projectName) {
@@ -104,7 +108,7 @@ test.describe("Tablet honest-block posture (WO-33 / ADR-018)", () => {
         }
       })()`,
     );
-    await page.waitForTimeout(300);
+    await waitForState(page, "state.interactionMode === 'text-edit'");
     const mode = await evaluateEditor(page, "state.interactionMode");
     expect(mode).toBe("text-edit");
   });
@@ -134,8 +138,8 @@ test.describe("Tablet honest-block posture (WO-33 / ADR-018)", () => {
         startActiveManipulation("drag", fakeEvent);
       })()`,
     );
-    await page.waitForTimeout(300);
     // The compact-manip banner should be visible in #shellBanner
+    await waitForShellBannerText(page, "Перемещение и изменение размера — только на desktop");
     const bannerText = await page.locator("#shellBanner").innerText().catch(() => "");
     expect(bannerText).toContain("Перемещение и изменение размера — только на desktop");
   });
@@ -163,7 +167,7 @@ test.describe("Tablet honest-block posture (WO-33 / ADR-018)", () => {
         startActiveManipulation("drag", fakeEvent);
       })()`,
     );
-    await page.waitForTimeout(300);
+    await waitForShellBannerText(page, "Перемещение и изменение размера — только на desktop");
     const bannerText = await page.locator("#shellBanner").innerText().catch(() => "");
     expect(bannerText).toContain("Перемещение и изменение размера — только на desktop");
   });
@@ -191,7 +195,7 @@ test.describe("Tablet honest-block posture (WO-33 / ADR-018)", () => {
         startActiveManipulation("drag", fakeEvent);
       })()`,
     );
-    await page.waitForTimeout(300);
+    await waitForShellBannerText(page, "Перемещение и изменение размера — только на desktop");
     const bannerText = await page.locator("#shellBanner").innerText().catch(() => "");
     expect(bannerText).toContain("Перемещение и изменение размера — только на desktop");
   });
@@ -219,7 +223,7 @@ test.describe("Tablet honest-block posture (WO-33 / ADR-018)", () => {
         startActiveManipulation("resize", fakeEvent, "se");
       })()`,
     );
-    await page.waitForTimeout(300);
+    await waitForShellBannerText(page, "Перемещение и изменение размера — только на desktop");
     const bannerText = await page.locator("#shellBanner").innerText().catch(() => "");
     expect(bannerText).toContain("Перемещение и изменение размера — только на desktop");
   });
@@ -239,7 +243,7 @@ test.describe("Tablet honest-block posture (WO-33 / ADR-018)", () => {
         if (window.reportCompactRailBlock) window.reportCompactRailBlock();
       })()`,
     );
-    await page.waitForTimeout(300);
+    await waitForShellBannerText(page, "Перетаскивание слайдов — только на desktop");
     const bannerText = await page.locator("#shellBanner").innerText().catch(() => "");
     expect(bannerText).toContain("Перетаскивание слайдов — только на desktop");
   });

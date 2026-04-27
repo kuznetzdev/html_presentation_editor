@@ -22,6 +22,11 @@ const {
   closeCompactShellPanels,
   clickPreview,
 } = require("../helpers/editorApp");
+const {
+  captureCommandSeq,
+  waitForCommandSeqAdvance,
+  waitForPreviewReady,
+} = require("../helpers/waits");
 
 async function loadDeck(page) {
   await loadReferenceDeck(page, "v1-selection-engine-v2", { mode: "edit" });
@@ -73,11 +78,12 @@ test.describe("Bridge mutation-path security (v2.0.13)", () => {
       // Force-send the message at the bridge boundary, bypassing schema
       // (sendToBridge calls validateMessage; we want to confirm the
       // handler ALSO rejects in case schema is ever bypassed).
+      const priorSeq = await captureCommandSeq(page);
       await evaluateEditor(
         page,
         "sendToBridge('apply-style', { nodeId: state.selectedNodeId, styleName: 'cssText', value: 'pointer-events:none;background:red' })",
       );
-      await page.waitForTimeout(200);
+      await waitForCommandSeqAdvance(page, priorSeq);
       const after = await evaluateEditor(
         page,
         "state.modelDoc.querySelector('[data-editor-node-id=\"' + state.selectedNodeId + '\"]').getAttribute('style') || ''",
@@ -102,11 +108,12 @@ test.describe("Bridge mutation-path security (v2.0.13)", () => {
         page,
         `(() => { const el = state.modelDoc.querySelector('[data-editor-node-id="' + ${JSON.stringify(targetId)} + '"]'); return el ? (el.getAttribute('href') || '') : ''; })()`,
       );
+      const priorSeq = await captureCommandSeq(page);
       await evaluateEditor(
         page,
         `sendToBridge('update-attributes', { nodeId: ${JSON.stringify(targetId)}, attrs: { href: 'javascript:alert(1)' } })`,
       );
-      await page.waitForTimeout(200);
+      await waitForCommandSeqAdvance(page, priorSeq);
       const after = await evaluateEditor(
         page,
         `(() => { const el = state.modelDoc.querySelector('[data-editor-node-id="' + ${JSON.stringify(targetId)} + '"]'); return el ? (el.getAttribute('href') || '') : ''; })()`,
@@ -122,11 +129,12 @@ test.describe("Bridge mutation-path security (v2.0.13)", () => {
       test.skip(!isChromiumOnlyProject(testInfo.project.name));
       await loadDeck(page);
       const targetId = await evaluateEditor(page, "state.selectedNodeId");
+      const priorSeq = await captureCommandSeq(page);
       await evaluateEditor(
         page,
         `sendToBridge('update-attributes', { nodeId: ${JSON.stringify(targetId)}, attrs: { formaction: 'vbscript:msgbox(1)' } })`,
       );
-      await page.waitForTimeout(200);
+      await waitForCommandSeqAdvance(page, priorSeq);
       const value = await evaluateEditor(
         page,
         `(() => { const el = state.modelDoc.querySelector('[data-editor-node-id="' + ${JSON.stringify(targetId)} + '"]'); return el ? (el.getAttribute('formaction') || '') : ''; })()`,
@@ -143,11 +151,12 @@ test.describe("Bridge mutation-path security (v2.0.13)", () => {
       const targetId = await evaluateEditor(page, "state.selectedNodeId");
       // srcdoc with javascript: as content — full fragment is treated as URL
       // by URL_BEARING_ATTRS path; should drop.
+      const priorSeq = await captureCommandSeq(page);
       await evaluateEditor(
         page,
         `sendToBridge('update-attributes', { nodeId: ${JSON.stringify(targetId)}, attrs: { srcdoc: 'javascript:alert(1)' } })`,
       );
-      await page.waitForTimeout(200);
+      await waitForCommandSeqAdvance(page, priorSeq);
       const value = await evaluateEditor(
         page,
         `(() => { const el = state.modelDoc.querySelector('[data-editor-node-id="' + ${JSON.stringify(targetId)} + '"]'); return el ? (el.getAttribute('srcdoc') || '') : ''; })()`,
@@ -165,11 +174,12 @@ test.describe("Bridge mutation-path security (v2.0.13)", () => {
         page,
         "(() => { const el = state.modelDoc.querySelector('a[data-editor-node-id]'); return el ? el.getAttribute('data-editor-node-id') : state.selectedNodeId; })()",
       );
+      const priorSeq = await captureCommandSeq(page);
       await evaluateEditor(
         page,
         `sendToBridge('update-attributes', { nodeId: ${JSON.stringify(targetId)}, attrs: { href: 'https://example.com/path' } })`,
       );
-      await page.waitForTimeout(200);
+      await waitForCommandSeqAdvance(page, priorSeq);
       const value = await evaluateEditor(
         page,
         `(() => { const el = state.modelDoc.querySelector('[data-editor-node-id="' + ${JSON.stringify(targetId)} + '"]'); return el ? (el.getAttribute('href') || '') : ''; })()`,
@@ -193,16 +203,17 @@ test.describe("Bridge mutation-path security (v2.0.13)", () => {
         "(() => { const slide = state.modelDoc.querySelector('[data-editor-slide-id=\"' + state.activeSlideId + '\"]'); if (!slide) return null; let img = slide.querySelector('img[data-editor-node-id]'); if (!img) { img = state.modelDoc.createElement('img'); img.setAttribute('src', 'https://example.test/placeholder.png'); img.setAttribute('alt', 'placeholder'); img.setAttribute('data-editor-node-id', 'security-test-img'); img.setAttribute('data-editor-entity-kind', 'image'); slide.appendChild(img); rebuildPreviewKeepingContext(state.activeSlideId); } return img.getAttribute('data-editor-node-id'); })()",
       );
       test.skip(!imgId, "Could not synthesize image node for SEC-003 test");
-      await page.waitForTimeout(300);
+      await waitForPreviewReady(page);
       const before = await evaluateEditor(
         page,
         `(() => { const el = state.modelDoc.querySelector('[data-editor-node-id="' + ${JSON.stringify(imgId)} + '"]'); return el ? (el.getAttribute('src') || '') : ''; })()`,
       );
+      const priorSeq = await captureCommandSeq(page);
       await evaluateEditor(
         page,
         `sendToBridge('replace-image-src', { nodeId: ${JSON.stringify(imgId)}, src: 'javascript:alert(1)' })`,
       );
-      await page.waitForTimeout(200);
+      await waitForCommandSeqAdvance(page, priorSeq);
       const after = await evaluateEditor(
         page,
         `(() => { const el = state.modelDoc.querySelector('[data-editor-node-id="' + ${JSON.stringify(imgId)} + '"]'); return el ? (el.getAttribute('src') || '') : ''; })()`,
@@ -225,16 +236,17 @@ test.describe("Bridge mutation-path security (v2.0.13)", () => {
         "(() => { const slide = state.modelDoc.querySelector('[data-editor-slide-id=\"' + state.activeSlideId + '\"]'); if (!slide) return null; let img = slide.querySelector('img[data-editor-node-id]'); if (!img) { img = state.modelDoc.createElement('img'); img.setAttribute('src', 'https://example.test/placeholder.png'); img.setAttribute('alt', 'placeholder'); img.setAttribute('data-editor-node-id', 'security-test-img'); img.setAttribute('data-editor-entity-kind', 'image'); slide.appendChild(img); rebuildPreviewKeepingContext(state.activeSlideId); } return img.getAttribute('data-editor-node-id'); })()",
       );
       test.skip(!imgId, "Could not synthesize image node for SEC-003 test");
-      await page.waitForTimeout(300);
+      await waitForPreviewReady(page);
       const before = await evaluateEditor(
         page,
         `(() => { const el = state.modelDoc.querySelector('[data-editor-node-id="' + ${JSON.stringify(imgId)} + '"]'); return el ? (el.getAttribute('src') || '') : ''; })()`,
       );
+      const priorSeq = await captureCommandSeq(page);
       await evaluateEditor(
         page,
         `sendToBridge('replace-image-src', { nodeId: ${JSON.stringify(imgId)}, src: 'vbscript:msgbox(1)' })`,
       );
-      await page.waitForTimeout(200);
+      await waitForCommandSeqAdvance(page, priorSeq);
       const after = await evaluateEditor(
         page,
         `(() => { const el = state.modelDoc.querySelector('[data-editor-node-id="' + ${JSON.stringify(imgId)} + '"]'); return el ? (el.getAttribute('src') || '') : ''; })()`,
@@ -257,13 +269,14 @@ test.describe("Bridge mutation-path security (v2.0.13)", () => {
         "(() => { const slide = state.modelDoc.querySelector('[data-editor-slide-id=\"' + state.activeSlideId + '\"]'); if (!slide) return null; let img = slide.querySelector('img[data-editor-node-id]'); if (!img) { img = state.modelDoc.createElement('img'); img.setAttribute('src', 'https://example.test/placeholder.png'); img.setAttribute('alt', 'placeholder'); img.setAttribute('data-editor-node-id', 'security-test-img'); img.setAttribute('data-editor-entity-kind', 'image'); slide.appendChild(img); rebuildPreviewKeepingContext(state.activeSlideId); } return img.getAttribute('data-editor-node-id'); })()",
       );
       test.skip(!imgId, "Could not synthesize image node for SEC-003 test");
-      await page.waitForTimeout(300);
+      await waitForPreviewReady(page);
       const dataUri = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=";
+      const priorSeq = await captureCommandSeq(page);
       await evaluateEditor(
         page,
         `sendToBridge('replace-image-src', { nodeId: ${JSON.stringify(imgId)}, src: ${JSON.stringify(dataUri)} })`,
       );
-      await page.waitForTimeout(200);
+      await waitForCommandSeqAdvance(page, priorSeq);
       const after = await evaluateEditor(
         page,
         `(() => { const el = state.modelDoc.querySelector('[data-editor-node-id="' + ${JSON.stringify(imgId)} + '"]'); return el ? (el.getAttribute('src') || '') : ''; })()`,

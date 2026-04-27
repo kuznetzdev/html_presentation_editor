@@ -33,6 +33,7 @@ const {
   getViewerEventCount,
   TELEMETRY_LOG_KEY,
 } = require("../helpers/telemetry-fixtures");
+const { waitForRafTicks, waitForLocalStorage } = require("../helpers/waits");
 
 // ─── Shared setup ────────────────────────────────────────────────────────────
 
@@ -66,7 +67,7 @@ test("TV2 — enable opt-in: viewer becomes visible with valid summary", async (
 
   await enableTelemetry(page);
   // renderTelemetryViewer is called from toggle wiring; give it one RAF tick
-  await page.waitForTimeout(100);
+  await waitForRafTicks(page, 2);
 
   await waitForViewerVisible(page);
 
@@ -85,12 +86,14 @@ test("TV3 — emit 5 events: viewer lists 5 entries", async ({
   await setupViewerTest(page);
 
   await enableTelemetry(page);
-  await page.waitForTimeout(100);
+  await waitForRafTicks(page, 2);
   await waitForViewerVisible(page);
 
   await emitTestEvents(page, 5);
-  // Wait for RAF render cycle triggered by subscriber
-  await page.waitForTimeout(200);
+  // Wait for RAF render cycle triggered by subscriber, then poll on count
+  await expect
+    .poll(() => getViewerEventCount(page), { timeout: 5_000 })
+    .toBeGreaterThanOrEqual(5);
 
   const count = await getViewerEventCount(page);
   // 5 test events + 1 canary (telemetry.enabled) = at least 5; filter is "all"
@@ -105,12 +108,14 @@ test("TV4 — filter chip: 'Ошибки' narrows list to error-level events onl
   await setupViewerTest(page);
 
   await enableTelemetry(page);
-  await page.waitForTimeout(100);
+  await waitForRafTicks(page, 2);
   await waitForViewerVisible(page);
 
   // Emit 9 events: 3 ok, 3 warn, 3 error (emitTestEvents cycles through levels)
   await emitTestEvents(page, 9);
-  await page.waitForTimeout(200);
+  await expect
+    .poll(() => getViewerEventCount(page), { timeout: 5_000 })
+    .toBeGreaterThanOrEqual(3);
 
   const totalBefore = await getViewerEventCount(page);
   expect(totalBefore).toBeGreaterThanOrEqual(3);
@@ -119,7 +124,7 @@ test("TV4 — filter chip: 'Ошибки' narrows list to error-level events onl
   const errorChip = page.locator('.telemetry-filter-chip[data-filter="error"]');
   await expect(errorChip).toBeVisible();
   await errorChip.click();
-  await page.waitForTimeout(100);
+  await waitForRafTicks(page, 2);
 
   const countAfterFilter = await getViewerEventCount(page);
   // After filtering for errors: should have fewer items than total and all have level="error"
@@ -143,24 +148,28 @@ test("TV5 — disable opt-in: viewer re-hides and log is cleared", async ({
   await setupViewerTest(page);
 
   await enableTelemetry(page);
-  await page.waitForTimeout(100);
+  await waitForRafTicks(page, 2);
   await waitForViewerVisible(page);
 
   await emitTestEvents(page, 3);
-  await page.waitForTimeout(100);
+  await waitForRafTicks(page, 2);
 
   // Disable via setEnabled(false) — this matches the toggle wiring in bindTelemetryToggleUi
   await disableTelemetry(page);
-  // renderTelemetryViewer is called from the toggle change handler
-  await page.waitForTimeout(200);
-
-  const isHidden = await page.evaluate(() => {
-    const el = document.getElementById("telemetryViewer");
-    return !el || el.hidden;
-  });
-  expect(isHidden).toBe(true);
+  // renderTelemetryViewer is called from the toggle change handler — poll for hidden
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const el = document.getElementById("telemetryViewer");
+          return !el || el.hidden;
+        }),
+      { timeout: 5_000 },
+    )
+    .toBe(true);
 
   // Log must be cleared after disable
+  await waitForLocalStorage(page, TELEMETRY_LOG_KEY, (raw) => raw === null);
   const logRaw = await page.evaluate(
     (key) => localStorage.getItem(key),
     TELEMETRY_LOG_KEY,
@@ -177,7 +186,13 @@ test("TV6 — export log: exportLog() produces a valid JSON blob with events arr
 
   await enableTelemetry(page);
   await emitTestEvents(page, 3);
-  await page.waitForTimeout(100);
+  // Poll until exportLogJson reports the events flushed to log (subscriber RAF settled)
+  await expect
+    .poll(
+      () => evaluateEditor(page, "(window.telemetry.exportLogJson() || []).length"),
+      { timeout: 5_000 },
+    )
+    .toBeGreaterThanOrEqual(3);
 
   // Call exportLogJson() (the array form) and verify structure
   const log = await evaluateEditor(page, "window.telemetry.exportLogJson()");
@@ -206,7 +221,9 @@ test("TV7 — clear log: confirm-accept empties log", async ({
 
   await enableTelemetry(page);
   await emitTestEvents(page, 5);
-  await page.waitForTimeout(100);
+  await expect
+    .poll(() => getViewerEventCount(page), { timeout: 5_000 })
+    .toBeGreaterThanOrEqual(1);
   await waitForViewerVisible(page);
 
   const countBefore = await getViewerEventCount(page);
@@ -219,8 +236,13 @@ test("TV7 — clear log: confirm-accept empties log", async ({
   await expect(clearBtn).toBeVisible();
   await clearBtn.click();
 
-  // Wait for RAF render cycle
-  await page.waitForTimeout(300);
+  // Poll for log clearing — clearLog() writes one telemetry.cleared marker
+  await expect
+    .poll(
+      () => evaluateEditor(page, "(window.telemetry.readLog() || []).length"),
+      { timeout: 5_000 },
+    )
+    .toBeLessThanOrEqual(1);
 
   // After clearing, the log should be near-empty (telemetry.cleared marker may exist)
   const log = await evaluateEditor(page, "window.telemetry.readLog()");
@@ -238,7 +260,9 @@ test("TV8 — clear log: confirm-decline preserves log", async ({
 
   await enableTelemetry(page);
   await emitTestEvents(page, 5);
-  await page.waitForTimeout(100);
+  await expect
+    .poll(() => evaluateEditor(page, "(window.telemetry.readLog() || []).length"), { timeout: 5_000 })
+    .toBeGreaterThanOrEqual(1);
   await waitForViewerVisible(page);
 
   const logBefore = await evaluateEditor(page, "window.telemetry.readLog()");
@@ -252,7 +276,8 @@ test("TV8 — clear log: confirm-decline preserves log", async ({
   await expect(clearBtn).toBeVisible();
   await clearBtn.click();
 
-  await page.waitForTimeout(200);
+  // Allow dialog dismiss + RAF cycle to settle
+  await waitForRafTicks(page, 2);
 
   const logAfter = await evaluateEditor(page, "window.telemetry.readLog()");
   // Log must be unchanged after dismiss
@@ -276,7 +301,13 @@ test("TV9 — export purity: exported HTML does NOT contain telemetry markers", 
     window.telemetry.emit({ level: "ok", code: "deck.opened", data: {} });
     window.telemetry.emit({ level: "error", code: "bridge.error", data: {} });
   })()`);
-  await page.waitForTimeout(100);
+  // Poll until at least 3 events landed in the in-memory log
+  await expect
+    .poll(
+      () => evaluateEditor(page, "(window.telemetry.readLog() || []).length"),
+      { timeout: 5_000 },
+    )
+    .toBeGreaterThanOrEqual(3);
 
   // Get the session ID so we can search for it specifically
   const sessionId = await evaluateEditor(page, "window.telemetry.getSession().sessionId");

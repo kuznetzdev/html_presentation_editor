@@ -298,6 +298,142 @@ async function waitForPreviewReady(page, opts = {}) {
     .toBe(true);
 }
 
+// ─── Bridge command-seq helpers (v2.0.23 — FLAKE-sweep) ──────────────────────
+
+/**
+ * Capture the current outbound bridge `commandSeq`. Pair with
+ * `waitForCommandSeqAdvance()` to deterministically wait for a mutation to be
+ * dispatched + ack'd.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @returns {Promise<number>} the current state.commandSeq value
+ */
+async function captureCommandSeq(page) {
+  const value = await evaluateEditor(page, "Number(state.commandSeq || 0)");
+  return Number(value || 0);
+}
+
+/**
+ * Wait until state.commandSeq has advanced past `priorSeq` AND the new ack
+ * exists in state.bridgeAcks. This is the precise replacement for arbitrary
+ * `waitForTimeout(N)` calls placed after a `sendToBridge(...)` send: we wait
+ * for the iframe to acknowledge the mutation, not for a wall-clock estimate.
+ *
+ * Use case (e.g. SEC-002 negative test):
+ *
+ *   const prior = await captureCommandSeq(page);
+ *   await evaluateEditor(page, "sendToBridge('update-attributes', ...)");
+ *   await waitForCommandSeqAdvance(page, prior);
+ *   // Now safe to read state.modelDoc and assert no mutation happened.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {number} priorSeq  - the seq value captured BEFORE the send call
+ * @param {{ timeout?: number, requireOk?: boolean }} [opts]
+ */
+async function waitForCommandSeqAdvance(page, priorSeq, opts = {}) {
+  const timeout = opts.timeout ?? DEFAULT_TIMEOUT;
+  const requireOk = opts.requireOk === true; // default false: allow ack:false
+  await expect
+    .poll(
+      () => evaluateEditor(
+        page,
+        `(() => {
+          const seq = Number(state.commandSeq || 0);
+          if (seq <= ${priorSeq}) return false;
+          // Must also have ack(s) for every advanced seq.
+          if (!state.bridgeAcks) return true;
+          for (let s = ${priorSeq} + 1; s <= seq; s += 1) {
+            if (!state.bridgeAcks.has(s)) return false;
+          }
+          return true;
+        })()`,
+      ),
+      { timeout, message: `Waiting for commandSeq to advance past ${priorSeq} with acks`, ...POLL_INTERVALS },
+    )
+    .toBe(true);
+  if (requireOk) {
+    const seq = await evaluateEditor(page, "Number(state.commandSeq || 0)");
+    const ack = await evaluateEditor(
+      page,
+      `JSON.stringify(state.bridgeAcks && state.bridgeAcks.get(${seq}) || null)`,
+    );
+    const parsed = JSON.parse(ack);
+    expect(parsed?.ok, `Bridge ACK seq=${seq} reported ok:false — error: ${parsed?.error?.message || '(none)'}`).toBe(true);
+  }
+}
+
+/**
+ * Wait for one or more requestAnimationFrame ticks to flush. Useful after a
+ * non-bridge state mutation that schedules a render via RAF (e.g. telemetry
+ * subscriber, viewer DOM render).
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {number} [count=2]  - number of RAFs to await (default 2 — covers
+ *                              pending-render → render flushed)
+ */
+async function waitForRafTicks(page, count = 2) {
+  await page.evaluate(
+    (n) =>
+      new Promise((resolve) => {
+        let remaining = n;
+        const tick = () => {
+          remaining -= 1;
+          if (remaining <= 0) resolve();
+          else requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }),
+    count,
+  );
+}
+
+/**
+ * Wait until a localStorage key matches a predicate.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {string} key  - localStorage key
+ * @param {(raw: string|null) => boolean} predicate
+ * @param {{ timeout?: number, message?: string }} [opts]
+ */
+async function waitForLocalStorage(page, key, predicate, opts = {}) {
+  const timeout = opts.timeout ?? DEFAULT_TIMEOUT;
+  const message = opts.message ?? `Waiting for localStorage["${key}"] to satisfy predicate`;
+  await expect
+    .poll(
+      async () => {
+        const raw = await page.evaluate((k) => localStorage.getItem(k), key);
+        return Boolean(predicate(raw));
+      },
+      { timeout, message, ...POLL_INTERVALS },
+    )
+    .toBe(true);
+}
+
+/**
+ * Wait until #shellBanner is visible AND its rendered text contains substring.
+ * Replaces `waitForTimeout(300)` + immediate banner-text assertion in tablet
+ * / banner specs.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {string} substring  - expected portion of banner text
+ * @param {{ timeout?: number }} [opts]
+ */
+async function waitForShellBannerText(page, substring, opts = {}) {
+  const timeout = opts.timeout ?? DEFAULT_TIMEOUT;
+  await expect
+    .poll(
+      async () => {
+        try {
+          return await page.locator("#shellBanner").innerText({ timeout: 250 });
+        } catch {
+          return "";
+        }
+      },
+      { timeout, message: `Waiting for shellBanner to contain "${substring}"`, ...POLL_INTERVALS },
+    )
+    .toContain(substring);
+}
+
 module.exports = {
   waitForState,
   waitForSelection,
@@ -312,4 +448,9 @@ module.exports = {
   waitForContainerModeApplied,
   waitForThemeApplied,
   waitForPreviewReady,
+  captureCommandSeq,
+  waitForCommandSeqAdvance,
+  waitForRafTicks,
+  waitForLocalStorage,
+  waitForShellBannerText,
 };
