@@ -29,7 +29,12 @@
   --shell-border: rgba(29, 29, 31, 0.06);
   --shell-border-strong: rgba(29, 29, 31, 0.12);
   --shell-text: #1d1d1f;
-  --shell-text-muted: rgba(60, 60, 67, 0.6);
+  /* [v2.0.16 / A11Y-001] Light-theme muted text: bumped alpha 0.6 → 0.78
+     to lift contrast from 3.43:1 → ~5.5:1 on #ffffff (WCAG AA ≥ 4.5:1).
+     Apple HIG "secondaryLabel" stock value is 0.6 (3.43:1) but it fails
+     WCAG AA on small text — we trade a sliver of iOS aesthetic fidelity
+     for AA. Dark-theme equivalent below already passes (5.5:1 on #16171a). */
+  --shell-text-muted: rgba(60, 60, 67, 0.78);
   --shell-accent: #0071e3;
   --shell-accent-soft: rgba(0, 113, 227, 0.1);
   --shell-focus: rgba(0, 113, 227, 0.18);

@@ -407,8 +407,11 @@ a:focus-visible,
 
 .mode-toggle button.is-suggested:not(.is-active):not(:disabled) {
   background: var(--shell-accent-soft);
-  color: var(--shell-accent);
-  -webkit-text-fill-color: var(--shell-accent);
+  /* [v2.0.16 / A11Y-001] Original was var(--shell-accent) (#0071e3) on
+     accent-soft (#e5eefb) = 3.69:1, fails WCAG AA. Darkened text by
+     mixing 30% black for ~6.5:1 contrast. */
+  color: color-mix(in srgb, var(--shell-accent), #000 30%);
+  -webkit-text-fill-color: color-mix(in srgb, var(--shell-accent), #000 30%);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--shell-accent) 28%, transparent);
 }
 

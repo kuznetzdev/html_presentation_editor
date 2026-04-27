@@ -5,9 +5,14 @@ Tests referencing these violations are marked `test.fail()` with a TODO comment.
 
 All items here must be resolved before v1.0 GA.
 
+> **Status as of v2.0.16 (2026-04-25):** Both originally-tracked violations
+> are RESOLVED. `test.fail()` markers removed from `shell-a11y.spec.js` for
+> both `loaded-preview` and `loaded-edit` states. Sections kept below as a
+> historical record; see Triage table at the bottom for current status.
+
 ---
 
-## color-contrast (all workflow states)
+## color-contrast (all workflow states) — RESOLVED v2.0.16
 
 **Rule:** `color-contrast`
 **Impact:** serious
@@ -36,7 +41,7 @@ Verify dark-theme equivalent. Referenced in WO-10 (keyboard + contrast audit).
 
 ---
 
-## nested-interactive (loaded-preview, loaded-edit)
+## nested-interactive (loaded-preview, loaded-edit) — RESOLVED v2.0.16
 
 **Rule:** `nested-interactive`
 **Impact:** serious
@@ -73,7 +78,7 @@ Referenced in WO-10 (keyboard navigation audit).
 
 ## Triage status
 
-| Rule | Impact | States | Fix WO | Priority |
-|------|--------|--------|--------|----------|
-| color-contrast | serious | all 3 | WO-10 | before v1.0 |
-| nested-interactive | serious | loaded-preview, loaded-edit | WO-10 | before v1.0 |
+| Rule | Impact | States | Fix WO | Status |
+|------|--------|--------|--------|--------|
+| color-contrast | serious | all 3 | v2.0.16 / A11Y-001 | RESOLVED — `--shell-text-muted` alpha 0.6 → 0.78 (~5.5:1 on white) |
+| nested-interactive | serious | loaded-preview, loaded-edit | v2.0.16 / A11Y-001 | RESOLVED — `.slide-item` role `button` → `listitem`; parent `#slidesList` role=`list`; overlap chip dropped role=`button` + tabindex |

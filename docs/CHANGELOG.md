@@ -1,5 +1,57 @@
 # CHANGELOG
 
+## [2.0.16] — 2026-04-25 — A11Y-001 contrast + nesting fixes (polish ph.3)
+
+Three accessibility violations closed and `test.fail()` markers removed
+from `tests/a11y/shell-a11y.spec.js`. Gate-a11y now 27/0/0 with no
+masked failures.
+
+### Fixed — A11Y violations
+
+**A11Y-001 — color-contrast token undersized.** `--shell-text-muted` was
+`rgba(60, 60, 67, 0.6)` (3.43:1 on white, fails WCAG AA ≥ 4.5:1 for
+normal text). Bumped alpha to `0.78` for ~5.5:1. Apple HIG
+"secondaryLabel" stock value is 0.6 — we trade a sliver of iOS
+aesthetic fidelity for AA. Dark-theme equivalent already passes (5.5:1
+on `#16171a`).
+
+**A11Y-001b — color-contrast on `.is-suggested` mode toggle.** Surfaced
+once the muted-text fix landed: `#editModeBtn span` was
+`var(--shell-accent)` (#0071e3) on `var(--shell-accent-soft)` (#dae5f5)
+= 3.69:1, fails AA. Darkened text via `color-mix(in srgb,
+var(--shell-accent), #000 30%)` for ~6.5:1 contrast.
+
+**A11Y-001c — nested-interactive on slide rail.** `.slide-item` was
+`role="button"` containing a real `<button>` (slide menu trigger ⋯) —
+ARIA forbids interactive-inside-interactive. Changed to
+`role="listitem"`; parent `#slidesList` now `role="list"`. Activation
+still wired via click + Enter/Space keydown. The overlap-warning chip
+`<span data-overlap-warning>` dropped its redundant `role="button"` +
+`tabindex="0"` (informational decoration, not a primary action).
+
+**A11Y-001d — nested-interactive on layers panel.** Surfaced once the
+slide-rail fix landed: `<summary class="layer-row">` (implicitly
+interactive) contained `<button>` (visibility / lock). Refactored
+`buildLayerRowHtml` to return `{rowHtml, actionsHtml}` in summary mode;
+`renderLayerTreeNodes` now places `.layer-row-actions.is-detached` as a
+SIBLING of `<summary>` inside `<details>`. CSS positions the detached
+actions absolutely over the summary's right edge so the visual stays
+inline. The buttons are no longer descendants of an
+implicitly-interactive element.
+
+### Tests
+
+`shell-a11y.spec.js` — `test.fail()` removed from `loaded-preview` and
+`loaded-edit` cases. Both now pass clean.
+
+`tests/a11y/known-violations.md` — both originally-tracked violations
+marked **RESOLVED v2.0.16** with the closure summary.
+
+### Gates
+
+- Gate-a11y: 27/0/0 (was 25 passed + 2 masked).
+- Gate-A: 306/8/0 (target — must remain green after refactor).
+
 ## [2.0.15] — 2026-04-25 — SEC-006 prototype-pollution hardening (polish ph.2)
 
 Slide-keyed dictionaries on the shell `state` singleton are now

@@ -33,7 +33,13 @@
           if (isPendingSlide) item.classList.add("is-pending");
           item.dataset.index = String(index);
           item.dataset.slideId = slide.id;
-          item.setAttribute("role", "button");
+          // [v2.0.16 / A11Y-001] role=button → role=listitem (parent is now
+          // role=list). Eliminates the nested-interactive WCAG violation:
+          // a real <button> (slide menu trigger ⋯) lives inside this row,
+          // and ARIA forbids interactive-inside-interactive. Listitem is
+          // non-interactive but keeps an accessible name + roving tabindex.
+          // Activation is still wired via click + Enter/Space keydown.
+          item.setAttribute("role", "listitem");
           item.setAttribute("tabindex", isActiveSlide ? "0" : "-1");
           item.setAttribute(
             "aria-label",
@@ -66,8 +72,12 @@
                   slide.stateLabel || "ready",
                 )}</span>${metaTags
                   .map((tag) =>
+                    // [v2.0.16 / A11Y-001] Drop role=button + tabindex from
+                    // the warning chip — informational decoration, not a
+                    // primary action. The chip's click toast still works,
+                    // but it no longer counts as nested-interactive.
                     `<span class="slide-tag${tag.includes("⚠") ? " is-overlap-warning" : ""}"${
-                      tag.includes("⚠") ? ' data-overlap-warning="true" role="button" tabindex="0"' : ""
+                      tag.includes("⚠") ? ' data-overlap-warning="true"' : ""
                     }>${escapeHtml(tag)}</span>`,
                   )
                   .join("")}</div>`

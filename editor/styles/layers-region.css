@@ -111,6 +111,32 @@
     transform: translateY(-50%) rotate(90deg);
   }
 
+  /* [v2.0.16 / A11Y-001] When the row is rendered as <summary> (parent in
+     tree), the visibility/lock action buttons are hoisted to a SIBLING
+     .layer-row-actions.is-detached node so they're not descendants of an
+     implicitly-interactive element (eliminates nested-interactive WCAG
+     violation). Position them absolutely over the summary's right edge so
+     the visual stays inline. */
+  .layers-list-container.is-tree-mode .layer-tree-node {
+    position: relative;
+  }
+
+  .layers-list-container.is-tree-mode .layer-tree-node > .layer-row-actions.is-detached {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    display: flex;
+    gap: 2px;
+    z-index: 2;
+    pointer-events: auto;
+  }
+
+  /* Reserve space at the right of summary content so labels don't collide
+     with the detached actions. */
+  .layers-list-container.is-tree-mode .layer-tree-node > summary .layer-trailing {
+    padding-right: 56px;
+  }
+
   .layers-list-container.is-tree-mode .layer-tree-children {
     display: block;
   }

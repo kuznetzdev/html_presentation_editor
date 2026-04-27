@@ -76,16 +76,11 @@ test("shell passes WCAG 2.1 AA axe scan in workflow state: empty", async ({ page
 // State 2: "loaded-preview" — deck loaded in preview mode
 // ---------------------------------------------------------------------------
 test("shell passes WCAG 2.1 AA axe scan in workflow state: loaded-preview", async ({ page }) => {
-  // TODO(WO-10): two known violations:
-  //   1. color-contrast — #8a8a8e on #ffffff = 3.43:1 (needs 4.5:1). Fix: darken --color-secondary.
-  //   2. nested-interactive — slide-item role=button contains focusable descendants.
-  //      Fix: restructure slide rail so outer container is role=listitem, inner is <button>.
-  // See: tests/a11y/known-violations.md
-  test.fail(
-    true,
-    "Known violations: color-contrast + nested-interactive (slide rail). Fix tracked in WO-10.",
-  );
-
+  // [v2.0.16 / A11Y-001] test.fail() removed. Both known violations fixed:
+  //   1. color-contrast — bumped --shell-text-muted alpha 0.6 → 0.78 (5.5:1).
+  //   2. nested-interactive — slide-item role=button → role=listitem,
+  //      overlap-warning chip dropped role=button + tabindex.
+  // See: tests/a11y/known-violations.md (now marked RESOLVED).
   await gotoFreshEditor(page);
   await openHtmlFixture(page, BASIC_DECK_PATH, {
     manualBaseUrl: BASIC_MANUAL_BASE_URL,
@@ -117,16 +112,8 @@ test("shell passes WCAG 2.1 AA axe scan in workflow state: loaded-preview", asyn
 // State 3: "loaded-edit" — deck loaded and in edit mode
 // ---------------------------------------------------------------------------
 test("shell passes WCAG 2.1 AA axe scan in workflow state: loaded-edit", async ({ page }) => {
-  // TODO(WO-10): two known violations:
-  //   1. color-contrast — #8a8a8e on #ffffff = 3.43:1 (needs 4.5:1). Fix: darken --color-secondary.
-  //   2. nested-interactive — slide-item role=button contains focusable descendants.
-  //      Fix: restructure slide rail so outer container is role=listitem, inner is <button>.
-  // See: tests/a11y/known-violations.md
-  test.fail(
-    true,
-    "Known violations: color-contrast + nested-interactive (slide rail). Fix tracked in WO-10.",
-  );
-
+  // [v2.0.16 / A11Y-001] test.fail() removed. Both known violations fixed
+  // (see loaded-preview test above for details).
   await gotoFreshEditor(page);
   await openHtmlFixture(page, BASIC_DECK_PATH, {
     manualBaseUrl: BASIC_MANUAL_BASE_URL,

@@ -539,7 +539,37 @@
           : "";
         const tag = renderAsSummary ? "summary" : "div";
         const depthStyle = depth > 0 ? ` style="--layer-depth:${depth};"` : "";
-        return `
+        // [v2.0.16 / A11Y-001] When the row is rendered as <summary>, the
+        // visibility/lock buttons MUST live outside the summary element to
+        // avoid the nested-interactive WCAG violation (<summary> is
+        // implicitly interactive). renderLayerTreeNodes appends a sibling
+        // .layer-row-actions-detached node after the <summary>; CSS uses
+        // grid to keep it visually inline with the summary content.
+        const actionsHtml = `
+              <div class="layer-row-actions${renderAsSummary ? " is-detached" : ""}">
+                <button
+                  type="button"
+                  class="layer-action-btn layer-visibility-btn ${isHidden ? "is-hidden" : ""}"
+                  data-layer-node-id="${escapeHtml(nodeId)}"
+                  aria-label="${isHidden ? "Показать слой" : "Скрыть слой"}"
+                  title="${isHidden ? "Показать слой" : "Скрыть слой"}"
+                >
+                  ${eyeIcon}
+                </button>
+                ${lockButtonHtml}
+              </div>
+        `;
+        const trailingHtml = renderAsSummary
+          ? `
+            <div class="layer-trailing">
+              <div class="layer-status-list">${buildLayerStatusChipsHtml(chips)}</div>
+            </div>`
+          : `
+            <div class="layer-trailing">
+              <div class="layer-status-list">${buildLayerStatusChipsHtml(chips)}</div>
+              ${actionsHtml}
+            </div>`;
+        const rowHtml = `
           <${tag}
             class="layer-row ${isActive ? "is-active" : ""}"
             data-layer-node-id="${escapeHtml(nodeId)}"
@@ -553,23 +583,17 @@
               <span class="layer-label">${label}</span>
               <span class="layer-meta">${escapeHtml(stackHint)}</span>
             </div>
-            <div class="layer-trailing">
-              <div class="layer-status-list">${buildLayerStatusChipsHtml(chips)}</div>
-              <div class="layer-row-actions">
-                <button
-                  type="button"
-                  class="layer-action-btn layer-visibility-btn ${isHidden ? "is-hidden" : ""}"
-                  data-layer-node-id="${escapeHtml(nodeId)}"
-                  aria-label="${isHidden ? "Показать слой" : "Скрыть слой"}"
-                  title="${isHidden ? "Показать слой" : "Скрыть слой"}"
-                >
-                  ${eyeIcon}
-                </button>
-                ${lockButtonHtml}
-              </div>
-            </div>
+            ${trailingHtml}
           </${tag}>
         `;
+        // For summary-mode parents, the actions <div> is appended after the
+        // <summary> by renderLayerTreeNodes via a HTML-string concatenation.
+        // The renderer slices the row + actions on the
+        // -LAYER-ACTIONS- sentinel below.
+        if (renderAsSummary) {
+          return { rowHtml: rowHtml, actionsHtml: actionsHtml };
+        }
+        return rowHtml;
       }
 
       // [v1.1.5 / ADR-034] Build a parent-child tree from the flat sorted list
@@ -613,7 +637,7 @@
             if (!entry.children.length) {
               return buildLayerRowHtml(entry.el, entry.index, ctx, { depth });
             }
-            const summaryHtml = buildLayerRowHtml(entry.el, entry.index, ctx, {
+            const summaryParts = buildLayerRowHtml(entry.el, entry.index, ctx, {
               depth,
               renderAsSummary: true,
             });
@@ -623,9 +647,15 @@
                 entry.nodeId &&
                 state.layerTreeCollapsed.has(entry.nodeId),
             );
+            // [v2.0.16 / A11Y-001] Actions HTML is now placed as a SIBLING
+            // of <summary> inside <details>. Because it's not nested under
+            // the implicitly-interactive <summary>, axe no longer flags
+            // nested-interactive. CSS positions .layer-row-actions.is-detached
+            // absolutely over the summary's right edge to keep the visual.
             return `
               <details class="layer-tree-node" ${collapsed ? "" : "open"} data-layer-tree-depth="${depth}" data-layer-tree-nodeid="${escapeHtml(entry.nodeId)}">
-                ${summaryHtml}
+                ${summaryParts.rowHtml}
+                ${summaryParts.actionsHtml}
                 <div class="layer-tree-children">${childrenHtml}</div>
               </details>
             `;
