@@ -236,7 +236,7 @@ See `docs/GITHUB_PACKAGES.md` for the exact recommendation and tradeoffs.
 
 ## Recent milestone tags
 
-Current: **v2.0.20 — CI workflows for gate-A + gate-secondary**
+Current: **v2.0.21 — Pre-commit syntax guard**
 (2026-04-25) on top of **v2.0.0 GA**.
 See [`docs/AUDIT-REPORT-2026-04-26.md`](docs/AUDIT-REPORT-2026-04-26.md)
 for the full audit that drove the post-v2 polish track.
@@ -245,10 +245,17 @@ Post-v2 roadmap: [`docs/POST_V2_ROADMAP.md`](docs/POST_V2_ROADMAP.md).
 
 The v1.0.3 → v2.0.0 redesign trajectory: **26 incremental release
 points** (v1.1.0 → v2.0.0 inclusive) across Phases A–E + 6 hardening
-sprints, plus **20 post-GA polish tags** (v2.0.1–v2.0.20).
+sprints, plus **21 post-GA polish tags** (v2.0.1–v2.0.21).
 
 ### v2.0 trajectory
 
+- `v2.0.21` — Pre-commit syntax guard:
+  `scripts/precommit-bridge-script-syntax.js` runs `node --check`
+  on the 11 hot editor JS files (most critical:
+  `bridge-script.js` — 3,800-line template literal where a
+  stray backtick silently breaks the iframe). Wired as first
+  step of `npm run test:gate-a` + exposed as `npm run precommit`.
+  Phase 8 of 9.
 - `v2.0.20` — CI workflows: gate-A runs on every push + PR
   (Node 18/20/22 matrix, Playwright browser cache); gate-secondary
   (B/C/D/E/A11Y/Visual) runs nightly. Phase 7 of 9.

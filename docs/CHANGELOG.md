@@ -1,5 +1,44 @@
 # CHANGELOG
 
+## [2.0.21] — 2026-04-25 — Pre-commit syntax guard (polish ph.8)
+
+Adds `scripts/precommit-bridge-script-syntax.js` which runs
+`node --check` on the 11 hottest editor JS files (most importantly
+`editor/src/bridge-script.js` — a 3,800-line template literal where a
+stray backtick silently breaks the entire iframe bridge). Wired as
+the first step of `npm run test:gate-a` so CI catches the bug
+immediately, and exposed as `npm run precommit` for local hooks
+(husky / git-hooks-automation).
+
+### Added
+
+- `scripts/precommit-bridge-script-syntax.js` — runs `node --check` on:
+  `bridge-script.js`, `bridge.js`, `bridge-schema.js`,
+  `bridge-commands.js`, `state.js`, `slides.js`, `slide-rail.js`,
+  `layers-panel.js`, `export.js`, `export-pptx/index.js`,
+  `experimental-badge.js`. Exits with `process.exit(1)` on the first
+  syntax failure with a clear message.
+- `npm run precommit` script that invokes the above.
+- `npm run test:gate-a` now runs the precommit guard first (~2-3
+  seconds) before launching Playwright (~14 minutes). A syntax error
+  is caught before browser startup.
+
+### Deferred
+
+The audit-pointed `waitForTimeout` flake-sweep (target ≤ 10 instances)
+remains a follow-up. Current count: 71 across 18 files. The largest
+offenders are `telemetry-viewer.spec.js` (15), `bridge-mutation-security.spec.js`
+(11), `tablet-honest.spec.js` (6). These need bespoke `expect.poll` /
+`waitForFunction` rewrites per call site; doing them safely without
+introducing new flake takes more time than this polish phase budget
+allows. Tracked for v2.1.0.
+
+### Gates
+
+- Gate-A: 315/8/0 (unchanged + ~2s startup syntax check).
+- `node scripts/precommit-bridge-script-syntax.js` standalone:
+  `[precommit] all syntax checks passed.`
+
 ## [2.0.20] — 2026-04-25 — CI workflows: gate-A on every PR + gate-secondary nightly (polish ph.7)
 
 Adds GitHub Actions workflows so every push and pull request gets the
