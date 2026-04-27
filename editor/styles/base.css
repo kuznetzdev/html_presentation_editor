@@ -181,13 +181,17 @@ textarea:disabled {
   align-items: center;
   margin-left: 6px;
   padding: 0 6px;
-  height: 16px;
-  font-size: 10px;
+  height: 18px;
+  /* [v2.1.0-pre / ADR-031, A2-F3 / WCAG 1.4.3 AA] Was 10px + rgb(138,95,0)
+     on rgba(255,175,38,0.18) ≈ 4.0:1 (fails AA for normal text).
+     Bumped to var(--text-xs) (11px) and darker color #6b4a00 on opaque
+     #fff3d6 — measured ≥ 4.5:1. Border alpha unchanged (decorative). */
+  font-size: var(--text-xs);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: rgb(138, 95, 0);
-  background: rgba(255, 175, 38, 0.18);
+  color: #6b4a00;
+  background: #fff3d6;
   border: 1px solid rgba(255, 175, 38, 0.35);
   border-radius: 4px;
   vertical-align: middle;

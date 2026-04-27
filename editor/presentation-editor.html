@@ -135,10 +135,16 @@
 
       <div class="topbar-center">
         <div class="mode-toggle" role="group" aria-label="Режим работы">
-          <button type="button" id="previewModeBtn" class="is-active">
+          <!-- [v2.1.0-pre / ADR-031, A2-F11 / WCAG 4.1.2] Initial aria-pressed
+               in HTML for progressive enhancement; JS continues to toggle
+               via setToggleButtonState(). Matches existing inspector +
+               selection-mode toggles. -->
+          <button type="button" id="previewModeBtn" class="is-active"
+                  aria-pressed="true">
             <span>Превью</span>
           </button>
-          <button type="button" id="editModeBtn" disabled>
+          <button type="button" id="editModeBtn" disabled
+                  aria-pressed="false">
             <span>Редактирование</span>
           </button>
         </div>
@@ -202,6 +208,7 @@
       class="topbar-overflow-menu"
       role="menu"
       aria-hidden="true"
+      aria-orientation="vertical"
       aria-label="Дополнительные команды topbar"
     >
       <div class="topbar-overflow-menu-inner">
@@ -287,6 +294,7 @@
           class="slides-template-bar"
           role="menu"
           aria-hidden="true"
+          aria-orientation="vertical"
           aria-label="Шаблоны слайдов"
         >
           <div class="slides-template-help hint">
@@ -444,6 +452,7 @@
             role="menu"
             aria-label="Меню вставки"
             aria-hidden="true"
+            aria-orientation="horizontal"
             aria-describedby="quickPaletteDescription"
           >
             <div id="quickPaletteDescription" class="palette-help hint">
@@ -877,10 +886,12 @@
               role="group"
               aria-label="Уровень инспектора"
             >
-              <button type="button" id="basicModeBtn" class="is-active">
+              <button type="button" id="basicModeBtn" class="is-active"
+                      aria-pressed="true">
                 <span>Простой</span>
               </button>
-              <button type="button" id="advancedModeBtn"><span>Полный</span></button>
+              <button type="button" id="advancedModeBtn" aria-pressed="false"
+                ><span>Полный</span></button>
             </div>
             <button
               type="button"
@@ -989,10 +1000,11 @@
               role="group"
               aria-label="Режим выделения"
             >
-              <button type="button" id="smartModeBtn" class="is-active">
+              <button type="button" id="smartModeBtn" class="is-active"
+                      aria-pressed="true">
                 <span>⊞ Листы</span>
               </button>
-              <button type="button" id="containerModeBtn">
+              <button type="button" id="containerModeBtn" aria-pressed="false">
                 <span>▣ Группы</span>
               </button>
             </div>
@@ -1683,10 +1695,13 @@
       </button>
     </nav>
 
-    <div class="modal" id="openHtmlModal" aria-hidden="true">
+    <!-- [v2.1.0-pre / ADR-031, A2-F1 / WCAG 4.1.2] role=dialog + aria-modal +
+         aria-labelledby for SR dialog announcement. -->
+    <div class="modal" id="openHtmlModal" aria-hidden="true"
+         role="dialog" aria-modal="true" aria-labelledby="openHtmlModalTitle">
       <div class="modal-card">
         <div class="modal-header">
-          <h3>Открыть HTML</h3>
+          <h3 id="openHtmlModalTitle">Открыть HTML</h3>
           <button
             type="button"
             class="ghost-btn"
@@ -1780,7 +1795,8 @@
       </div>
     </div>
 
-    <div class="modal" id="htmlEditorModal" aria-hidden="true">
+    <div class="modal" id="htmlEditorModal" aria-hidden="true"
+         role="dialog" aria-modal="true" aria-labelledby="htmlEditorModalTitle">
       <div class="modal-card">
         <div class="modal-header">
           <h3 id="htmlEditorModalTitle">Редактирование HTML</h3>
@@ -1818,10 +1834,11 @@
       </div>
     </div>
 
-    <div class="modal" id="videoInsertModal" aria-hidden="true">
+    <div class="modal" id="videoInsertModal" aria-hidden="true"
+         role="dialog" aria-modal="true" aria-labelledby="videoInsertModalTitle">
       <div class="modal-card">
         <div class="modal-header">
-          <h3>Вставить видео</h3>
+          <h3 id="videoInsertModalTitle">Вставить видео</h3>
           <button
             type="button"
             class="ghost-btn"
@@ -1884,10 +1901,11 @@
     </div>
 
     <!-- Keyboard shortcuts reference modal -->
-    <div class="modal" id="shortcutsModal" aria-hidden="true">
+    <div class="modal" id="shortcutsModal" aria-hidden="true"
+         role="dialog" aria-modal="true" aria-labelledby="shortcutsModalTitle">
       <div class="modal-card modal-card--wide">
         <div class="modal-header">
-          <h3>⌨ Горячие клавиши</h3>
+          <h3 id="shortcutsModalTitle">⌨ Горячие клавиши</h3>
           <button type="button" class="ghost-btn" data-close-modal="shortcutsModal">Закрыть</button>
         </div>
         <div class="modal-body shortcuts-modal-body">
@@ -1941,7 +1959,8 @@
     <!-- Context menu
        Кастомное меню редактора. Строится динамически под тип элемента и никогда
        не использует системное browser-menu внутри iframe в edit-режиме. -->
-    <div id="contextMenu" class="context-menu" role="menu" aria-hidden="true">
+    <div id="contextMenu" class="context-menu" role="menu" aria-hidden="true"
+         aria-orientation="vertical">
       <div id="contextMenuInner" class="context-menu-inner"></div>
     </div>
 

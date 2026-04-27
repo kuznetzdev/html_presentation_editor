@@ -495,6 +495,11 @@
           groupItems.forEach((item) => {
             const button = document.createElement("button");
             button.type = "button";
+            // [v2.1.0-pre / ADR-031, A2-F2 / WCAG 4.1.2] role=menuitem so the
+            // ARIA menu pattern is complete (parent #contextMenu has role=menu
+            // since the original implementation). Without this, axe reports
+            // aria-required-children and SR menu navigation breaks.
+            button.setAttribute("role", "menuitem");
             button.dataset.menuAction = item.action;
             if (item.nodeId) button.dataset.layerNodeId = item.nodeId;
             if (item.danger) button.classList.add("danger-item");
