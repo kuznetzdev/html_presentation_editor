@@ -538,28 +538,18 @@
                 <button type="button" id="emptyOpenBtn" class="primary-btn">
                   Открыть HTML
                 </button>
-                <button type="button" id="emptyStarterDeckBtn" class="ghost-btn">
-                  Попробовать на примере
+                <button type="button" id="emptyPasteBtn" class="ghost-btn">
+                  Вставить из буфера
                 </button>
-                <div class="empty-state-more" data-empty-state-more>
-                  <button
-                    type="button"
-                    id="emptyMoreToggleBtn"
-                    class="text-btn"
-                    aria-expanded="false"
-                    aria-controls="emptyMorePanel"
-                  >
-                    Дополнительно ▾
-                  </button>
-                  <div id="emptyMorePanel" class="empty-state-more-panel" hidden>
-                    <button type="button" id="emptyPasteBtn" class="ghost-btn">
-                      Вставить из буфера
-                    </button>
-                  </div>
-                </div>
               </div>
               <div class="empty-state-footnote" id="emptyStateFootnote">
-                Загрузите HTML для предпросмотра.
+                Или
+                <button
+                  type="button"
+                  id="emptyStarterDeckBtn"
+                  class="text-link-btn"
+                  aria-label="Открыть стартовый пример"
+                >попробуйте на примере</button>.
               </div>
             </div>
             <iframe

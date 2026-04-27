@@ -236,8 +236,8 @@ See `docs/GITHUB_PACKAGES.md` for the exact recommendation and tradeoffs.
 
 ## Recent milestone tags
 
-Current: **v2.0.28 — Empty-state landing redesign (UX polish)**
-(2026-04-27) on top of **v2.0.0 GA**.
+Current: **v2.0.29 — True landing mode: editor chrome hidden at empty state**
+(2026-04-28) on top of **v2.0.0 GA**.
 See [`docs/AUDIT-REPORT-2026-04-26.md`](docs/AUDIT-REPORT-2026-04-26.md)
 for the full audit that drove the post-v2 polish track.
 Full release notes: [`docs/RELEASE-v2.0.md`](docs/RELEASE-v2.0.md).
@@ -245,10 +245,17 @@ Post-v2 roadmap: [`docs/POST_V2_ROADMAP.md`](docs/POST_V2_ROADMAP.md).
 
 The v1.0.3 → v2.0.0 redesign trajectory: **26 incremental release
 points** (v1.1.0 → v2.0.0 inclusive) across Phases A–E + 6 hardening
-sprints, plus **28 post-GA polish tags** (v2.0.1–v2.0.28).
+sprints, plus **29 post-GA polish tags** (v2.0.1–v2.0.29).
 
 ### v2.0 trajectory
 
+- `v2.0.29` — True landing mode: hides ALL editor chrome (preview header
+  with zoom controls, "Следующий шаг" preview note with status pills and
+  editing buttons) when no deck is loaded. Empty-state restructured to
+  2 directly-visible main CTAs (Open HTML + Paste from clipboard) plus a
+  tertiary text-link inside the footnote ("Или [попробуйте на примере].").
+  Disclosure pattern (`#emptyMoreToggleBtn` + `#emptyMorePanel`) removed —
+  paste-from-clipboard is a primary user need, not a "more options" feature.
 - `v2.0.28` — Empty-state landing redesign (UX polish): minimalist hero
   card with HIG empty-state convention (centered), Material 3 elevation
   level-1 (layered shadow), WCAG AA token-driven contrast. Removed the

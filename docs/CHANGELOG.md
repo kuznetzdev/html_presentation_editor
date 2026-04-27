@@ -1,5 +1,86 @@
 # CHANGELOG
 
+## [2.0.29] — 2026-04-28 — True landing mode: hide editor chrome at empty state
+
+User feedback after v2.0.28: "When no HTML presentation is loaded, why show
+zoom controls and other editing buttons? Leave the page literally with a
+couple of buttons for loading from clipboard or from file."
+
+This release converts the editor's first-load state into a **true landing**:
+all editing chrome (preview header with zoom controls, "Следующий шаг" preview
+note with status pills and editing buttons) is hidden until a deck is loaded.
+The user sees only: top-bar with theme toggle + Open HTML button, and a
+focused empty-state card with two main CTAs.
+
+### Changed — empty-state actions
+
+Disclosure pattern (`Дополнительно ▾` toggle revealing paste-from-clipboard)
+removed. Paste-from-clipboard is a primary user need, not a "more options"
+feature. Restructured to:
+
+- **Primary:** `#emptyOpenBtn` → "Открыть HTML"
+- **Secondary:** `#emptyPasteBtn` → "Вставить из буфера" (now directly visible)
+- **Tertiary:** `#emptyStarterDeckBtn` → text-link inside footnote
+  ("Или [попробуйте на примере].")
+
+`#emptyMoreToggleBtn` and `#emptyMorePanel` removed from DOM.
+`bindEmptyStateDisclosure()` removed from `editor/src/onboarding.js` (dead
+code after element removal).
+
+### Added — `.text-link-btn` style
+
+Minimal text-link button style (transparent background, accent color,
+underline-on-hover, focus-visible ring). Used for the starter-deck tertiary
+CTA inside the footnote.
+
+### Added — preview chrome hiding (CSS, `body[data-editor-workflow="empty"]`)
+
+```css
+body[data-editor-workflow="empty"] #mainPreviewPanel > .panel-header,
+body[data-editor-workflow="empty"] .preview-note {
+  display: none !important;
+}
+```
+
+Hides:
+- `.panel-header` ("Превью" h2 + subtext + zoom controls −/100%/+/1:1)
+- `.preview-note` ("Следующий шаг" eyebrow + title + status summary +
+  preview-mode action buttons + interaction state pills)
+
+Plus collapses `.preview-shell` chrome (padding, background, border, shadow)
+and centers `.preview-stage` to the viewport so the empty-state card sits
+visually centered. Chrome reappears as soon as `data-editor-workflow` flips
+away from `"empty"` (i.e. as soon as a deck is loaded).
+
+### Changed — `editor/src/onboarding.js`
+
+Removed runtime override of `els.emptyStateFootnote.textContent` — the HTML
+markup is now the source of truth for footnote copy (it carries the
+text-link button which would be stripped by `textContent` setter). Updated
+`#emptyStarterDeckBtn` text override to lowercase casual form
+("попробуйте на примере") to match the link's in-sentence position.
+
+### Test updates
+
+- `tests/playwright/specs/onboarding.spec.js`: rewritten "empty state
+  renders 2 main CTAs (open + paste) directly visible + 1 starter text link"
+  test; replaced "disclosure toggle shows and hides..." test with
+  "paste button is keyboard-reachable directly". Asserts
+  `#emptyMoreToggleBtn` and `#emptyMorePanel` `toHaveCount(0)`.
+- `tests/playwright/specs/shell.smoke.spec.js`: "novice empty state hides
+  editing chrome and keeps one obvious start path" test updated —
+  `emptyPaste` is now expected `true` (was `false` behind disclosure);
+  `emptyMoreToggleBtn` and `emptyMorePanel` asserted absent.
+
+### Verification
+
+- `shell.smoke.spec.js` + `onboarding.spec.js` + `onboarding-v2.spec.js`:
+  **32 passed / 4 skipped / 0 failed** (1.4m, chromium-desktop).
+- Empty-state DOM IDs preserved: `#emptyOpenBtn`, `#emptyPasteBtn`,
+  `#emptyStarterDeckBtn`, `#emptyState`, `#emptyStateTitle`,
+  `#emptyStateLead`, `#emptyStateFootnote`.
+- Removed IDs: `#emptyMoreToggleBtn`, `#emptyMorePanel`.
+
 ## [2.0.28] — 2026-04-27 — Empty-state landing redesign (UX polish)
 
 User-facing visual polish for the editor's first-load empty state. Applies

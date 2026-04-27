@@ -787,11 +787,14 @@ test.describe("Editor shell smoke @harness", () => {
     expect(shell.workflow).toBe("empty");
     expect(shell.controls.open).toBe(true);
     expect(shell.controls.emptyOpen).toBe(true);
-    // emptyPasteBtn is now inside a disclosure panel (#emptyMorePanel) — hidden by default (WO-25)
-    expect(shell.controls.emptyPaste).toBe(false);
+    // v2.0.29 — paste button is now directly visible (disclosure pattern removed,
+    // paste-from-clipboard is a primary user need, not a "more options" feature).
+    expect(shell.controls.emptyPaste).toBe(true);
+    // Starter deck link is rendered as a tertiary text-link inside the footnote.
     await expect(page.locator("#emptyStarterDeckBtn")).toBeVisible();
-    // Disclosure toggle must be visible
-    await expect(page.locator("#emptyMoreToggleBtn")).toBeVisible();
+    // Disclosure toggle and panel were removed in v2.0.29.
+    await expect(page.locator("#emptyMoreToggleBtn")).toHaveCount(0);
+    await expect(page.locator("#emptyMorePanel")).toHaveCount(0);
     expect(shell.controls.previewMode).toBe(false);
     expect(shell.controls.editMode).toBe(false);
     expect(shell.controls.basicMode).toBe(false);

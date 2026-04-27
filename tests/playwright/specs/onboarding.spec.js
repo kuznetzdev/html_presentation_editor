@@ -7,8 +7,12 @@ const {
   gotoFreshEditor,
 } = require("../helpers/editorApp");
 
-test.describe("Empty-state CTA rehome — WO-25 @onboarding", () => {
-  test("empty state renders exactly 2 visible buttons + 1 disclosure toggle", async ({
+test.describe("Empty-state landing — WO-25 / v2.0.29 @onboarding", () => {
+  // v2.0.29: empty-state simplified to 2 main CTAs + 1 tertiary text link.
+  // Disclosure pattern (Дополнительно ▾ → paste) was removed in favor of paste
+  // being directly visible — paste-from-clipboard is a primary user need, not
+  // a "more options" feature.
+  test("empty state renders 2 main CTAs (open + paste) directly visible + 1 starter text link", async ({
     page,
   }) => {
     await gotoFreshEditor(page);
@@ -18,52 +22,36 @@ test.describe("Empty-state CTA rehome — WO-25 @onboarding", () => {
     await expect(openBtn).toBeVisible();
     await expect(openBtn).toHaveText(/Открыть HTML/);
 
-    // Secondary ghost button: Попробовать на примере
+    // Secondary ghost button: Вставить из буфера (now directly visible)
+    const pasteBtn = page.locator("#emptyPasteBtn");
+    await expect(pasteBtn).toBeVisible();
+    await expect(pasteBtn).toHaveText(/Вставить из буфера/);
+
+    // Tertiary text link inside footnote: попробуйте на примере
     const starterBtn = page.locator("#emptyStarterDeckBtn");
     await expect(starterBtn).toBeVisible();
-    await expect(starterBtn).toHaveText(/Попробовать на примере/);
+    await expect(starterBtn).toHaveText(/попробуйте на примере/);
 
-    // Accessibility: starter button should have aria-label for screen readers
+    // Accessibility: starter link still carries aria-label
     await expect(starterBtn).toHaveAttribute("aria-label", "Открыть стартовый пример");
 
-    // Disclosure toggle: Дополнительно — visible but paste panel is hidden
-    const toggleBtn = page.locator("#emptyMoreToggleBtn");
-    await expect(toggleBtn).toBeVisible();
-    await expect(toggleBtn).toHaveText(/Дополнительно/);
-    await expect(toggleBtn).toHaveAttribute("aria-expanded", "false");
-
-    // Paste button is hidden inside the disclosure panel
-    const pasteBtn = page.locator("#emptyPasteBtn");
-    const morePanel = page.locator("#emptyMorePanel");
-    await expect(morePanel).toBeHidden();
-    await expect(pasteBtn).toBeHidden();
+    // Disclosure pattern removed in v2.0.29 — toggle + panel no longer in DOM
+    await expect(page.locator("#emptyMoreToggleBtn")).toHaveCount(0);
+    await expect(page.locator("#emptyMorePanel")).toHaveCount(0);
   });
 
-  test("disclosure toggle shows and hides the paste button panel", async ({
+  test("paste button is keyboard-reachable directly (no disclosure to expand)", async ({
     page,
   }) => {
     await gotoFreshEditor(page);
 
-    const toggleBtn = page.locator("#emptyMoreToggleBtn");
-    const morePanel = page.locator("#emptyMorePanel");
     const pasteBtn = page.locator("#emptyPasteBtn");
-
-    // Initially hidden
-    await expect(morePanel).toBeHidden();
-    await expect(toggleBtn).toHaveAttribute("aria-expanded", "false");
-
-    // Click to expand
-    await toggleBtn.click();
-    await expect(morePanel).toBeVisible();
-    await expect(toggleBtn).toHaveAttribute("aria-expanded", "true");
-    await expect(toggleBtn).toHaveText(/Дополнительно ▴/);
     await expect(pasteBtn).toBeVisible();
 
-    // Click again to collapse
-    await toggleBtn.click();
-    await expect(morePanel).toBeHidden();
-    await expect(toggleBtn).toHaveAttribute("aria-expanded", "false");
-    await expect(toggleBtn).toHaveText(/Дополнительно ▾/);
+    // Reachable via Tab from open button
+    await page.locator("#emptyOpenBtn").focus();
+    await page.keyboard.press("Tab");
+    await expect(pasteBtn).toBeFocused();
   });
 
   test("STARTER_DECKS.basic.href points to editor/fixtures/basic-deck.html", async ({

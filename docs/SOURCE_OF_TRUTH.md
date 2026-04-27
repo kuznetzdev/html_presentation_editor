@@ -219,7 +219,18 @@ The preview zoom feature uses the CSS `zoom:` property which is on the W3C stand
 
 ## Release state
 
-**Current**: v2.0.28 — Empty-state landing redesign (UX polish)
+**Current**: v2.0.29 — True landing mode: editor chrome hidden at empty state
+(2026-04-28). v2.0.0 GA + twenty-nine post-GA polish tags.
+All editing chrome (`.panel-header` with zoom controls, `.preview-note`
+with status pills + editing buttons) is hidden via
+`body[data-editor-workflow="empty"]` until a deck is loaded. Empty-state
+actions restructured to 2 directly-visible main CTAs (Open HTML, Paste
+from clipboard) plus a tertiary text-link in the footnote
+("Или попробуйте на примере."). Disclosure pattern (`#emptyMoreToggleBtn`
++ `#emptyMorePanel`) removed from DOM. Tests updated; smoke + onboarding
+**32/4/0**.
+
+**Previous**: v2.0.28 — Empty-state landing redesign (UX polish)
 (2026-04-27). v2.0.0 GA + twenty-eight post-GA polish tags.
 Minimalist empty-state hero per HIG/M3 — removed the fake-affordance
 "КАК НАЧАТЬ РАБОТУ" kicker pill (~2.4:1 dark-theme contrast offender

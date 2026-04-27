@@ -29,10 +29,9 @@
             els.emptyStateLead.textContent =
               "Редактор открывает файл напрямую — без конвертации. После загрузки можно сразу переходить к правке.";
           }
-          if (els.emptyStateFootnote) {
-            els.emptyStateFootnote.textContent =
-              "Если в презентации есть картинки, CSS или видео с относительными путями — подключите папку проекта.";
-          }
+          // v2.0.29 — footnote contains the tertiary "попробуйте на примере"
+          // text-link button. Do NOT overwrite footnote.textContent (it would
+          // strip the button); the markup already carries the canonical copy.
           const emptyPasteBtn =
             document.getElementById("emptyPasteBtn");
           if (emptyPasteBtn instanceof HTMLButtonElement) {
@@ -43,11 +42,12 @@
             els.emptyOpenBtn.textContent = "Открыть HTML";
           }
           if (els.emptyStarterDeckBtn) {
-            els.emptyStarterDeckBtn.textContent = "Попробовать на примере";
+            // v2.0.29 — starter button is now a tertiary text-link inside the
+            // footnote ("Или попробуйте на примере."), lowercase casual form.
+            els.emptyStarterDeckBtn.textContent = "попробуйте на примере";
             els.emptyStarterDeckBtn.setAttribute("aria-label", "Открыть стартовый пример");
           }
         }
-        bindEmptyStateDisclosure();
         if (els.openHtmlModal) {
           const warning = els.openHtmlModal.querySelector(".warning-box");
           if (warning) {
