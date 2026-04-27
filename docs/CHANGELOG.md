@@ -1,5 +1,79 @@
 # CHANGELOG
 
+## [2.0.25] — 2026-04-27 — Phase A3': latent regex bugs fixed in bridge-script
+
+Closes the 3 latent regex bugs preserved deliberately during Phase A2 (v2.0.24).
+At three call sites in the iframe-injected bridge code — `getLayoutContainerKind`,
+`getSelectionBreadcrumbLabel`, and `scorePreferredSelectionLeaf` — the regex
+`/\s+/g` (collapse runs of whitespace into a single space) was authored with a
+single backslash inside the wrapping template literal in the original
+`bridge-script.js`. The template-literal evaluator silently consumed the
+backslash, so the runtime regex was actually `/s+/g` (matches literal `s`
+chars, NOT whitespace). Phase A2 (ADR-031) extracted the iframe code to a
+real source file but mandated "same behavior", so the bugs were preserved
+inline with `// PRESERVED runtime semantics` markers pointing at this fix.
+
+### Changed
+
+- `editor/src/bridge-script-iframe.js` — three single-byte source edits:
+  `/s+/g` → `/\s+/g` at lines 1406, 1729, 1855. The 7-line + 2 single-line
+  `// PRESERVED runtime semantics` comment markers introduced in v2.0.24 are
+  removed in the same edits.
+- `editor/src/bridge-script.js` — regenerated from the iframe source via
+  `node scripts/sync-bridge-script.js`. The wrapper now contains
+  `/\\s+/g` (escaped backslash) at the three sites — the template-literal
+  evaluator collapses this to `/\s+/g` at runtime, which is the correct
+  whitespace shorthand. Byte equivalence preserved at all non-fix sites
+  (verified by sync-script idempotency: `npm run precommit` is no-op
+  when run twice in succession against the regenerated wrapper).
+
+### Added
+
+- `tests/playwright/specs/bridge-regex-whitespace.spec.js` — regression
+  guard with three assertions:
+  1. Static-string check on the produced runtime bridge string: bug
+     pattern `/s+/g` count must be 0; fixed pattern `/\s+/g` count must
+     be ≥ 5 (3 fixed sites + 2 pre-existing correct sites that were never
+     affected). Caught the regression on v2.0.24 wrapper bytes
+     (bug-count = 4, including comment-string mention).
+  2. Functional check on the same regex pattern: `"  This  is   a   test  "`
+     normalizes to `"This is a test"` (whitespace collapsed; `s` chars
+     preserved). Differential cross-check against `/s+/g` produces a
+     string without any `s` chars — proving the contrast.
+  3. Selection-breadcrumb-label sample using the exact call shape from
+     `getSelectionBreadcrumbLabel`: indented multi-line text content
+     normalizes to `"This fixture exercises text edit…"` (32-char + ellipsis).
+
+  Wired into `npm run test:gate-a` after `pptx-export-roundtrip.spec.js`.
+  The 3 cases are pure Node-side reads of `editor/src/bridge-script.js` via
+  `vm.createContext` + `vm.runInContext` — no Playwright browser navigation,
+  no full editor boot, runtime ≈ 4 ms.
+
+### Verification
+
+- Gate-A: 318/8/0 (315 prior baseline + 3 new regression cases). Verified
+  end-to-end on Windows.
+- Typecheck (`tsc --noEmit`): clean.
+- `node --check editor/src/bridge-script.js`: pass.
+- `node --check editor/src/bridge-script-iframe.js`: pass.
+- `node scripts/precommit-bridge-script-syntax.js`: pass (12 files).
+- Sync-script byte-equivalence: re-running `node scripts/sync-bridge-script.js`
+  twice in succession produces "no-op (already in sync)" — wrapper diff
+  contains only the 3 fix sites (each: 1 added + 7 or 2 removed comment
+  lines + 1 regex byte). All other ~177 KB of wrapper content is byte-identical
+  to v2.0.24.
+- Fail-then-pass evidence: temporarily reverting `editor/src/bridge-script.js`
+  to v2.0.24 wrapper bytes (via `git stash`) caused the static-string check
+  to fail with `bugCount = 4, expected 0`. Restoring the fix returns to green.
+
+### Closes
+
+- The 3 latent regex bugs documented in v2.0.24 CHANGELOG section
+  "Preserved (NOT fixed in this tag)".
+- AUDIT-REPORT-2026-04-26.md ARCH-001 follow-up (the bugs were tracked
+  for "a separate phase to evaluate impact and ship the 3-byte fix with
+  regression tests" — that is this tag).
+
 ## [2.0.24] — 2026-04-27 — bridge-script iframe content extraction (ADR-031)
 
 Closes audit finding ARCH-001 ("`bridge-script.js` is 3 906 lines living

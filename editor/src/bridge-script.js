@@ -1389,14 +1389,7 @@
           const display = String(computed.display || '').toLowerCase();
           const position = String(computed.position || '').toLowerCase();
           const hasChildren = el.children.length > 0;
-          // PRESERVED runtime semantics: original bridge-script.js source had
-          // a single-backslash regex shorthand inside the wrapping template
-          // literal. The backslash was consumed by the template literal
-          // evaluator, so at iframe runtime this regex was /s+/g (literal
-          // 's' chars, NOT whitespace). Phase A2 extraction (ADR-031)
-          // preserves the bug as-is; a future phase fixes it via a single-
-          // byte source change. Same note applies to two more sites below.
-          const text = String(el.textContent || '').replace(/s+/g, ' ').trim();
+          const text = String(el.textContent || '').replace(/\\s+/g, ' ').trim();
           const isExplicitContainer = explicitKind === 'container';
           const isBlockLikeTag = LAYOUT_CONTAINER_TAGS.includes(el.tagName);
           if (display.includes('grid')) return 'grid';
@@ -1719,8 +1712,7 @@
           const authoredId = String(el.getAttribute(AUTHOR_NODE_ID_ATTR) || '').trim();
           if (authoredId) return authoredId;
           if (entityKind === 'text') {
-            // PRESERVED runtime semantics: see note at line 1410. Same bug.
-            const text = String(el.textContent || '').replace(/s+/g, ' ').trim();
+            const text = String(el.textContent || '').replace(/\\s+/g, ' ').trim();
             if (text) return text.slice(0, 32) + (text.length > 32 ? '…' : '');
           }
           if (fallbackId) return fallbackId;
@@ -1846,8 +1838,7 @@
           const entityKind = getEntityKind(candidate);
           const explicitEditable = String(candidate.getAttribute(AUTHOR_EDITABLE_ATTR) || '').trim().toLowerCase();
           const authoredId = String(candidate.getAttribute(AUTHOR_NODE_ID_ATTR) || '').trim();
-          // PRESERVED runtime semantics: see note at line 1410. Same bug.
-          const text = String(candidate.textContent || '').replace(/s+/g, ' ').trim();
+          const text = String(candidate.textContent || '').replace(/\\s+/g, ' ').trim();
           const tagName = String(candidate.tagName || '').toUpperCase();
           let score = scoreSelectionCandidate({
             el: candidate,

@@ -219,15 +219,26 @@ The preview zoom feature uses the CSS `zoom:` property which is on the W3C stand
 
 ## Release state
 
-**Current**: v2.0.24 — bridge-script iframe content extraction
-(2026-04-27). v2.0.0 GA + twenty-four post-GA polish tags. Phase A2
-of the post-v2 perfection sprint Track A: iframe-side JavaScript
-extracted from a template-literal string into a real lint-visible
-source file (`editor/src/bridge-script-iframe.js`); wrapper
-`bridge-script.js` now regenerates via `scripts/sync-bridge-script.js`
+**Current**: v2.0.25 — Phase A3' latent regex bugs fixed
+(2026-04-27). v2.0.0 GA + twenty-five post-GA polish tags. Closes
+the 3 latent `/\s+/g` regex bugs that v2.0.24 (Phase A2 / ADR-031)
+deliberately preserved with `// PRESERVED runtime semantics` markers.
+The original `bridge-script.js` source had single-backslash regex
+shorthand inside the wrapping template literal; the template
+evaluator consumed the backslash, so runtime regex was `/s+/g`
+(matches `s` chars, not whitespace) at 3 sites in selection-label
+normalization and layout-container kind heuristic. v2.0.25 is a
+3-byte source fix at `editor/src/bridge-script-iframe.js` plus a
+regenerated wrapper plus a 3-case regression spec
+(`tests/playwright/specs/bridge-regex-whitespace.spec.js`). Gate-A
+is now 318/8/0 (315 prior + 3 new). v2.0.24 was Phase A2: iframe-side
+JavaScript extracted from a template-literal string into a real
+lint-visible source file (`editor/src/bridge-script-iframe.js`); wrapper
+`bridge-script.js` regenerates via `scripts/sync-bridge-script.js`
 at pre-commit time. Closes AUDIT-REPORT-2026-04-26.md ARCH-001
-(3 906-line template-string) and AUDIT-A item #15. No runtime change;
-no platform change; no bundler. Architecture: ADR-031.
+(3 906-line template-string) and AUDIT-A item #15. No runtime change
+beyond the 3 regex fixes; no platform change; no bundler. Architecture:
+ADR-031.
 v2.0.23 had closed 5 HIGH + 2 MEDIUM + 1 A11Y + 1 PERF-budget +
 1 FLAKE + 1 FN + 1 CI-gap + 1 DEV-tooling + 2 dev-issues from
 `docs/AUDIT-REPORT-2026-04-26.md` (deep testing audit, 17 findings) +
@@ -235,6 +246,8 @@ HIG-polish-1/2 from Phase 9 dual-agent spawn + spec FLAKE-sweep
 (38 → 3 spec instances; 11 spec files migrated; 18 reusable wait
 helpers exposed via `tests/playwright/helpers/waits.js`).
 All audit findings closed except deferred items in POST_V2_ROADMAP.
+Gate-A baseline raised to 318/8/0 in v2.0.25 by adding the
+bridge-script-iframe regex regression guard (3 new cases).
 
 The v1.0.3 → v2.0.0 redesign trajectory is complete: 26 incremental
 release points (v1.1.0 through v2.0.0 inclusive) across Phases A–E
