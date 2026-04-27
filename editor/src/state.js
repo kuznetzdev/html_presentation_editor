@@ -619,6 +619,42 @@
         anchorNodeId: null,
       });
 
+      // Register the 'panels' slice — Phase A4 (ADR-032).
+      // Migrated fields: leftPanelOpen → leftOpen, rightPanelOpen → rightOpen,
+      // rightPanelUserOpen → rightUserOpen, inspectorSections → inspectorSections.
+      window.store.defineSlice("panels", {
+        leftOpen: false,
+        rightOpen: false,
+        rightUserOpen: false,
+        inspectorSections: {},
+      });
+
+      // Register the 'toolbar' slice — Phase A4 (ADR-032).
+      // Migrated fields: toolbarPinned → pinned, toolbarPos → pos,
+      // toolbarCollapsed → collapsed, toolbarDragOffset → dragOffset,
+      // toolbarDragActive → dragActive.
+      window.store.defineSlice("toolbar", {
+        pinned: false,
+        pos: null,
+        collapsed: false,
+        dragOffset: { x: 0, y: 0 },
+        dragActive: false,
+      });
+
+      // Register the 'modal' slice — Phase A4 (ADR-032).
+      // Migrated fields: htmlEditorMode/TargetId/TargetType, contextMenuNodeId/Payload,
+      // layerPickerPayload/HighlightNodeId/ActiveIndex.
+      window.store.defineSlice("modal", {
+        htmlEditorMode: null,
+        htmlEditorTargetId: null,
+        htmlEditorTargetType: null,
+        contextMenuNodeId: null,
+        contextMenuPayload: null,
+        layerPickerPayload: null,
+        layerPickerHighlightNodeId: null,
+        layerPickerActiveIndex: -1,
+      });
+
       /** @type {State} */
       const state = {
         sourceLabel: "",
@@ -876,6 +912,49 @@
       /** @type {Set<string>} */
       var _MULTI_SELECT_STATE_KEYS = new Set(Object.keys(_MULTI_SELECT_STATE_TO_SLICE));
 
+      // Panels fields mapped from legacy state key → store 'panels' slice key.
+      // Phase A4 (ADR-032). leftPanelOpen→leftOpen, rightPanelOpen→rightOpen,
+      // rightPanelUserOpen→rightUserOpen, inspectorSections→inspectorSections.
+      /** @type {Object.<string, string>} */
+      var _PANELS_STATE_TO_SLICE = {
+        leftPanelOpen:      "leftOpen",
+        rightPanelOpen:     "rightOpen",
+        rightPanelUserOpen: "rightUserOpen",
+        inspectorSections:  "inspectorSections",
+      };
+      /** @type {Set<string>} */
+      var _PANELS_STATE_KEYS = new Set(Object.keys(_PANELS_STATE_TO_SLICE));
+
+      // Toolbar fields mapped from legacy state key → store 'toolbar' slice key.
+      // Phase A4 (ADR-032). toolbar* → trim 'toolbar' prefix.
+      /** @type {Object.<string, string>} */
+      var _TOOLBAR_STATE_TO_SLICE = {
+        toolbarPinned:     "pinned",
+        toolbarPos:        "pos",
+        toolbarCollapsed:  "collapsed",
+        toolbarDragOffset: "dragOffset",
+        toolbarDragActive: "dragActive",
+      };
+      /** @type {Set<string>} */
+      var _TOOLBAR_STATE_KEYS = new Set(Object.keys(_TOOLBAR_STATE_TO_SLICE));
+
+      // Modal fields mapped from legacy state key → store 'modal' slice key.
+      // Phase A4 (ADR-032). htmlEditor*, contextMenu*, layerPicker* — names preserved
+      // for direct readability (these legacy names are widely referenced).
+      /** @type {Object.<string, string>} */
+      var _MODAL_STATE_TO_SLICE = {
+        htmlEditorMode:             "htmlEditorMode",
+        htmlEditorTargetId:         "htmlEditorTargetId",
+        htmlEditorTargetType:       "htmlEditorTargetType",
+        contextMenuNodeId:          "contextMenuNodeId",
+        contextMenuPayload:         "contextMenuPayload",
+        layerPickerPayload:         "layerPickerPayload",
+        layerPickerHighlightNodeId: "layerPickerHighlightNodeId",
+        layerPickerActiveIndex:     "layerPickerActiveIndex",
+      };
+      /** @type {Set<string>} */
+      var _MODAL_STATE_KEYS = new Set(Object.keys(_MODAL_STATE_TO_SLICE));
+
       // Install Proxy if the runtime supports it (ES6+). Falls back to direct
       // state access for very old environments (not expected for this project).
       if (typeof Proxy !== "undefined") {
@@ -902,6 +981,18 @@
             if (_MULTI_SELECT_STATE_KEYS.has(String(prop))) {
               var msSliceKey = _MULTI_SELECT_STATE_TO_SLICE[String(prop)];
               return window.store.get("multiSelect")[msSliceKey];
+            }
+            if (_PANELS_STATE_KEYS.has(String(prop))) {
+              var pSliceKey = _PANELS_STATE_TO_SLICE[String(prop)];
+              return window.store.get("panels")[pSliceKey];
+            }
+            if (_TOOLBAR_STATE_KEYS.has(String(prop))) {
+              var tbSliceKey = _TOOLBAR_STATE_TO_SLICE[String(prop)];
+              return window.store.get("toolbar")[tbSliceKey];
+            }
+            if (_MODAL_STATE_KEYS.has(String(prop))) {
+              var mSliceKey = _MODAL_STATE_TO_SLICE[String(prop)];
+              return window.store.get("modal")[mSliceKey];
             }
             // @ts-ignore — dynamic property access on typed State object via Proxy trap
             return target[prop];
@@ -963,6 +1054,48 @@
               }()));
               // Mirror to raw state for backward compat
               // @ts-ignore — dynamic string-keyed write on typed State via Proxy trap
+              target[prop] = value;
+              return true;
+            }
+            if (_PANELS_STATE_KEYS.has(String(prop))) {
+              // Write to panels store slice (triggers notification)
+              var pSliceKey = _PANELS_STATE_TO_SLICE[String(prop)];
+              window.store.update("panels", (function () {
+                /** @type {Record<string,unknown>} */
+                var patch = {};
+                // @ts-ignore — dynamic string-keyed write
+                patch[pSliceKey] = value;
+                return patch;
+              }()));
+              // @ts-ignore — dynamic string-keyed write
+              target[prop] = value;
+              return true;
+            }
+            if (_TOOLBAR_STATE_KEYS.has(String(prop))) {
+              // Write to toolbar store slice (triggers notification)
+              var tbSliceKey = _TOOLBAR_STATE_TO_SLICE[String(prop)];
+              window.store.update("toolbar", (function () {
+                /** @type {Record<string,unknown>} */
+                var patch = {};
+                // @ts-ignore — dynamic string-keyed write
+                patch[tbSliceKey] = value;
+                return patch;
+              }()));
+              // @ts-ignore — dynamic string-keyed write
+              target[prop] = value;
+              return true;
+            }
+            if (_MODAL_STATE_KEYS.has(String(prop))) {
+              // Write to modal store slice (triggers notification)
+              var mSliceKey = _MODAL_STATE_TO_SLICE[String(prop)];
+              window.store.update("modal", (function () {
+                /** @type {Record<string,unknown>} */
+                var patch = {};
+                // @ts-ignore — dynamic string-keyed write
+                patch[mSliceKey] = value;
+                return patch;
+              }()));
+              // @ts-ignore — dynamic string-keyed write
               target[prop] = value;
               return true;
             }
