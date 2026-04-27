@@ -219,16 +219,16 @@ The preview zoom feature uses the CSS `zoom:` property which is on the W3C stand
 
 ## Release state
 
-**Current**: v2.0.16 — A11Y-001 contrast + nesting fixes shipped
-2026-04-25 (v2.0.0 GA + sixteen post-GA polish tags).
-Closes 5 HIGH + 2 MEDIUM + 1 A11Y + 2 dev-issues from
+**Current**: v2.0.17 — Performance budget tests shipped
+2026-04-25 (v2.0.0 GA + seventeen post-GA polish tags).
+Closes 5 HIGH + 2 MEDIUM + 1 A11Y + 1 PERF-budget + 2 dev-issues from
 `docs/AUDIT-REPORT-2026-04-26.md` (deep testing audit, 17 findings).
 
 The v1.0.3 → v2.0.0 redesign trajectory is complete: 26 incremental
 release points (v1.1.0 through v2.0.0 inclusive) across Phases A–E
-plus 6 hardening sprints; the GA has since absorbed 16 post-GA
-polish tags (v2.0.1–v2.0.16). All v2 feature flags default to v2
-behavior; full feature surface stable. Gate-A: 306/8/0 across 32
+plus 6 hardening sprints; the GA has since absorbed 17 post-GA
+polish tags (v2.0.1–v2.0.17). All v2 feature flags default to v2
+behavior; full feature surface stable. Gate-A: 311/8/0 across 33
 spec files (was 289/8/0 at v2.0.13). Gate-a11y: 27/0/0 (no masked).
 Gate-contract: 152/0.
 

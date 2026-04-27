@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Perf 200-elem fixture (v2.0.17 / Phase 4)</title>
+<style>
+  body{margin:0;padding:0;background:#fff}
+  .slide{position:relative;width:1280px;height:900px;background:#f8fafc;overflow:hidden;border-bottom:2px solid #cbd5e1}
+  h1{position:absolute;left:20px;top:20px;margin:0;font:600 22px sans-serif;color:#0f172a}
+</style>
+</head>
+<body>
+  <section data-editor-slide-id="slide-1" class="slide">
+    <h1 data-editor-node-id="s1-title" data-editor-entity-kind="generic">Slide 1 — 200 absolutely-positioned elements</h1>
+<!-- 200 elements injected at build-time of the fixture; each <div> uses
+     position:absolute with left/top in pixels so selection-engine has to
+     walk all 200 candidates on click. Targets:
+       p50 click-to-select < 50ms, p95 < 100ms
+       FPS during continuous mousemove > 50
+-->
+<script>
+(function () {
+  var s = document.querySelector('section.slide');
+  var COLS = 20, GAP_X = 60, GAP_Y = 32, BASE_Y = 80;
+  for (var i = 1; i <= 200; i++) {
+    var col = (i - 1) % COLS;
+    var row = Math.floor((i - 1) / COLS);
+    var d = document.createElement('div');
+    var pad3 = ('00' + i).slice(-3);
+    d.setAttribute('data-editor-node-id', 'elem-' + pad3);
+    d.setAttribute('data-editor-entity-kind', 'generic');
+    d.style.cssText = 'position:absolute;left:' + (20 + col * GAP_X) +
+      'px;top:' + (BASE_Y + row * GAP_Y) +
+      'px;width:55px;height:28px;background:#e2e8f0;border:1px solid #94a3b8;' +
+      'display:flex;align-items:center;justify-content:center;font:11px sans-serif;color:#0f172a;';
+    d.textContent = 'el-' + pad3;
+    s.appendChild(d);
+  }
+})();
+</script>
+  </section>
+</body>
+</html>

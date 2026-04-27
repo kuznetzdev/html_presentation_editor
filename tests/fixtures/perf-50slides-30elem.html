@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Perf 50-slides × 30-elem fixture (v2.0.17 / Phase 4)</title>
+<style>
+  body{margin:0;padding:0;background:#fff}
+  .slide{position:relative;width:1280px;height:720px;background:#f8fafc;overflow:hidden;border-bottom:2px solid #cbd5e1}
+  h1{position:absolute;left:20px;top:20px;margin:0;font:600 22px sans-serif;color:#0f172a}
+</style>
+</head>
+<body>
+<!-- 50 slides × 30 elements = 1500 nodes total. Used for heap delta /
+     undo-redo perf tests. Generated at iframe load time via inline script.
+     Targets: heap delta < 20MB after 1000 undo/redo operations. -->
+<script>
+(function () {
+  for (var s = 1; s <= 50; s++) {
+    var slide = document.createElement('section');
+    slide.setAttribute('data-editor-slide-id', 'slide-' + s);
+    slide.className = 'slide';
+    var h = document.createElement('h1');
+    h.setAttribute('data-editor-node-id', 's' + s + '-title');
+    h.setAttribute('data-editor-entity-kind', 'generic');
+    h.textContent = 'Slide ' + s + ' — 30 elements';
+    slide.appendChild(h);
+    for (var i = 1; i <= 30; i++) {
+      var col = (i - 1) % 6, row = Math.floor((i - 1) / 6);
+      var d = document.createElement('div');
+      var nodeId = 's' + s + '-elem-' + ('00' + i).slice(-3);
+      d.setAttribute('data-editor-node-id', nodeId);
+      d.setAttribute('data-editor-entity-kind', 'generic');
+      d.style.cssText = 'position:absolute;left:' + (20 + col * 200) +
+        'px;top:' + (80 + row * 110) +
+        'px;width:180px;height:90px;background:#e2e8f0;border:1px solid #94a3b8;' +
+        'display:flex;align-items:center;justify-content:center;font:13px sans-serif;color:#0f172a;';
+      d.textContent = nodeId;
+      slide.appendChild(d);
+    }
+    document.body.appendChild(slide);
+  }
+})();
+</script>
+</body>
+</html>

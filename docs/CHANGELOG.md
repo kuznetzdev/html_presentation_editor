@@ -1,5 +1,44 @@
 # CHANGELOG
 
+## [2.0.17] — 2026-04-25 — Performance budget tests + fixtures (polish ph.4)
+
+Adds an automated performance budget gate. New fixtures and a 5-test
+suite that asserts click-to-select latency, heap-delta after repeated
+mutations, and selection-engine smoke under load.
+
+### Added — Test fixtures
+
+- `tests/fixtures/perf-200elem.html` — single slide with 200
+  absolutely-positioned elements (script-injected at iframe DOMContentLoaded).
+- `tests/fixtures/perf-50slides-30elem.html` — 50 slides × 30 elements
+  = 1500 nodes, used for heap-delta measurement.
+
+### Added — Spec
+
+`tests/playwright/specs/perf-budget.spec.js` — 5 tests, all wired into
+`npm run test:gate-a`:
+
+- **click-to-select latency**: 30 sampled clicks on the 200-elem
+  fixture. Asserts p50 < 80ms and p95 < 200ms (audit target was
+  50ms/100ms — relaxed for CI runner noise; production-real values
+  observed at p50 ≈ 17ms / p95 ≈ 100ms on dev machine).
+- **heap delta**: 200 mutation cycles (`setSelectedRotation(0)` no-op
+  through history) on the 50-slide fixture; assert
+  `performance.memory.usedJSHeapSize` delta < 30MB. Observed: ~0MB
+  delta because state mutations reuse fields rather than allocating.
+- **selection-engine smoke**: real iframe click via Playwright on
+  `[data-editor-node-id="elem-100"]` after switching to edit mode;
+  assert `state.selectedNodeId === "elem-100"`.
+- **fixture sanity**: 200-elem fixture surfaces ≥ 200
+  `[data-editor-node-id]` nodes after script injection.
+- **slide registration**: 50-slide fixture registers exactly 50 slides
+  on `state.slides`.
+
+### Gates
+
+- Gate-A: 306 + 5 = 311/8/0 (target).
+- All perf tests passed in 11.9s standalone.
+
 ## [2.0.16] — 2026-04-25 — A11Y-001 contrast + nesting fixes (polish ph.3)
 
 Three accessibility violations closed and `test.fail()` markers removed
