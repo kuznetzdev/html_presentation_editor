@@ -19,6 +19,7 @@ const path = require("node:path");
 
 const FILES = [
   "editor/src/bridge-script.js",
+  "editor/src/bridge-script-iframe.js", // ADR-031: source-of-truth for iframe code.
   "editor/src/bridge.js",
   "editor/src/bridge-schema.js",
   "editor/src/bridge-commands.js",

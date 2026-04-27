@@ -1,26 +1,40 @@
-// bridge-script.js
-// Layer: Iframe Bridge Application
-// Contains buildBridgeScript(token) — generates the JS string injected into
-// the preview iframe. This is a self-contained mini-app; do NOT mix shell
-// logic here.
+// bridge-script-iframe.js
+// Layer: Iframe Bridge Application — SOURCE OF TRUTH
 //
-// SOURCE OF TRUTH for the iframe content: editor/src/bridge-script-iframe.js
-// Re-generated from that file by:
+// This file is the lint-visible / tsc-visible source for the JS
+// injected into the preview iframe by editor/src/bridge-script.js.
+//
+// DO NOT edit editor/src/bridge-script.js between the iframe content
+// sentinels — that region is regenerated from THIS file by:
+//
 //     node scripts/sync-bridge-script.js
-// (run automatically as part of `npm run precommit`). Do NOT edit the body
-// between the iframe-content sentinels by hand.
-// Architecture: ADR-031 (docs/ADR-031-bridge-script-iframe-extraction.md).
 //
-      function buildBridgeScript(token) {
-        return `// __BEGIN_IFRAME_CONTENT__
+// (run automatically as part of `npm run precommit`). The 4 placeholder
+// identifiers (`__*_PLACEHOLDER__`) are restored to their original
+// `${JSON.stringify(...)}` template-literal expressions during sync.
+// Defaults below let this file pass `node --check` and run as standalone JS.
+//
+// Architecture: ADR-031 (docs/ADR-031-bridge-script-iframe-extraction.md).
+
+// __BEGIN_PLACEHOLDER_DEFAULTS__
+// Placeholder defaults — overwritten with real values during sync.
+// These exist so the file is valid standalone JS.
+/* eslint-disable no-unused-vars */
+const __BRIDGE_TOKEN_PLACEHOLDER__ = "placeholder-token";
+const __ROOT_SELECTORS_PLACEHOLDER__ = [];
+const __MAX_HTML_BYTES_PLACEHOLDER__ = 262144;
+const __SHELL_BUILD_PLACEHOLDER__ = "placeholder-build";
+/* eslint-enable no-unused-vars */
+// __END_PLACEHOLDER_DEFAULTS__
+
 (function(){
         /* ================================================================
            Presentation Editor Bridge (inside iframe)
            Этот код исполняется в документе презентации и работает только с
            preview DOM: выбор элементов, редактирование, sync и runtime events.
            ================================================================ */
-        const TOKEN = ${JSON.stringify(token)};
-        const ROOT_SELECTORS = ${JSON.stringify(STATIC_SLIDE_SELECTORS)};
+        const TOKEN = __BRIDGE_TOKEN_PLACEHOLDER__;
+        const ROOT_SELECTORS = __ROOT_SELECTORS_PLACEHOLDER__;
         const EDITOR_MARKER = 'data-editor-node-id';
         const SLIDE_MARKER = 'data-editor-slide-id';
         const ENTITY_KIND_ATTR = 'data-editor-entity-kind';
@@ -88,7 +102,7 @@
           'UL',
         ]);
         const BLOCKED_ATTR_NAMES = new Set([EDITOR_MARKER, SLIDE_MARKER, 'contenteditable', 'spellcheck']);
-        const VALID_ATTR_NAME = /^[^\\s"'<>\\/=]+$/;
+        const VALID_ATTR_NAME = /^[^\s"'<>\/=]+$/;
         const UNSAFE_ATTR_NAME = /^on/i;
 
         // ── Sanitization constants (AUDIT-D-02 / ADR-012 §7) ─────────────────────
@@ -126,7 +140,7 @@
         // enforces for replace-node-html / insert-element.
         function isSafeUrlAttributeValue(value) {
           if (value == null) return true;
-          const trimmed = String(value).replace(/[\\t\\n\\r ]/g, '').toLowerCase();
+          const trimmed = String(value).replace(/[\t\n\r ]/g, '').toLowerCase();
           return !UNSAFE_URL_PROTOCOLS.test(trimmed);
         }
         const URL_BEARING_ATTRS = new Set([
@@ -202,7 +216,7 @@
               }
               // (c) URL attribute: strip dangerous protocols.
               if (URL_ATTRS.has(name.toLowerCase())) {
-                var trimmed = String(value || '').replace(/[\\t\\n\\r ]/g, '').toLowerCase();
+                var trimmed = String(value || '').replace(/[\t\n\r ]/g, '').toLowerCase();
                 if (UNSAFE_URL_PROTOCOLS.test(trimmed)) {
                   el.removeAttribute(name);
                   removedAttrs++;
@@ -305,7 +319,7 @@
 
         function cssEscape(value) {
           if (window.CSS && typeof window.CSS.escape === 'function') return window.CSS.escape(String(value));
-          return String(value).replace(/[^a-zA-Z0-9_-]/g, '\\$&');
+          return String(value).replace(/[^a-zA-Z0-9_-]/g, '\$&');
         }
 
         function parseBooleanLikeAttribute(value) {
@@ -430,7 +444,7 @@
 
         function syncSequenceFromDom() {
           const values = Array.from(document.querySelectorAll('[' + EDITOR_MARKER + ']')).map((el) => {
-            const m = String(el.getAttribute(EDITOR_MARKER)).match(/node-(\\d+)/);
+            const m = String(el.getAttribute(EDITOR_MARKER)).match(/node-(\d+)/);
             return m ? Number(m[1]) : 0;
           });
           STATE.seq = Math.max(STATE.seq, 0, ...values);
@@ -497,7 +511,7 @@
           if (slideTitleOverride) return slideTitleOverride;
           const heading = slide.querySelector('h1, h2, h3, .slide-title, [data-slide-title]');
           if (heading && heading.textContent.trim()) return heading.textContent.trim();
-          const text = slide.textContent.replace(/\\s+/g, ' ').trim();
+          const text = slide.textContent.replace(/\s+/g, ' ').trim();
           return text ? text.slice(0, 60) + (text.length > 60 ? '…' : '') : 'Пустой слайд';
         }
 
@@ -852,7 +866,7 @@
           if (TEXT_TAGS.has(el.tagName)) return true;
           if (el.tagName === 'DIV' || el.tagName === 'SECTION' || el.tagName === 'ARTICLE' || el.tagName === 'SPAN') {
             const hasComplexChildren = Array.from(el.children).some((child) => !['SPAN','B','STRONG','I','EM','U','SMALL','A','BR'].includes(child.tagName));
-            const text = el.textContent.replace(/\\s+/g, ' ').trim();
+            const text = el.textContent.replace(/\s+/g, ' ').trim();
             return Boolean(text) && !hasComplexChildren;
           }
           return false;
@@ -860,8 +874,8 @@
 
         function normalizePlainTextValue(value) {
           return String(value || '')
-            .replace(/\\r\\n?/g, '\\n')
-            .replace(/\\u00a0/g, ' ');
+            .replace(/\r\n?/g, '\n')
+            .replace(/\u00a0/g, ' ');
         }
 
         function isPlainTextBlockElement(node) {
@@ -874,7 +888,7 @@
             return normalizePlainTextValue(node.textContent || '');
           }
           if (!(node instanceof Element)) return '';
-          if (node.tagName === 'BR') return '\\n';
+          if (node.tagName === 'BR') return '\n';
           if (EXCLUDED.has(node.tagName)) return '';
           if (node.tagName === 'IMG' || node.tagName === 'SVG' || node.tagName === 'VIDEO' || node.tagName === 'IFRAME') {
             return '';
@@ -884,16 +898,16 @@
           children.forEach((child, index) => {
             const blockChild =
               child instanceof Element && isPlainTextBlockElement(child);
-            if (blockChild && index > 0 && !text.endsWith('\\n')) {
-              text += '\\n';
+            if (blockChild && index > 0 && !text.endsWith('\n')) {
+              text += '\n';
             }
             text += extractPreformattedPlainText(child);
             if (
               blockChild &&
               index < children.length - 1 &&
-              !text.endsWith('\\n')
+              !text.endsWith('\n')
             ) {
-              text += '\\n';
+              text += '\n';
             }
           });
           return text;
@@ -903,13 +917,13 @@
           const fallback = extractPreformattedPlainText(el);
           const raw = typeof el.innerText === 'string' ? el.innerText : fallback;
           return normalizePlainTextValue(raw)
-            .replace(/\\n{3,}/g, '\\n\\n')
-            .replace(/\\n+$/g, '');
+            .replace(/\n{3,}/g, '\n\n')
+            .replace(/\n+$/g, '');
         }
 
         function buildPlainTextFragment(text) {
           const fragment = document.createDocumentFragment();
-          const lines = String(text || '').split('\\n');
+          const lines = String(text || '').split('\n');
           lines.forEach((line, index) => {
             if (index > 0) fragment.appendChild(document.createElement('br'));
             fragment.appendChild(document.createTextNode(line));
@@ -1083,7 +1097,7 @@
         }
 
         function isEmbeddedVideoFrame(el) {
-          return el instanceof Element && el.tagName === 'IFRAME' && /(youtube|youtu\\.be|vimeo)/i.test(el.getAttribute('src') || '');
+          return el instanceof Element && el.tagName === 'IFRAME' && /(youtube|youtu\.be|vimeo)/i.test(el.getAttribute('src') || '');
         }
 
         function isVideoElement(el) {
@@ -2207,7 +2221,7 @@
         }
 
         function normalizeDomId(value) {
-          return String(value || '').replace(/\\s+/g, '-').trim();
+          return String(value || '').replace(/\s+/g, '-').trim();
         }
 
         function collectUsedDomIds(exceptRoot) {
@@ -2287,9 +2301,9 @@
         function isTranslateOnlyTransformValue(value) {
           const raw = String(value || '').trim();
           if (!raw || raw === 'none') return true;
-          const functions = raw.match(/[a-zA-Z0-9]+\\([^)]*\\)/g);
+          const functions = raw.match(/[a-zA-Z0-9]+\([^)]*\)/g);
           if (!functions || !functions.length) return false;
-          return functions.every((fn) => /^translate(?:3d|x|y)?\\(/i.test(fn.trim()));
+          return functions.every((fn) => /^translate(?:3d|x|y)?\(/i.test(fn.trim()));
         }
 
         function hasComplexTransformOnElement(el) {
@@ -2820,7 +2834,7 @@
         function parseTranslateValue(value) {
           const raw = String(value || '').trim();
           if (!raw || raw === 'none') return { x: 0, y: 0 };
-          const parts = raw.split(/\\s+/);
+          const parts = raw.split(/\s+/);
           const x = Number.parseFloat(parts[0]) || 0;
           const y = Number.parseFloat(parts[1] || '0') || 0;
           return { x, y };
@@ -2939,7 +2953,7 @@
             session.el.style.translate = Math.round(tx) + 'px ' + Math.round(ty) + 'px';
             return;
           }
-          const baseTransform = (session.startInline.transform || '').replace(/translate(?:3d|X|Y)?\\([^)]*\\)/gi, '').trim();
+          const baseTransform = (session.startInline.transform || '').replace(/translate(?:3d|X|Y)?\([^)]*\)/gi, '').trim();
           const translateTransform = 'translate(' + Math.round(tx) + 'px, ' + Math.round(ty) + 'px)';
           session.el.style.transform = baseTransform ? baseTransform + ' ' + translateTransform : translateTransform;
         }
@@ -3078,7 +3092,7 @@
               return; // silently drop — caller's intent is impossible to apply safely
             }
             if (attrName === 'class') {
-              const normalized = value.split(/\\s+/).filter(Boolean).join(' ');
+              const normalized = value.split(/\s+/).filter(Boolean).join(' ');
               if (normalized) el.setAttribute('class', normalized); else el.removeAttribute('class');
               return;
             }
@@ -3780,7 +3794,7 @@
                 if (typeof payload.html === 'string') {
                   try {
                     const _byteLen = unescape(encodeURIComponent(payload.html)).length;
-                    if (_byteLen > ${JSON.stringify(262144)}) {
+                    if (_byteLen > __MAX_HTML_BYTES_PLACEHOLDER__) {
                       postAck(inboundSeq, false, 'replace-node-html.oversize',
                         'html payload too large: ' + _byteLen + ' bytes');
                       return;
@@ -3812,7 +3826,7 @@
                 if (typeof payload.html === 'string') {
                   try {
                     const _byteLen = unescape(encodeURIComponent(payload.html)).length;
-                    if (_byteLen > ${JSON.stringify(262144)}) {
+                    if (_byteLen > __MAX_HTML_BYTES_PLACEHOLDER__) {
                       postAck(inboundSeq, false, 'replace-slide-html.oversize',
                         'html payload too large: ' + _byteLen + ' bytes');
                       return;
@@ -3897,7 +3911,7 @@
           // build time (template literal in buildBridgeScript, shell scope).
           post('hello', {
             protocol: 2,
-            build: ${JSON.stringify(SHELL_BUILD)},
+            build: __SHELL_BUILD_PLACEHOLDER__,
             capabilities: [
               'replace-node-html','replace-slide-html','insert-element',
               'apply-style','apply-styles','update-attributes',
@@ -3920,5 +3934,3 @@
           document.addEventListener('DOMContentLoaded', boot, { once: true });
         }
       })();
-// __END_IFRAME_CONTENT__`;
-      }

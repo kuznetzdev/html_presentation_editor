@@ -11,7 +11,7 @@
     "docker:run": "docker run --rm -p 4173:4173 html-presentation-editor:local",
     "smoke": "npm run test:gate-a",
     "test:pilot": "npm run test:gate-a && npm run test:asset-parity",
-    "precommit": "node scripts/precommit-bridge-script-syntax.js",
+    "precommit": "node scripts/sync-bridge-script.js && node scripts/precommit-bridge-script-syntax.js",
     "test:install-browsers": "playwright install",
     "test": "playwright test",
     "test:pw": "playwright test",
