@@ -316,7 +316,8 @@
   max-width: min(100%, 58ch);
   overflow: hidden;
   color: var(--shell-text-muted);
-  font-size: 11.5px;
+  /* [v2.1.0-pre / ADR-031] was 11.5px (sub-pixel escape) */
+  font-size: var(--text-xs);
   line-height: 1.45;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
@@ -344,7 +345,8 @@
   background: transparent;
   box-shadow: none;
   color: var(--shell-text-muted);
-  font-size: 10.5px;
+  /* [v2.1.0-pre / ADR-031] was 10.5px (sub-pixel escape, decorative chip) */
+  font-size: var(--text-2xs);
   font-weight: 600;
   line-height: 1.25;
 }
@@ -352,7 +354,8 @@
 #activeSlideLabel {
   color: var(--shell-text);
   font-weight: 600;
-  font-size: 12.5px;
+  /* [v2.1.0-pre / ADR-031] was 12.5px (sub-pixel escape) */
+  font-size: var(--text-sm);
   line-height: 1.25;
   white-space: normal;
   display: -webkit-box;
@@ -439,7 +442,9 @@
   background: color-mix(in srgb, var(--shell-panel-elevated) 90%, transparent);
   color: var(--shell-text-muted);
   box-shadow: none;
-  font-size: 9px;
+  /* [v2.1.0-pre / ADR-031, A1-F29] was 9px — below WCAG legibility floor.
+     Bumped to --text-2xs (10px) — these pills are decorative metadata only. */
+  font-size: var(--text-2xs);
 }
 
 .insert-toggle-btn {
@@ -586,7 +591,10 @@ iframe {
 
 .empty-state strong {
   display: block;
-  font-size: 32px;
+  /* [v2.1.0-pre / ADR-031] was 32px hardcoded; promoted --text-3xl (28px)
+     as the hero/landing display token. Slight visual tightening — empty
+     state is now 28px / 600w / -0.01em letter-spacing. */
+  font-size: var(--text-3xl);
   font-weight: 600;
   line-height: 1.2;
   color: var(--shell-text);

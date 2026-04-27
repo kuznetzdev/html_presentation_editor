@@ -53,6 +53,16 @@
   </head>
   <body>
     <!-- ====================================================================
+       Skip link (a11y)
+       [v2.1.0-pre / ADR-031, A2-F6 / WCAG 2.4.1] First focusable child;
+       keyboard users from address bar bypass topbar (12+ Tab stops) and
+       jump straight to the workspace.
+       ==================================================================== -->
+    <a id="skipToMain" class="skip-link" href="#workspace"
+       >Перейти к рабочей области</a
+    >
+
+    <!-- ====================================================================
        Restore banner
        Показывается только если найден autosave в sessionStorage этой вкладки и
        даёт пользователю выбор: восстановить проект или начать с чистого состояния.
@@ -555,7 +565,7 @@
             <iframe
               id="previewFrame"
               class="hidden"
-              title="Preview"
+              title="Превью презентации"
               allowfullscreen
             ></iframe>
             <div id="previewDropzone" class="preview-dropzone">

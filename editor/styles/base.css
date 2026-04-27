@@ -43,6 +43,32 @@ body[data-shell-locked="true"] {
   display: none !important;
 }
 
+/* ======================================================================
+ [v2.1.0-pre / ADR-031, A2-F6] Skip link — first focusable in body, hidden
+ off-screen until keyboard focus, then becomes visible at top-left.
+ Activating jumps focus to #workspace.
+ ====================================================================== */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  z-index: 9999;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--shell-accent);
+  color: var(--on-accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  left: var(--space-2);
+  top: var(--space-2);
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
 button,
 input,
 select,
