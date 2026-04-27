@@ -610,6 +610,15 @@
         overlapIndex: 0,
       });
 
+      // Register the 'multiSelect' slice — Phase A4 (ADR-032).
+      // Migrated fields: multiSelectNodeIds → nodeIds, multiSelectAnchorNodeId → anchorNodeId.
+      // Proxy shim auto-handles state.multiSelectNodeIds reads/writes via window.stateProxy.
+      // Direct writes to raw state continue working unchanged for non-proxy callers.
+      window.store.defineSlice("multiSelect", {
+        nodeIds: [],
+        anchorNodeId: null,
+      });
+
       /** @type {State} */
       const state = {
         sourceLabel: "",
@@ -856,6 +865,17 @@
       /** @type {Set<string>} */
       var _SELECTION_STATE_KEYS = new Set(Object.keys(_SELECTION_STATE_TO_SLICE));
 
+      // MultiSelect fields mapped from legacy state key → store 'multiSelect' slice key.
+      // Phase A4 (ADR-032). READ:  state.multiSelectNodeIds → store.get('multiSelect').nodeIds
+      //                    WRITE: state.multiSelectNodeIds = ids → store.update + raw mirror.
+      /** @type {Object.<string, string>} */
+      var _MULTI_SELECT_STATE_TO_SLICE = {
+        multiSelectNodeIds:      "nodeIds",
+        multiSelectAnchorNodeId: "anchorNodeId",
+      };
+      /** @type {Set<string>} */
+      var _MULTI_SELECT_STATE_KEYS = new Set(Object.keys(_MULTI_SELECT_STATE_TO_SLICE));
+
       // Install Proxy if the runtime supports it (ES6+). Falls back to direct
       // state access for very old environments (not expected for this project).
       if (typeof Proxy !== "undefined") {
@@ -878,6 +898,10 @@
             if (_HISTORY_STATE_KEYS.has(String(prop))) {
               var hSliceKey = _HISTORY_STATE_TO_SLICE[String(prop)];
               return window.store.get("history")[hSliceKey];
+            }
+            if (_MULTI_SELECT_STATE_KEYS.has(String(prop))) {
+              var msSliceKey = _MULTI_SELECT_STATE_TO_SLICE[String(prop)];
+              return window.store.get("multiSelect")[msSliceKey];
             }
             // @ts-ignore — dynamic property access on typed State object via Proxy trap
             return target[prop];
@@ -920,6 +944,21 @@
                 var patch = {};
                 // @ts-ignore — dynamic string-keyed write
                 patch[hSliceKey] = value;
+                return patch;
+              }()));
+              // Mirror to raw state for backward compat
+              // @ts-ignore — dynamic string-keyed write on typed State via Proxy trap
+              target[prop] = value;
+              return true;
+            }
+            if (_MULTI_SELECT_STATE_KEYS.has(String(prop))) {
+              // Write to multiSelect store slice (triggers notification)
+              var msSliceKey = _MULTI_SELECT_STATE_TO_SLICE[String(prop)];
+              window.store.update("multiSelect", (function () {
+                /** @type {Record<string,unknown>} */
+                var patch = {};
+                // @ts-ignore — dynamic string-keyed write
+                patch[msSliceKey] = value;
                 return patch;
               }()));
               // Mirror to raw state for backward compat
