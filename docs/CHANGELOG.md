@@ -1,5 +1,82 @@
 # CHANGELOG
 
+## [2.1.0-rc.2] — 2026-04-28 — Basic-mode simpler + starter-deck file:// fix
+
+User feedback after rc.1: "сделай инспектор Простой действительно простым,
+а еще стартовый пример все таки отсутствует — его не находит!"
+
+### Fixed — starter-deck on `file://` (USER-REPORTED REGRESSION)
+
+v2.0.30 fixed the URL construction (was using `null` origin from
+`window.location.origin`), but modern browsers (Chrome / Edge) **block
+`fetch()` entirely for `file://` URLs** as a security policy — even
+when the target is same-origin. The fetch threw `TypeError: Failed
+to fetch` on `file://` → user saw "Пример не найден" toast.
+
+Added `fetchHtmlFile()` helper in `editor/src/slides.js`: tries fetch
+first; on failure, falls back to a hidden iframe loader (iframe loading
+IS allowed for same-origin `file://`, so this works where fetch can't).
+Reads `iframe.contentDocument.documentElement.outerHTML` and returns
+serialized HTML. 8s timeout to avoid hangs. Error toast now names the
+actual file path attempted, so the user can verify file existence at
+the expected location.
+
+### Improved — inspector basic mode
+
+- `selection-mode-toggle` ("⊞ Листы / ▣ Группы") gated to
+  `data-ui-level="advanced"` — pure power-user jargon (smart vs
+  container layer modes); novice presenters don't need this distinction.
+  SoT.md:69-70: "raw node metadata and tag-level controls remain
+  advanced-only."
+- `selectionBreadcrumbs` + `stackDepthBadge` kept basic-visible (they're
+  conditionally `hidden` until overlap exists, AND the click-through
+  layer-disambiguation flow IS a novice need — "I clicked the wrong
+  thing in a stack").
+- Dropped redundant `<h3>Текущий слайд</h3>` (parallel to rc.1's
+  `<h3>Текущий элемент</h3>` removal). Summary-card kicker "Контекст"
+  serves as section heading.
+- `slide-status-note` (4-line technical preset/slide-settings
+  explanation) gated to advanced. Shortened the still-included copy.
+
+### Improved — copy unification
+
+- "Preset слайда" / "Без preset-замены" / "Применить preset" → all
+  unified to "Шаблон слайда" / "Без замены" / "Применить шаблон".
+  4 different Cyrillic-vs-Latin spellings collapsed to one term (P-42).
+- Slide template menu translated: Title slide / Section / Bullets /
+  Media → Заголовочный / Раздел / Маркеры / Медиа. `data-slide-template`
+  keys preserved for JS handlers (A1-F24).
+
+### Improved — slide rail visual
+
+- Removed the 10×10 LED dot pseudo-element (`.slide-item::before`).
+  Competed visually with the thumbnail border-accent for the active
+  signal (A1-F30).
+- Removed `scale(1.02)` hover transform. Caused row positions to shift
+  in scrollable lists — Apple HIG list guidance violation (A1-F31).
+- New active state: inset 3px accent rail (`box-shadow: inset 3px 0 0`)
+  + accent border + subtle accent-soft background tint. Unambiguous
+  active-marker that doesn't need a separate dot.
+- New hover state: background tint via `:hover .slide-item-main` +
+  lift via `box-shadow`.
+- Updated `shell.smoke "slide rail status marker"` test to verify the
+  new inset-rail pattern instead of the removed dot's clearance.
+
+### Verification
+
+- `shell.smoke + onboarding + honest-feedback + click-through +
+  selection-engine-v2 + docs-sync` subset: **71 passed / 5 skipped /
+  0 failed** (4.0m).
+- `tsc --noEmit` clean.
+- `precommit-bridge-script-syntax.js` clean every commit.
+
+### Refs
+
+- docs/audit/PAIN-MAP-UX-v2.1-2026-04-28.md (P-11 / P-31 / P-42 +
+  new starter-deck regression)
+- All architectural invariants preserved: no bundler, no `type="module"`,
+  no bridge churn, file:// works.
+
 ## [2.1.0-rc.1] — 2026-04-28 — UX Overhaul v2.1 (release candidate)
 
 Holistic UX redesign pass. Closes 11 P0 + selected P1 items from

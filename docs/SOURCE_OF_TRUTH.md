@@ -219,7 +219,22 @@ The preview zoom feature uses the CSS `zoom:` property which is on the W3C stand
 
 ## Release state
 
-**Current**: v2.1.0-rc.1 — UX Overhaul v2.1 release candidate (2026-04-28).
+**Current**: v2.1.0-rc.2 — Basic-mode simpler + starter-deck file:// fix
+(2026-04-28). User feedback after rc.1 surfaced (1) the inspector's
+"Простой" mode still showed the smartMode/containerMode jargon toggle
+("⊞ Листы / ▣ Группы") and (2) the starter-deck "попробуйте на примере"
+button still failed on file:// despite v2.0.30's URL fix — modern
+browsers BLOCK fetch() for file:// entirely (security policy). rc.2
+gates `selection-mode-toggle` to advanced; drops redundant
+`<h3>Текущий слайд</h3>`; gates the long slide-status-note to advanced;
+unifies Preset → Шаблон copy across 4 spellings; translates slide
+template names (Title slide → Заголовочный, etc.); slide rail visual
+cleanup (removed LED dot + scale hover, added inset accent rail);
+adds `fetchHtmlFile()` helper with iframe fallback for file://
+compatibility (iframe loading IS allowed for same-origin file:// even
+when fetch is blocked). Targeted subset 71/5/0; full Gate-A pending.
+
+**Previous**: v2.1.0-rc.1 — UX Overhaul v2.1 release candidate (2026-04-28).
 v2.0.0 GA + thirty post-GA polish tags + UX overhaul foundation. Closes
 11 P0 + selected P1 items from PAIN-MAP-UX-v2.1: 4 modal dialog roles
 (A2-F1 CRIT), context-menu menuitem role (A2-F2 CRIT), basic-mode
