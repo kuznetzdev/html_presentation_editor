@@ -219,7 +219,22 @@ The preview zoom feature uses the CSS `zoom:` property which is on the W3C stand
 
 ## Release state
 
-**Current**: v2.1.0-rc.3 — Button + topbar contrast pass (2026-04-28).
+**Current**: v2.1.0-rc.4 — Expert-review P0+P1 implementation (2026-04-28).
+User-supplied expert UX review with prioritized P0/P1/P2 list. This pass:
+(P0) topbar compaction — undo/redo demoted to icon buttons (`↶` `↷`),
+"Показать" → "Полный просмотр" (resolves Превью/Показать naming clash);
+(P0) canvas dominance — `.preview-note-main` + `.preview-note-meta-row`
+hidden in `loaded-edit`, `#mainPreviewPanel .panel-header` heading
+collapsed, only the action utility row + zoom controls remain over the
+canvas; (P1) layer panel humanized — `getLayerLabel` now returns the
+entity-kind human label first ("Карточка"), with `tagName.className`
+moving to `.layer-meta` (`div.card-dark · слой 2 из 19`); misuse
+hardening already in place via `showUndoToast` for delete-slide +
+`danger-btn` styling. Deferred to rc.5: float zoom controls, slides+
+layers tabs, Export dropdown, inspector type-dependent split, command
+palette, layer type icons. Targeted subset 79/5/0; gate-a TBD.
+
+**Previous**: v2.1.0-rc.3 — Button + topbar contrast pass (2026-04-28).
 User feedback: "контраст цветов у кнопок не нравится мне в тёмной теме
 и в светлой тоже." Systematic audit found: (1) `#exportPptxBtn` referenced
 non-existent `--shell-fg` token (text invisible); (2) topbar ghost buttons

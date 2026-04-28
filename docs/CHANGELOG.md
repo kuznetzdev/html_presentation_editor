@@ -1,5 +1,82 @@
 # CHANGELOG
 
+## [2.1.0-rc.4] — 2026-04-28 — Expert-review P0+P1 implementation
+
+User asked for "богатый дизайн ... красивый не нагружающий" plus an
+expert UX review with prioritized P0/P1/P2 list. This pass closes the
+P0 items + the P1 layer-naming item.
+
+### P0 — Topbar compaction
+
+- Undo/Redo demoted from wide text buttons ("Отменить" / "Повторить")
+  to icon buttons (`↶` `↷`) with `.icon-btn .compact` classes. Saves
+  ~120px topbar width. Russian aria-label preserved (announcement
+  unchanged).
+- "Показать" → "Полный просмотр". Resolves the naming collision with
+  the topbar Превью/Редактирование mode toggle. "Показать" was
+  ambiguous next to "Превью"; "Полный просмотр" reads as "open the
+  live presentation full-screen" — matches the actual F5 behavior.
+
+### P0 — Canvas dominance restored
+
+The verbose `.preview-note` card that dominated canvas vertical space
+("СЛЕДУЮЩИЙ ШАГ / Проверьте текущий слайд / [meta] / Готово к
+проверке") is gone in `loaded-edit` workflow. Implementation:
+
+- `body[data-editor-workflow="loaded-edit"] .preview-note-main,
+  .preview-note-meta-row { display: none; }`
+- The `.preview-note-actions` row remains as a thin canvas utility bar
+  (insert palette + reload).
+- `body[data-editor-workflow="loaded-edit"] #mainPreviewPanel
+  .panel-header > div:first-child { display: none; }` — drops the
+  "Превью" heading + subtext too.
+- In `loaded-preview` the card stays — it IS the orientation surface
+  for that workflow state.
+
+### P1 — Layer panel humanized
+
+Per expert: "human label first, technical second."
+
+- `getLayerLabel` was returning `tagName.className` ("div.card-dark")
+  as primary, with the entity-kind label buried in `.layer-meta`.
+  Refactored to return the human kind label first ("Карточка" /
+  "Контейнер" / "Изображение"), with the technical detail moving to
+  the meta line.
+- New `getLayerTechHint` helper returns `tagName.className` (or
+  `tag#id`, or `tag`) for the meta line.
+- Meta line now reads `div.card-dark · слой 2 из 19` — kind in the
+  primary `.layer-label`, tech in the secondary `.layer-meta`.
+- Text + heading layers continue to lead with the actual content
+  (`"text preview"` / `H1 "title"`) — already the most-human form.
+
+### Misuse hardening — review
+
+Reviewed the delete-slide flow: already uses `showUndoToast` with
+explicit "Можно отменить — Undo (Ctrl+Z) вернёт его" message. Modern
+UX pattern (Gmail / Trello) — toast-undo is preferable to a confirm
+modal. Combined with rc.1's `danger-btn` class on the button, this is
+sufficient misuse protection. No further change needed.
+
+### Deferred to rc.5 / v2.2
+
+- Float zoom controls to bottom-right of canvas (needs DOM/JS work to
+  re-anchor inside `.preview-stage`)
+- Slides + Layers as left-panel tabs (significant DOM/JS work)
+- Export → dropdown menu (Экспорт ▾ with HTML / PPTX inside)
+- Inspector type-dependent split (slide vs text vs image)
+- Floating toolbar near selected element (already exists; rework needed)
+- Command palette (Ctrl+/)
+- Layer type icons (T/img/video/contain) — labels humanized this pass
+  but icons not yet added
+
+### Verification
+
+- shell.smoke + onboarding + honest-feedback + layers-tree-nav +
+  layers-rename-context + click-through + selection-engine-v2:
+  **79/5/0** (5.3m).
+- No snapshot drift on existing visual baselines.
+- `precommit-bridge-script-syntax` + `tsc --noEmit` clean.
+
 ## [2.1.0-rc.3] — 2026-04-28 — Button + topbar contrast pass
 
 User feedback after rc.2: "контраст цветов у кнопок не нравится мне в
