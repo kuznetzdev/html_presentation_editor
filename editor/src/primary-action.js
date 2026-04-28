@@ -31,15 +31,28 @@
         setToggleButtonState(els.editModeBtn, state.mode === "edit");
 
         if (els.saveStatePill) {
+          // [v2.1.0-rc.3 / ADR-031, A3-#5] Tightened from 5 verbose phrasings
+          // to 4 crisp ones; HH:MM not HH:MM:SS (less topbar overflow).
+          // "Локальный черновик" wording preserved on the saved state for
+          // honest-feedback contract (per honest-feedback.spec.js: "save
+          // state pill names the draft honestly instead of pretending to
+          // export") — the deck is in browser localStorage, not in the
+          // exported HTML file; "Сохранено" alone would be misleading.
+          const formatHHMM = (ts) => {
+            const d = new Date(ts);
+            const h = String(d.getHours()).padStart(2, "0");
+            const m = String(d.getMinutes()).padStart(2, "0");
+            return `${h}:${m}`;
+          };
           const text = !hasPresentation
-            ? "Локальный черновик не создан"
+            ? "Ожидает HTML"
             : state.dirty
               ? state.lastSavedAt
-                ? `Есть правки • локальный черновик: ${new Date(state.lastSavedAt).toLocaleTimeString()}`
-                : "Есть несохранённые правки"
+                ? `Не сохранено · черновик ${formatHHMM(state.lastSavedAt)}`
+                : "Не сохранено"
               : state.lastSavedAt
-                ? `Локальный черновик: ${new Date(state.lastSavedAt).toLocaleTimeString()}`
-                : "Изменений нет";
+                ? `Локальный черновик · ${formatHHMM(state.lastSavedAt)}`
+                : "Без правок";
           els.saveStatePill.textContent = text;
           els.saveStatePill.className =
             `status-pill save-pill ${state.dirty ? "is-saving" : "is-saved"}`.trim();

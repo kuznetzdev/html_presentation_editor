@@ -1,5 +1,102 @@
 # CHANGELOG
 
+## [2.1.0-rc.3] — 2026-04-28 — Button + topbar contrast pass
+
+User feedback after rc.2: "контраст цветов у кнопок не нравится мне в
+тёмной теме и в светлой тоже. анализируй."
+
+Issues found via systematic audit + screenshots:
+
+### Fixed — broken token reference
+
+`#exportPptxBtn` referenced `var(--shell-fg)` which doesn't exist in the
+token system. Resolved to inherited (transparent on the topbar gradient =
+invisible text). Replaced with `--shell-text`.
+
+### Improved — topbar ghost button contrast (light + dark)
+
+Was: `color: --shell-text-muted` (0.6-0.78 alpha) + `background: transparent`
++ `border: --shell-border-strong` (0.12 alpha). Result: buttons looked
+like floating muted labels rather than interactive controls.
+
+Now: uniform treatment for `#undoBtn`, `#redoBtn`, `#themeToggleBtn`,
+`#exportPptxBtn`:
+- `color: --shell-text` (full foreground)
+- `background: --shell-field-bg` (subtle tint for silhouette)
+- `border: --shell-border-button` (new semantic, 0.22 light / 0.26 dark)
+
+`#openHtmlBtn` gets `--shell-panel-elevated` background + 600 weight.
+`#exportBtn` and `#presentBtn` unchanged but use `--on-accent` token
+(was hardcoded `#ffffff`).
+
+### Added — `--shell-border-button` semantic token
+
+Between `--shell-border` (0.06-0.08) and `--shell-text-muted` (0.6-0.78).
+Used for ghost / outline buttons sitting on tinted backgrounds. Light:
+`rgba(29, 29, 31, 0.22)`. Dark: `rgba(255, 255, 255, 0.26)`. Gives ≥3:1
+perimeter contrast per WCAG 1.4.11 (non-text contrast).
+
+### Fixed — disabled state contrast (closes A2-F17 / WCAG 1.4.11)
+
+Was: `opacity: 0.55` universally. Dropped `.primary-btn:disabled`
+contrast to ~3:1 (white text on faded blue, fails AA non-text).
+
+Now: token-based —
+- `background: --button-bg-disabled` (= `--shell-field-muted`)
+- `color: --button-text-disabled` (alpha 0.42 light / 0.36 dark)
+- `border-color: --shell-border` (faint)
+- `box-shadow: none`
+
+`!important` is used because topbar IDs (specificity `1,0,0`) outrank
+`button:disabled` (`0,1,1`) in cascade. Inputs / selects / textareas
+keep `opacity:0.55` (native disabled styling AT users recognize on form
+fields).
+
+### Improved — `.ghost-btn` base (used everywhere)
+
+Used by panel-close, modal-close, slide-template-trigger, etc. Lifted
+from `--shell-border-strong` (0.12) to `--shell-border-button` (0.22)
++ explicit `color: --shell-text` + slightly stronger hover border.
+
+### Improved — `.icon-btn`
+
+Was `color: color-mix(--shell-text 55% transparent)` ≈ 3:1 (fails AA).
+Bumped to `--shell-text-muted` (5.5:1 per v2.0.16 muted-text bump).
+
+### Improved — `.mode-toggle` inactive button text
+
+Was 68% mix → ~3.4:1 on dark `--shell-field-bg`. Bumped to
+`--shell-text-muted` (passes AA).
+
+### Improved — save-state pill copy (A3-#5)
+
+Was 5 different verbose phrasings:
+- `Локальный черновик не создан`
+- `Есть правки • локальный черновик: HH:MM:SS`
+- `Есть несохранённые правки`
+- `Локальный черновик: HH:MM:SS`
+- `Изменений нет`
+
+Now 4 crisp phrasings using HH:MM (not HH:MM:SS):
+- `Ожидает HTML` (no deck)
+- `Не сохранено · черновик HH:MM` (dirty + last save)
+- `Не сохранено` (dirty + no last save)
+- `Локальный черновик · HH:MM` (saved)
+- `Без правок` (saved + no last save edge case)
+
+"Локальный черновик" wording preserved on saved state per the
+honest-feedback contract: deck lives in browser localStorage, not in
+the exported HTML file; "Сохранено" alone would be misleading.
+
+### Verification
+
+- `shell.smoke`: 20/4/0 (no snapshot drift on existing baselines)
+- broader subset (onboarding + onboarding-v2 + honest-feedback +
+  click-blocked + inspector validators / empty-hint / basic-geometry
+  + workspace-settings + click-through): 58/2/0
+- `gate-a11y`: **27/0/0** (contrast spec confirms AA still passing)
+- `tsc --noEmit` clean; `precommit-bridge-script-syntax.js` clean
+
 ## [2.1.0-rc.2] — 2026-04-28 — Basic-mode simpler + starter-deck file:// fix
 
 User feedback after rc.1: "сделай инспектор Простой действительно простым,

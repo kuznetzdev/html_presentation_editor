@@ -219,7 +219,25 @@ The preview zoom feature uses the CSS `zoom:` property which is on the W3C stand
 
 ## Release state
 
-**Current**: v2.1.0-rc.2 — Basic-mode simpler + starter-deck file:// fix
+**Current**: v2.1.0-rc.3 — Button + topbar contrast pass (2026-04-28).
+User feedback: "контраст цветов у кнопок не нравится мне в тёмной теме
+и в светлой тоже." Systematic audit found: (1) `#exportPptxBtn` referenced
+non-existent `--shell-fg` token (text invisible); (2) topbar ghost buttons
+(`Undo`, `Redo`, `Theme`, `ExportPPTX`) styled as floating muted labels
+(text `--shell-text-muted`, transparent bg, faint 0.12-alpha border);
+(3) disabled state `opacity: 0.55` dropped primary-btn contrast to ~3:1
+(fails AA non-text per WCAG 1.4.11); (4) `.icon-btn` at 55% text-mix
+fails AA; (5) `.mode-toggle` inactive at 68% text-mix borderline on dark.
+rc.3 fixes all five via: new `--shell-border-button` semantic token
+(0.22 light / 0.26 dark), `--button-bg-disabled` + `--button-text-disabled`
+tokens, lifted topbar ghost buttons to `--shell-text` foreground +
+`--shell-field-bg` background + `--shell-border-button` border, fixed
+`--shell-fg` typo, lifted `.icon-btn` and `.mode-toggle` inactive to
+`--shell-text-muted`. Save-pill copy tightened (5 phrasings → 4 crisp,
+HH:MM not HH:MM:SS, "Локальный черновик" preserved on saved state for
+honest-feedback contract). Targeted subset 86/6/0 + gate-a11y 27/0/0.
+
+**Previous**: v2.1.0-rc.2 — Basic-mode simpler + starter-deck file:// fix
 (2026-04-28). User feedback after rc.1 surfaced (1) the inspector's
 "Простой" mode still showed the smartMode/containerMode jargon toggle
 ("⊞ Листы / ▣ Группы") and (2) the starter-deck "попробуйте на примере"
