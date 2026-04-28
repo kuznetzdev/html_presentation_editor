@@ -219,7 +219,20 @@ The preview zoom feature uses the CSS `zoom:` property which is on the W3C stand
 
 ## Release state
 
-**Current**: v2.1.0-rc.4 — Expert-review P0+P1 implementation (2026-04-28).
+**Current**: v2.1.0-rc.5 — Layer glyphs + floating zoom + export grouping
+(2026-04-28). Continued expert-review implementation. (P1) layer type
+glyphs (T / 🖼 / 🎬 / ▦ / { } / ✦ / ✱ / ▢ / 🔒 / ▣ / H) prefixed in a new
+22px grid column, muted color, accent on `.is-active` — lets the user
+scan layer trees by visual type. (P0 #3) floating zoom-control pill
+relocated from `.panel-header-actions` into `.preview-stage` as
+absolute-positioned bottom-right with backdrop-blur — matches Figma /
+Canva / Pitch convention. (P1) `#exportBtn` + `#exportPptxBtn` styled
+as a Mac-toolbar split-button capsule (shared border-radius, 1px accent
+divider, flush margins) — lighter version of the expert's "Экспорт ▾"
+dropdown spec; the proper popover defers to v2.2. All IDs preserved;
+existing JS handlers + tests work unchanged.
+
+**Previous**: v2.1.0-rc.4 — Expert-review P0+P1 implementation (2026-04-28).
 User-supplied expert UX review with prioritized P0/P1/P2 list. This pass:
 (P0) topbar compaction — undo/redo demoted to icon buttons (`↶` `↷`),
 "Показать" → "Полный просмотр" (resolves Превью/Показать naming clash);

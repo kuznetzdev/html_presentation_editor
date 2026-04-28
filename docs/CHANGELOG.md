@@ -1,5 +1,62 @@
 # CHANGELOG
 
+## [2.1.0-rc.5] — 2026-04-28 — Layer glyphs + floating zoom + export grouping
+
+User: "делай дальше. работай. ... быстро пробегись и доделывай."
+Continued expert-review implementation.
+
+### P1 — Layer type glyphs
+
+`getLayerTypeGlyph(entityKind, tagName)` returns a single recognition mark
+per kind: `T` text · `🖼` image · `🎬` video · `▦` table · `{ }` code ·
+`✦` svg · `✱` fragment · `▢` slide-root · `🔒` protected · `▣` container ·
+`H` heading. Rendered before `.layer-label` in a new 22px grid column,
+muted color, accent on `.is-active`. Lets the user scan a long layer
+tree by visual type without label-reading.
+
+Layer-row grid: `32px 22px 1fr auto` (was `32px 1fr auto`).
+
+### P0 #3 — Floating zoom over canvas
+
+`.preview-zoom-control` DOM relocated from `.panel-header-actions` (top-
+right of preview panel) to inside `.preview-stage` as the first absolute-
+positioned child. New `.preview-zoom-floating` modifier:
+`position: absolute; right: 16px; bottom: 16px;` — pill-shaped capsule
+with `backdrop-filter: blur(12px)` for the floating-over-canvas feel.
+Per expert spec "снизу справа поверх canvas" — matches Figma / Canva /
+Pitch convention.
+
+- IDs preserved (`#zoomOutBtn`, `#zoomLevelLabel`, `#zoomInBtn`,
+  `#zoomResetBtn`); `zoom.js` handlers untouched.
+- Hidden in empty workflow.
+- Now-empty `.panel-header-actions` collapses via `:empty { display: none }`.
+
+### P1 — Export buttons visually grouped
+
+`#exportBtn` (HTML, primary blue) + `#exportPptxBtn` (PPTX, ghost) styled
+as a Mac-toolbar capsule — shared border-radius (right side of HTML, left
+side of PPTX flat); 1px accent divider; flush margins. Signals "these two
+are related actions" without the heavier dropdown rewrite. IDs preserved;
+existing JS handlers and tests untouched.
+
+Lighter version of the expert review's "Экспорт ▾" dropdown
+recommendation — defers the proper popover menu to v2.2 when the
+broader dropdown infrastructure (used also for command palette, slide
+rail, etc.) lands.
+
+### Deferred to rc.6 / v2.2
+
+- Proper Export ▾ dropdown with HTML / PPTX / "Проверить экспорт" menu items
+- Slides + Layers as left-panel tabs
+- Inspector type-dependent split (slide vs text vs image)
+- Command palette (Ctrl+/)
+- Floating toolbar refinement (content-aware filtering)
+
+### Verification
+
+Will run full Gate-A after rc.4 finishes its in-flight run; tag + push on
+green.
+
 ## [2.1.0-rc.4] — 2026-04-28 — Expert-review P0+P1 implementation
 
 User asked for "богатый дизайн ... красивый не нагружающий" plus an
