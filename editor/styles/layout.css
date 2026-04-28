@@ -205,16 +205,31 @@ body[data-topbar-command-mode="overflow"] #topbarCommandCluster #themeToggleBtn 
   border-color: var(--shell-border-strong);
 }
 
+/* [v2.1.0-rc.5 / ADR-031, expert-feedback P1] Export buttons visually
+   grouped as a Mac-toolbar split-button capsule — shared border-radius,
+   1px divider between them, semantic continuity that signals "these two
+   are related actions". Cleaner than two free-floating buttons; avoids
+   the heavier dropdown rewrite while still conveying the grouping. */
 #topbarCommandCluster #exportBtn {
   border: 1px solid transparent;
   background: var(--shell-accent);
   color: var(--on-accent);
   font-weight: 600;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  margin-right: 0;
 }
 
 #topbarCommandCluster #exportBtn:hover:not(:disabled) {
   background: color-mix(in srgb, var(--shell-accent) 88%, #000000 12%);
   color: var(--on-accent);
+}
+
+#topbarCommandCluster #exportPptxBtn {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  margin-left: 0;
+  border-left-color: color-mix(in srgb, var(--shell-accent) 28%, transparent);
 }
 
 #topbarCommandCluster #presentBtn {
