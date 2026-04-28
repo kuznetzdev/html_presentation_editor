@@ -28,6 +28,15 @@
   --shell-field-muted: #f2f2f7;
   --shell-border: rgba(29, 29, 31, 0.06);
   --shell-border-strong: rgba(29, 29, 31, 0.12);
+  /* [v2.1.0-rc.3 / ADR-031, contrast-pass] Stronger button perimeter
+     for ghost / outline buttons sitting on tinted topbar / panel
+     backgrounds. Halfway between --shell-border-strong and
+     --shell-text-muted; ≥ 3:1 against panel surfaces (WCAG 1.4.11). */
+  --shell-border-button: rgba(29, 29, 31, 0.22);
+  /* [v2.1.0-rc.3] Disabled state — replaces opacity:0.55 (which dropped
+     primary-btn contrast to ~3:1 — fails AA). Token-based bg + text. */
+  --button-bg-disabled: var(--shell-field-muted);
+  --button-text-disabled: rgba(60, 60, 67, 0.42);
   --shell-text: #1d1d1f;
   /* [v2.0.16 / A11Y-001] Light-theme muted text: bumped alpha 0.6 → 0.78
      to lift contrast from 3.43:1 → ~5.5:1 on #ffffff (WCAG AA ≥ 4.5:1).
@@ -280,6 +289,9 @@
   --shell-field-muted: #2a2b30;
   --shell-border: rgba(255, 255, 255, 0.08);
   --shell-border-strong: rgba(255, 255, 255, 0.14);
+  /* [v2.1.0-rc.3] Dark-theme rebind — same role, themed alpha. */
+  --shell-border-button: rgba(255, 255, 255, 0.26);
+  --button-text-disabled: rgba(235, 235, 245, 0.36);
   --shell-text: #f5f5f7;
   --shell-text-muted: rgba(235, 235, 245, 0.6);
   --shell-accent: #4da3ff;

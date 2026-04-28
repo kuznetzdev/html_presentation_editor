@@ -132,7 +132,18 @@ button:active:not(:disabled) {
   }
 }
 
-button:disabled,
+/* [v2.1.0-rc.3 / ADR-031, A2-F17 / WCAG 1.4.11] Replaced opacity:0.55
+   with token-based disabled state. Old behavior dropped primary-btn
+   contrast to ~3:1 (fails AA non-text). Inputs/selects/textareas keep
+   opacity since they have native disabled styling AT users recognize. */
+button:disabled {
+  background: var(--button-bg-disabled) !important;
+  border-color: var(--shell-border) !important;
+  color: var(--button-text-disabled) !important;
+  box-shadow: none !important;
+  cursor: not-allowed;
+}
+
 input:disabled,
 select:disabled,
 textarea:disabled {
@@ -230,13 +241,20 @@ a:focus-visible,
   box-shadow: 0 8px 18px rgba(0, 113, 227, 0.18);
 }
 
+/* [v2.1.0-rc.3 / ADR-031, contrast-pass] Ghost button — used widely
+   (panel-close, slide-template-trigger, modal-close, etc). Was border
+   --shell-border-strong (0.12 alpha) which read as "barely there" on
+   panel backgrounds. Bumped to --shell-border-button (0.22 alpha) +
+   subtle tint for silhouette readability. Text remains --shell-text. */
 .ghost-btn {
   background: transparent;
-  border-color: var(--shell-border-strong);
+  border-color: var(--shell-border-button);
+  color: var(--shell-text);
 }
 
 .ghost-btn:hover:not(:disabled) {
   background: var(--shell-field-muted);
+  border-color: var(--shell-border-strong);
 }
 
 .danger-btn,
@@ -254,11 +272,15 @@ a:focus-visible,
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  color: color-mix(in srgb, var(--shell-text) 55%, transparent);
+  /* [v2.1.0-rc.3 / ADR-031, contrast-pass] Was 55% mix → ~3:1 contrast,
+     fails AA. --shell-text-muted is the proper "secondary icon" token
+     (5.5:1 light, 5.5:1 dark per v2.0.16). */
+  color: var(--shell-text-muted);
 }
 
 .icon-btn:hover:not(:disabled) {
   background: var(--shell-field-muted);
+  color: var(--shell-text);
 }
 
 .compact {
@@ -396,7 +418,10 @@ a:focus-visible,
   min-height: 32px;
   border-radius: 8px;
   background: var(--shell-field-bg);
-  color: color-mix(in srgb, var(--shell-text) 68%, transparent);
+  /* [v2.1.0-rc.3 / ADR-031, contrast-pass] Was 68% mix → ~3.4:1 on
+     dark-theme --shell-field-bg. Bumped to --shell-text-muted (which
+     v2.0.16 already lifted to AA-passing). Active state stays accent. */
+  color: var(--shell-text-muted);
   -webkit-text-fill-color: currentColor;
   font-weight: 600;
   transition:

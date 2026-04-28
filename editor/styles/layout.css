@@ -164,41 +164,57 @@ body[data-topbar-command-mode="overflow"] #topbarCommandCluster #themeToggleBtn 
   display: none;
 }
 
+/* [v2.1.0-rc.3 / ADR-031, contrast-pass]
+   Topbar command cluster — every button now reads as a button (not as
+   floating text). Three principles applied:
+     1. Text color is --shell-text (full), never --shell-text-muted —
+        buttons are interactive surfaces that need foreground commitment.
+     2. Borders use --shell-border-button (new semantic token, slightly
+        stronger than --shell-border-strong) so the button perimeter is
+        readable on both light and dark topbar gradients.
+     3. Subtle background tint on ghost buttons (--shell-field-bg at low
+        alpha) so the silhouette stays visible even before hover. */
 #topbarCommandCluster #undoBtn,
 #topbarCommandCluster #redoBtn,
-#topbarCommandCluster #themeToggleBtn {
-  border: 1px solid var(--shell-border-strong);
-  background: transparent;
-  color: var(--shell-text-muted);
-}
-
-#topbarCommandCluster #undoBtn:hover:not(:disabled),
-#topbarCommandCluster #redoBtn:hover:not(:disabled),
-#topbarCommandCluster #themeToggleBtn:hover:not(:disabled) {
+#topbarCommandCluster #themeToggleBtn,
+#topbarCommandCluster #exportPptxBtn {
+  border: 1px solid var(--shell-border-button);
   background: var(--shell-field-bg);
   color: var(--shell-text);
 }
 
-#topbarCommandCluster #openHtmlBtn {
-  border: 1px solid var(--shell-border-strong);
-  background: color-mix(in srgb, var(--shell-panel-elevated) 92%, transparent);
+#topbarCommandCluster #undoBtn:hover:not(:disabled),
+#topbarCommandCluster #redoBtn:hover:not(:disabled),
+#topbarCommandCluster #themeToggleBtn:hover:not(:disabled),
+#topbarCommandCluster #exportPptxBtn:hover:not(:disabled) {
+  border-color: var(--shell-border-strong);
+  background: var(--shell-field-muted);
   color: var(--shell-text);
+}
+
+#topbarCommandCluster #openHtmlBtn {
+  border: 1px solid var(--shell-border-button);
+  background: var(--shell-panel-elevated);
+  color: var(--shell-text);
+  font-weight: 600;
   box-shadow: none;
 }
 
 #topbarCommandCluster #openHtmlBtn:hover:not(:disabled) {
   background: var(--shell-field-bg);
+  border-color: var(--shell-border-strong);
 }
 
 #topbarCommandCluster #exportBtn {
   border: 1px solid transparent;
   background: var(--shell-accent);
-  color: #ffffff;
+  color: var(--on-accent);
+  font-weight: 600;
 }
 
 #topbarCommandCluster #exportBtn:hover:not(:disabled) {
   background: color-mix(in srgb, var(--shell-accent) 88%, #000000 12%);
-  color: #ffffff;
+  color: var(--on-accent);
 }
 
 #topbarCommandCluster #presentBtn {
@@ -210,16 +226,6 @@ body[data-topbar-command-mode="overflow"] #topbarCommandCluster #themeToggleBtn 
 
 #topbarCommandCluster #presentBtn:hover:not(:disabled) {
   background: color-mix(in srgb, var(--shell-accent) 12%, transparent 88%);
-}
-
-#topbarCommandCluster #exportPptxBtn {
-  border: 1px solid var(--shell-border);
-  background: transparent;
-  color: var(--shell-fg);
-}
-
-#topbarCommandCluster #exportPptxBtn:hover:not(:disabled) {
-  background: var(--shell-field-bg);
 }
 
 body[data-editor-workflow="empty"] #topbarStateCluster,
