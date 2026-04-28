@@ -84,31 +84,18 @@
   transform: translateY(-1px);
 }
 
-.slide-item::before {
-  content: "";
-  position: absolute;
-  left: 12px;
-  top: 12px;
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  border: 1px solid var(--shell-border-strong);
-  background: var(--shell-panel-elevated);
-  z-index: 1;
-}
+/* [v2.1.0-rc.2 / ADR-031, A1-F30 / P-31] Removed the 10×10 LED dot
+   pseudo-element — competed visually with the thumbnail border-accent
+   for the "active" signal. Active state now lives entirely on the
+   .slide-item-main rules below (border-accent + inset accent rail).
 
-.slide-item:hover {
-  transform: scale(1.02);
-}
+   Also removed scale(1.02) hover transform — caused row positions to
+   shift in scrollable lists, disorienting per Apple HIG list guidance.
+   Hover state moved to .slide-item-main rules below (background tint). */
 
 .slide-item.is-active {
-  transform: translateY(-1px);
-}
-
-.slide-item.is-active::before {
-  border-color: var(--shell-accent);
-  background: var(--shell-accent);
-  box-shadow: 0 0 0 4px var(--shell-focus);
+  /* keep small lift but not a position-shifting transform */
+  z-index: 1;
 }
 
 .slide-item.is-pending {
@@ -134,13 +121,20 @@
 
 .slide-item:hover .slide-item-main {
   border-color: var(--shell-border-strong);
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.08);
+  /* [v2.1.0-rc.2 / ADR-031, P-31] Background-tint hover instead of
+     transform-shift parent. Tinted with accent-soft for subtle warmth. */
+  background: color-mix(in srgb, var(--shell-panel) 88%, var(--shell-accent-soft) 12%);
+  box-shadow: var(--shadow-panel);
 }
 
 .slide-item.is-active .slide-item-main {
   border-color: var(--shell-accent);
-  background: var(--shell-panel);
+  background: color-mix(in srgb, var(--shell-panel) 94%, var(--shell-accent-soft) 6%);
+  /* [v2.1.0-rc.2 / ADR-031, P-31] Inset accent rail at left edge =
+     unambiguous active-marker (replaces the LED dot). Outer ring kept
+     for emphasis against rail background. */
   box-shadow:
+    inset 3px 0 0 0 var(--shell-accent),
     0 0 0 1px var(--shell-accent),
     0 12px 28px rgba(0, 113, 227, 0.12);
 }

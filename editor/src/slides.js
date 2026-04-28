@@ -372,6 +372,65 @@
         }
       }
 
+      // [v2.1.0-rc.2 / ADR-031] file:// fetch fallback. Modern browsers
+      // (Chrome / Edge) block fetch() for file:// URLs as a security policy
+      // even when the target is same-origin. v2.0.30 fixed the URL
+      // construction (was using `null` origin from window.location), but
+      // fetch itself still fails. This helper tries fetch first; on
+      // failure (typically `TypeError: Failed to fetch` on file://),
+      // falls back to a hidden iframe loader — which IS allowed for
+      // same-origin file:// since browsers permit iframe loading even
+      // when fetch is blocked.
+      async function fetchHtmlFile(url) {
+        try {
+          const response = await fetch(url, {
+            cache: "no-store",
+            credentials: "same-origin",
+          });
+          if (!response.ok) throw new Error(`http-${response.status}`);
+          return await response.text();
+        } catch (fetchError) {
+          // Iframe fallback — works on file:// where fetch is blocked.
+          return await new Promise((resolve, reject) => {
+            const iframe = document.createElement("iframe");
+            iframe.style.cssText =
+              "position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;border:0;";
+            const cleanup = () => {
+              try { iframe.parentNode?.removeChild(iframe); } catch {}
+            };
+            const timer = setTimeout(() => {
+              cleanup();
+              reject(new Error("starter-iframe-timeout"));
+            }, 8000);
+            iframe.onload = () => {
+              clearTimeout(timer);
+              try {
+                const doc = iframe.contentDocument;
+                if (!doc || !doc.documentElement) {
+                  cleanup();
+                  reject(new Error("starter-iframe-no-document"));
+                  return;
+                }
+                const html =
+                  "<!doctype html>\n" + doc.documentElement.outerHTML;
+                cleanup();
+                resolve(html);
+              } catch (readError) {
+                cleanup();
+                reject(readError);
+              }
+            };
+            iframe.onerror = () => {
+              clearTimeout(timer);
+              cleanup();
+              reject(fetchError);
+            };
+            iframe.src = url;
+            document.body.appendChild(iframe);
+          });
+        }
+      }
+
       async function loadStarterDeck(starterKey = "basic") {
         const starter = getStarterDeckConfig(starterKey);
         if (!starter) {
@@ -391,14 +450,9 @@
 
         try {
           setPreviewLoading(true, "Загрузка стартового примера…");
-          const response = await fetch(starter.href, {
-            cache: "no-store",
-            credentials: "same-origin",
-          });
-          if (!response.ok) {
-            throw new Error(`starter-fetch-${response.status}`);
-          }
-          const htmlText = await response.text();
+          // [v2.1.0-rc.2] fetchHtmlFile transparently falls back to iframe
+          // load on file:// where fetch is browser-blocked.
+          const htmlText = await fetchHtmlFile(starter.href);
           loadHtmlString(htmlText, starter.label, {
             resetHistory: true,
             dirty: false,
@@ -414,10 +468,17 @@
             { title: "Стартовый пример" },
           );
         } catch (error) {
-          console.error(error);
+          console.error("[starter-deck] load failed:", error, {
+            href: starter.href,
+            baseURI: document.baseURI,
+            protocol: window.location.protocol,
+          });
           setPreviewLoading(false);
+          // [v2.1.0-rc.2] More honest error message — names the actual file
+          // path attempted, so the user (or a debug session) can verify the
+          // file exists at the expected location.
           showToast(
-            "Пример не найден — проверьте, что папка editor/fixtures присутствует в сборке.",
+            `Не удалось загрузить пример "${starter.href}". Проверьте, что файл присутствует рядом с editor/.`,
             "warning",
             { title: "Стартовый пример" },
           );

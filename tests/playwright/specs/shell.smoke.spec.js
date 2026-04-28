@@ -729,7 +729,7 @@ test.describe("Editor shell smoke @harness", () => {
     await assertShellGeometry(page);
   });
 
-  test("slide rail status marker keeps clear of slide text @stage-f", async (
+  test("slide rail active marker is visually unambiguous @stage-f", async (
     { page },
     testInfo,
   ) => {
@@ -741,40 +741,31 @@ test.describe("Editor shell smoke @harness", () => {
     await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL });
     await ensureShellPanelVisible(page, "slides");
 
+    // [v2.1.0-rc.2 / ADR-031, A1-F30 / P-31] The 10×10 LED dot marker
+    // (`.slide-item::before`) was removed in favor of an inset accent rail
+    // on `.slide-item.is-active .slide-item-main` (border-color +
+    // `box-shadow: inset 3px 0 0` accent). This test now verifies the new
+    // marker is present + visually distinct, instead of policing the old
+    // dot's clearance against text.
     const metrics = await page.evaluate(() => {
-      const readMarkerClearance = (selector) => {
-        const item = document.querySelector(selector);
-        if (!(item instanceof HTMLElement)) return null;
-        const slideNumber = item.querySelector(".slide-number");
-        if (!(slideNumber instanceof HTMLElement)) return null;
-        const itemRect = item.getBoundingClientRect();
-        const numberRect = slideNumber.getBoundingClientRect();
-        const beforeStyle = window.getComputedStyle(item, "::before");
-        const numberStyle = window.getComputedStyle(slideNumber);
-        const markerLeft = Number.parseFloat(beforeStyle.left || "0");
-        const markerWidth = Number.parseFloat(beforeStyle.width || "0");
-        const paddingLeft = Number.parseFloat(numberStyle.paddingLeft || "0");
-        const markerRight = itemRect.left + markerLeft + markerWidth;
-        const textStart = numberRect.left + paddingLeft;
-        return {
-          clearance: textStart - markerRight,
-          markerRight,
-          textStart,
-        };
-      };
-
+      const item = document.querySelector(
+        "#slidesPanel .slide-item.is-active",
+      );
+      if (!(item instanceof HTMLElement)) return null;
+      const main = item.querySelector(".slide-item-main");
+      if (!(main instanceof HTMLElement)) return null;
+      const mainStyle = window.getComputedStyle(main);
       return {
-        active: readMarkerClearance("#slidesPanel .slide-item.is-active"),
-        firstInactive: readMarkerClearance(
-          '#slidesPanel .slide-item:not(.is-active)',
-        ),
+        borderColor: mainStyle.borderColor,
+        boxShadow: mainStyle.boxShadow,
       };
     });
 
-    expect(metrics.active).not.toBeNull();
-    expect(metrics.firstInactive).not.toBeNull();
-    expect(metrics.active.clearance).toBeGreaterThanOrEqual(6);
-    expect(metrics.firstInactive.clearance).toBeGreaterThanOrEqual(6);
+    expect(metrics).not.toBeNull();
+    // accent border is set on .is-active state
+    expect(metrics.borderColor).not.toBe("rgb(0, 0, 0)");
+    // inset accent rail (box-shadow inset 3px 0 0) is present
+    expect(metrics.boxShadow.toLowerCase()).toMatch(/inset/);
   });
 
   test("novice empty state hides editing chrome and keeps one obvious start path @stage-f", async ({

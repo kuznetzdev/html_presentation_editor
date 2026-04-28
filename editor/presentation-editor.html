@@ -300,17 +300,21 @@
           <div class="slides-template-help hint">
             Создай новый слайд из шаблона. Он появится после текущего.
           </div>
+          <!-- [v2.1.0-rc.2 / ADR-031, A1-F24] Translated mixed-language
+               labels ("Title slide / Section / Bullets / Media") to RU
+               for consistency with <html lang="ru">. data-slide-template
+               keys preserved for JS handlers. -->
           <button type="button" role="menuitem" data-slide-template="title">
-            Title slide
+            Заголовочный
           </button>
           <button type="button" role="menuitem" data-slide-template="section">
-            Section
+            Раздел
           </button>
           <button type="button" role="menuitem" data-slide-template="bullets">
-            Bullets
+            Маркеры
           </button>
           <button type="button" role="menuitem" data-slide-template="media">
-            Media
+            Медиа
           </button>
           <button type="button" role="menuitem" data-slide-template="two-column">
             2 колонки
@@ -994,11 +998,16 @@
                 <button type="button" class="icon-btn" id="brokenAssetBannerDismissBtn" aria-label="Скрыть предупреждение">×</button>
               </div>
             </div>
-            <!-- [LAYER-MODEL v2] selection mode toggle -->
+            <!-- [LAYER-MODEL v2] selection mode toggle
+                 [v2.1.0-rc.2 / ADR-031, A1-F17 / SoT.md:69-70] Gated to
+                 data-ui-level="advanced" — "Листы / Группы" is power-user
+                 jargon (smart vs container layer modes); novice presenters
+                 don't need to understand this distinction in basic mode. -->
             <div
               class="mode-toggle selection-mode-toggle"
               role="group"
               aria-label="Режим выделения"
+              data-ui-level="advanced"
             >
               <button type="button" id="smartModeBtn" class="is-active"
                       aria-pressed="true">
@@ -1008,6 +1017,14 @@
                 <span>▣ Группы</span>
               </button>
             </div>
+            <!-- [v2.1.0-rc.2 / ADR-031, A1-F17] selection-breadcrumbs +
+                 stack-depth-badge are conditionally `hidden` (only render
+                 when overlap actually exists), so they don't clutter basic
+                 mode when not active. Kept basic-visible for the click-
+                 through layer-disambiguation flow which IS a novice need
+                 ("I clicked the wrong thing in a stack"). The smart/container
+                 selection-mode-toggle (above) is the genuine power-user
+                 surface and stays advanced-gated. -->
             <div
               class="selection-breadcrumbs"
               id="selectionBreadcrumbs"
@@ -1062,7 +1079,9 @@
                 контекст и дальнейшие действия.
               </div>
             </div>
-            <h3>Текущий слайд</h3>
+            <!-- [v2.1.0-rc.2 / ADR-031, A1-F16 parallel] Was:
+                 <h3>Текущий слайд</h3> — redundant with the summary-card
+                 kicker "Контекст" already at the top of this section. -->
             <div class="badge-row">
               <span class="mini-badge" id="currentSlideMetaBadge"
                 >слайд: —</span
@@ -1093,21 +1112,26 @@
               </div>
             </div>
             <div class="field-grid-2 slide-settings-grid">
+              <!-- [v2.1.0-rc.2 / ADR-031, A3-#10 / P-42] "preset" / "Preset" /
+                   "preset-замена" — 3 different spellings unified to "шаблон"
+                   per existing slide-template terminology elsewhere. Slide
+                   template names also translated (Title slide → Заголовок,
+                   etc.) per A1-F24. -->
               <div class="field-group compact">
-                <label for="slidePresetSelect">Preset слайда</label>
+                <label for="slidePresetSelect">Шаблон слайда</label>
                 <select id="slidePresetSelect">
-                  <option value="">Без preset-замены</option>
-                  <option value="title">Title slide</option>
-                  <option value="section">Section</option>
-                  <option value="bullets">Bullets</option>
-                  <option value="media">Media</option>
+                  <option value="">Без замены</option>
+                  <option value="title">Заголовочный</option>
+                  <option value="section">Раздел</option>
+                  <option value="bullets">Маркеры</option>
+                  <option value="media">Медиа</option>
                   <option value="two-column">2 колонки</option>
                 </select>
               </div>
               <div class="field-group compact slide-preset-apply-group">
                 <span class="group-title">Структура</span>
                 <button type="button" id="applySlidePresetBtn">
-                  Применить preset
+                  Применить шаблон
                 </button>
               </div>
             </div>
@@ -1131,10 +1155,13 @@
                 HTML слайда
               </button>
             </div>
-            <div class="small-note slide-status-note">
-              У слайда появились собственные first-class настройки: название для
-              списка, фон, preset отступов и безопасная preset-замена структуры.
-              Применение preset заменяет контент текущего слайда, но сохраняет
+            <!-- [v2.1.0-rc.2 / ADR-031] Was a 4-line technical explanation
+                 of preset-vs-slide-settings semantics. Power-user info that
+                 doesn't help a novice presenter — gated to advanced. -->
+            <div class="small-note slide-status-note" data-ui-level="advanced">
+              У слайда есть собственные настройки: название для списка, фон,
+              шаблон отступов и безопасная замена структуры.
+              Применение шаблона заменяет контент текущего слайда, но сохраняет
               slide-level настройки. Undo вернёт прошлую версию.
             </div>
           </div>
