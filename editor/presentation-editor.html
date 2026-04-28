@@ -365,6 +365,9 @@
       <!-- /.left-pane-wrapper -->
 
       <section class="panel panel-main" id="mainPreviewPanel">
+        <!-- [v2.1.0-rc.5 / ADR-031, expert-feedback P0 #3] panel-header
+             retained as a thin shell for non-edit workflows. Zoom controls
+             relocated below into .preview-stage as a floating overlay. -->
         <div class="panel-header">
           <div>
             <h2>Превью</h2>
@@ -373,14 +376,7 @@
               скрипты и хоткеи.
             </div>
           </div>
-          <div class="panel-header-actions">
-            <div class="preview-zoom-control" role="group" aria-label="Масштаб превью">
-              <button type="button" id="zoomOutBtn" class="icon-btn compact" aria-label="Уменьшить масштаб" title="Уменьшить (Ctrl+−)">−</button>
-              <span id="zoomLevelLabel" class="preview-zoom-label" aria-live="polite" aria-atomic="true">100%</span>
-              <button type="button" id="zoomInBtn" class="icon-btn compact" aria-label="Увеличить масштаб" title="Увеличить (Ctrl+=)">+</button>
-              <button type="button" id="zoomResetBtn" class="ghost-btn compact" aria-label="Сбросить масштаб" title="1:1 (Ctrl+0)" hidden>1:1</button>
-            </div>
-          </div>
+          <div class="panel-header-actions"></div>
         </div>
         <div class="preview-shell">
           <div class="preview-note">
@@ -538,6 +534,17 @@
           </div>
 
           <div class="preview-stage" id="previewStage">
+            <!-- [v2.1.0-rc.5 / ADR-031, expert-feedback P0 #3] Floating
+                 zoom control over canvas (bottom-right). Was in panel-header
+                 top-right; per expert review, "снизу справа поверх canvas"
+                 is the conventional editor placement (Figma / Canva /
+                 Pitch). Same DOM ids — JS handlers unchanged. -->
+            <div class="preview-zoom-control preview-zoom-floating" role="group" aria-label="Масштаб превью">
+              <button type="button" id="zoomOutBtn" class="icon-btn compact" aria-label="Уменьшить масштаб" title="Уменьшить (Ctrl+−)">−</button>
+              <span id="zoomLevelLabel" class="preview-zoom-label" aria-live="polite" aria-atomic="true">100%</span>
+              <button type="button" id="zoomInBtn" class="icon-btn compact" aria-label="Увеличить масштаб" title="Увеличить (Ctrl+=)">+</button>
+              <button type="button" id="zoomResetBtn" class="ghost-btn compact" aria-label="Сбросить масштаб" title="1:1 (Ctrl+0)" hidden>1:1</button>
+            </div>
             <div class="empty-state" id="emptyState">
               <strong id="emptyStateTitle"
                 >Откройте HTML-презентацию</strong

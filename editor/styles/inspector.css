@@ -459,8 +459,11 @@ textarea {
 
 .layer-row {
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) auto;
-  gap: 10px;
+  /* [v2.1.0-rc.5 / ADR-031, expert-feedback P1] Added 22px column for the
+     type glyph between drag-handle and main content. Lets the user scan
+     a long layer tree by visual type instead of label-reading. */
+  grid-template-columns: 32px 22px minmax(0, 1fr) auto;
+  gap: 8px;
   align-items: center;
   padding: 10px;
   border: 1px solid var(--border-subtle);
@@ -472,6 +475,25 @@ textarea {
     border-color var(--motion-quick) ease,
     box-shadow var(--motion-quick) ease;
   user-select: none;
+}
+
+/* [v2.1.0-rc.5 / ADR-031, expert-feedback P1] Layer type glyph cell —
+   monospace-ish, muted, sized as a recognition mark not a button. */
+.layer-type-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--shell-text-muted);
+  user-select: none;
+}
+
+.layer-row.is-active .layer-type-glyph {
+  color: var(--shell-accent);
 }
 
 /* [v2.0.5] --shell-hover-bg / --shell-accent-bg were never defined as

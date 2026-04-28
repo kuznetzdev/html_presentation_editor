@@ -262,6 +262,27 @@
         return tagName;
       }
 
+      // [v2.1.0-rc.5 / ADR-031, expert-feedback P1] Type glyph rendered
+      // before the layer label. Lets the user scan a long layer tree and
+      // identify text/image/video/container at a glance without reading
+      // the label text. Glyphs chosen to match the editor's existing
+      // entity-kind iconography (insert palette uses similar marks).
+      function getLayerTypeGlyph(entityKind, tagName) {
+        if (entityKind === "text") return "T";
+        if (entityKind === "image") return "🖼";
+        if (entityKind === "video") return "🎬";
+        if (entityKind === "table") return "▦";
+        if (entityKind === "table-cell") return "▦";
+        if (entityKind === "code-block") return "{ }";
+        if (entityKind === "svg") return "✦";
+        if (entityKind === "fragment") return "✱";
+        if (entityKind === "slide-root") return "▢";
+        if (entityKind === "protected") return "🔒";
+        if (entityKind === "container") return "▣";
+        if (/^h[1-6]$/i.test(tagName)) return "H";
+        return "▢";
+      }
+
       function getPreviewLayerNode(nodeId) {
         if (!nodeId) return null;
         const doc = getPreviewDocument();
@@ -504,6 +525,9 @@
           index,
           sortedLayers.length,
         )}`;
+        // [v2.1.0-rc.5 / ADR-031, expert-feedback P1] Type glyph for at-a-
+        // glance scanning of long layer trees.
+        const typeGlyph = getLayerTypeGlyph(entityKind, layer.tagName);
         // [v2.0.6] Row chips carry STATE, not selection.
         // - "Текущий" removed: the .is-active row highlight + aria-current
         //   already communicate "this is the selected layer" both visually
@@ -602,6 +626,7 @@
             aria-current="${isActive ? "true" : "false"}"${depthStyle}
           >
             ${dragHandleHtml}
+            <span class="layer-type-glyph" aria-hidden="true">${escapeHtml(typeGlyph)}</span>
             <div class="layer-main">
               <span class="layer-label">${label}</span>
               <span class="layer-meta">${escapeHtml(stackHint)}</span>

@@ -390,6 +390,49 @@ body[data-editor-workflow="loaded-edit"] #mainPreviewPanel .panel-header {
   padding: 0 2px;
 }
 
+/* [v2.1.0-rc.5 / ADR-031, expert-feedback P0 #3] Floating zoom control —
+   bottom-right of canvas, over the iframe. Conventional editor placement
+   (Figma / Canva / Pitch). Pill-shaped capsule with subtle elevation. */
+.preview-zoom-floating {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: var(--z-stage-toolbar, 18);
+  padding: 4px;
+  border: 1px solid var(--shell-border-button);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--shell-panel-elevated) 92%, transparent);
+  box-shadow: var(--shadow-floating, var(--elevation-3));
+  backdrop-filter: blur(12px);
+}
+
+.preview-zoom-floating .icon-btn,
+.preview-zoom-floating .ghost-btn {
+  border: 0;
+  background: transparent;
+}
+
+.preview-zoom-floating .icon-btn:hover:not(:disabled),
+.preview-zoom-floating .ghost-btn:hover:not(:disabled) {
+  background: var(--shell-field-muted);
+}
+
+.preview-zoom-floating .preview-zoom-label {
+  color: var(--shell-text);
+}
+
+/* Hide floating zoom in empty workflow (no deck — nothing to zoom). */
+body[data-editor-workflow="empty"] .preview-zoom-floating {
+  display: none;
+}
+
+/* The .panel-header-actions is now empty (zoom moved out). Collapse
+   the panel-header itself in non-edit workflows where the title is
+   still useful but the empty actions div would create dead spacing. */
+.panel-header-actions:empty {
+  display: none;
+}
+
 .topbar button,
 .topbar .mode-toggle button,
 .preview-note-actions button {
