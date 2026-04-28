@@ -218,14 +218,26 @@
         const userName = (el.getAttribute("data-layer-name") || "").trim();
         if (userName) return userName;
         const entityKind = el.getAttribute("data-editor-entity-kind") || "element";
-        const authorId = el.getAttribute("data-node-id") || "";
         const tagName = el.tagName.toLowerCase();
-        // [v2.0.5] Text + heading elements lead with the text preview — the
-        // user sees what the layer says rather than decoding "div [node-a]".
+        // Text + headings lead with the actual content — the user sees what
+        // the layer says rather than decoding `div.card-dark`.
         const rawText = (el.textContent || "").replace(/\s+/g, " ").trim();
         const textPreview = rawText.slice(0, 40);
         if (entityKind === "text" && textPreview) return `"${textPreview}"`;
         if (/^h[1-6]$/i.test(tagName) && textPreview) return `${tagName.toUpperCase()} "${textPreview}"`;
+        // [v2.1.0-rc.4 / ADR-031, expert-feedback P1] Human label FIRST.
+        // Was: returned tagName.className ("div.card-dark") as primary, with
+        // entity-kind buried in the meta line. Per expert review, novice
+        // users don't decode HTML class names — they see "Карточка". The
+        // technical tagName.className now lives in .layer-meta (stackHint).
+        if (typeof getEntityKindLabel === "function") {
+          const kindLabel = getEntityKindLabel(entityKind);
+          if (kindLabel && kindLabel !== entityKind && kindLabel !== "—") {
+            return kindLabel;
+          }
+        }
+        // Final fallbacks: technical naming when no entity-kind labelled.
+        const authorId = el.getAttribute("data-node-id") || "";
         if (authorId) return `${tagName} · #${authorId}`;
         if (el.id) return `${tagName}#${el.id}`;
         const className = (el.className || "")
@@ -233,15 +245,21 @@
           .split(/\s+/)
           .filter((c) => c && !c.startsWith("editor-"))[0];
         if (className) return `${tagName}.${className}`;
-        // [v2.0.5] Last resort: use entity-kind human label instead of the
-        // opaque "[node-xxxxxx]" fragment. "node-xxxxxx" is noise for users.
-        if (typeof getEntityKindLabel === "function") {
-          const kindLabel = getEntityKindLabel(entityKind);
-          if (kindLabel && kindLabel !== entityKind) {
-            return `${kindLabel} · ${tagName}`;
-          }
-        }
         return `${tagName} · ${nodeId.slice(0, 6)}`;
+      }
+
+      // [v2.1.0-rc.4 / ADR-031, expert-feedback P1] Build the secondary
+      // (meta) line: technical detail (tagName.className) + stack position.
+      // Renders below the human label in .layer-meta.
+      function getLayerTechHint(el) {
+        const tagName = el.tagName.toLowerCase();
+        const className = (el.className || "")
+          .toString()
+          .split(/\s+/)
+          .filter((c) => c && !c.startsWith("editor-"))[0];
+        if (className) return `${tagName}.${className}`;
+        if (el.id) return `${tagName}#${el.id}`;
+        return tagName;
       }
 
       function getPreviewLayerNode(nodeId) {
@@ -477,7 +495,12 @@
         const isHidden = isLayerSessionHidden(nodeId);
         const label = escapeHtml(getLayerLabel(layer));
         const isActive = nodeId === state.selectedNodeId;
-        const stackHint = `${getEntityKindLabel(entityKind)} · ${formatLayerStackHint(
+        // [v2.1.0-rc.4 / ADR-031, expert-feedback P1] Meta line shows
+        // tagName.className (technical detail) + stack position. Was just
+        // entity-kind label (now promoted to the primary .layer-label) +
+        // position. Pattern: "div.card-dark · слой 2 из 19".
+        const techHint = getLayerTechHint(layer);
+        const stackHint = `${techHint} · ${formatLayerStackHint(
           index,
           sortedLayers.length,
         )}`;

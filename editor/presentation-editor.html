@@ -166,10 +166,20 @@
             >
               🌓 Тема
             </button>
-            <button id="undoBtn" disabled>Отменить</button>
-            <button id="redoBtn" disabled>Повторить</button>
-          <button id="openHtmlBtn" class="primary-btn" title="Открыть HTML-файл презентации">Открыть HTML</button>
-            <button id="presentBtn" disabled title="Открыть презентацию на весь экран (▶ F5)">▶ Показать</button>
+            <!-- [v2.1.0-rc.4 / ADR-031, expert-feedback P0] Undo/Redo
+                 compacted to icon buttons (was wide text buttons "Отменить"
+                 / "Повторить"); aria-label preserves Russian announcement. -->
+            <button id="undoBtn" class="icon-btn compact"
+                    aria-label="Отменить" title="Отменить (Ctrl+Z)" disabled>↶</button>
+            <button id="redoBtn" class="icon-btn compact"
+                    aria-label="Повторить" title="Повторить (Ctrl+Shift+Z)" disabled>↷</button>
+            <button id="openHtmlBtn" class="primary-btn" title="Открыть HTML-файл презентации">Открыть HTML</button>
+            <!-- [v2.1.0-rc.4 / ADR-031, expert-feedback P0] "Показать" →
+                 "Полный просмотр" — resolves the naming conflict with the
+                 topbar Превью/Редактирование mode toggle. "Показать" was
+                 ambiguous next to "Превью"; "Полный просмотр" reads as
+                 "open the live presentation full-screen". -->
+            <button id="presentBtn" disabled title="Открыть презентацию на весь экран (F5)">▶ Полный просмотр</button>
             <button id="exportBtn" disabled title="Скачать чистый HTML-файл">Экспорт HTML</button>
             <button id="exportPptxBtn" disabled title="Скачать файл PowerPoint (.pptx)">Экспорт PPTX</button>
           </div>

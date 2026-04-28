@@ -349,6 +349,21 @@ body[data-editor-workflow="empty"] .empty-state {
   padding-block: 8px;
 }
 
+/* [v2.1.0-rc.4 / ADR-031, expert-feedback P0 #3]
+   In loaded-edit, drop the "Превью" heading + subtext from the preview
+   panel header. The user is past orientation; what matters is the canvas.
+   Zoom controls stay (they're action chrome, not orientation chrome). */
+body[data-editor-workflow="loaded-edit"] #mainPreviewPanel .panel-header > div:first-child {
+  display: none;
+}
+
+body[data-editor-workflow="loaded-edit"] #mainPreviewPanel .panel-header {
+  justify-content: flex-end;
+  padding-block: 4px;
+  background: transparent;
+  border-bottom: 0;
+}
+
 #previewModeLabel {
   max-width: 68ch;
   display: -webkit-box;
