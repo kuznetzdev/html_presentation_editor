@@ -165,3 +165,350 @@
     border-color: var(--shell-accent, #0071e3);
   }
 }
+
+/* =============================================================================
+ * v2.1 UX pass — novice-friendly layers list
+ *
+ * This block intentionally lives outside @layer so it acts as the final layer
+ * usability correction over inspector/onboarding polish. It targets shell layer
+ * rows only and does not touch iframe presentation content.
+ * ============================================================================= */
+
+#layersRegion .layers-region-body {
+  padding: 12px !important;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--premium-panel, var(--shell-panel)) 92%, transparent),
+      color-mix(in srgb, var(--premium-panel-soft, var(--shell-panel)) 76%, transparent)
+    );
+}
+
+#layersRegion .layers-list-container,
+#layersInspectorSection .layers-list-container {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  padding: 10px !important;
+  border: 1px solid color-mix(in srgb, var(--premium-border, var(--shell-border-strong)) 86%, transparent) !important;
+  border-radius: 16px !important;
+  background: color-mix(in srgb, var(--premium-panel-soft, var(--shell-field-bg)) 82%, transparent) !important;
+}
+
+#layersRegion .layers-list-container::before,
+#layersInspectorSection .layers-list-container::before {
+  content: "Клик по строке — выбрать слой. 👁 скрыть. 🔒 защитить.";
+  display: block;
+  padding: 8px 10px 9px;
+  border: 1px solid color-mix(in srgb, var(--shell-accent) 16%, var(--premium-border, var(--shell-border-strong))) !important;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--shell-accent-soft) 34%, var(--premium-panel, var(--shell-panel)) 66%);
+  color: var(--shell-text-muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+#layersRegion .layer-row,
+#layersInspectorSection .layer-row {
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: 30px 34px minmax(0, 1fr) minmax(72px, auto) !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-height: 58px !important;
+  padding: 9px 10px !important;
+  border: 1px solid color-mix(in srgb, var(--premium-border, var(--shell-border-strong)) 78%, transparent) !important;
+  border-radius: 14px !important;
+  background: color-mix(in srgb, var(--premium-panel, var(--shell-panel)) 92%, transparent) !important;
+  box-shadow: 0 1px 2px color-mix(in srgb, #0f172a 5%, transparent) !important;
+  cursor: pointer !important;
+  touch-action: manipulation;
+}
+
+#layersRegion .layer-row::after,
+#layersInspectorSection .layer-row::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 16px;
+  pointer-events: none;
+}
+
+#layersRegion .layer-row:hover,
+#layersInspectorSection .layer-row:hover {
+  border-color: color-mix(in srgb, var(--shell-accent) 46%, var(--premium-border, var(--shell-border-strong))) !important;
+  background: color-mix(in srgb, var(--premium-panel, var(--shell-panel)) 78%, var(--shell-accent-soft) 22%) !important;
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--shell-accent) 10%, transparent) !important;
+}
+
+#layersRegion .layer-row.is-active,
+#layersInspectorSection .layer-row.is-active,
+#layersRegion .layer-row[aria-current="true"],
+#layersInspectorSection .layer-row[aria-current="true"] {
+  border-color: color-mix(in srgb, var(--shell-accent) 78%, var(--premium-border, var(--shell-border-strong))) !important;
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--shell-accent-soft) 62%, var(--premium-panel, var(--shell-panel)) 38%),
+      color-mix(in srgb, var(--premium-panel, var(--shell-panel)) 80%, var(--shell-accent-soft) 20%)
+    ) !important;
+  box-shadow:
+    inset 4px 0 0 var(--shell-accent),
+    0 0 0 1px color-mix(in srgb, var(--shell-accent) 24%, transparent),
+    0 10px 22px color-mix(in srgb, var(--shell-accent) 14%, transparent) !important;
+}
+
+#layersRegion .layer-row:focus-visible,
+#layersInspectorSection .layer-row:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--shell-accent) 42%, transparent) !important;
+  outline-offset: 2px !important;
+}
+
+#layersRegion .layer-type-glyph,
+#layersInspectorSection .layer-type-glyph {
+  width: 32px !important;
+  height: 32px !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  border: 1px solid color-mix(in srgb, var(--premium-border, var(--shell-border-strong)) 72%, transparent) !important;
+  border-radius: 10px !important;
+  background: color-mix(in srgb, var(--premium-control-bg, var(--shell-field-bg)) 82%, transparent) !important;
+  color: var(--shell-text) !important;
+  font-size: 13px !important;
+  font-weight: 760 !important;
+  line-height: 1 !important;
+}
+
+#layersRegion .layer-row.is-active .layer-type-glyph,
+#layersInspectorSection .layer-row.is-active .layer-type-glyph,
+#layersRegion .layer-row[aria-current="true"] .layer-type-glyph,
+#layersInspectorSection .layer-row[aria-current="true"] .layer-type-glyph {
+  border-color: color-mix(in srgb, var(--shell-accent) 50%, var(--premium-border, var(--shell-border-strong))) !important;
+  background: color-mix(in srgb, var(--shell-accent-soft) 64%, var(--premium-control-bg, var(--shell-field-bg)) 36%) !important;
+  color: var(--shell-accent) !important;
+}
+
+#layersRegion .layer-main,
+#layersInspectorSection .layer-main {
+  min-width: 0 !important;
+  gap: 3px !important;
+}
+
+#layersRegion .layer-label,
+#layersInspectorSection .layer-label {
+  display: block !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  color: var(--shell-text) !important;
+  font-size: 13px !important;
+  font-weight: 760 !important;
+  line-height: 1.25 !important;
+}
+
+#layersRegion .layer-meta,
+#layersInspectorSection .layer-meta {
+  display: block !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  color: var(--shell-text-muted) !important;
+  font-size: 10.5px !important;
+  line-height: 1.3 !important;
+}
+
+#layersRegion .layer-trailing,
+#layersInspectorSection .layer-trailing {
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+}
+
+#layersRegion .layer-status-list,
+#layersInspectorSection .layer-status-list {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: flex-end !important;
+  gap: 4px !important;
+  max-width: 88px !important;
+}
+
+#layersRegion .layer-status-chip,
+#layersInspectorSection .layer-status-chip {
+  min-height: 20px !important;
+  padding: 2px 7px !important;
+  border-radius: 999px !important;
+  font-size: 10px !important;
+  font-weight: 650 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+#layersRegion .layer-row-actions,
+#layersInspectorSection .layer-row-actions {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 4px !important;
+}
+
+#layersRegion .layer-action-btn,
+#layersInspectorSection .layer-action-btn,
+#layersRegion .layer-drag-handle,
+#layersInspectorSection .layer-drag-handle {
+  width: 34px !important;
+  min-width: 34px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  border: 1px solid color-mix(in srgb, var(--premium-border, var(--shell-border-strong)) 72%, transparent) !important;
+  border-radius: 10px !important;
+  background: color-mix(in srgb, var(--premium-control-bg, var(--shell-field-bg)) 82%, transparent) !important;
+  color: var(--shell-text-muted) !important;
+  cursor: pointer !important;
+}
+
+#layersRegion .layer-action-btn:hover,
+#layersInspectorSection .layer-action-btn:hover,
+#layersRegion .layer-drag-handle:hover,
+#layersInspectorSection .layer-drag-handle:hover,
+#layersRegion .layer-action-btn:focus-visible,
+#layersInspectorSection .layer-action-btn:focus-visible,
+#layersRegion .layer-drag-handle:focus-visible,
+#layersInspectorSection .layer-drag-handle:focus-visible {
+  border-color: color-mix(in srgb, var(--shell-accent) 42%, var(--premium-border, var(--shell-border-strong))) !important;
+  background: color-mix(in srgb, var(--shell-accent-soft) 56%, var(--premium-control-bg, var(--shell-field-bg)) 44%) !important;
+  color: var(--shell-accent) !important;
+}
+
+#layersRegion .layer-action-btn:active,
+#layersInspectorSection .layer-action-btn:active,
+#layersRegion .layer-drag-handle:active,
+#layersInspectorSection .layer-drag-handle:active {
+  transform: scale(0.97) !important;
+}
+
+#layersRegion .layer-action-btn.is-hidden,
+#layersInspectorSection .layer-action-btn.is-hidden {
+  opacity: 1 !important;
+  color: var(--shell-text-muted) !important;
+  background: color-mix(in srgb, var(--shell-text-muted) 12%, var(--premium-control-bg, var(--shell-field-bg)) 88%) !important;
+}
+
+#layersRegion .layer-action-btn.is-locked,
+#layersInspectorSection .layer-action-btn.is-locked,
+#layersRegion .layer-status-chip.is-locked,
+#layersInspectorSection .layer-status-chip.is-locked {
+  color: var(--intent-error-fg, var(--shell-danger)) !important;
+}
+
+#layersRegion .layer-drag-handle,
+#layersInspectorSection .layer-drag-handle {
+  cursor: grab !important;
+}
+
+#layersRegion .layer-drag-handle:active,
+#layersInspectorSection .layer-drag-handle:active {
+  cursor: grabbing !important;
+}
+
+#layersRegion .layers-list-container.is-tree-mode,
+#layersInspectorSection .layers-list-container.is-tree-mode {
+  gap: 6px !important;
+}
+
+#layersRegion .layers-list-container.is-tree-mode .layer-tree-node,
+#layersInspectorSection .layers-list-container.is-tree-mode .layer-tree-node {
+  margin: 0 !important;
+}
+
+#layersRegion .layers-list-container.is-tree-mode .layer-tree-node > summary.layer-row,
+#layersInspectorSection .layers-list-container.is-tree-mode .layer-tree-node > summary.layer-row {
+  padding-left: max(24px, min(calc(var(--layer-depth, 0) * 10px + 24px), 96px)) !important;
+}
+
+#layersRegion .layers-list-container.is-tree-mode .layer-tree-node > summary::before,
+#layersInspectorSection .layers-list-container.is-tree-mode .layer-tree-node > summary::before {
+  left: max(8px, min(calc(var(--layer-depth, 0) * 10px + 8px), 80px)) !important;
+  opacity: 0.76 !important;
+}
+
+#layersRegion .layers-list-container.is-tree-mode .layer-tree-children,
+#layersInspectorSection .layers-list-container.is-tree-mode .layer-tree-children {
+  margin: 6px 0 0 14px !important;
+  padding-left: 10px !important;
+  border-left: 1px solid color-mix(in srgb, var(--premium-border, var(--shell-border-strong)) 72%, transparent) !important;
+}
+
+#layersRegion .layers-list-container.is-tree-mode .layer-tree-node > .layer-row-actions.is-detached,
+#layersInspectorSection .layers-list-container.is-tree-mode .layer-tree-node > .layer-row-actions.is-detached {
+  top: 50% !important;
+  right: 10px !important;
+  transform: translateY(-50%) !important;
+  gap: 4px !important;
+}
+
+#layersRegion .layers-list-container.is-tree-mode .layer-tree-node > summary .layer-trailing,
+#layersInspectorSection .layers-list-container.is-tree-mode .layer-tree-node > summary .layer-trailing {
+  padding-right: 78px !important;
+}
+
+#layersRegion .layer-label-input,
+#layersInspectorSection .layer-label-input {
+  min-height: 30px !important;
+  border-radius: 9px !important;
+  padding: 4px 8px !important;
+  background: var(--premium-panel, var(--shell-panel)) !important;
+  color: var(--shell-text) !important;
+  font-size: 13px !important;
+}
+
+@media (max-width: 1280px) {
+  #layersRegion .layer-row,
+  #layersInspectorSection .layer-row {
+    grid-template-columns: 28px 32px minmax(0, 1fr) auto !important;
+    min-height: 56px !important;
+  }
+
+  #layersRegion .layer-status-list,
+  #layersInspectorSection .layer-status-list {
+    display: none !important;
+  }
+}
+
+@media (max-width: 520px) {
+  #layersRegion .layer-row,
+  #layersInspectorSection .layer-row {
+    grid-template-columns: 32px minmax(0, 1fr) auto !important;
+    min-height: 58px !important;
+  }
+
+  #layersRegion .layer-drag-handle,
+  #layersInspectorSection .layer-drag-handle {
+    display: none !important;
+  }
+
+  #layersRegion .layer-type-glyph,
+  #layersInspectorSection .layer-type-glyph {
+    width: 30px !important;
+    height: 30px !important;
+  }
+
+  #layersRegion .layer-row-actions,
+  #layersInspectorSection .layer-row-actions {
+    gap: 3px !important;
+  }
+
+  #layersRegion .layer-action-btn,
+  #layersInspectorSection .layer-action-btn {
+    width: 36px !important;
+    min-width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+  }
+}
