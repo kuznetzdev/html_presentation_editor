@@ -2,10 +2,10 @@
  * layers-region.css — persistent Layers panel styles (ADR-031 + ADR-032)
  *
  * UX contract:
- * - The standalone left-rail Layers panel is a compact object list.
- * - It must stay readable in a narrow column.
- * - Tree depth must not consume the rail width.
- * - Row click selects; small action buttons remain separate and predictable.
+ * - The standalone Layers panel shows document architecture, not a random DOM dump.
+ * - The tree must stay compact in the narrow left rail.
+ * - Parent/child relationships are visible through shallow indentation and guide lines.
+ * - Row click selects; action buttons remain separate and never float over labels.
  * - No iframe/presentation content is styled here.
  * ============================================================================= */
 
@@ -51,7 +51,7 @@
 }
 
 /* =============================================================================
- * Calm compact layer list
+ * Structured compact rail
  * ============================================================================= */
 
 #layersRegion .panel-header {
@@ -81,15 +81,13 @@
 
 #layersRegion .layers-list-container,
 #layersInspectorSection .layers-list-container {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 4px !important;
+  display: block !important;
   width: 100% !important;
   max-height: none !important;
-  padding: 4px !important;
+  padding: 5px !important;
   border: 1px solid color-mix(in srgb, var(--premium-border, var(--shell-border-strong)) 54%, transparent) !important;
   border-radius: 12px !important;
-  background: color-mix(in srgb, var(--premium-panel-soft, var(--shell-field-bg)) 60%, transparent) !important;
+  background: color-mix(in srgb, var(--premium-panel-soft, var(--shell-field-bg)) 58%, transparent) !important;
   overflow: auto !important;
 }
 
@@ -99,53 +97,93 @@
   content: none !important;
 }
 
-/* Standalone rail: visually flatten tree-mode. The DOM can remain a tree for
-   keyboard/state logic, but the user sees a simple, consistent object list. */
-#layersRegion .layers-list-container.is-tree-mode {
-  gap: 4px !important;
+/* Tree grammar --------------------------------------------------------------
+   Not flat. Not a staircase. A compact outline:
+   - parent rows are slightly tinted;
+   - children sit under a subtle vertical guide;
+   - indentation is shallow and capped by the DOM-rendered tree depth.
+*/
+#layersRegion .layers-list-container.is-tree-mode,
+#layersInspectorSection .layers-list-container.is-tree-mode {
+  display: block !important;
 }
 
-#layersRegion .layers-list-container.is-tree-mode .layer-tree-node {
-  display: contents !important;
-  position: static !important;
-  margin: 0 !important;
+#layersRegion .layer-tree-node,
+#layersInspectorSection .layer-tree-node {
+  position: relative !important;
+  display: block !important;
+  margin: 0 0 4px !important;
 }
 
-#layersRegion .layers-list-container.is-tree-mode .layer-tree-node > summary {
+#layersRegion .layer-tree-node > summary,
+#layersInspectorSection .layer-tree-node > summary {
   list-style: none !important;
 }
 
-#layersRegion .layers-list-container.is-tree-mode .layer-tree-node > summary::-webkit-details-marker {
+#layersRegion .layer-tree-node > summary::-webkit-details-marker,
+#layersInspectorSection .layer-tree-node > summary::-webkit-details-marker {
   display: none !important;
 }
 
-#layersRegion .layers-list-container.is-tree-mode .layer-tree-node > summary::before {
+#layersRegion .layer-tree-node > summary.layer-row,
+#layersInspectorSection .layer-tree-node > summary.layer-row {
+  padding-left: 22px !important;
+  background: color-mix(in srgb, var(--premium-panel, var(--shell-panel)) 88%, var(--premium-panel-soft, var(--shell-field-bg)) 12%) !important;
+}
+
+#layersRegion .layer-tree-node > summary.layer-row::before,
+#layersInspectorSection .layer-tree-node > summary.layer-row::before {
+  content: "";
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  width: 0;
+  height: 0;
+  border: 4px solid transparent;
+  border-left-color: color-mix(in srgb, var(--shell-text-muted) 72%, transparent);
+  transform: translateY(-50%);
+  transform-origin: 2px 50%;
+  pointer-events: none;
+}
+
+#layersRegion .layer-tree-node[open] > summary.layer-row::before,
+#layersInspectorSection .layer-tree-node[open] > summary.layer-row::before {
+  transform: translateY(-50%) rotate(90deg);
+}
+
+#layersRegion .layer-tree-children,
+#layersInspectorSection .layer-tree-children {
+  display: block !important;
+  margin: 4px 0 0 10px !important;
+  padding-left: 8px !important;
+  border-left: 1px solid color-mix(in srgb, var(--shell-border-strong) 42%, transparent) !important;
+}
+
+#layersRegion .layer-tree-node:not([open]) .layer-tree-children,
+#layersInspectorSection .layer-tree-node:not([open]) .layer-tree-children {
   display: none !important;
-  content: none !important;
 }
 
-#layersRegion .layers-list-container.is-tree-mode .layer-tree-children {
-  display: contents !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
+/* Detached actions are required for accessible <summary>. Keep them visually
+   attached to the parent row, reserve right-side space, and prevent overlap. */
+#layersRegion .layer-tree-node > .layer-row-actions.is-detached,
+#layersInspectorSection .layer-tree-node > .layer-row-actions.is-detached {
+  position: absolute !important;
+  top: 5px !important;
+  right: 5px !important;
+  z-index: 2 !important;
+  display: inline-flex !important;
+  gap: 3px !important;
+  transform: none !important;
+  pointer-events: auto !important;
 }
 
-#layersRegion .layers-list-container.is-tree-mode .layer-tree-node:not([open]) .layer-tree-children {
-  display: contents !important;
+#layersRegion .layer-tree-node > summary .layer-trailing,
+#layersInspectorSection .layer-tree-node > summary .layer-trailing {
+  padding-right: 56px !important;
 }
 
-/* Detached action buttons in tree-mode caused the floating eye/lock pile-up.
-   Hide only those detached parent actions in the standalone rail. Leaf rows and
-   flat rows still keep their normal inline actions. */
-#layersRegion .layers-list-container.is-tree-mode .layer-row-actions.is-detached {
-  display: none !important;
-}
-
-#layersRegion .layers-list-container.is-tree-mode .layer-tree-node > summary .layer-trailing {
-  padding-right: 0 !important;
-}
-
+/* Rows --------------------------------------------------------------------- */
 #layersRegion .layer-row,
 #layersInspectorSection .layer-row {
   position: relative !important;
@@ -195,6 +233,7 @@
   outline-offset: 1px !important;
 }
 
+/* Handles / glyphs --------------------------------------------------------- */
 #layersRegion .layer-drag-handle,
 #layersInspectorSection .layer-drag-handle {
   width: 18px !important;
@@ -248,6 +287,7 @@
   color: var(--shell-accent) !important;
 }
 
+/* Text --------------------------------------------------------------------- */
 #layersRegion .layer-main,
 #layersInspectorSection .layer-main {
   min-width: 0 !important;
@@ -282,6 +322,7 @@
   line-height: 1.15 !important;
 }
 
+/* Actions ------------------------------------------------------------------ */
 #layersRegion .layer-trailing,
 #layersInspectorSection .layer-trailing {
   min-width: 0 !important;
@@ -368,6 +409,12 @@
     min-width: 25px !important;
     height: 25px !important;
     min-height: 25px !important;
+  }
+
+  #layersRegion .layer-tree-children,
+  #layersInspectorSection .layer-tree-children {
+    margin-left: 8px !important;
+    padding-left: 6px !important;
   }
 }
 
