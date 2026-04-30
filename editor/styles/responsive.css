@@ -453,6 +453,313 @@ body[data-complexity-mode="basic"] [data-ui-level="advanced"]:not([data-force-ba
   }
 }
 
+/* ======================================================================
+ Premium shell polish — pass 3: responsive working surfaces
+ - mobile drawers become inset, calmer, and less edge-to-edge;
+ - mobile command rail gets the same premium glass treatment as desktop;
+ - insert / slide-template popovers behave more like bottom sheets;
+ - touch targets and selection controls become easier to hit.
+ ====================================================================== */
+@media (max-width: 1024px) {
+  .topbar {
+    padding: 8px 10px !important;
+    row-gap: 8px;
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--premium-panel, var(--shell-panel)) 94%, transparent),
+        color-mix(in srgb, var(--premium-panel, var(--shell-panel)) 88%, transparent)
+      ) !important;
+    backdrop-filter: blur(18px) saturate(1.08);
+  }
+
+  .topbar-identity {
+    min-height: 34px;
+    align-items: center;
+  }
+
+  .topbar-title h1 {
+    max-width: 44vw;
+    font-size: 15px !important;
+  }
+
+  .topbar-title span,
+  #topbarStateCluster {
+    display: none !important;
+  }
+
+  .topbar-actions {
+    justify-content: space-between !important;
+  }
+
+  #topbarCommandCluster {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    padding: 1px;
+  }
+
+  #topbarCommandCluster::-webkit-scrollbar {
+    display: none;
+  }
+
+  #topbarCommandCluster > button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .workspace {
+    gap: 10px !important;
+    padding: 10px !important;
+    padding-bottom: calc(
+      var(--mobile-rail-offset) + 12px + env(safe-area-inset-bottom, 0px)
+    ) !important;
+  }
+
+  .shell-panel-left,
+  .shell-panel-right {
+    top: calc(var(--shell-top-offset) + 8px);
+    bottom: calc(
+      var(--mobile-rail-offset) + 18px + env(safe-area-inset-bottom, 0px)
+    );
+    width: min(92vw, 420px);
+    max-width: min(92vw, 420px);
+    border: 1px solid color-mix(in srgb, var(--premium-border, var(--shell-border-strong)) 86%, transparent);
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--premium-panel, var(--shell-panel)) 94%, transparent);
+    box-shadow: var(--premium-shadow-floating, var(--shadow-lg));
+    backdrop-filter: blur(16px) saturate(1.08);
+  }
+
+  .shell-panel-left {
+    left: 8px;
+    transform: translateX(calc(-100% - 18px));
+  }
+
+  .shell-panel-right {
+    right: 8px;
+    transform: translateX(calc(100% + 18px));
+  }
+
+  .panel-backdrop {
+    inset: var(--shell-top-offset) 0 0 !important;
+    background: color-mix(in srgb, var(--drawer-backdrop-bg) 82%, transparent);
+    backdrop-filter: blur(6px);
+  }
+
+  body[data-left-panel-open="true"] .panel-backdrop,
+  body[data-right-panel-open="true"] .panel-backdrop {
+    left: 0 !important;
+    right: 0 !important;
+  }
+
+  .panel-main {
+    min-height: calc(
+      100dvh - var(--shell-top-offset) - var(--mobile-rail-offset) - 28px
+    );
+    border-radius: 18px !important;
+  }
+
+  .preview-shell {
+    padding: 10px !important;
+  }
+
+  .preview-stage {
+    min-height: min(70vh, 760px);
+    border-radius: 16px !important;
+  }
+
+  .mobile-command-rail {
+    gap: 6px;
+    padding: 7px;
+    border-color: color-mix(in srgb, var(--premium-border, var(--shell-border-strong)) 86%, transparent);
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--premium-panel, var(--shell-panel)) 92%, transparent);
+    box-shadow: var(--premium-shadow-floating, var(--shadow-lg));
+    backdrop-filter: blur(18px) saturate(1.12);
+  }
+
+  .mobile-command-rail button {
+    min-height: 50px;
+    border-radius: 13px;
+    border-color: transparent;
+    background: transparent;
+  }
+
+  .mobile-command-rail button:hover:not(:disabled),
+  .mobile-command-rail button:focus-visible,
+  .mobile-command-rail button.is-active {
+    background: color-mix(in srgb, var(--shell-accent-soft) 54%, var(--premium-control-bg, var(--shell-field-bg)) 46%);
+    color: var(--shell-accent);
+  }
+
+  .toast-container {
+    bottom: calc(var(--mobile-rail-offset) + 18px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (max-width: 767px) {
+  body[data-shell-popover-mode="sheet"] .quick-palette,
+  body[data-shell-popover-mode="sheet"] .slides-template-bar,
+  .quick-palette,
+  .slides-template-bar {
+    left: 10px !important;
+    right: 10px !important;
+    width: calc(100vw - 20px) !important;
+    max-width: none !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 18px;
+    max-height: min(
+      58vh,
+      calc(100dvh - var(--shell-top-offset) - var(--mobile-rail-offset) - 36px)
+    );
+  }
+
+  .quick-palette button,
+  .slides-template-bar button {
+    min-height: 46px;
+    justify-content: flex-start;
+  }
+
+  .preview-note {
+    border-radius: 14px !important;
+  }
+
+  body[data-editor-workflow="loaded-edit"] .preview-note {
+    width: 100%;
+    margin-inline: 0;
+  }
+
+  .empty-state {
+    width: min(100%, 540px);
+    padding: 28px 20px !important;
+    border-radius: 20px !important;
+  }
+
+  .empty-state strong {
+    max-width: 14ch;
+    font-size: clamp(23px, 7vw, 28px) !important;
+  }
+
+  .empty-state-lead {
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .empty-state-actions {
+    width: min(100%, 360px);
+    grid-template-columns: 1fr !important;
+  }
+
+  .preview-zoom-floating {
+    right: 10px;
+    bottom: 10px;
+    transform-origin: right bottom;
+  }
+
+  .floating-toolbar {
+    max-width: calc(100vw - 20px);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .floating-toolbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .context-menu,
+  .layer-picker {
+    max-width: calc(100vw - 20px) !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .topbar-title h1 {
+    max-width: 58vw;
+  }
+
+  #topbarCommandCluster #presentBtn,
+  #topbarCommandCluster #exportPptxBtn {
+    display: none;
+  }
+
+  #topbarOverflowBtn {
+    display: inline-flex !important;
+  }
+
+  .mobile-command-rail {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    left: max(6px, env(safe-area-inset-left, 0px));
+    right: max(6px, env(safe-area-inset-right, 0px));
+    bottom: max(6px, env(safe-area-inset-bottom, 0px));
+    padding: 6px;
+  }
+
+  .mobile-command-rail button {
+    min-height: 48px;
+    padding-inline: 4px;
+    font-size: 10.5px;
+  }
+
+  .mobile-command-rail button::before {
+    font-size: 13px;
+  }
+
+  .inspector-body,
+  .slides-panel-body {
+    padding: 10px !important;
+  }
+
+  .inspector-section {
+    padding: 12px !important;
+  }
+}
+
+@media (pointer: coarse) {
+  .selection-handle {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    min-height: 22px;
+    border-width: 2px;
+  }
+
+  .selection-frame-label {
+    min-height: 28px;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+  }
+
+  .floating-toolbar button,
+  .floating-toolbar select,
+  .layer-action-btn,
+  .layer-drag-handle {
+    min-width: 34px;
+    min-height: 34px;
+  }
+}
+
+@media (max-height: 720px) and (max-width: 1024px) {
+  .preview-stage {
+    min-height: min(62vh, 620px);
+  }
+
+  .empty-state {
+    gap: 12px;
+    padding-block: 22px !important;
+  }
+
+  .empty-state::before,
+  .empty-state::after {
+    display: none;
+  }
+}
+
 @media (prefers-contrast: more) {
   :root {
     --shell-border: #5d6773;
