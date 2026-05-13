@@ -191,6 +191,8 @@ if (typeof state !== 'object' || !els) throw new Error('shell-layout.js requires
       }
 
       function setShellPanelState(side, open) {
+        const hadCompactDrawerOpen =
+          isCompactShell() && Boolean(state.leftPanelOpen || state.rightPanelOpen);
         closeTransientShellUi();
         if (side === "left") state.leftPanelOpen = Boolean(open);
         if (side === "right") {
@@ -208,6 +210,7 @@ if (typeof state !== 'object' || !els) throw new Error('shell-layout.js requires
           state.rightPanelUserOpen = false;
         }
         applyShellPanelState();
+        scheduleFloatingToolbarRestoreAfterCompactDrawerClose(hadCompactDrawerOpen);
       }
 
       function toggleShellPanel(side) {
@@ -218,6 +221,8 @@ if (typeof state !== 'object' || !els) throw new Error('shell-layout.js requires
       }
 
       function closeShellPanels(options = {}) {
+        const hadCompactDrawerOpen =
+          isCompactShell() && Boolean(state.leftPanelOpen || state.rightPanelOpen);
         const keep = normalizeShellSurfaceKeep(options.keep);
         if (!keep.has("left-panel")) state.leftPanelOpen = false;
         if (!keep.has("right-panel")) {
@@ -228,4 +233,29 @@ if (typeof state !== 'object' || !els) throw new Error('shell-layout.js requires
         if (options.includeTransient !== false) {
           closeTransientShellUi({ keep: Array.from(keep) });
         }
+        scheduleFloatingToolbarRestoreAfterCompactDrawerClose(hadCompactDrawerOpen);
+      }
+
+      function scheduleFloatingToolbarRestoreAfterCompactDrawerClose(hadCompactDrawerOpen) {
+        if (
+          !hadCompactDrawerOpen ||
+          !isCompactShell() ||
+          state.leftPanelOpen ||
+          state.rightPanelOpen ||
+          state.mode !== "edit" ||
+          !state.selectedNodeId ||
+          state.selectedFlags.isTextEditing ||
+          state.interactionMode === "text-edit" ||
+          state.activeManipulation
+        ) {
+          return;
+        }
+        const hasTransientSurface =
+          isContextMenuOpen() ||
+          (typeof isInsertPaletteOpen === "function" && isInsertPaletteOpen()) ||
+          (typeof isLayerPickerOpen === "function" && isLayerPickerOpen()) ||
+          (typeof isSlideTemplateBarOpen === "function" && isSlideTemplateBarOpen()) ||
+          (typeof isTopbarOverflowOpen === "function" && isTopbarOverflowOpen());
+        if (hasTransientSurface) return;
+        window.requestAnimationFrame(() => positionFloatingToolbar());
       }

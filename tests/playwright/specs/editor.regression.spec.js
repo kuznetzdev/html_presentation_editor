@@ -166,6 +166,75 @@ async function forceLightTheme(page) {
   await expect.poll(() => page.locator("body").getAttribute("data-theme")).toBe("light");
 }
 
+async function readFloatingToolbarContract(page) {
+  return page.evaluate(() => {
+    const isVisible = (selector) => {
+      const element = document.querySelector(selector);
+      if (!(element instanceof HTMLElement)) return false;
+      const rect = element.getBoundingClientRect();
+      const style = window.getComputedStyle(element);
+      return (
+        !element.hidden &&
+        element.getAttribute("aria-hidden") !== "true" &&
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        rect.width > 0 &&
+        rect.height > 0
+      );
+    };
+
+    const buttonState = (selector) => ({
+      enabled: isVisible(selector) && !document.querySelector(selector)?.disabled,
+      visible: isVisible(selector),
+    });
+
+    const groups = {
+      align: isVisible("#ftAlignGroup"),
+      general: isVisible("#ftGeneralGroup"),
+      media: isVisible("#ftMediaGroup"),
+      text: isVisible("#ftTextGroup"),
+    };
+
+    return {
+      buttons: {
+        alignCenter: buttonState("#ftAlignCenterBtn"),
+        bold: buttonState("#ftBoldBtn"),
+        duplicate: buttonState("#ftDuplicateBtn"),
+        editText: buttonState("#ftEditTextBtn"),
+        fitImage: buttonState("#ftFitImageBtn"),
+        replaceImage: buttonState("#ftReplaceImageBtn"),
+      },
+      entityKind:
+        typeof getSelectedEntityKindForUi === "function"
+          ? getSelectedEntityKindForUi()
+          : "none",
+      groups,
+      selectedFlags: {
+        canEditText: Boolean(globalThis.eval("state.selectedFlags?.canEditText")),
+        isImage: Boolean(globalThis.eval("state.selectedFlags?.isImage")),
+        isVideo: Boolean(globalThis.eval("state.selectedFlags?.isVideo")),
+      },
+      toolbarVisible: isVisible("#floatingToolbar"),
+      visibleGroups: Object.entries(groups)
+        .filter(([, visible]) => visible)
+        .map(([name]) => name)
+        .sort(),
+    };
+  });
+}
+
+async function selectOrdinaryBlock(page) {
+  await selectPreviewNodeBySelector(page, "#palette-dropzone");
+  await expect
+    .poll(() =>
+      evaluateEditor(
+        page,
+        "Boolean(state.selectedNodeId) && !state.selectedFlags.canEditText && !state.selectedFlags.isImage && !state.selectedFlags.isVideo",
+      ),
+    )
+    .toBe(true);
+}
+
 test.describe("Editor regression coverage", () => {
   test("create duplicate delete and undo/redo keep slide activation deterministic @stage-b", async (
     { page },
@@ -1413,6 +1482,143 @@ test.describe("Editor regression coverage", () => {
     ui = await readSelectionUiState(page);
     expect(ui.contextMenuVisible).toBe(false);
     expect(ui.toolbarVisible).toBe(true);
+  });
+
+  test("desktop floating toolbar exposes only selection-specific groups @stage-f", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(
+      testInfo.project.name !== "chromium-desktop",
+      "Desktop toolbar contract is asserted on the standard desktop viewport.",
+    );
+
+    await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
+    await closeCompactShellPanels(page);
+
+    await selectTextNode(page, "#hero-title");
+    let toolbar = await readFloatingToolbarContract(page);
+    expect(toolbar.entityKind).toBe("text");
+    expect(toolbar.toolbarVisible).toBe(true);
+    expect(toolbar.visibleGroups).toEqual(["align", "general", "text"]);
+    expect(toolbar.groups.media).toBe(false);
+    expect(toolbar.buttons.editText.enabled).toBe(true);
+    expect(toolbar.buttons.bold.enabled).toBe(true);
+    expect(toolbar.buttons.alignCenter.enabled).toBe(true);
+    expect(toolbar.buttons.replaceImage.visible).toBe(false);
+    expect(toolbar.buttons.fitImage.visible).toBe(false);
+
+    await selectImageNode(page, "#hero-image");
+    toolbar = await readFloatingToolbarContract(page);
+    expect(toolbar.entityKind).toBe("image");
+    expect(toolbar.toolbarVisible).toBe(true);
+    expect(toolbar.visibleGroups).toEqual(["general", "media"]);
+    expect(toolbar.groups.text).toBe(false);
+    expect(toolbar.groups.align).toBe(false);
+    expect(toolbar.buttons.replaceImage.enabled).toBe(true);
+    expect(toolbar.buttons.fitImage.enabled).toBe(true);
+    expect(toolbar.buttons.editText.visible).toBe(false);
+    expect(toolbar.buttons.bold.visible).toBe(false);
+
+    await selectOrdinaryBlock(page);
+    toolbar = await readFloatingToolbarContract(page);
+    expect(toolbar.entityKind).toBe("container");
+    expect(toolbar.toolbarVisible).toBe(true);
+    expect(toolbar.visibleGroups).toEqual(["general"]);
+    expect(toolbar.groups.text).toBe(false);
+    expect(toolbar.groups.align).toBe(false);
+    expect(toolbar.groups.media).toBe(false);
+    expect(toolbar.buttons.duplicate.enabled).toBe(true);
+  });
+
+  test("floating toolbar is mutually exclusive with context menu and insert palette @stage-f", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!isChromiumOnlyProject(testInfo.project.name), "Chromium-only shell flow.");
+    test.skip(/390|640|820/.test(testInfo.project.name), "Desktop and intermediate shell only.");
+
+    await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
+    await closeCompactShellPanels(page);
+    await selectTextNode(page, "#hero-title");
+    await expect(page.locator("#floatingToolbar")).toBeVisible();
+
+    await page.locator("#selectionFrameHitArea").click({ button: "right" });
+    await expect(page.locator("#contextMenu")).toBeVisible();
+    await expect(page.locator("#floatingToolbar")).toBeHidden();
+    await expect(page.locator("#quickPalette")).toBeHidden();
+
+    await openInsertPalette(page);
+    await expect(page.locator("#quickPalette")).toBeVisible();
+    await expect(page.locator("#contextMenu")).toBeHidden();
+    await expect(page.locator("#floatingToolbar")).toBeHidden();
+
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#quickPalette")).toBeHidden();
+    await expect(page.locator("#floatingToolbar")).toBeVisible();
+  });
+
+  test("compact floating toolbar keeps type-specific actions and closes for drawers @stage-e", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!/(390|640|820)/.test(testInfo.project.name), "Compact shell only.");
+
+    await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
+    await closeCompactShellPanels(page);
+
+    await selectTextNode(page, "#hero-title");
+    let toolbar = await readFloatingToolbarContract(page);
+    expect(toolbar.entityKind).toBe("text");
+    expect(toolbar.toolbarVisible).toBe(true);
+    expect(toolbar.visibleGroups).toEqual(["align", "general", "text"]);
+    expect(toolbar.groups.media).toBe(false);
+
+    await selectImageNode(page, "#hero-image");
+    await closeCompactShellPanels(page);
+    toolbar = await readFloatingToolbarContract(page);
+    expect(toolbar.entityKind).toBe("image");
+    expect(toolbar.toolbarVisible).toBe(true);
+    expect(toolbar.visibleGroups).toEqual(["general", "media"]);
+    expect(toolbar.groups.text).toBe(false);
+    expect(toolbar.groups.align).toBe(false);
+
+    await selectTextNode(page, "#hero-title");
+    await expect(page.locator("#floatingToolbar")).toBeVisible();
+
+    await page.locator("#mobileInspectorBtn").click();
+    await expect(page.locator("#inspectorPanel")).toBeVisible();
+    await expect(page.locator("#floatingToolbar")).toBeHidden();
+    await expect(page.locator("#quickPalette")).toBeHidden();
+
+    await page.locator("#mobileSlidesBtn").click();
+    await expect(page.locator("#slidesPanel")).toBeVisible();
+    await expect(page.locator("#inspectorPanel")).toBeHidden();
+    await expect(page.locator("#floatingToolbar")).toBeHidden();
+  });
+
+  test("compact floating toolbar restores after inspector drawer closes @stage-e", async (
+    { page },
+    testInfo,
+  ) => {
+    test.skip(!/(390|640|820)/.test(testInfo.project.name), "Compact shell only.");
+
+    await loadBasicDeck(page, { manualBaseUrl: BASIC_MANUAL_BASE_URL, mode: "edit" });
+    await closeCompactShellPanels(page);
+
+    await selectTextNode(page, "#hero-title");
+    await expect(page.locator("#floatingToolbar")).toBeVisible();
+
+    await page.locator("#mobileInspectorBtn").click();
+    await expect(page.locator("#inspectorPanel")).toBeVisible();
+    await expect(page.locator("#floatingToolbar")).toBeHidden();
+
+    await page.locator("#mobileInspectorBtn").click();
+    await expect(page.locator("#inspectorPanel")).toBeHidden();
+    await expect
+      .poll(() => evaluateEditor(page, "state.selectedNodeId || ''"))
+      .not.toBe("");
+    await expect(page.locator("#floatingToolbar")).toBeVisible();
   });
 
   test("desktop rail drag reorder updates slide order @stage-d", async ({ page }, testInfo) => {

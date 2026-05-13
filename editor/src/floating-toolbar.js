@@ -11,59 +11,189 @@
       // ZONE: Floating Toolbar
       // Context-sensitive floating toolbar: show/hide, position, disable/enable controls
       // =====================================================================
+      function hasOpenCompactShellDrawer() {
+        if (typeof isCompactShell !== "function" || !isCompactShell()) {
+          return false;
+        }
+        return Boolean(state.leftPanelOpen || state.rightPanelOpen);
+      }
+
+      function shouldSuppressFloatingToolbarForShellSurface() {
+        return (
+          isContextMenuOpen() ||
+          (typeof isInsertPaletteOpen === "function" && isInsertPaletteOpen()) ||
+          (typeof isLayerPickerOpen === "function" && isLayerPickerOpen()) ||
+          (typeof isSlideTemplateBarOpen === "function" && isSlideTemplateBarOpen()) ||
+          (typeof isTopbarOverflowOpen === "function" && isTopbarOverflowOpen()) ||
+          hasOpenCompactShellDrawer()
+        );
+      }
+
+      function setFloatingToolbarControlState(control, visible, disabled) {
+        if (!control) return;
+        control.hidden = !visible;
+        control.disabled = disabled;
+      }
+
+      function setFloatingToolbarGroupState(group, visible) {
+        if (!group) return;
+        group.hidden = !visible;
+        group.setAttribute("aria-hidden", visible ? "false" : "true");
+      }
+
+      function getFloatingToolbarActionVisibility(entityKind, policy) {
+        const isAdvanced = isAdvancedMode();
+        const isText = entityKind === "text";
+        const isTableCell = entityKind === "table-cell";
+        const isCodeBlock = entityKind === "code-block";
+        const isImage = entityKind === "image";
+        const isVideo = entityKind === "video";
+        const isStructural =
+          entityKind === "container" ||
+          entityKind === "element" ||
+          entityKind === "slide-root";
+        const canEditRichTextStyles =
+          policy.canEditStyles &&
+          policy.canEditText &&
+          (isText || isTableCell);
+        const canStartPlainTextEditing =
+          state.selectedFlags.canEditText &&
+          policy.canEditText &&
+          (isText || isTableCell || isCodeBlock);
+        const showReplaceImage = isImage && policy.canReplaceMedia;
+        const showFitImage = isImage && policy.canEditStyles;
+        const showCopyMediaUrl = isAdvanced && (isImage || isVideo);
+        const showMediaUrl = isAdvanced && isVideo;
+        const showCopyStyle =
+          isAdvanced && policy.canEditStyles && (isText || isImage || isStructural);
+        const showPasteStyle = showCopyStyle && Boolean(state.copiedStyle?.styles);
+
+        return {
+          canEditRichTextStyles,
+          canStartPlainTextEditing,
+          showGeneralGroup:
+            policy.canDelete ||
+            policy.canDuplicate ||
+            showCopyStyle ||
+            showPasteStyle,
+          showDelete: policy.canDelete,
+          showDuplicate: policy.canDuplicate && !isTableCell,
+          showCopyStyle,
+          showPasteStyle,
+          showTextGroup: canStartPlainTextEditing || canEditRichTextStyles,
+          showRichTextControls: canEditRichTextStyles,
+          showAlignGroup: canEditRichTextStyles,
+          showMediaGroup:
+            showReplaceImage || showFitImage || showCopyMediaUrl || showMediaUrl,
+          showReplaceImage,
+          showFitImage,
+          showCopyMediaUrl,
+          showMediaUrl,
+        };
+      }
+
       function updateFloatingToolbarContext() {
         const hasSelection = Boolean(
           state.selectedNodeId && state.mode === "edit",
         );
         const policy = state.selectedPolicy || createDefaultSelectionPolicy();
-        const isAdvanced = isAdvancedMode();
         const compactLayout = document.body.dataset.toolbarLayout === "compact";
         const entityKind = hasSelection ? getSelectedEntityKindForUi() : "none";
-        const canEditRichTextStyles =
-          hasSelection &&
-          policy.canEditStyles &&
-          policy.canEditText &&
-          (entityKind === "text" || entityKind === "table-cell");
-        const canStartPlainTextEditing =
-          hasSelection &&
-          state.selectedFlags.canEditText &&
-          policy.canEditText &&
-          (entityKind === "text" ||
-            entityKind === "table-cell" ||
-            entityKind === "code-block");
-        els.ftTextGroup.hidden =
-          !canStartPlainTextEditing;
-        els.ftMediaGroup.hidden =
-          !hasSelection ||
-          (!state.selectedFlags.isImage && !state.selectedFlags.isVideo);
-        els.ftHandleBtn.hidden = compactLayout || !hasSelection;
-        els.ftCopyStyleBtn.hidden = !isAdvanced || !hasSelection;
-        els.ftPasteStyleBtn.hidden = !isAdvanced || !hasSelection;
-        els.ftReplaceImageBtn.hidden = !state.selectedFlags.isImage;
-        els.ftCopyImageUrlBtn.hidden =
-          !isAdvanced || !(
-            state.selectedFlags.isImage || state.selectedFlags.isVideo
-          );
-        els.ftMediaUrlBtn.hidden = !isAdvanced || !state.selectedFlags.isVideo;
-        els.ftFitImageBtn.hidden = !state.selectedFlags.isImage;
-        els.ftHandleBtn.disabled = compactLayout || !hasSelection;
-        els.ftReplaceImageBtn.disabled =
-          !hasSelection || !policy.canReplaceMedia || !state.selectedFlags.isImage;
-        els.ftFitImageBtn.disabled =
-          !hasSelection || !policy.canEditStyles || !state.selectedFlags.isImage;
-        els.ftEditTextBtn.disabled = !canStartPlainTextEditing;
-        els.ftBoldBtn.disabled = !canEditRichTextStyles;
-        els.ftItalicBtn.disabled = !canEditRichTextStyles;
-        if (els.ftUnderlineBtn) els.ftUnderlineBtn.disabled = !canEditRichTextStyles;
-        if (els.ftColorInput) els.ftColorInput.disabled = !canEditRichTextStyles;
-        if (els.ftFontFamilySelect) els.ftFontFamilySelect.disabled = !canEditRichTextStyles;
-        if (els.ftFontSizeSelect) els.ftFontSizeSelect.disabled = !canEditRichTextStyles;
-        if (els.ftAlignGroup) els.ftAlignGroup.hidden = !canEditRichTextStyles;
-        [els.ftAlignLeftBtn, els.ftAlignCenterBtn, els.ftAlignRightBtn].forEach(
-          (b) => { if (b) b.disabled = !canEditRichTextStyles; },
+        const visibility = getFloatingToolbarActionVisibility(entityKind, policy);
+        const noSelection = !hasSelection;
+        const noRichText = noSelection || !visibility.canEditRichTextStyles;
+        const noPlainText = noSelection || !visibility.canStartPlainTextEditing;
+
+        setFloatingToolbarControlState(
+          els.ftHandleBtn,
+          hasSelection && !compactLayout,
+          compactLayout || noSelection,
         );
-        els.ftDeleteBtn.disabled = !hasSelection || !policy.canDelete;
-        els.ftDuplicateBtn.disabled = !hasSelection || !policy.canDuplicate;
+        setFloatingToolbarGroupState(
+          els.ftGeneralGroup,
+          hasSelection && visibility.showGeneralGroup,
+        );
+        setFloatingToolbarGroupState(
+          els.ftTextGroup,
+          hasSelection && visibility.showTextGroup,
+        );
+        setFloatingToolbarGroupState(
+          els.ftAlignGroup,
+          hasSelection && visibility.showAlignGroup,
+        );
+        setFloatingToolbarGroupState(
+          els.ftMediaGroup,
+          hasSelection && visibility.showMediaGroup,
+        );
+
+        setFloatingToolbarControlState(
+          els.ftDeleteBtn,
+          hasSelection && visibility.showDelete,
+          noSelection || !policy.canDelete,
+        );
+        setFloatingToolbarControlState(
+          els.ftDuplicateBtn,
+          hasSelection && visibility.showDuplicate,
+          noSelection || !policy.canDuplicate,
+        );
+        setFloatingToolbarControlState(
+          els.ftCopyStyleBtn,
+          hasSelection && visibility.showCopyStyle,
+          noSelection || !policy.canEditStyles,
+        );
+        setFloatingToolbarControlState(
+          els.ftPasteStyleBtn,
+          hasSelection && visibility.showPasteStyle,
+          noSelection || !policy.canEditStyles,
+        );
+        setFloatingToolbarControlState(
+          els.ftEditTextBtn,
+          hasSelection && visibility.canStartPlainTextEditing,
+          noPlainText,
+        );
+        [els.ftBoldBtn, els.ftItalicBtn, els.ftUnderlineBtn].forEach((button) =>
+          setFloatingToolbarControlState(
+            button,
+            hasSelection && visibility.showRichTextControls,
+            noRichText,
+          ),
+        );
+        [els.ftColorInput, els.ftFontFamilySelect, els.ftFontSizeSelect].forEach(
+          (control) =>
+            setFloatingToolbarControlState(
+              control,
+              hasSelection && visibility.showRichTextControls,
+              noRichText,
+            ),
+        );
+        [els.ftAlignLeftBtn, els.ftAlignCenterBtn, els.ftAlignRightBtn].forEach(
+          (button) =>
+            setFloatingToolbarControlState(
+              button,
+              hasSelection && visibility.showAlignGroup,
+              noRichText,
+            ),
+        );
+        setFloatingToolbarControlState(
+          els.ftReplaceImageBtn,
+          hasSelection && visibility.showReplaceImage,
+          noSelection || !policy.canReplaceMedia,
+        );
+        setFloatingToolbarControlState(
+          els.ftCopyImageUrlBtn,
+          hasSelection && visibility.showCopyMediaUrl,
+          noSelection,
+        );
+        setFloatingToolbarControlState(
+          els.ftMediaUrlBtn,
+          hasSelection && visibility.showMediaUrl,
+          noSelection,
+        );
+        setFloatingToolbarControlState(
+          els.ftFitImageBtn,
+          hasSelection && visibility.showFitImage,
+          noSelection || !policy.canEditStyles,
+        );
       }
 
       function toggleFloatingToolbarCollapsed(force) {
@@ -183,7 +313,7 @@
           !state.selectedNodeId ||
           !activeRect ||
           state.selectedFlags.isTextEditing ||
-          isContextMenuOpen() ||
+          shouldSuppressFloatingToolbarForShellSurface() ||
           Boolean(state.activeManipulation)
         ) {
           hideFloatingToolbar();

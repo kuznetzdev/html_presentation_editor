@@ -452,6 +452,11 @@
         ) {
           closeLayerPicker();
         }
+        if (!payload.isTextEditing) {
+          if (isInsertPaletteOpen()) closeInsertPalette();
+          if (isSlideTemplateBarOpen()) closeSlideTemplateBar();
+          if (isTopbarOverflowOpen()) closeTopbarOverflow();
+        }
         syncSlideRegistry({
           currentActiveId: payload.slideId || state.activeSlideId,
           runtimeActiveSlideId: state.runtimeActiveSlideId,

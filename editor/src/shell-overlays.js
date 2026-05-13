@@ -202,7 +202,12 @@
           closeTransientShellUi({ keep: "insert-palette" });
           setInteractionMode("insert");
           scheduleShellPopoverLayout();
-        } else syncInteractionModeFromState();
+        } else {
+          syncInteractionModeFromState();
+          if (state.mode === "edit" && state.selectedNodeId) {
+            window.requestAnimationFrame(() => positionFloatingToolbar());
+          }
+        }
         const buttons = getPaletteActionButtons();
         applyRovingTabindex(buttons, active ? 0 : -1);
         if (active && options.focusFirst !== false) {
